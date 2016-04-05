@@ -1,0 +1,41 @@
+name "collied"
+description "A network framework written in D."
+homepage "http://collied.org/"
+copyright "Copyright © 2016, collied.org"
+authors "Putao's Collie team."
+versions "TCP_POOL"
+//libs "jemalloc"
+
+dependency "experimental_allocator" path="experimental_allocator"
+
+configuration "default" {
+	targetType "library"
+}
+
+configuration "ssl" {
+	targetType "library"
+	versions "SSL"
+	dependency "openssl" version="~>1.1.4+1.0.1g"
+}
+
+configuration "exe" {
+	targetType "executable"
+	versions "EXEc"
+}
+
+
+configuration "exessl" {
+	targetType "executable"
+	versions "EXEc"  "SSL"
+	dependency "openssl" version="~>1.1.4+1.0.1g"
+}
+
+buildType "debug" {
+	buildOptions "debugMode" "debugInfo" "profile" 
+	dflags "-profile"
+}
+
+buildType "release" {
+	buildOptions "releaseMode" "inline" "optimize"
+}
+//这是备注

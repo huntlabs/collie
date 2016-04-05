@@ -1,0 +1,2 @@
+dmd clien.d -I../../source -L../../libcollied.a
+dmd server.d -I../../source -L../../libcollied.a

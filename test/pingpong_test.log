@@ -1,0 +1,46 @@
+测试方法来自：http://blog.csdn.net/Solstice/article/details/5863411
+客户端直接用的asio的客户端，没有专门编写
+服务端核数和客户端保持一致的。
+编译命令：dub build --build=release --force
+
+Usage: client <host> <port> <threads> <blocksize> <sessions> <time>(s)
+
+./client 127.0.0.1 9000 1 16384 100 120
+75462295552 total bytes written = 599.72Mib/s
+75460677632 total bytes read = 599.70Mib/s
+
+
+./client 127.0.0.1 9000 2 16384 100 120 
+Server_IO_Mode.One_EventLoop
+101489119232 total bytes written
+101487517696 total bytes read
+
+./client 127.0.0.1 9000 2 16384 1000 120
+Server_IO_Mode.One_EventLoop
+74228133888 total bytes written
+74212077568 total bytes read
+
+./client 127.0.0.1 9000 2 16384 10000 120
+Server_IO_Mode.One_EventLoop
+15255552000 total bytes written
+15092482048 total bytes read
+
+
+./client 127.0.0.1 9000 2 16384 100 120
+Server_IO_Mode.Mult_EventLoop
+102166290432 total bytes written
+102164672512 total bytes read
+
+
+./client 127.0.0.1 9000 2 16384 1000 120
+Server_IO_Mode.Mult_EventLoop
+70870646784 total bytes written
+70854594560 total bytes read
+
+./client 127.0.0.1 9000 2 16384 10000 120
+Server_IO_Mode.Mult_EventLoop
+17017511936 total bytes written
+16853671936 total bytes read
+
+
+
