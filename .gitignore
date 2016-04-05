@@ -11,9 +11,10 @@ __dummy.html
 /obj
 /bin
 *.userprefs
-Collied
-collied
+/Collied
+/collied
 performance_test
 performance_test/*
 core
 callgrind.*
+.directory
