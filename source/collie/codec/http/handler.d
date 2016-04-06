@@ -158,7 +158,7 @@ protected:
 	{
 		trace("responseDone");
 		if((cast(PiPeline)pipeline).channel.isInValid()) return;
-		scope auto buffer = new SectionBuffer(HTTPConfig.instance.Header_Stection_Size,threadColliedAllocator);
+		scope auto buffer = new SectionBuffer(HTTPConfig.instance.HeaderStectionSize,threadColliedAllocator);
 		HTTPResponse.generateHeader(respon,buffer);
 		auto buf = respon.HTTPBody;
 		_writeStection += (buffer.writeCount + 1);
@@ -390,7 +390,7 @@ package:
 	bool send(ubyte[] data, bool isBin)
 	{ 
 		if(pipeline.channel.isInValid()) return false;
-		scope auto buffer = new SectionBuffer(HTTPConfig.instance.REP_Body_Stection_Size,threadColliedAllocator);
+		scope auto buffer = new SectionBuffer(HTTPConfig.instance.ResponseBodyStectionSize,threadColliedAllocator);
 		_frame.writeFrame(data,isBin,buffer);
 		_writeStection += (buffer.writeCount + 1);
 		return writeStection(buffer);

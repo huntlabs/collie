@@ -1,11 +1,11 @@
 
 module collie.channel.pipeline;
 
-import collie.channel;
-import collie.handler.basehandler;
 import core.sync.mutex;
 
-import std.stdio;
+import collie.channel;
+import collie.handler.basehandler;
+
 
 /** 
  * 事件系统产生和传递管理类。 
@@ -471,6 +471,8 @@ uint getEventType()
 
 
 unittest {//test scope calss数据传递方式，值传还是址传
+	import std.stdio;
+
 	void  fun1() 
 	{
 		scope auto c2 = new MyClass;

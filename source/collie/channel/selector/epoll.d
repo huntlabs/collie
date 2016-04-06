@@ -7,21 +7,22 @@ version (linux) :
 
 import core.time;
 import core.stdc.errno;
+import core.memory;
+
+public import core.sys.posix.sys.types; // for ssize_t, size_t
+public import core.sys.posix.netinet.tcp;
+public import core.sys.posix.netinet.in_;
+import core.sys.posix.time : itimerspec, CLOCK_MONOTONIC;
 import core.sys.posix.unistd;
-import collie.channel.channel;
+
 import std.algorithm;
 import std.array;
 import std.conv;
 import std.exception;
 import std.format;
 
-public import core.sys.posix.sys.types; // for ssize_t, size_t
-public import core.sys.posix.netinet.tcp;
-public import core.sys.posix.netinet.in_;
-import core.sys.posix.time : itimerspec, CLOCK_MONOTONIC;
 import collie.channel.define;
-import core.memory;
-
+import collie.channel.channel;
 
 enum EVENT_POLL_SIZE = 1;
 

@@ -3,19 +3,19 @@
 
 module collie.channel.eventloop;
 
-import collie.channel;
-
 import core.thread;
 import core.sync.mutex;
 import core.memory;
-public import std.concurrency;
-import core.thread;
+import core.sync.mutex;
+
+//public import std.concurrency;
 import std.datetime;
 import std.variant;
 import std.algorithm.mutation;
-import core.sync.mutex;
 import std.stdio;
 import std.string;
+
+import collie.channel;
 import collie.channel.utils.queue;
 
 /** 网络I/O处理的事件循环类

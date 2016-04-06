@@ -1,9 +1,10 @@
 ﻿module collie.codec.http.utils.frame;
 
-import collie.codec.http.utils.buffer;
 import std.conv;
 import std.bitmanip;
 import std.experimental.logger;
+
+import collie.codec.http.utils.buffer;
 
 enum FRAME_SIZE_IN_BYTES = 512 * 512 * 2;	//maximum size of a frame when sending a message
 

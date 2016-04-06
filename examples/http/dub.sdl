@@ -1,0 +1,17 @@
+name "http"
+description "A minimal D application."
+copyright "Copyright © 2016, dsby"
+authors "dsby"
+
+dependency "collie" path="../../" 
+
+configuration "default" {
+	targetType "executable"
+}
+
+
+configuration "ssl" {
+	targetType "executable"
+	versions  "SSL"
+	dependency "openssl" version="~>1.1.4+1.0.1g"
+}

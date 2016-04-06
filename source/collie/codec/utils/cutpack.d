@@ -1,11 +1,14 @@
 ﻿module collie.codec.utils.cutpack;
 
-import collie.handler.basehandler;
-import collie.channel.pipeline;
-import std.bitmanip;
 import core.stdc.string;
 import core.stdc.stdlib;
+
+import std.bitmanip;
+
+import collie.handler.basehandler;
+import collie.channel.pipeline;
 import collie.channel.define;
+
 class CutPack(bool littleEndian) : Handler 
 {
 	this(PiPeline pipu,int maxLen = uint.max)

@@ -18,7 +18,10 @@ else version (OSX)
 }
 //version = KQUEUE;
 version(KQUEUE):
-//TODO: 定时器有问题，ruseport 属性mac下定义不一样
+
+import core.memory;
+
+//TODO: 定时器有问题，
 public import core.sys.posix.sys.types; // for ssize_t, size_t
 public import core.sys.posix.netinet.tcp;
 public import core.sys.posix.netinet.in_;
@@ -26,15 +29,14 @@ public import core.stdc.stdint;    // intptr_t, uintptr_t
 public import core.sys.posix.time; // timespec
 public import core.sys.posix.config;
 
+import std.exception;
+import std.container : Array;
+import std.stdio;
+
 import collie.channel.define;
 import collie.channel.channel;
 import collie.channel.timer;
-import core.memory;
-import std.exception;
 
-import std.container : Array;
-
-import std.stdio;
 
 enum EVENT_KQUEUE_SIZE = 128;
 

@@ -4,11 +4,11 @@
 
 module collie.channel.tcpsocket;
 
+public import std.datetime;
+
 import collie.channel;
-import collie.channel.pipeline;
 import collie.channel.utils.queue;
 import collie.channel.utils.buffer;
-public import std.datetime;
 
 /** Tcp 异步链接类
  @authors  Putao‘s Collie Team

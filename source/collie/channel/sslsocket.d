@@ -5,6 +5,7 @@ import collie.channel.pipeline;
 import collie.channel.utils.queue;
 import collie.channel.utils.buffer;
 import collie.channel.tcpsocket;
+
 import deimos.openssl.ssl;
 
 final class SSLSocket : Channel

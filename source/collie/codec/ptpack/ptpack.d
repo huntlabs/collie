@@ -1,11 +1,13 @@
 ﻿module collie.codec.ptpack.ptpack;
 
-import collie.handler.basehandler;
-import collie.channel.pipeline;
-import std.bitmanip;
 import core.stdc.string;
 import core.stdc.stdlib;
+
+import std.bitmanip;
 import std.experimental.logger;
+
+import collie.handler.basehandler;
+import collie.channel.pipeline;
 
 string encodePack(string data,string type,string pipeline,string handler){
 	string str =  "{ scope auto mixins_event = new EnPackEvent(" ~ pipeline ~ ", " ~ handler ~ ");

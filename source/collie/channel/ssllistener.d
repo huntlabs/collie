@@ -1,12 +1,18 @@
 ﻿module collie.channel.ssllistener;
 version(SSL):
-import collie.channel;
-import std.concurrency;
+
+
+//import std.concurrency;
 import core.thread;
 import core.atomic;
 import core.sync.mutex;
-import deimos.openssl.ssl;
+
 import std.string;
+
+import collie.channel;
+
+import deimos.openssl.ssl;
+
 version(USE_SSL_V2) {
 enum SSLMODE{
 	SSLv2,

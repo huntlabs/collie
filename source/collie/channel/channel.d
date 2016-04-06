@@ -3,10 +3,11 @@
 
 module collie.channel.channel;
 
-import collie.channel;
-import collie.channel.pipeline;
 import core.atomic;
 import core.memory;
+
+import collie.channel;
+import collie.channel.pipeline;
 public import collie.channel.eventloop;
 
 /** 传送给事件循环可监视的I/O对象的基类

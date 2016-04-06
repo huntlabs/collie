@@ -1,11 +1,13 @@
 ﻿module collie.codec.http.config;
 
+public import std.datetime;
+
 import collie.codec.http.handler;
 import collie.channel.pipeline;
-public import std.datetime;
 
 alias DoHttpHandle = void delegate (HTTPRequest,HTTPResponse);
 alias DoWebSocket  = WebSocket delegate(const HTTPHeader header);
+
 final class HTTPConfig
 {
 	static @property HTTPConfig instance()
@@ -16,12 +18,12 @@ final class HTTPConfig
 		return _gconfig;
 	}
 
-	__gshared static uint Max_Body_Size = 8*1024*1024;//2M
-	__gshared static uint Max_Header_Size = 16 * 1024;//8K;
+	__gshared static uint MaxBodySize = 8*1024*1024;//2M
+	__gshared static uint MaxHeaderSize = 16 * 1024;//8K;
 	__gshared static Duration httpTimeOut = 20.seconds;
-	uint Header_Stection_Size = 1024;
-	uint REQ_Body_Stection_Size = 4096;
-	uint REP_Body_Stection_Size = 4096;
+	uint HeaderStectionSize = 1024;
+	uint RequestBodyStectionSize = 4096;
+	uint ResponseBodyStectionSize = 4096;
 
 
 	static void createPipline(PiPeline pip){

@@ -3,11 +3,12 @@
 
 module collie.channel.tcplistener;
 
-import collie.channel;
-import std.concurrency;
+//import std.concurrency;
 import core.thread;
 import core.atomic;
 import core.sync.mutex;
+
+import collie.channel;
 
 /** Tcp 监听并异步接受链接的类
  @authors  Putao‘s Collie Team

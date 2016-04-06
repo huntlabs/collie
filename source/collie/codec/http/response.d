@@ -1,12 +1,14 @@
 ﻿module collie.codec.http.response;
 
-import collie.codec.http.header;
 import core.stdc.string : memcpy;
-import collie.codec.http.utils.buffer;
-import collie.codec.http.request;
+
 import std.string;
 import std.array;
 import std.conv;
+
+import collie.codec.http.header;
+import collie.codec.http.utils.buffer;
+import collie.codec.http.request;
 import collie.codec.http.config;
 import collie.channel.define;
 
@@ -49,7 +51,7 @@ class HTTPResponse
 	{
 		_header = new HTTPHeader(HTTPHeaderType.HTTP_RESPONSE);
 		_header.statusCode = 200;
-		_body = new SectionBuffer(HTTPConfig.instance.REP_Body_Stection_Size,threadColliedAllocator);
+		_body = new SectionBuffer(HTTPConfig.instance.ResponseBodyStectionSize,threadColliedAllocator);
 	}
 	~this(){
 		_body.destroy;

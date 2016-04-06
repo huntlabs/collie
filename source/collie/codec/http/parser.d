@@ -1,9 +1,8 @@
 ﻿module collie.codec.http.parser;
 
 public import collie.codec.http.parsertype;
-
-import std.stdio;
 import collie.codec.http.config;
+
 
 /** ubyte[] 为传过去字段里的位置引用，没有数据拷贝，自己使用的时候注意拷贝数据， 
  bool 此段数据是否完结，可能只是数据的一部分。
@@ -143,7 +142,7 @@ public:
 			ch= data[p]; 
 			if(state <=  HTTPParserState.s_headers_done) {                                                             
 				nread += 1;                                              
-				if (nread > HTTPConfig.Max_Header_Size) {            
+				if (nread > HTTPConfig.MaxHeaderSize) {            
 					http_errno = HTTPParserErrno.HPE_HEADER_OVERFLOW;                                  
 					goto error;                                                      
 				}                                                                  
@@ -933,7 +932,7 @@ public:
 					
 					//COUNT_HEADER_SIZE(p - start);
 					nread += (p - start);                                              
-					if (nread > (HTTPConfig.Max_Header_Size)) {            
+					if (nread > (HTTPConfig.MaxHeaderSize)) {            
 						http_errno = HTTPParserErrno.HPE_HEADER_OVERFLOW;                                  
 						goto error;                                                      
 					}
@@ -1045,7 +1044,7 @@ public:
 							state = HTTPParserState.s_header_almost_done;
 							//COUNT_HEADER_SIZE(p - start);
 							nread += (p - start);                                              
-							if (nread > (HTTPConfig.Max_Header_Size)) {            
+							if (nread > (HTTPConfig.MaxHeaderSize)) {            
 								http_errno = HTTPParserErrno.HPE_HEADER_OVERFLOW;                                  
 								goto error;                                                      
 							}
@@ -1069,7 +1068,7 @@ public:
 								import core.stdc.string;
 								size_t limit = maxP - p;
 								
-								limit = (limit < HTTPConfig.Max_Header_Size ? limit : HTTPConfig.Max_Header_Size);//MIN(limit, TTPConfig.instance.Max_Header_Size);
+								limit = (limit < HTTPConfig.MaxHeaderSize ? limit : HTTPConfig.MaxHeaderSize);//MIN(limit, TTPConfig.instance.MaxHeaderSize);
 								string str = cast(string)data[p..maxP];
 								auto p_cr = str.indexOf(CR);// memchr(p, CR, limit);
 								auto p_lf = str.indexOf(LF);// memchr(p, LF, limit);
@@ -1223,7 +1222,7 @@ public:
 					
 					//COUNT_HEADER_SIZE(p - start);
 					nread += (p - start);                                              
-					if (nread > (HTTPConfig.Max_Header_Size)) {            
+					if (nread > (HTTPConfig.MaxHeaderSize)) {            
 						http_errno = HTTPParserErrno.HPE_HEADER_OVERFLOW;                                  
 						goto error;                                                      
 					}
@@ -1942,6 +1941,7 @@ string CALLBACK_DATA_NOADVANCE(string code){
 
 
 unittest{
+	import std.stdio;
 	import std.functional;
 
 	void on_message_begin(HTTPParser)

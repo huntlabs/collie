@@ -1,13 +1,14 @@
 ﻿module collie.codec.http.request;
 
+import core.stdc.string : memcpy;
+
+import std.experimental.logger;
 
 import collie.codec.http.header;
 import collie.codec.http.parser;
 import collie.channel.address;
 import collie.codec.http.utils.buffer;
-import core.stdc.string : memcpy;
 import collie.codec.http.config;
-import std.experimental.logger;
 import collie.channel.define;
 
 alias CallBackHeader = void delegate (HTTPHeader header);
@@ -28,7 +29,7 @@ class HTTPRequest
 		_parser.onChunkHeader = &onChunkHeader;
 		_parser.onBody = &onBody;
 		_parser.onChunkComplete = &onChunkComplete;
-		_body = new SectionBuffer(HTTPConfig.instance.REQ_Body_Stection_Size,threadColliedAllocator);
+		_body = new SectionBuffer(HTTPConfig.instance.RequestBodyStectionSize,threadColliedAllocator);
 		_addr = Address(0,false);
 	}
 	~this(){
@@ -156,7 +157,7 @@ protected:
 		trace("HTTPRequest.onBody adv = ", adv," ,data = ", cast(string)data);
 		if(!_dorun) {_parser.handleIng = false; return;}
 		_body.write(data);
-		if(_body.length > HTTPConfig.instance.Max_Body_Size){
+		if(_body.length > HTTPConfig.instance.MaxBodySize){
 			_parser.handleIng = false;
 		}
 	}

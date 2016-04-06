@@ -3,8 +3,8 @@
 import std.conv;
 import std.uri;
 import std.string;
-public import collie.codec.http.parsertype;
 
+public import collie.codec.http.parsertype;
 import collie.codec.http.config;
 
 enum HTTPHeaderType

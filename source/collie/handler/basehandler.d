@@ -1,4 +1,5 @@
 module collie.handler.basehandler;
+
 import collie.channel.pipeline;
 
 enum HandleType

@@ -2,6 +2,7 @@
 */
 
 module collie.channel.define;
+
 public import std.experimental.logger;
 public import std.experimental.allocator;
 import std.experimental.allocator.mallocator ;
