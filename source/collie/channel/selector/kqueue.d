@@ -193,7 +193,7 @@ class KqueueLoop
 		}
 	}
 
-	boll removeTimer(Timer tm){
+	void removeTimer(Timer tm){
 		kevent_t event;
 		EV_SET(&event, tm.fd, EVFILT_TIMER, EV_DELETE, 0, 0, ptr);//单位毫秒
 		err = kevent(_efd, &event, 1, null, 0, null);
