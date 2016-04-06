@@ -1,7 +1,7 @@
 import core.thread;
 import std.stdio;
 import collie.channel;
-import collie.handler.basehandler;
+import collie.handler.base;
 import collie.booststrap.client;
 import std.parallelism;
 import core.runtime;

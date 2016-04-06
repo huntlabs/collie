@@ -1,4 +1,4 @@
-module collie.handler.basehandler;
+module collie.handler.base;
 
 import collie.channel.pipeline;
 

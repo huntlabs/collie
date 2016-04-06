@@ -4,7 +4,7 @@ module collie.channel.pipeline;
 import core.sync.mutex;
 
 import collie.channel;
-import collie.handler.basehandler;
+import collie.handler.base;
 
 
 /** 

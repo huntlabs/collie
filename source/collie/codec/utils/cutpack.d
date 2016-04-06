@@ -5,7 +5,7 @@ import core.stdc.stdlib;
 
 import std.bitmanip;
 
-import collie.handler.basehandler;
+import collie.handler.base;
 import collie.channel.pipeline;
 import collie.channel.define;
 

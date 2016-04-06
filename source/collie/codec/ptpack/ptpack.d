@@ -6,7 +6,7 @@ import core.stdc.stdlib;
 import std.bitmanip;
 import std.experimental.logger;
 
-import collie.handler.basehandler;
+import collie.handler.base;
 import collie.channel.pipeline;
 
 string encodePack(string data,string type,string pipeline,string handler){

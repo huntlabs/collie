@@ -1,7 +1,7 @@
 
 
 import collie.channel;
-import collie.handler.basehandler;
+import collie.handler.base;
 import collie.booststrap.server;
 import collie.codec.http;
 

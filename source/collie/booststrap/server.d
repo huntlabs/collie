@@ -7,7 +7,7 @@ import std.parallelism;
 import std.stdio;
 
 import collie.channel;
-import collie.handler.basehandler;
+import collie.handler.base;
 import collie.channel.utils.queue;
 
 

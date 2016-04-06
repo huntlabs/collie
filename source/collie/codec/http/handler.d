@@ -1,6 +1,6 @@
 module collie.codec.http.handler;
 
-import collie.handler.basehandler;
+import collie.handler.base;
 import collie.channel;
 public import collie.codec.http.utils.buffer;
 public import collie.codec.http.header;
