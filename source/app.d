@@ -3,14 +3,14 @@ version (EXEc):
 
 import core.thread;
 import std.stdio;
-import collied.channel;
-import collied.handler.basehandler;
-import collied.booststrap.server;
+import collie.channel;
+import collie.handler.basehandler;
+import collie.booststrap.server;
 import std.parallelism;
 import core.runtime;
 import std.conv;
 import core.memory;
-import collied.codec.http;
+import collie.codec.http;
 import std.container.array;
 
 import std.experimental.allocator.mallocator ;

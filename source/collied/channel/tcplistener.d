@@ -1,9 +1,9 @@
 ﻿/* Copyright collied.org 
  */
 
-module collied.channel.tcplistener;
+module collie.channel.tcplistener;
 
-import collied.channel;
+import collie.channel;
 import std.concurrency;
 import core.thread;
 import core.atomic;

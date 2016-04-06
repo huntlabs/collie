@@ -1,9 +1,9 @@
-﻿module collied.codec.http.parser;
+﻿module collie.codec.http.parser;
 
-public import collied.codec.http.parsertype;
+public import collie.codec.http.parsertype;
 
 import std.stdio;
-import collied.codec.http.config;
+import collie.codec.http.config;
 
 /** ubyte[] 为传过去字段里的位置引用，没有数据拷贝，自己使用的时候注意拷贝数据， 
  bool 此段数据是否完结，可能只是数据的一部分。

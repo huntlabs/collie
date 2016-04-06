@@ -1,4 +1,4 @@
-﻿module collied.codec.http.parsertype;
+﻿module collie.codec.http.parsertype;
 
 enum HTTPParserType { HTTP_REQUEST, HTTP_RESPONSE, HTTP_BOTH };
 

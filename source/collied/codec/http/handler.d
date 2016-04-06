@@ -1,13 +1,13 @@
-module collied.codec.http.handler;
+module collie.codec.http.handler;
 
-import collied.handler.basehandler;
-import collied.channel;
-public import collied.codec.http.utils.buffer;
-public import collied.codec.http.header;
-public import collied.codec.http.request;
-public import collied.codec.http.response;
-public import collied.codec.http.config;
-import collied.codec.http.utils.frame;
+import collie.handler.basehandler;
+import collie.channel;
+public import collie.codec.http.utils.buffer;
+public import collie.codec.http.header;
+public import collie.codec.http.request;
+public import collie.codec.http.response;
+public import collie.codec.http.config;
+import collie.codec.http.utils.frame;
 
 import std.base64;
 import std.digest.sha;

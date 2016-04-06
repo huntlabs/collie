@@ -1,11 +1,11 @@
-﻿module collied.codec.http.header;
+﻿module collie.codec.http.header;
 
 import std.conv;
 import std.uri;
 import std.string;
-public import collied.codec.http.parsertype;
+public import collie.codec.http.parsertype;
 
-import collied.codec.http.config;
+import collie.codec.http.config;
 
 enum HTTPHeaderType
 {

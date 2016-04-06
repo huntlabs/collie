@@ -1,7 +1,7 @@
-﻿module collied.codec.http.config;
+﻿module collie.codec.http.config;
 
-import collied.codec.http.handler;
-import collied.channel.pipeline;
+import collie.codec.http.handler;
+import collie.channel.pipeline;
 public import std.datetime;
 
 alias DoHttpHandle = void delegate (HTTPRequest,HTTPResponse);

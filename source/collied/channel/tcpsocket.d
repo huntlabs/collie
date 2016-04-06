@@ -2,12 +2,12 @@
  */
 
 
-module collied.channel.tcpsocket;
+module collie.channel.tcpsocket;
 
-import collied.channel;
-import collied.channel.pipeline;
-import collied.channel.utils.queue;
-import collied.channel.utils.buffer;
+import collie.channel;
+import collie.channel.pipeline;
+import collie.channel.utils.queue;
+import collie.channel.utils.buffer;
 public import std.datetime;
 
 /** Tcp 异步链接类

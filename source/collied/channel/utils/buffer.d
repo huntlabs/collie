@@ -2,7 +2,7 @@
 */
 
 
-module collied.channel.utils.buffer;
+module collie.channel.utils.buffer;
 import core.memory;
 
 /** 记录位置的buffer

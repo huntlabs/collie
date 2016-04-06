@@ -1,10 +1,10 @@
 ﻿/* Copyright collied.org 
 */
 
-module collied.channel.address;
+module collie.channel.address;
 
-import collied.channel.define;
-import collied.channel.define;
+import collie.channel.define;
+import collie.channel.define;
 
 public import std.conv : to;
 import std.bitmanip;

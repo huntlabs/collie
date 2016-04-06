@@ -1,10 +1,10 @@
 /* Copyright collied.org 
 */
 
-module collied.channel.timer;
+module collie.channel.timer;
 
-import collied.channel;
-import collied.channel.channel;
+import collie.channel;
+import collie.channel.channel;
 import core.sys.posix.time;
 public import std.datetime;
 import core.sync.mutex;
@@ -92,7 +92,7 @@ public :
 			if(err == -1) return false;
 			return eventLoop.addEvent(this);
 		} else static if(IOMode == IO_MODE.kqueue) {
-			import collied.channel.selector.kqueue;
+			import collie.channel.selector.kqueue;
 			fd = eventLoop.loop.createIndex();
 			import std.stdio;
 			writeln("timer fd = ", fd);
@@ -118,7 +118,7 @@ protected:
 		}
 		static if(IOMode == IO_MODE.kqueue){
 			if(once) {
-				import collied.channel.selector.kqueue;
+				import collie.channel.selector.kqueue;
 				eventLoop.loop.removeTimer(this);
 			}
 		}

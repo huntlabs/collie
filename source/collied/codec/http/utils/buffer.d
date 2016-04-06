@@ -1,4 +1,4 @@
-﻿module collied.codec.http.utils.buffer;
+﻿module collie.codec.http.utils.buffer;
 
 import std.container.array;
 import core.stdc.string;

@@ -1,12 +1,12 @@
-﻿module collied.codec.http;
+﻿module collie.codec.http;
 
-public import collied.codec.http.utils.buffer;
-public import collied.codec.http.utils.frame;
-public import collied.codec.http.header;
-public import collied.codec.http.request;
-public import collied.codec.http.response;
-public import collied.codec.http.config;
-public import collied.codec.http.parser;
-public import collied.codec.http.parsertype;
-public import collied.codec.http.config;
-public import collied.codec.http.handler;
+public import collie.codec.http.utils.buffer;
+public import collie.codec.http.utils.frame;
+public import collie.codec.http.header;
+public import collie.codec.http.request;
+public import collie.codec.http.response;
+public import collie.codec.http.config;
+public import collie.codec.http.parser;
+public import collie.codec.http.parsertype;
+public import collie.codec.http.config;
+public import collie.codec.http.handler;

@@ -1,7 +1,7 @@
 ﻿/* Copyright collied.org 
  */
 
-module collied.channel.utils.queue;
+module collie.channel.utils.queue;
 /** 自定义自己的queue的类,非线程安全
  *  @authors : Putao‘s Collie Team
  @date : 2016.1

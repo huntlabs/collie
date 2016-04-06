@@ -1,9 +1,9 @@
 ﻿/* Copyright collied.org 
  */
 
-module collied.channel.eventloop;
+module collie.channel.eventloop;
 
-import collied.channel;
+import collie.channel;
 
 import core.thread;
 import core.sync.mutex;
@@ -16,7 +16,7 @@ import std.algorithm.mutation;
 import core.sync.mutex;
 import std.stdio;
 import std.string;
-import collied.channel.utils.queue;
+import collie.channel.utils.queue;
 
 /** 网络I/O处理的事件循环类
  @authors  Putao‘s Collie Team
@@ -144,43 +144,43 @@ enum IO_MODE {
 
 version (FreeBSD) 
 {
-	public import collied.channel.selector.kqueue;
+	public import collie.channel.selector.kqueue;
 	alias EventLoop = EventLoopImpl!(KqueueLoop);
 	enum IO_MODE IOMode = IO_MODE.kqueue;
 }
 else version (OpenBSD) 
 {
-	public import collied.channel.selector.kqueue;
+	public import collie.channel.selector.kqueue;
 	alias EventLoop = EventLoopImpl!(KqueueLoop);
 	enum IO_MODE IOMode = IO_MODE.kqueue;
 }
 else version (NetBSD)
 {
-	public import collied.channel.selector.kqueue;
+	public import collie.channel.selector.kqueue;
 	alias EventLoop = EventLoopImpl!(KqueueLoop);
 	enum IO_MODE IOMode = IO_MODE.kqueue;
 }
 else version (OSX) 
 {
-	public import collied.channel.selector.kqueue;
+	public import collie.channel.selector.kqueue;
 	alias EventLoop = EventLoopImpl!(KqueueLoop);
 	enum IO_MODE IOMode = IO_MODE.kqueue;
 }
 else version (Solaris)
 {
-	public import collied.channel.selector.port;
+	public import collie.channel.selector.port;
 }
 else version (linux) 
 {
-	public import collied.channel.selector.epoll;
+	public import collie.channel.selector.epoll;
 	alias EventLoop = EventLoopImpl!(EpollLoop);
 	enum IO_MODE IOMode = IO_MODE.epoll;
 }
 else version (Posix) 
 {
-	public import collied.channel.selector.poll;
+	public import collie.channel.selector.poll;
 }
 else
 {
-	public import collied.channel.selector.select;
+	public import collie.channel.selector.select;
 }

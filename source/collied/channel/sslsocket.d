@@ -1,10 +1,10 @@
-﻿module collied.channel.sslsocket;
+﻿module collie.channel.sslsocket;
 version(SSL):
-import collied.channel;
-import collied.channel.pipeline;
-import collied.channel.utils.queue;
-import collied.channel.utils.buffer;
-import collied.channel.tcpsocket;
+import collie.channel;
+import collie.channel.pipeline;
+import collie.channel.utils.queue;
+import collie.channel.utils.buffer;
+import collie.channel.tcpsocket;
 import deimos.openssl.ssl;
 
 final class SSLSocket : Channel

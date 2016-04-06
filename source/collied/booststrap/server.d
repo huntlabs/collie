@@ -1,11 +1,11 @@
-module collied.booststrap.server;
+module collie.booststrap.server;
 
-import collied.channel;
+import collie.channel;
 import core.thread;
 import std.parallelism;
 import std.stdio;
-import collied.handler.basehandler;
-import collied.channel.utils.queue;
+import collie.handler.basehandler;
+import collie.channel.utils.queue;
 import core.sync.mutex;
 
 version(SSL) {

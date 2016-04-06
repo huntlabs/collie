@@ -1,7 +1,7 @@
 ﻿/* Copyright collied.org 
 */
 
-module collied.channel.define;
+module collie.channel.define;
 public import std.experimental.logger;
 public import std.experimental.allocator;
 import std.experimental.allocator.mallocator ;
@@ -95,10 +95,10 @@ alias CallBack = void delegate ();
 alias StatusCallBck = void delegate(SOCKET_STATUS sfrom,SOCKET_STATUS sto);
 
 version(TCP_POOL)  :
-import collied.channel.utils.queue;
-import collied.channel.tcpsocket;
+import collie.channel.utils.queue;
+import collie.channel.tcpsocket;
 version(SSL) {
-	import collied.channel.sslsocket;
+	import collie.channel.sslsocket;
 }
 
 

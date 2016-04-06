@@ -1,5 +1,5 @@
-module collied.handler.basehandler;
-import collied.channel.pipeline;
+module collie.handler.basehandler;
+import collie.channel.pipeline;
 
 enum HandleType
 {

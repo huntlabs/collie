@@ -1,14 +1,14 @@
 /* Copyright collied.org 
  */
 
-module collied.channel.selector.epoll;
+module collie.channel.selector.epoll;
 
 version (linux) :
 
 import core.time;
 import core.stdc.errno;
 import core.sys.posix.unistd;
-import collied.channel.channel;
+import collie.channel.channel;
 import std.algorithm;
 import std.array;
 import std.conv;
@@ -19,7 +19,7 @@ public import core.sys.posix.sys.types; // for ssize_t, size_t
 public import core.sys.posix.netinet.tcp;
 public import core.sys.posix.netinet.in_;
 import core.sys.posix.time : itimerspec, CLOCK_MONOTONIC;
-import collied.channel.define;
+import collie.channel.define;
 import core.memory;
 
 

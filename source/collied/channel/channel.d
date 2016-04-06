@@ -1,13 +1,13 @@
 /* Copyright collied.org 
  */
 
-module collied.channel.channel;
+module collie.channel.channel;
 
-import collied.channel;
-import collied.channel.pipeline;
+import collie.channel;
+import collie.channel.pipeline;
 import core.atomic;
 import core.memory;
-public import collied.channel.eventloop;
+public import collie.channel.eventloop;
 
 /** 传送给事件循环可监视的I/O对象的基类
  @authors : Putao‘s Collie Team

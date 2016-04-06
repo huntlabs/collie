@@ -1,6 +1,6 @@
-﻿module collied.channel.ssllistener;
+﻿module collie.channel.ssllistener;
 version(SSL):
-import collied.channel;
+import collie.channel;
 import std.concurrency;
 import core.thread;
 import core.atomic;

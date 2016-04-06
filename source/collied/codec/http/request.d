@@ -1,14 +1,14 @@
-﻿module collied.codec.http.request;
+﻿module collie.codec.http.request;
 
 
-import collied.codec.http.header;
-import collied.codec.http.parser;
-import collied.channel.address;
-import collied.codec.http.utils.buffer;
+import collie.codec.http.header;
+import collie.codec.http.parser;
+import collie.channel.address;
+import collie.codec.http.utils.buffer;
 import core.stdc.string : memcpy;
-import collied.codec.http.config;
+import collie.codec.http.config;
 import std.experimental.logger;
-import collied.channel.define;
+import collie.channel.define;
 
 alias CallBackHeader = void delegate (HTTPHeader header);
 alias CallBackRequest = void delegate (HTTPRequest header);

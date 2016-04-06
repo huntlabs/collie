@@ -1,4 +1,4 @@
-﻿module collied.channel.selector.kqueue;
+﻿module collie.channel.selector.kqueue;
 
 version (FreeBSD) 
 {
@@ -26,9 +26,9 @@ public import core.stdc.stdint;    // intptr_t, uintptr_t
 public import core.sys.posix.time; // timespec
 public import core.sys.posix.config;
 
-import collied.channel.define;
-import collied.channel.channel;
-import collied.channel.timer;
+import collie.channel.define;
+import collie.channel.channel;
+import collie.channel.timer;
 import core.memory;
 import std.exception;
 

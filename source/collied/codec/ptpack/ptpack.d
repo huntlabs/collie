@@ -1,7 +1,7 @@
-﻿module collied.codec.ptpack.ptpack;
+﻿module collie.codec.ptpack.ptpack;
 
-import collied.handler.basehandler;
-import collied.channel.pipeline;
+import collie.handler.basehandler;
+import collie.channel.pipeline;
 import std.bitmanip;
 import core.stdc.string;
 import core.stdc.stdlib;

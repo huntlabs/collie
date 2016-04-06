@@ -1,8 +1,8 @@
 
-module collied.channel.pipeline;
+module collie.channel.pipeline;
 
-import collied.channel;
-import collied.handler.basehandler;
+import collie.channel;
+import collie.handler.basehandler;
 import core.sync.mutex;
 
 import std.stdio;

@@ -1,14 +1,14 @@
-﻿module collied.codec.http.response;
+﻿module collie.codec.http.response;
 
-import collied.codec.http.header;
+import collie.codec.http.header;
 import core.stdc.string : memcpy;
-import collied.codec.http.utils.buffer;
-import collied.codec.http.request;
+import collie.codec.http.utils.buffer;
+import collie.codec.http.request;
 import std.string;
 import std.array;
 import std.conv;
-import collied.codec.http.config;
-import collied.channel.define;
+import collie.codec.http.config;
+import collie.channel.define;
 
 enum XPoweredBy = "collied ( "~ getComplierName() ~ " )  http://collied.org/" ;
 

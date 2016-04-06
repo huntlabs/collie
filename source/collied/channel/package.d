@@ -1,16 +1,16 @@
 ﻿/* Copyright collied.org 
 */
 
-module collied.channel;
+module collie.channel;
 
-public import collied.channel.address;
-public import collied.channel.define;
-public import collied.channel.eventloop;
-public import collied.channel.tcplistener;
-public import collied.channel.tcpsocket;
-public import collied.channel.timer;
-public import collied.channel.channel;
-public import collied.channel.pipeline;
+public import collie.channel.address;
+public import collie.channel.define;
+public import collie.channel.eventloop;
+public import collie.channel.tcplistener;
+public import collie.channel.tcpsocket;
+public import collie.channel.timer;
+public import collie.channel.channel;
+public import collie.channel.pipeline;
 version(SSL):
-public import collied.channel.sslsocket;
-public import collied.channel.ssllistener;
+public import collie.channel.sslsocket;
+public import collie.channel.ssllistener;

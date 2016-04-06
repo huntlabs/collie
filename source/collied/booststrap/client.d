@@ -1,10 +1,10 @@
-﻿module collied.booststrap.client;
+﻿module collie.booststrap.client;
 
-import collied.channel.eventloop;
-import collied.channel.pipeline;
-import collied.channel.tcpsocket;
-import collied.handler.basehandler;
-import collied.channel.address;
+import collie.channel.eventloop;
+import collie.channel.pipeline;
+import collie.channel.tcpsocket;
+import collie.handler.basehandler;
+import collie.channel.address;
 
 final class ClientBoostStarp
 {

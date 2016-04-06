@@ -1,6 +1,6 @@
-﻿module collied.codec.http.utils.frame;
+﻿module collie.codec.http.utils.frame;
 
-import collied.codec.http.utils.buffer;
+import collie.codec.http.utils.buffer;
 import std.conv;
 import std.bitmanip;
 import std.experimental.logger;

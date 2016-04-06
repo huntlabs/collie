@@ -1,10 +1,10 @@
-name "collied"
+name "collie"
 description "A network framework written in D."
 homepage "http://collied.org/"
 copyright "Copyright © 2016, collied.org"
 authors "Putao's Collie team."
 versions "TCP_POOL"
-//libs "jemalloc"
+//libs-posix "jemalloc" //用jemalloc优化C内存分配
 
 dependency "experimental_allocator" path="experimental_allocator"
 
@@ -38,4 +38,4 @@ buildType "debug" {
 buildType "release" {
 	buildOptions "releaseMode" "inline" "optimize"
 }
-//这是备注
+
