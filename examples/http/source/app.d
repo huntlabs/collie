@@ -40,9 +40,9 @@ void main(string[] args)
 
 	writeln("current cpus = ",totalCPUs,"\n");
 	writeln("args : port threads threadMode");
-	writeln("like : ./Collied 9005 4 0 \n");
+	writeln("like : http://localhost:8080\n");
 	//string[] args = Runtime.args;
-	ushort port = 9005;
+	ushort port = 8080;
 	uint threads = 4;
 	if(args.length == 3) {
 		writeln(args);
