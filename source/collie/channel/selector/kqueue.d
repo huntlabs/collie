@@ -175,7 +175,7 @@ class KqueueLoop
 			}
 			
 		} catch (Throwable e) {
-			static if (DEBUG) {
+			version(DEBUG) {
 				import std.stdio : writeln;
 				try writeln(e.toString()); catch {}
 			}
@@ -193,10 +193,14 @@ class KqueueLoop
 		}
 	}
 
-	void removeTimer(Timer tm){
+
+	bool removeTimer(Timer tm){
+		auto ptr = cast(void *)tm;
 		kevent_t event;
-		EV_SET(&event, tm.fd, EVFILT_TIMER, EV_DELETE, 0, 0, ptr);//单位毫秒
-		err = kevent(_efd, &event, 1, null, 0, null);
+		 EV_SET(&event, tm.fd, EVFILT_TIMER, EV_DELETE, 0, 0, ptr);//单位毫秒
+		 int err = kevent(_efd, &event, 1, null, 0, null);
+		if(err < 0) return false;
+		return true;
 	}
 
 	/**
