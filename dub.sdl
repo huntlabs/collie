@@ -1,10 +1,12 @@
 name "collie"
-description "A network framework written in D."
+description "An asynchronous event-driven network framework written in D."
 homepage "http://collied.org/"
-copyright "Copyright © 2016, collied.org"
-authors "Putao's Collie team."
+copyright "Copyright © 2016, putao.com"
+authors "putao's Dlang team."
+license "MIT"
 versions "TCP_POOL"
-//libs-posix "jemalloc" //用jemalloc优化C内存分配
+
+//libs-posix "jemalloc"
 
 dependency "experimental_allocator" path="experimental_allocator"
 
@@ -26,4 +28,3 @@ buildType "debug" {
 buildType "release" {
 	buildOptions "releaseMode" "inline" "optimize"
 }
-
