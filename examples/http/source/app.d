@@ -13,6 +13,8 @@ import std.conv;
 import std.container.array;
 import std.stdio;
 import std.parallelism;
+import std.experimental.logger;
+import std.experimental.logger.filelogger;
 
 //import std.experimental.allocator.mallocator ;
 //import std.experimental.allocator.building_blocks.free_list ;
@@ -37,7 +39,7 @@ void httphandler(HTTPRequest req ,HTTPResponse rep)
 void main(string[] args)
 {
 	globalLogLevel(LogLevel.error);
-
+	//sharedLog = new FileLogger("logtext.log");
 	writeln("current cpus = ",totalCPUs,"\n");
 	writeln("args : port threads threadMode");
 	writeln("like : http://localhost:8080\n");

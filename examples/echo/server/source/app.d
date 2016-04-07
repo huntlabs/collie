@@ -10,7 +10,7 @@ import core.runtime;
 import std.conv;
 import core.memory;
 import std.container.array;
-import collie.codec.ptpack.ptpack;
+import collie.codec.utils.cutpack;
 
 extern(C) __gshared string[] rt_options = [ "gcopt=profile:0 incPoolSize:4" ];
 
@@ -20,12 +20,11 @@ final class EchoHandle : Handler
 
 	override void inEvent(InEvent event){
             writeln("have new event :", event.type);
-		if(event.type == DePackEvent.type) {
-			scope auto ev = cast(DePackEvent) event;
-			writeln("have event , data = " , ev.mdata);
-			writeln("have event , type = " , ev.mtype);
-			writeln("have event , lenght = " , ev.mlength);
-			mixin(encodePack("ev.mdata.dup","ev.mtype","this.pipeline","this"));
+		if(event.type == InCutPackEvent.type) {
+			scope auto ev = cast(InCutPackEvent) event;
+			writeln("have event , data = " , ev.data);
+			writeln("have event , lenght = " , ev.data.length);
+			mixin(enCutPack("ev.data.dup","this.pipeline","this"));
         } else {
 			event.up();
 		}
@@ -34,7 +33,7 @@ final class EchoHandle : Handler
 }
 
 void createPipeline(PiPeline pip){
-     pip.pushHandle(new PtPack!(true)(pip));
+  //      pip.pushHandle(new CutPack!(true)(pip));
 	pip.pushHandle(new EchoHandle(pip));
 }
 

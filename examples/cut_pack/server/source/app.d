@@ -9,25 +9,24 @@ import std.parallelism;
 import core.runtime;
 import std.conv;
 import core.memory;
-import collie.codec.http.http;
-import collie.codec.http.utils.buffer;
 import std.container.array;
-import collie.codec.ptpack.ptpack;
+import collie.codec.utils.cutpack;
 
 extern(C) __gshared string[] rt_options = [ "gcopt=profile:0 incPoolSize:4" ];
 
 final class EchoHandle : Handler
 {
-	this (PiPline pip) {super(pip);}
+	this (PiPeline pip) {super(pip);}
 
 	override void inEvent(InEvent event){
             writeln("have new event :", event.type);
-		if(event.type == DePackEvent.type) {
-			scope auto ev = cast(DePackEvent) event;
-			writeln("have event , data = " , ev.mdata);
-			writeln("have event , type = " , ev.mtype);
-			writeln("have event , lenght = " , ev.mlength);
-			mixin(encodePack("ev.mdata.dup","ev.mtype","this.pipline","this"));
+		if(event.type == InCutPackEvent.type) {
+			scope auto ev = cast(InCutPackEvent) event;
+			writeln("have event , data = " , ev.data);
+			writeln("have event , lenght = " , ev.data.length);
+			ubyte[] data = ev.data.dup;
+			data[] = 0x01;
+			mixin(enCutPack("data","this.pipeline","this"));
         } else {
 			event.up();
 		}
@@ -35,18 +34,18 @@ final class EchoHandle : Handler
 	}
 }
 
-void createPipline(PiPline pip){
-     pip.pushHandle(new PtPack!(true)(pip));
+void createPipeline(PiPeline pip){
+        pip.pushHandle(new CutPack!(true)(pip));
 	pip.pushHandle(new EchoHandle(pip));
 }
-
 
 void main()
 {
 	writeln("current cpus = ",totalCPUs);
 	writeln("start echo server at port : 9009");
 	ServerBoostStarp server = new ServerBoostStarp;
-	server.setPiplineFactory(toDelegate(&createPipline))
+	server.setPipelineFactory(toDelegate(&createPipeline))
 		.setThreadSize(2)
 		.bind(Address("0.0.0.0",9009)).run();
 }
+
