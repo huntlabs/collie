@@ -1,0 +1,5 @@
+name "client"
+description "A RPC client application."
+copyright "Copyright © 2016, putao.com"
+targetPath "../bin"
+dependency "collie" path="../../../"

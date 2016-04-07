@@ -9,9 +9,24 @@ import collie.handler.base;
 import collie.channel.pipeline;
 import collie.channel.define;
 
+string enCutPack(string data,string pipeline,string handler){
+	string str =  "{ scope auto mixins_event = new OutCutPackEvent(" ~ pipeline ~ ", " ~ handler ~ "); 
+    mixins_event.data = " ~ data ~ ";
+	mixins_event.down(); }";
+	return str;
+}
+
+string enCutPack(string data,string event){
+	string str =  "{ scope auto mixins_event = new OutCutPackEvent(" ~ event ~ ");
+    mixins_event.data = " ~ data ~ ";
+	mixins_event.down(); }";
+	return str;
+}
+
+
 class CutPack(bool littleEndian) : Handler 
 {
-	this(PiPeline pipu,int maxLen = uint.max)
+	this(PiPeline pip,uint maxLen = uint.max)
 	{
 		super(pip);
 		_max = maxLen;

@@ -57,6 +57,8 @@ final class ClientBoostStarp
 	}
 	@property EventLoop eventloop(){return _loop;}
 	@property PiPeline pipeline(){return _pip;}
+
+//	@property TCPSocket socket() {return _socket;}
 private:
 	PiPeline _pip;
 	EventLoop _loop;
