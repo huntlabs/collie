@@ -1,0 +1,22 @@
+name "rpc"
+targetType "none"
+description "A RPC example."
+copyright "Copyright © 2016, putao.com"
+targetPath "bin"
+dependency "collie" path="../../"
+dependency "rpc:server" version="*"
+dependency "rpc:client" version="*"
+subPackage {
+    name "server"
+    targetType "executable"
+    deppendency "collie" path="../../"
+    sourcePaths "server/source"
+    importPaths "server/source"
+}
+subPackage {
+    name "client"
+    targetType "executable"
+    deppendency "collie" path="../../"
+    sourcePaths "client/source"
+    importPaths "client/source"
+}
