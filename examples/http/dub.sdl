@@ -2,7 +2,7 @@ name "http"
 description "A minimal D application."
 copyright "Copyright © 2016, dsby"
 authors "dsby"
-
+targetPath "../bin"
 dependency "collie" path="../../" 
 
 configuration "default" {

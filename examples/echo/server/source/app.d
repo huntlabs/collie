@@ -20,14 +20,14 @@ final class EchoHandle : Handler
 
 	override void inEvent(InEvent event){
             writeln("have new event :", event.type);
-		if(event.type == InCutPackEvent.type) {
-			scope auto ev = cast(InCutPackEvent) event;
-			writeln("have event , data = " , ev.data);
-			writeln("have event , lenght = " , ev.data.length);
-			mixin(enCutPack("ev.data.dup","this.pipeline","this"));
-        } else {
-			event.up();
-		}
+            if(event.type == INEVENT_TCP_READ) {
+                    scope auto ev = cast(INEventTCPRead) event;
+                    writeln("have event , data = " , ev.data);
+                    writeln("have event , lenght = " , ev.data.length);
+                    mixin(writeChannel("this.pipeline","this","ev.data.dup"));
+            } else {
+                    event.up();
+            }
 
 	}
 }
