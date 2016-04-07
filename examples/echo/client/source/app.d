@@ -23,23 +23,24 @@ final class EchoHandle : Handler
 
 	override void inEvent(InEvent event){
                 writeln("have new event :", event.type);
-		if(event.type == InCutPackEvent.type) {
+		if(event.type == INEVENT_TCP_READ) {
                         ++i;
 			if(i > 5) {
                            mixin(closeChannel("this.pipeline","this"));
                             client.stop();
+                            writeln("\nclose client");
                             return;
 			}
-			scope auto ev = cast(InCutPackEvent) event;
+			scope auto ev = cast(INEventTCPRead) event;
 			writeln("have event , data = " , ev.data);
 			writeln("have event , length = " , ev.data.length);
-			mixin(enCutPack("ev.data.dup","this.pipeline","this"));
+			mixin(writeChannel("this.pipeline","this","ev.data.dup"));
                 } else if (event.type == INEVENT_STATUS_CHANGED) {
                     scope auto wev = cast(INEventSocketStatusChanged) event;
                     if(wev.status_to == SOCKET_STATUS.CONNECTED) {
                         ubyte[] data = ['0','0','0','0','0'];
                         writeln("write event , data = " , data);
-                        mixin(enCutPack("data","this.pipeline","this"));
+                        mixin(writeChannel("this.pipeline","this","data"));
                     }
 		}  else {
 			event.up();

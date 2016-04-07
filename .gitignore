@@ -1,6 +1,7 @@
 dub.userprefs
 detty
 dub.selections.json
+bin
 .dub
 docs.json
 __dummy.html
