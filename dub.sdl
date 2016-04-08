@@ -8,7 +8,7 @@ versions "TCP_POOL"
 
 //libs-posix "jemalloc"
 
-dependency "experimental_allocator" path="experimental_allocator"
+dependency "experimental_allocator" version="~>2.70.0-b1" optional=true 
 
 configuration "default" {
 	targetType "library"
