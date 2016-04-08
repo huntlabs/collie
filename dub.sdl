@@ -2,7 +2,7 @@ name "collie"
 description "An asynchronous event-driven network framework written in D."
 homepage "http://collied.org/"
 copyright "Copyright © 2016, putao.com"
-authors "putao's Dlang team."
+authors "putao.com Dlang team."
 license "BSD"
 versions "TCP_POOL"
 
