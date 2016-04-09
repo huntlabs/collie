@@ -9,7 +9,7 @@ See the examples/ directory for some example Collie servers and clients
 ## Build echo server example
 ```
 cd examples/echo/
-./build
+./build.sh
 ```
 
 ## License
