@@ -86,8 +86,10 @@ protected:
 				trace("tcp on read data = : ", _recvBuffer[0..length]);
 				_recvHandler(_recvBuffer[0..length]);
 			} else {
-				if (errno == EWOULDBLOCK || errno == EAGAIN || errno == 4){ // erro 4 :系统中断组织了
+				if (errno == EWOULDBLOCK || errno == EAGAIN ){ // erro 4 :系统中断组织了
 					break;
+				} else if(errno == 4) {
+					continue;
 				} else {
 					error("read ", fd, "failure with ", errno);
 					onClose();
