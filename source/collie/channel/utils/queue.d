@@ -11,39 +11,34 @@ import std.experimental.allocator.common;
 import std.experimental.allocator.mallocator : AlignedMallocator;
 import std.traits;
 
-struct SqQueue(T,bool autoExten = false, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator)
-{
-	
-	this(uint size)
-	{
+struct SqQueue(T,bool autoExten = false, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator) {
+	this(uint size) {
 		assert(size > 3);
 		_size = size;
 		//_data = new T[_size];
 		auto len = T.sizeof * _size;
 		_data = cast(T[])_alloc.allocate(T.sizeof * size);
-		static if(addToGC){
+		static if(addToGC) {
 			GC.addRange(_data.ptr,len);
 		}
 	}
-	
-	this(uint size,Allocator alloc){
+
+	this(uint size,Allocator alloc) {
 		this._alloc = alloc;
 		this(size);
 	}
-	
-	~this()
-	{
+
+	~this() {
 		clear();
-		static if(addToGC){
+		static if(addToGC) {
 			GC.removeRange(_data.ptr);
 		}
 		_alloc.deallocate(_data);
 	}
-	
-	void clear() 
-	{
+
+	void clear() {
 		static if(hasElaborateDestructor!T ) {
-			while(!empty){
+			while(!empty) {
 				auto x = deQueue();
 			}
 		} else {
@@ -51,32 +46,29 @@ struct SqQueue(T,bool autoExten = false, bool addToGC = hasIndirections!T, Alloc
 		}
 		_front = _rear = 0;
 	}
-	
-	@property bool empty() const
-	{
-		if(_rear == _front) return true;  //队空条件
+
+	@property const bool empty() {
+		if(_rear == _front)
+			return true;  //队空条件
 		else return false;
 	}
-	
-	@property bool full() const
-	{
-		if((_rear + 1) % _size == _front) return true; //队满
+
+	@property const bool full() {
+		if((_rear + 1) % _size == _front)
+			return true; //队满
 		else return false;
 	}
-	
-	@property T front ()
-	{
+
+	@property T front() {
 		assert(!empty());
 		return _data[_front];
 	}
-	
-	@property uint length()
-	{
+
+	@property uint length() {
 		return (_rear - _front + _size) % _size;
 	}
-	
-	@property uint maxLength()
-	{
+
+	@property uint maxLength() {
 		static if(autoExten) {
 			return uint.max;
 		} else {
@@ -84,10 +76,8 @@ struct SqQueue(T,bool autoExten = false, bool addToGC = hasIndirections!T, Alloc
 		}
 	}
 
-
-	bool enQueue(T x)
-	{
-		if(full()){ //队满
+	bool enQueue(T x) {
+		if(full()) { //队满
 			static if(autoExten) {
 				exten();
 			} else {
@@ -99,8 +89,7 @@ struct SqQueue(T,bool autoExten = false, bool addToGC = hasIndirections!T, Alloc
 		return true;
 	}
 
-	T deQueue(T v = T.init)
-	{
+	T deQueue(T v = T.init) {
 		assert(!empty());
 		auto x = _data[_front];
 		_data[_front] = v;
@@ -110,12 +99,12 @@ struct SqQueue(T,bool autoExten = false, bool addToGC = hasIndirections!T, Alloc
 
 	static if (autoExten) {
 	protected:
-		void exten(){
+		void exten() {
 			//	writeln("queue auto exten");
 			auto size = _size > 128 ?  _size + ((_size/3) * 2) : _size * 2;
 			auto len = T.sizeof * size;
 			auto  data = cast(T[])_alloc.allocate(T.sizeof * size);
-			static if(addToGC){
+			static if(addToGC) {
 				GC.addRange(data.ptr,len);
 			}
 			
@@ -127,7 +116,7 @@ struct SqQueue(T,bool autoExten = false, bool addToGC = hasIndirections!T, Alloc
 			_size = size;
 			_front = 0;
 			_rear = i;
-			static if(addToGC){
+			static if(addToGC) {
 				GC.removeRange(_data.ptr);
 			}
 			_alloc.deallocate(_data);
@@ -148,19 +137,19 @@ private:
 		Allocator _alloc;
 };
 
-unittest{
+unittest {
 	import std.stdio;
 
 	auto myq = SqQueue!(int,true,false)(5);
 	writeln("init is empty = ",myq.empty);
-	foreach(i;0..13){
+	foreach(i;0..13) {
 		writeln("enQueue i =  ",i ,"  en value = ",myq.enQueue(i));
 	}
 	writeln("end is empty = ",myq.empty);
 	writeln("end is full = ",myq.full);
 	writeln("size  = ",myq.length);
 	int i = 0;
-	while(!myq.empty){
+	while(!myq.empty) {
 		writeln("\n");
 		writeln("\tstart while! i = ", i);
 		writeln("\tfront is = ",myq.front());
