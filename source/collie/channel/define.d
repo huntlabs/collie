@@ -9,13 +9,11 @@ import std.experimental.allocator.mallocator ;
 
 import std.stdio;
 
-static this()
-{
+static this() {
 	threadColliedAllocator = allocatorObject(AlignedMallocator.instance);
 }
 
-shared static this()
-{
+shared static this() {
 	colliedAllocator = allocatorObject(AlignedMallocator.instance);
 }
 
@@ -25,8 +23,7 @@ IAllocator threadColliedAllocator;
 /**
  * 定义socket的类型,因为listener和connection将都是基于socket
  */
-enum CHANNEL_TYPE
-{
+enum CHANNEL_TYPE {
 	TCP_Listener, /**< tcp listen类型，用于监听端口，接受TCP链接 */
 	TCP_Socket, /**< tcp Socket类型，TCP链接的实例 */
 	UDP_Socket, /**< tcp Socket类型 */
@@ -39,8 +36,7 @@ enum CHANNEL_TYPE
 /**
  * 定义定义服务的状态
  */
-enum SOCKET_STATUS
-{
+enum SOCKET_STATUS {
 	CONNECTED, /**< 已经链接 */
 	CONNECTING, /**< 正在连接 */
 	ERROR, /**< 错误 */
@@ -50,8 +46,7 @@ enum SOCKET_STATUS
 	IDLE  /**< 初始化类型 */
 }
 package:
-version (Posix) 
-{
+version (Posix) {
 	public import core.sys.posix.fcntl;
 	public import core.sys.posix.unistd;
 	public import core.sys.posix.sys.socket;
@@ -82,20 +77,20 @@ enum TCP_POOL_SIZE_ONE_THREAD = 500;
  * @param : size_t 写完一个包的数据的大小，如果出错返回0或-1
  * @param : bool 当前发送队列是不是为空
 */
-alias WriteHandler = void delegate (ubyte[],uint);
+alias WriteHandler = void delegate(ubyte[],uint);
 /** 读取完成一次数据的回调，如果出错也调用
  * @param : ubyte[] 读取数据存储的ubyte数组，可直接操作更改。
  *************************************************/
-alias ReadHandler = void delegate (ubyte[]);
+alias ReadHandler = void delegate(ubyte[]);
 
-alias CloseHandler = void delegate (ubyte[][]);
+alias CloseHandler = void delegate(ubyte[][]);
 
 /** 无返回值的一般callback */
-alias CallBack = void delegate ();
+alias CallBack = void delegate();
 
 alias StatusCallBck = void delegate(SOCKET_STATUS sfrom,SOCKET_STATUS sto);
 
-version(TCP_POOL)  :
+version(TCP_POOL):
 import collie.channel.utils.queue;
 import collie.channel.tcpsocket;
 version(SSL) {
@@ -110,11 +105,11 @@ static this() {
 	}
 }
 
-@property SqQueue!TCPSocket * TCPPool(){
+@property SqQueue!TCPSocket* TCPPool() {
 	return &_tcpPool;
 }
 version(SSL) {
-	@property SqQueue!SSLSocket * SSLPool(){
+	@property SqQueue!SSLSocket* SSLPool(){
 		return &_sslPool;
 	}
 }
