@@ -135,7 +135,7 @@ public:
 			if (err == -1) { 
 				try {
 					error("setOption Erro the  value :",to!string(err),"  the option is ",to!string(option));
-				}
+				} catch {}
 				return false;
 			} else {
 				return true;
@@ -171,7 +171,7 @@ public:
 						if(errno == EINVAL || errno == ENOPROTOOPT) {
 							try {
 								trace("set SO_REUSEPORT not  supported over the value = ",to!string(err), " the erro = ", to!string(errno));
-							}
+							} catch {}
 							return true;
 						}
 					}
