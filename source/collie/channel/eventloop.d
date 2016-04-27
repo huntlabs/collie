@@ -23,15 +23,18 @@ import collie.channel.utils.queue;
  @date  2016.1
  */
  
-class EventLoopImpl(T) if(is(T == class)) { //用定义别名的方式
-	this() {
+class EventLoopImpl(T) if(is(T == class)) //用定义别名的方式
+{
+	this()
+	{
 		_poll = new T();
 		_callbackList = SqQueue!(CallBack,true,false)(32);
 		_mutex = new Mutex();
 		_run = false;
 	}
 
-	~this() {
+	~this()
+	{
 		_poll.destroy;
 	}
 
@@ -39,7 +42,8 @@ class EventLoopImpl(T) if(is(T == class)) { //用定义别名的方式
 	 @param :timeout = 无事件的超时等待时间。单位：毫秒
 	 @note : 此函数可以多线程同时执行，实现多个线程共用一个事件调度。
 	 */
-	void run(int timeout = 100) {
+	void run(int timeout = 100)
+	{
 		_th = Thread.getThis;
 		_run = true;
 		while(_run) {
@@ -53,32 +57,38 @@ class EventLoopImpl(T) if(is(T == class)) { //用定义别名的方式
 	}
 
 	//@property Channel[int] channelList(){return _channelList;}
-	void weakUp() {
+	void weakUp()
+	{
 		_poll.weakUp();
 	}
 
-	bool isRuning() {
+	bool isRuning()
+	{
 		return _run;
 	}
 
-	void stop() {
+	void stop()
+	{
 		if(isRuning()) {
 			_run = false;
 			weakUp();
 		}
 	}
 
-	bool isInLoopThread() {
+	bool isInLoopThread()
+	{
 		if(!isRuning())
 			return true;
 		return _th == Thread.getThis;
 	}
 
-	Thread runingThread() {
+	Thread runingThread()
+	{
 		return _th;
 	}
 
-	void post(CallBack cback) {
+	void post(CallBack cback)
+	{
 		if(isInLoopThread()) {
 			cback();
 			return;
@@ -92,21 +102,24 @@ package:
 	/**
 	 * 添加TcpSocket对象
 	 */
-	bool addEvent(Channel socket) {
+	bool addEvent(Channel socket)
+	{
 		return _poll.addEvent(socket);
 	}
 
 	/**
 	 * del TcpSocket对象
 	 */
-	bool delEvent(Channel socket) {
+	bool delEvent(Channel socket)
+	{
 		return _poll.delEvent(socket);
 	}
 
 	@property T loop() { return _poll; }
 
 protected:
-	void doHandleList() {
+	void doHandleList()
+	{
 		import std.algorithm : swap;
 		auto tmp = SqQueue!(CallBack,true,false)(32);
 		synchronized(_mutex) {
@@ -126,7 +139,8 @@ private:
 	Thread _th;
 };
 
-enum IO_MODE {
+enum IO_MODE
+{
 	epoll,
 	kqueue,
 	iocp,
@@ -135,29 +149,29 @@ enum IO_MODE {
 	none
 }
 
-version (FreeBSD) {
+version(FreeBSD) {
 	public import collie.channel.selector.kqueue;
 	alias EventLoop = EventLoopImpl!(KqueueLoop);
 	enum IO_MODE IOMode = IO_MODE.kqueue;
-} else version (OpenBSD)  {
+} else version(OpenBSD)  {
 	public import collie.channel.selector.kqueue;
 	alias EventLoop = EventLoopImpl!(KqueueLoop);
 	enum IO_MODE IOMode = IO_MODE.kqueue;
-} else version (NetBSD) {
+} else version(NetBSD) {
 	public import collie.channel.selector.kqueue;
 	alias EventLoop = EventLoopImpl!(KqueueLoop);
 	enum IO_MODE IOMode = IO_MODE.kqueue;
-} else version (OSX) {
+} else version(OSX) {
 	public import collie.channel.selector.kqueue;
 	alias EventLoop = EventLoopImpl!(KqueueLoop);
 	enum IO_MODE IOMode = IO_MODE.kqueue;
-} else version (Solaris) {
+} else version(Solaris) {
 	public import collie.channel.selector.port;
-} else version (linux) {
+} else version(linux) {
 	public import collie.channel.selector.epoll;
 	alias EventLoop = EventLoopImpl!(EpollLoop);
 	enum IO_MODE IOMode = IO_MODE.epoll;
-} else version (Posix) {
+} else version(Posix) {
 	public import collie.channel.selector.poll;
 } else {
 	public import collie.channel.selector.select;

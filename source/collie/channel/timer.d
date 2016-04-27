@@ -18,17 +18,20 @@ import collie.channel.channel;
  * @date : 2016.1
 */
 
-final class Timer : Channel {
+final class Timer : Channel
+{
 public :
 	/** 构造函数。
 	 * @param : loop = 所属的事件循环。
 	 */
-	this(EventLoop loop) {
+	this(EventLoop loop)
+	{
 		super(loop);
 		type = CHANNEL_TYPE.Timer;
 	}
 
-	~this() {
+	~this()
+	{
 		kill();//如果还在链接就释放，就会段错误，因为GC操作内存了
 	}
 	
@@ -44,7 +47,8 @@ public :
 	/**  重新设定定时器的时间。
 	 *  @note : 如果是kill的，应调用start（）。 
 	 */
-	bool restart(Duration time) {
+	bool restart(Duration time)
+	{
 		if(this.isInValid())
 			return false;
 		TimeOut = time;
@@ -74,7 +78,8 @@ public :
 	
 	/** 启动定时器。用于第一次启动或者kill后的启用。如果是一次性定时器超时，或者更改时间后的启用，请用restart函数 
 	 */
-	bool start() {
+	bool start()
+	{
 		if(!this.isInValid())
 			return false;
 		static if(IOMode == IO_MODE.epoll) {
@@ -110,7 +115,8 @@ protected:
 	/** 定时器到期调用的函数。
 	 *  @note : 注意，如果您的超时很短，而处理很慢，则中间的超时可能会被忽略，保证同时只有一个处理在运行。
 	 */
-	override void onRead() {
+	override void onRead()
+	{
 		ulong value;
 		read(fd, &value, 8);
 		if(!_callBack) {
@@ -127,7 +133,8 @@ protected:
 	}
 	override void onWrite() {}
 	/** 关闭定时器，并从事件循环里退出。 */
-	override void onClose() {
+	override void onClose()
+	{
 		if(!this.isInValid()) 
 			eventLoop.delEvent(this);
 	}

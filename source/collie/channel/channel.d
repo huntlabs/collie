@@ -14,16 +14,19 @@ public import collie.channel.eventloop;
  @authors : Putao‘s Collie Team
  @date : 2016.1
  */
-class Channel {
+class Channel
+{
 public:
 	/** 构造函数，指定此对象所属的事件循环
 	 *    @param : loop = 所属的事件循环
 	 */
-	this(EventLoop loop) {
+	this(EventLoop loop)
+	{
 		eventLoop = loop;
 	}
 
-	~this() {
+	~this()
+	{
 		if(_pipeline)
 			_pipeline.destroy;
 		_pipeline = null;
@@ -40,16 +43,17 @@ public:
 	/** 当此对象有可写事件时调用的方法。 */
 	abstract void onClose();
 	/** 获取当前channel的fd */
-	final @property int fd() const {return _fd;}//atomicLoad(_fd);}
+	final @property int fd() const { return _fd; }//atomicLoad(_fd);}
 	/** fd是否失效 
 	 *   @return true:无效，false 有效
 	 */
-	final  bool isInValid() const { return ( fd <= 0); }
+	final  bool isInValid() const { return (fd <= 0); }
 
 	final @safe  @property PiPeline pipeline() { return _pipeline; }
 
 	/** 获取当前Channel的类型 */
-	@property CHANNEL_TYPE type() const {
+	@property CHANNEL_TYPE type() const
+	{
 		return _type;
 	}
 
@@ -60,7 +64,8 @@ package :
 	/** 设置fd */
 	@property void fd(int tfd) { _fd = tfd; }//{atomicStore(_fd,tfd);}
 	/** 设置当前Channel的类型 */
-	@property void type(CHANNEL_TYPE sType) {
+	@property void type(CHANNEL_TYPE sType)
+	{
 		_type = sType;
 	}
 	
@@ -76,27 +81,28 @@ private:
 };
 
 
-static if(IOMode == IO_MODE.epoll){
-	version (X86) {
+static if(IOMode == IO_MODE.epoll) {
+	version(X86) {
 		enum SO_REUSEPORT	= 15;
-	} else version (X86_64) {
+	} else version(X86_64) {
 		enum SO_REUSEPORT	= 15;
-	} else version (MIPS32) {
+	} else version(MIPS32) {
 		enum SO_REUSEPORT	= 0x0200;
-	} else version (MIPS64) {
+	} else version(MIPS64) {
 		enum SO_REUSEPORT	= 0x0200;
-	} else version (PPC) {
+	} else version(PPC) {
 		enum SO_REUSEPORT	= 15;
-	} else version (PPC64) {
+	} else version(PPC64) {
 		enum SO_REUSEPORT	= 15;
-	} else version (ARM) {
+	} else version(ARM) {
 		enum SO_REUSEPORT	= 15;
 	}
 } else static if(IOMode == IO_MODE.kqueue) {
 	enum SO_REUSEPORT	= 0x0200;
 }
 
-enum TCPOption : char {
+enum TCPOption : char
+{
 	NODELAY = 0,		// Don't delay send to coalesce packets
 	REUSEADDR = 1,
 	REUSEPORT,
@@ -116,11 +122,13 @@ enum TCPOption : char {
 };
 
 /** 设置Tcp相关参数的混入模板 */
-mixin template SocketOption() {
+mixin template SocketOption()
+{
 public:
 	/** 返回当前fd是否是异步的。 */
-	@property asynchronous() {
-		version (Posix) {
+	@property asynchronous()
+	{
+		version(Posix) {
 			return (fcntl(fd, F_GETFL, 0) & O_NONBLOCK) != 0;
 		}
 	}
@@ -128,11 +136,13 @@ public:
 	/** 设置当前TCP fd 的属性 
 	 @return : true 设置成功，false 设置失败
 	 */
-	bool setOption(T)(TCPOption option, in T value) {
+	bool setOption(T)(TCPOption option, in T value)
+	{
 		import std.traits : isIntegral;
 		int err;
-		nothrow bool errorHandler() {
-			if (err == -1) { 
+		nothrow bool errorHandler()
+		{
+			if(err == -1) { 
 				try {
 					error("setOption Erro the  value :",to!string(err),"  the option is ",to!string(option));
 				} catch {}
@@ -141,7 +151,7 @@ public:
 				return true;
 			}
 		}
-		final switch (option) {
+		final switch(option) {
 			case TCPOption.NODELAY: // true/false
 				static if(!is(T == bool)) {
 					assert(false, "NODELAY value type must be bool, not " ~ T.stringof);
@@ -320,26 +330,30 @@ public:
 	}
 	
 	/** 设置当前ChannelTCP的链接地址 */
-	@property address(Address address) {
+	@property address(Address address)
+	{
 		_address = address;
 	}
 
 	/** 获取当前ChannelTCP的链接地址 */
-	@property address(){
+	@property address()
+	{
 		return _address;
 	}
 
-	bool getOption(T)(TCPOption option, out T value) { //TODO: 完善获取配置的值
+	bool getOption(T)(TCPOption option, out T value) //TODO: 完善获取配置的值
+	{
 		import std.traits : isIntegral;
 		int err;
-		nothrow bool errorHandler() {
+		nothrow bool errorHandler()
+		{
 			if(catchError!"getsockopt:"(err)) {
 				return false;
 			}
 			return true;
 		}
 
-		final switch (option) {
+		final switch(option) {
 			case TCPOption.NODELAY: // true/false
 				static if(!is(T == bool)) {
 					assert(false, "NODELAY value type must be bool, not " ~ T.stringof);
@@ -511,10 +525,11 @@ public:
 
 protected :
 	/** 设置当前TCP是否为异步 */
-	@property asynchronous(bool value) {
+	@property asynchronous(bool value)
+	{
 		int nNoBlocking;
 		if(value) {
-			version (Posix) {
+			version(Posix) {
 				int old = fcntl(fd, F_GETFL, 0);
 
 				if((nNoBlocking = fcntl(fd, F_SETFL, old | O_NONBLOCK)) < 0) {
@@ -522,7 +537,7 @@ protected :
 				}
 			}
 		} else {
-			version (Posix) {
+			version(Posix) {
 				int old = fcntl(fd, F_GETFL, 0);
 
 				if((nNoBlocking = fcntl(fd, F_SETFL, old & ~O_NONBLOCK)) < 0) {

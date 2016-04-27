@@ -9,11 +9,13 @@ import std.experimental.allocator.mallocator ;
 
 import std.stdio;
 
-static this() {
+static this()
+{
 	threadColliedAllocator = allocatorObject(AlignedMallocator.instance);
 }
 
-shared static this() {
+shared static this()
+{
 	colliedAllocator = allocatorObject(AlignedMallocator.instance);
 }
 
@@ -23,7 +25,8 @@ IAllocator threadColliedAllocator;
 /**
  * 定义socket的类型,因为listener和connection将都是基于socket
  */
-enum CHANNEL_TYPE {
+enum CHANNEL_TYPE
+{
 	TCP_Listener, /**< tcp listen类型，用于监听端口，接受TCP链接 */
 	TCP_Socket, /**< tcp Socket类型，TCP链接的实例 */
 	UDP_Socket, /**< tcp Socket类型 */
@@ -36,7 +39,8 @@ enum CHANNEL_TYPE {
 /**
  * 定义定义服务的状态
  */
-enum SOCKET_STATUS {
+enum SOCKET_STATUS
+{
 	CONNECTED, /**< 已经链接 */
 	CONNECTING, /**< 正在连接 */
 	ERROR, /**< 错误 */
@@ -46,7 +50,7 @@ enum SOCKET_STATUS {
 	IDLE  /**< 初始化类型 */
 }
 package:
-version (Posix) {
+version(Posix) {
 	public import core.sys.posix.fcntl;
 	public import core.sys.posix.unistd;
 	public import core.sys.posix.sys.socket;
@@ -98,14 +102,16 @@ version(SSL) {
 }
 
 
-static this() {
+static this()
+{
 	_tcpPool = SqQueue!TCPSocket(TCP_POOL_SIZE_ONE_THREAD);
 	version(SSL) {
 		_sslPool = SqQueue!SSLSocket(TCP_POOL_SIZE_ONE_THREAD);
 	}
 }
 
-@property SqQueue!TCPSocket* TCPPool() {
+@property SqQueue!TCPSocket* TCPPool()
+{
 	return &_tcpPool;
 }
 version(SSL) {

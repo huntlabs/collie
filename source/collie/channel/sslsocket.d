@@ -8,7 +8,8 @@ import collie.channel.tcpsocket;
 
 import deimos.openssl.ssl;
 
-final class SSLSocket : Channel {
+final class SSLSocket : Channel
+{
 public:
 	/** 构造函数
 	 @param : loop = 所属的事件循环。
@@ -18,7 +19,8 @@ public:
 		this(loop,-1);
 	}*/
 	/** 析构函数 */
-	~this() {
+	~this()
+	{
 		onClose(); 
 		colliedAllocator.deallocate(_recvBuffer);
 		if(_ssl) {
@@ -30,7 +32,8 @@ public:
 		//writeln("~this TCPSocket");
 	}
 	/** 关闭socket */
-	void close() {
+	void close()
+	{
 		if(!_start && !isInValid()) {
 			.close(fd);
 			_status = SOCKET_STATUS.IDLE;
@@ -51,12 +54,14 @@ package:
 	 @param : loop = 所属的事件循环。
 	 @param : socket = 此socket管理的FD。
 	 */
-	this(EventLoop loop, int socket,SSL * ssl = null) {
+	this(EventLoop loop, int socket, SSL* ssl = null)
+	{
 		super(loop);
 		type = CHANNEL_TYPE.SSL_Socket;
 		fd = socket;
 
-		if(!this.isInValid()) {
+		if(!this.isInValid())
+		{
 			asynchronous = true;
 			_status = SOCKET_STATUS.SSLHandshake;
 		}
@@ -65,14 +70,16 @@ package:
 		_ssl = ssl;
 	}
 
-	void reset(EventLoop loop,int tfd,SSL * ssl) {
+	void reset(EventLoop loop, int tfd, SSL* ssl)
+	{
 		fd  = tfd;
 		eventLoop = loop;
 		_ssl = ssl;
 		_status = SOCKET_STATUS.SSLHandshake;
 	}
 protected:
-	final override void onRead() { //TODO:
+	final override void onRead() //TODO:
+	{
 		if(isInValid()) 
 			return;
 		if(status == SOCKET_STATUS.SSLHandshake) {
@@ -87,7 +94,7 @@ protected:
 		while(!isInValid() && status == SOCKET_STATUS.CONNECTED) {
 			length = SSL_read(_ssl, _recvBuffer.ptr, cast(int)(_recvBuffer.length));
 			trace("ssl on read: ",length);
-			if (length > 0) {
+			if(length > 0) {
 				_recvHandler(_recvBuffer[0..length]);
 			} else {
 				int ssle = SSL_get_error(_ssl, length);
@@ -103,7 +110,8 @@ protected:
 	}
 
 	/** 从事件循环中移除socket并关闭 */
-	final override void onClose() {
+	final override void onClose()
+	{
 		if(isInValid())
 			return;
 		if(!_start) {
@@ -136,7 +144,7 @@ protected:
 
 	/** 有可写事件时调用的函数。*/
 	final override void onWrite() {
-		if (isInValid())
+		if(isInValid())
 			return;
 		if(status == SOCKET_STATUS.IDLE) { 
 			status(SOCKET_STATUS.SSLHandshake);
@@ -153,7 +161,8 @@ protected:
 		doWrite();
 	}
 
-	void doWrite() {
+	void doWrite()
+	{
 		trace("do write data!");
 		int length = 0;
 		WriteBuffer buffer;
@@ -181,7 +190,8 @@ protected:
 		}
 	}
 
-	int doHandShake() {
+	int doHandShake()
+	{
 		if(status != SOCKET_STATUS.SSLHandshake)
 			return false;
 		int r = SSL_do_handshake(_ssl);
@@ -202,6 +212,6 @@ protected:
 		return 0;
 	}
 private :
-	SSL * _ssl;
+	SSL* _ssl;
 }
 

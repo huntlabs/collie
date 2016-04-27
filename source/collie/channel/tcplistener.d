@@ -15,7 +15,8 @@ import collie.channel;
  @date  2016.1
  */
 
-final class TCPListener : Channel {
+final class TCPListener : Channel
+{
 	/**
 	 * 设置应用层TCPConnection的代理函数
 	 */
@@ -24,17 +25,20 @@ final class TCPListener : Channel {
 	/** 构造函数
 	 @param : loop = 所属的事件循环。
 	 */
-	this(EventLoop loop) {
+	this(EventLoop loop)
+	{
 		super(loop);
 		type = CHANNEL_TYPE.TCP_Listener;
 	}
 
 	/** 析构函数 */
-	~this() {
+	~this()
+	{
 		onClose();
 	}
 
-	void setConnectHandler(connectionHandler handler) {
+	void setConnectHandler(connectionHandler handler)
+	{
 		assert (handler);
 		_block = handler;
 	}
@@ -46,7 +50,8 @@ protected:
 	/** 有新链接调用的函数。
 	 @note : 注意：如果事件循环在多个线程中执行，那么此函数可能会同时执行。
 	 */
-	override void onRead() {
+	override void onRead()
+	{
 		trace("===========have new connect! @ onRead the thread is = ",to!string(Thread.getThis().name));
 		Address addr;
 		if(this._isIpv6) {
@@ -57,7 +62,7 @@ protected:
 		int tfd;
 		uint lenght = addr.sockAddrLen;
 		TCPSocket tcpSocket = null;
-		while (!isInValid()) {
+		while(!isInValid()) {
 			tfd =  accept(fd, addr.sockAddr,&lenght);
 			
 			if(tfd > 0) {
@@ -107,7 +112,8 @@ private:
 }
 
 
-mixin template TCPListenMixin(T) {
+mixin template TCPListenMixin(T)
+{
 	alias TCPListenAccpentError = bool delegate(int);
 private:
 	/// 保存监听的地址
@@ -122,7 +128,8 @@ protected:
 	
 	/** 关闭监听，并从事件循环中移除。 */
 	
-	override void onClose() {
+	override void onClose()
+	{
 		if(!isInValid()) {
 			eventLoop.delEvent(this);
 			auto list  = sockets.keys;
@@ -145,7 +152,8 @@ public:
 	 @return ： true 绑定并监听成功。false 不成功。
 	 @note ： 此函数只是设置监听 和 把fd加到事件队列中，并不启动事件循环。
 	 */
-	bool listen(Address addr) {
+	bool listen(Address addr)
+	{
 		address = addr;
 		if(!isInValid())
 			onClose();
@@ -184,7 +192,8 @@ public:
 	 * 设置有新链接时的监听函数。
 	 */
 
-	void setAcceptErrorHandler (TCPListenAccpentError handler) {
+	void setAcceptErrorHandler(TCPListenAccpentError handler)
+	{
 		_accept = handler;
 	}
 

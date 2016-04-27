@@ -15,12 +15,14 @@ import Socked = std.socket;
     @author : Putao‘s Collie Team
     @date : 2016.1
 */
-struct Address {
+struct Address
+{
 	/** 构造函数
 	@param : port = 端口，地址的端口
 	@param : isV6 = IP地址是不是IP v6
 	*/
-	this (ushort port,bool isV6 = false) {
+	this(ushort port,bool isV6 = false)
+	{
 		if(isV6) {
 			this("::",port,isV6);
 		} else { 
@@ -33,14 +35,15 @@ struct Address {
 	@param : port = 端口，地址的端口
 	@param : isV6 = IP地址是不是IP v6
 	*/
-	this (string ip, ushort port,bool isV6 = false) {
+	this(string ip, ushort port,bool isV6 = false)
+	{
 		if(ip.length == 0) {
 			error("Invalid address ip or port");
 			return;
 		}
 	//	ip ~= "\0";
 		auto tip = toStringz(ip);
-		if(isV6)  {
+		if(isV6) {
 			if(inet_pton(AF_INET6,tip,&addr_ip6.sin6_addr) > 0) {//inet_addr(_ip.ptr);
 				addr_ip6.sin6_family = AF_INET6;
 			} else {
@@ -60,20 +63,23 @@ struct Address {
 	/** 构造函数 
 	@param : address   = IP v4地址的系统结构体
 	*/
-	this (sockaddr_in address) {
+	this(sockaddr_in address)
+	{
 		addr_ip4 = address;
 	}
 	/** 构造函数 
             @param : address   = IP v6地址的系统结构体
 	*/
-	this (sockaddr_in6 address) {
+	this(sockaddr_in6 address)
+	{
 		addr_ip6 = address;
 	}
 
 	/** 构造函数 
             @param : isV6 = IP地址是不是IP v6
 	*/
-	this(bool isV6) {
+	this(bool isV6)
+	{
 		if(isV6) {
 			addr_ip6.sin6_family = AF_INET6;
 		} else {
@@ -94,7 +100,8 @@ struct Address {
 	/** 获取当前的IP地址
             @return : 返回当前地址的字符串表示
 	*/
-	string getIp() {
+	string getIp()
+	{
 		import std.array : appender;
 		import std.string : format;
 		import std.format : formattedWrite;
@@ -109,7 +116,8 @@ struct Address {
 				auto ret = appender!string();
 				ret.reserve(40);
 				foreach (i; 0 .. 8) {
-					if (i > 0) ret.put(':');
+					if (i > 0)
+						ret.put(':');
 					ret.formattedWrite("%x", bigEndianToNative!ushort(cast(ubyte[2])ip[i*2 .. i*2+2].ptr[0 .. 2]));
 				}
 				return ret.data;
@@ -117,12 +125,13 @@ struct Address {
 	}
 
 	/** 获取当前地址的协议族*/
-	@safe @property ushort family() const pure nothrow @nogc{ return addr.sa_family; }
+	@safe @property ushort family() const pure nothrow @nogc { return addr.sa_family; }
 	
 	/** 获取当前地址的端口
 	*/
-	@safe ushort getPort() pure nothrow @nogc {
-		switch (this.family) {
+	@safe ushort getPort() pure nothrow @nogc
+	{
+		switch(this.family) {
 			default: assert(false, "port() called for invalid address family.");
 			case AF_INET: return ntohs(addr_ip4.sin_port);
 			case AF_INET6: return ntohs(addr_ip6.sin6_port);
@@ -130,31 +139,39 @@ struct Address {
 	}
 
 	/** 获取系统地址结构体的指针 */
-	@safe  @property const(sockaddr) * sockAddr() const pure nothrow @nogc {
+	@safe  @property const(sockaddr)* sockAddr() const pure nothrow @nogc
+	{
 		return &addr;
 	}
 	/** 获取系统地址结构体的指针 */
-	@safe  @property sockaddr * sockAddr() pure nothrow @nogc {
+	@safe  @property sockaddr* sockAddr() pure nothrow @nogc
+	{
 		return &addr;
 	}
 
 	/** 获取系统地址结构体所占的字节的大小 */
-	@safe @property uint sockAddrLen() const pure nothrow @nogc {
-		switch (this.family) {
-			default: assert(false, "sockAddrLen() called for invalid address family.");
-			case AF_INET: return addr_ip4.sizeof;
-			case AF_INET6: return addr_ip6.sizeof;
+	@safe @property uint sockAddrLen() const pure nothrow @nogc
+	{
+		switch(this.family) {
+			default: 
+				assert(false, "sockAddrLen() called for invalid address family.");
+			case AF_INET:
+				return addr_ip4.sizeof;
+			case AF_INET6:
+				return addr_ip6.sizeof;
 		}
 	}
 
-	Socked.Address toStdAddress() {
+	Socked.Address toStdAddress()
+	{
 		return new ColliedAddress(this);
 	}
 package :
         /** 设置当前地址的协议族 */
 	@property void family(ushort val) pure nothrow @nogc { addr.sa_family = cast(ubyte)val; }
 private :
-	union {
+	union
+	{
 		sockaddr addr;
 		sockaddr_in addr_ip4;
 		sockaddr_in6 addr_ip6;
@@ -162,22 +179,26 @@ private :
 }
 
 
-class ColliedAddress : Socked.Address {
-	this(ref Address addr){ _addr = addr; }
+class ColliedAddress : Socked.Address
+{
+	this(ref Address addr) { _addr = addr; }
 
-	override @property sockaddr* name() pure nothrow @nogc {
+	override @property sockaddr* name() pure nothrow @nogc
+	{
 		return _addr.sockAddr();
 	}
 
-	override @property const(sockaddr)* name() const pure nothrow @nogc {
+	override @property const(sockaddr)* name() const pure nothrow @nogc
+	{
 		return _addr.sockAddr();
 	}
 
-	override @property socklen_t nameLen() const pure nothrow @nogc {
+	override @property socklen_t nameLen() const pure nothrow @nogc
+	{
 		return cast(socklen_t)_addr.sockAddrLen();
 	}
 
-	@property Address address(){ return _addr; }
+	@property Address address() { return _addr; }
 private:
 	Address _addr;
 }

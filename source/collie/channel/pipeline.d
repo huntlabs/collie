@@ -14,36 +14,42 @@ import collie.handler.base;
  * 
  */
 
-string closeChannel(string pline, string handler) {
+string closeChannel(string pline, string handler)
+{
 	string str = "{ scope auto mixins_event = new OutEventClose(" ~ pline ~ ", " ~ handler ~ ");
 	mixins_event.down(); }";
 	return str;
 }
 
-string closeChannel(string event) {
+string closeChannel(string event)
+{
 	string str = " {scope auto mixins_event = new OutEventClose(" ~ event ~ ");
 	mixins_event.down(); }";
 	return str;
 }
 
-string  writeChannel(string pline, string handler, string data) {
+string  writeChannel(string pline, string handler, string data)
+{
 	string str = " {scope auto mixins_event = new OutEventTCPWrite(" ~ pline ~ ", " ~ handler ~ ");
 	mixins_event.data = " ~ data ~ ";
 	mixins_event.down(); }";
 	return str;
 }
 
-string  writeChannel(string event, string data) {
+string  writeChannel(string event, string data)
+{
 	string str = " { scope auto mixins_event = new OutEventTCPWrite(" ~ event ~ ");
 	mixins_event.data = " ~ data ~ ";
 	mixins_event.down(); }";
 	return str;
 }
 
-class PiPeline {
+class PiPeline
+{
 	@disable this();
 
-	this(Channel chan) {
+	this(Channel chan)
+	{
 		_channel = chan;
 		switch(_channel.type) {
 			case CHANNEL_TYPE.TCP_Listener:
@@ -79,7 +85,8 @@ class PiPeline {
 		}
 	}
 
-	~this() {
+	~this()
+	{
 		//destroy(_out);
 		_out = null;
 	//	destroy(_in);
@@ -87,40 +94,48 @@ class PiPeline {
 		_channel = null;
 	}
 
-	void pushHandle(Handler hand) {
+	void pushHandle(Handler hand)
+	{
 		_in ~= hand;
 		_out ~= hand;
 	}
 
-	void pushInhandle(InHander handle) {
+	void pushInhandle(InHander handle)
+	{
 		_in ~= handle;
 	}
 
-	void pushOutHandle(OutHander handle) {
+	void pushOutHandle(OutHander handle)
+	{
 		_out ~= handle;
 	}
 
-	@property const(Channel) channel() const {
+	@property const(Channel) channel() const
+	{
 		return _channel;
 	}
 
-	@property Channel channel() {
+	@property Channel channel()
+	{
 		return _channel;
 	}
 
-	bool isVaild() const {
+	bool isVaild() const
+	{
 		return (_out.length > 0) || (_in.length > 0);
 	}
 
 package:
-	void upEvent(InEvent event) {
+	void upEvent(InEvent event)
+	{
 		trace("up Event level:",event.level);
 		if(event.level >= _in.length) {
 			return;
 		}
 		_in[event.level].inEvent(event);
 	}
-	void downEvent(OutEvent event) {
+	void downEvent(OutEvent event)
+	{
 		trace("down Event level:",event.level);
 		if(event.level >= _out.length || event.level  < 0)
 			return;
@@ -129,7 +144,7 @@ package:
 			if(event.type == OUTEVENT_TCP_WRITE) {
 				scope auto ev = cast(OutEventTCPWrite) event;
 				bool suess = false;
-				switch (channel.type) {
+				switch(channel.type) {
 					case CHANNEL_TYPE.TCP_Socket:
 						auto tcp = cast(TCPSocket) channel;
 						trace("write tcp:",cast(string)ev.data);
@@ -190,14 +205,16 @@ package:
 	}
 
 	
-	void onRead(ubyte[] data) {
+	void onRead(ubyte[] data)
+	{
 		trace("tcp on read:", cast(string)data);
 		scope auto ev = new INEventTCPRead(this);
 		ev.data = data;
 		ev.up();
 	}
 
-	void onClose(ubyte[][] buffers) {
+	void onClose(ubyte[][] buffers)
+	{
 		scope auto ev = new InEventTCPClose(this);
 		ev.buffers = buffers;
 		ev.up();
@@ -208,40 +225,46 @@ package:
 		}
 	}
 
-	void onWrite(ubyte[] data,uint wsize) {
+	void onWrite(ubyte[] data,uint wsize)
+	{
 		scope auto ev = new INEventWrite(this);
 		ev.data = data;
 		ev.wsize = wsize;
 		ev.up();
 	}
 
-	void onStatus(SOCKET_STATUS sfrom,SOCKET_STATUS sto) {
+	void onStatus(SOCKET_STATUS sfrom,SOCKET_STATUS sto)
+	{
 		scope auto ev = new INEventSocketStatusChanged(this);
 		ev.status_from = sfrom;
 		ev.status_to = sto;
 		ev.up();
 	}
 
-	void onTimeOut() {
+	void onTimeOut()
+	{
 		scope auto ev = new INEventTimeOut(this);
 		ev.up();
 	}
 
-	void onNewTcp(TCPSocket socket) {
+	void onNewTcp(TCPSocket socket)
+	{
 		scope auto ev = new INEventNewConnect(this);
 		ev.sock = socket;
 		ev.up();
 	}
 
 	version(SSL) {
-		void onNewSSL(SSLSocket socket) {
+		void onNewSSL(SSLSocket socket)
+		{
 			scope auto ev = new INEventNewConnect(this);
 			ev.sock = socket;
 			ev.up();
 		}
 	}
 
-	uint getOutLevel(OutHandle ou) const {
+	uint getOutLevel(OutHandle ou) const
+	{
 		uint size = cast(uint)_out.length;
 		if(ou is null)
 			return size;
@@ -258,7 +281,8 @@ private:
 	Channel _channel;
 };
 
-scope abstract class Event {
+scope abstract class Event
+{
 	@disable this();
 	@property uint type() { return _type; }
 	@property const(PiPeline) pipeline() const { return _pipeline; }
@@ -269,13 +293,15 @@ private:
 	const PiPeline _pipeline;
 };
 
-abstract class InEvent: Event {
+abstract class InEvent : Event
+{
 	this(const InEvent ev,uint ty) {
 		super(ev.pipeline,ty);
 		level = ev.level;
 	}
 
-	final void up() {
+	final void up()
+	{
 		++level;
 		auto pip = cast(PiPeline) this.pipeline;
 		pip.upEvent(this);
@@ -287,21 +313,26 @@ private:
 	int level = -1;
 }
 
-abstract class OutEvent: Event {
-	this(const OutEvent ev,uint ty) {
+abstract class OutEvent : Event
+{
+	this(const OutEvent ev,uint ty)
+	{
 		super(ev.pipeline,ty);
 		level = ev.level;
 	}
-	this(const PiPeline pip,uint ty) {
+	this(const PiPeline pip,uint ty)
+	{
 		super(pip,ty);
 		level = pip.getOutLevel(null);
 	}
-	this(const PiPeline pip,uint ty,OutHandle hand) {
+	this(const PiPeline pip,uint ty,OutHandle hand)
+	{
 		super(pip,ty);
 		level = pip.getOutLevel(hand);
 	}
 
-	final void down() {
+	final void down()
+	{
 		--level;
 		auto pip = cast(PiPeline) this.pipeline;
 		pip.downEvent(this);
@@ -310,7 +341,8 @@ private:
 	int level = -1;
 };
 
-enum {
+enum
+{
 	INEVENT_TCP_CLOSED = 0,
 	INEVENT_TCP_READ = 1,
 	INEVENT_UDP_READ = 2,
@@ -331,7 +363,8 @@ enum {
  this(const PiPeline pip){super(pip,INEVENT_CLOSED);}
  }*/
 
-final class INEventTCPRead : InEvent {
+final class INEventTCPRead : InEvent
+{
 	ubyte[] data;
 package:
 	this(const PiPeline pip) { super(pip,INEVENT_TCP_READ); }
@@ -341,7 +374,8 @@ package:
 //{
 //}
 
-final class INEventWrite : InEvent {
+final class INEventWrite : InEvent
+{
 	ubyte[] data;
 	uint wsize;
 package:
@@ -357,61 +391,71 @@ package:
  }*/
 
 
-final class INEventSocketStatusChanged : InEvent {
+final class INEventSocketStatusChanged : InEvent
+{
 	SOCKET_STATUS status_from;
 	SOCKET_STATUS status_to;
 package:
 	this(const PiPeline pip) { super(pip,INEVENT_STATUS_CHANGED); }
 }
 
-final class INEventTimeOut : InEvent {
+final class INEventTimeOut : InEvent
+{
 package:
 	this(const PiPeline pip) { super(pip,INEVENT_TIMEROUT); }
 }
 
-final class INEventNewConnect : InEvent {
+final class INEventNewConnect : InEvent
+{
 	Channel sock;
 package:
 	this(const PiPeline pip) { super(pip,INEVENT_NEWCONNECT); }
 }
 
-final class InEventTCPClose : InEvent {
+final class InEventTCPClose : InEvent
+{
 	ubyte[][] buffers = null;
 package:
 	this(const PiPeline pip) { super(pip,INEVENT_TCP_CLOSED); }
 }
 
 
-final class OutEventTCPWrite : OutEvent {
+final class OutEventTCPWrite : OutEvent
+{
 	this(const OutEvent ev) { super(ev,OUTEVENT_TCP_WRITE); }
 
 	this(const PiPeline pip) { super(pip,OUTEVENT_TCP_WRITE); }
 
-	this(const PiPeline pip,OutHandle hand) {
+	this(const PiPeline pip,OutHandle hand)
+	{
 		super(pip,OUTEVENT_TCP_WRITE,hand);
 	}
 
 	ubyte[] data;
 }
 
-final class OutEventUDPWrite : OutEvent {
+final class OutEventUDPWrite : OutEvent
+{
 	this(const OutEvent ev) { super(ev,OUTEVENT_UDP_WRITE); }
 
 	this(const PiPeline pip) { super(pip,OUTEVENT_UDP_WRITE); }
 
-	this(const PiPeline pip,OutHandle hand) {
+	this(const PiPeline pip,OutHandle hand)
+	{
 		super(pip,OUTEVENT_UDP_WRITE,hand);
 	}
 	ubyte[] data;
 	Address addr;
 }
 
-final class OutEventClose : OutEvent {
+final class OutEventClose : OutEvent
+{
 	this(const OutEvent ev) { super(ev,OUTEVENT_CLOSE); }
 
 	this(const PiPeline pip) { super(pip,OUTEVENT_CLOSE); }
 
-	this(const PiPeline pip,OutHandle hand) {
+	this(const PiPeline pip,OutHandle hand)
+	{
 		super(pip,OUTEVENT_CLOSE,hand);
 	}
 }
@@ -420,13 +464,15 @@ private const uint eventStartType = 100;
 private __gshared uint eventTypeNum ;
 private __gshared Mutex m_mutex;
 
-shared static this() {
+shared static this()
+{
 	m_mutex = new Mutex();
 }
 
-uint getEventType() {
+uint getEventType()
+{
 	uint type;
-	synchronized (m_mutex) {
+	synchronized(m_mutex) {
 		++eventTypeNum;
 		type = eventTypeNum + eventStartType;
 	}
@@ -437,7 +483,8 @@ uint getEventType() {
 unittest {//test scope calss数据传递方式，值传还是址传
 	import std.stdio;
 
-	void  fun1()  {
+	void  fun1()
+	{
 		scope auto c2 = new MyClass;
 		c2.tid = 1;
 		writeln("the class tid = ", c2.tid); //输出1
@@ -445,7 +492,8 @@ unittest {//test scope calss数据传递方式，值传还是址传
 		writeln("the fun2 after class tid = ", c2.tid); //输出5,是址传
 	}
 	
-	void fun2(MyClass c2) {
+	void fun2(MyClass c2)
+	{
 		c2.tid = 5;
 	}
 

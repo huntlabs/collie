@@ -14,7 +14,8 @@ import collie.channel;
 import deimos.openssl.ssl;
 
 version(USE_SSL_V2) {
-	enum SSLMODE {
+	enum SSLMODE
+	{
 		SSLv2,
 		SSLv3,
 		SSLv2v3,
@@ -23,7 +24,8 @@ version(USE_SSL_V2) {
 		TLSv1_2
 	}
 } else {
-	enum SSLMODE {
+	enum SSLMODE
+	{
 		SSLv3,
 		SSLv2v3,
 		TLSv1,
@@ -32,12 +34,14 @@ version(USE_SSL_V2) {
 	}
 }
 
-class SSLlistener  : Channel {
+class SSLlistener : Channel
+{
 	alias sslconnectionHandler = void delegate(SSLSocket);
 	/** 构造函数
 	 @param : loop = 所属的事件循环。
 	 */
-	this(EventLoop loop, SSLMODE mod = SSLMODE.SSLv2v3) {
+	this(EventLoop loop, SSLMODE mod = SSLMODE.SSLv2v3)
+	{
 		super(loop);
 		type = CHANNEL_TYPE.SSL_Listener;
 		_mode = mod;
@@ -66,17 +70,20 @@ class SSLlistener  : Channel {
 	}
 	
 	/** 析构函数 */
-	~this () {
+	~this()
+	{
 		onClose();
 		SSL_CTX_free(_sslCtx);
 	}
 
-	void setConnectHandler(sslconnectionHandler handler) {
+	void setConnectHandler(sslconnectionHandler handler)
+	{
 		assert(handler);
 		_block = handler;
 	}
 
-	bool setCertificateFile(string file) {
+	bool setCertificateFile(string file)
+	{
 		auto r = SSL_CTX_use_certificate_file(_sslCtx,toStringz(file) , SSL_FILETYPE_PEM);
 		if(r < 0) {
 			error("SSL_CTX_use_certificate_file failed ! file : ",file);
@@ -85,7 +92,8 @@ class SSLlistener  : Channel {
 		return true;
 	}
 
-	bool setPrivateKeyFile(string file) {
+	bool setPrivateKeyFile(string file)
+	{
 		auto r = SSL_CTX_use_PrivateKey_file(_sslCtx, toStringz(file), SSL_FILETYPE_PEM);
 		if(r < 0) {
 			error("SSL_CTX_use_PrivateKey_file failed! file : ",file);
@@ -99,7 +107,8 @@ class SSLlistener  : Channel {
 		return true;
 	}
 
-	bool setCipherList(string cipher) {
+	bool setCipherList(string cipher)
+	{
 		int i = SSL_CTX_set_cipher_list(_sslCtx, toStringz(cipher));
 		return i == 1 ? true : false;
 	}
@@ -111,7 +120,8 @@ class SSLlistener  : Channel {
 	mixin SocketOption!();
 
 protected:
-	override void onRead() {
+	override void onRead()
+	{
 		trace(" onRead the thread is = ",to!string(Thread.getThis().name));
 		Address addr;
 		if(this._isIpv6) {
@@ -163,7 +173,7 @@ protected:
 					sslSocket.status(sslSocket.status);
 				}
 			} else {
-				if (errno == EAGAIN || errno == ECONNABORTED || errno == EPROTO || errno == EINTR || errno == EWOULDBLOCK) {
+				if(errno == EAGAIN || errno == ECONNABORTED || errno == EPROTO || errno == EINTR || errno == EWOULDBLOCK) {
 					break;
 				} else {
 					error("socket accpet failure %d", errno);
@@ -186,11 +196,12 @@ import deimos.openssl.opensslv;
 import deimos.openssl.crypto;
 
 //import std.stdio;
-shared static this() {
+shared static this()
+{
 	SSL_load_error_strings ();
 	SSL_library_init ();
 	sslmutex.length = CRYPTO_num_locks();
-	for (uint i = 0; i < sslmutex.length; ++i) {
+	for(uint i = 0; i < sslmutex.length; ++i) {
 		sslmutex[i] = new Mutex();
 		//writeln("new mutex");
 	}
@@ -202,7 +213,8 @@ shared static this() {
 	CRYPTO_set_locking_callback(&ssl_lock_callback);
 }
 
-shared static ~this() {
+shared static ~this()
+{
 	static if(OPENSSL_VERSION_NUMBER > 0x10000000L) {
 		CRYPTO_THREADID_set_callback(null);
 	} else {
@@ -215,15 +227,18 @@ private {
 	__gshared Mutex[] sslmutex;
 }
 extern(C) :
-ulong id_function() {
+ulong id_function()
+{
 	return Thread.getThis.id;
 }
 
-void threadid_function(CRYPTO_THREADID* id) {
+void threadid_function(CRYPTO_THREADID* id)
+{
 	CRYPTO_THREADID_set_numeric(id, Thread.getThis.id);
 }
 
-void ssl_lock_callback(int mode, int type, const(char) * file, int line) {
+void ssl_lock_callback(int mode, int type, const(char) * file, int line)
+{
 	if(mode & CRYPTO_LOCK) {
 		sslmutex[type].lock();
 	//	writeln("SSL LOCK");
