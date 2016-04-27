@@ -9,34 +9,41 @@ import core.memory;
     @author : Putao‘s Collie Team
     @date : 2016.1
 */
-struct WriteBuffer {
+struct WriteBuffer
+{
 	/** 记录位置的buffer的有效开始位 */
 	size_t _start = 0;
 
 	/** 获取当前buffer的有效数据 */
-	ubyte[] data() {
+	ubyte[] data()
+	{
 		return _data[_start .. $];
 	}
 
-	bool isInVaild() {
+	bool isInVaild()
+	{
 		return _data is null;
 	}
 
-	void clear() {
+	void clear()
+	{
 		_data = null;
 		_start = 0;
 	}
 
 	/** 获取当前buffer的有效的字节大小 */
-	size_t dataSize () {
+	size_t dataSize()
+	{
 		return _data.length - _start;
 	}
 
-	this(ubyte[] data) {
+	this(ubyte[] data)
+	{
 		_data = data;
 	}
 
-	ubyte[] allData() {
+	ubyte[] allData()
+	{
 		return _data;
 	}
 
