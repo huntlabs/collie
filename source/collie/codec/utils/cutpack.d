@@ -9,14 +9,16 @@ import collie.handler.base;
 import collie.channel.pipeline;
 import collie.channel.define;
 
-string enCutPack(string data, string pipeline, string handler) {
+string enCutPack(string data, string pipeline, string handler)
+{
 	string str = "{ scope auto mixins_event = new OutCutPackEvent(" ~ pipeline ~ ", " ~ handler ~ "); 
     mixins_event.data = " ~ data ~ ";
 	mixins_event.down(); }";
 	return str;
 }
 
-string enCutPack(string data, string event) {
+string enCutPack(string data, string event)
+{
 	string str = "{ scope auto mixins_event = new OutCutPackEvent(" ~ event ~ ");
     mixins_event.data = " ~ data ~ ";
 	mixins_event.down(); }";
@@ -24,17 +26,21 @@ string enCutPack(string data, string event) {
 }
 
 
-class CutPack(bool littleEndian) : Handler {
-	this(PiPeline pip,uint maxLen = uint.max) {
+class CutPack(bool littleEndian) : Handler
+{
+	this(PiPeline pip,uint maxLen = uint.max)
+	{
 		super(pip);
 		_max = maxLen;
 	}
 
-	~this() {
+	~this()
+	{
 		_packData = null;
 	}
 
-	override void inEvent(InEvent event) {
+	override void inEvent(InEvent event)
+	{
 		trace("CutPack inEvent ", event.type);
 		if(event.type == INEVENT_TCP_READ) {
 			scope auto ev = cast(INEventTCPRead) event;
@@ -46,7 +52,8 @@ class CutPack(bool littleEndian) : Handler {
 		}
 	}
 	
-	override void outEvent(OutEvent event) {
+	override void outEvent(OutEvent event)
+	{
 		trace("CutPack outEvent  ", event.type);
 		if(event.type == OutCutPackEvent.type) {
 			scope auto ev = cast(OutCutPackEvent)event;
@@ -59,7 +66,8 @@ class CutPack(bool littleEndian) : Handler {
 	}
 
 protected:
-	void readPack(ubyte[] data,InEvent event) {
+	void readPack(ubyte[] data,InEvent event)
+	{
 		if(data.length == 0)
 			return;
 		if(_size == 0) {
@@ -100,7 +108,8 @@ protected:
 		}
 	}
 
-	uint readPackSize(ref ubyte[] data) {
+	uint readPackSize(ref ubyte[] data)
+	{
 		if(_pSize == 4 || _size > 0)
 			return 0;
 		uint size = cast(uint) data.length;
@@ -129,7 +138,8 @@ protected:
 		}
 	}
 
-	ubyte[] writePack(ubyte[] edata) {
+	ubyte[] writePack(ubyte[] edata)
+	{
 		uint size = cast(uint)edata.length;
 		ubyte[] data = new ubyte[size + 4];
 		static if(littleEndian) {
@@ -153,8 +163,10 @@ private:
 };
 
 
-class InCutPackEvent : InEvent {
-	shared static this() {
+class InCutPackEvent : InEvent
+{
+	shared static this()
+	{
 		if(type == 0) {
 			type = getEventType();
 			trace("InCutPackEvent type", type);
@@ -166,14 +178,17 @@ class InCutPackEvent : InEvent {
 
 	@disable this();
 	this(const InEvent ev) { super(ev,type); }
-	this(const InEvent ev, ubyte[] data) {
+	this(const InEvent ev, ubyte[] data)
+	{
 		super(ev,type);
 		this.data = data;
 	}
 };
 
-class OutCutPackEvent : OutEvent {
-	shared static this() {
+class OutCutPackEvent : OutEvent
+{
+	shared static this()
+	{
 		if(type == 0) {
 			type = getEventType();
 			trace("OutCutPackEvent type", type);
@@ -186,11 +201,13 @@ class OutCutPackEvent : OutEvent {
 	@disable this();
 	this(const OutEvent ev) { super(ev,type); }
 	this(const PiPeline pip) { super(pip,type); }
-	this(const OutEvent ev, ubyte[] data) {
+	this(const OutEvent ev, ubyte[] data)
+	{
 		super(ev,type);
 		this.data = data;
 	}
-	this(const PiPeline pip, OutHandle hand) {
+	this(const PiPeline pip, OutHandle hand)
+	{
 		super(pip, type, hand);
 	}
 };
