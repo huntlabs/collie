@@ -17,12 +17,15 @@ version(SSL) {
 alias  ServerBoostStarp = ServerBoostStarpImpl!(false);
 alias pipelineFactory = void delegate (PiPeline pip);
 
-final class ServerBoostStarpImpl(bool ssl) {
-	this() {
+final class ServerBoostStarpImpl(bool ssl)
+{
+	this()
+	{
 		this(new EventLoop());
 	}
 
-	this(EventLoop loop) {
+	this(EventLoop loop)
+	{
 		_loop = loop;
 		static if(ssl) {
 			_listen = new SSLlistener(_loop);
@@ -36,22 +39,26 @@ final class ServerBoostStarpImpl(bool ssl) {
 		_loopList = SqQueue!EventLoop(16);
 	}
 
-	auto setOption(T)(TCPOption option, in T value) {
+	auto setOption(T)(TCPOption option, in T value)
+	{
 		_listen.setOption(option,value);
 		return this;
 	}
 
-	auto bind(Address addr) {
+	auto bind(Address addr)
+	{
 		_addr = addr;
 		return this;
 	}
 
-	auto setPipelineFactory(pipelineFactory pipFac) {
+	auto setPipelineFactory(pipelineFactory pipFac)
+	{
 		_pipelineFactory = pipFac;
 		return this;
 	}
 
-	auto setThreadSize(uint size) {
+	auto setThreadSize(uint size)
+	{
 		_threadsize = size;
 		if (_loopList.maxLength <  _threadsize){
 			_loopList = SqQueue!EventLoop(_threadsize + 4);
@@ -59,15 +66,16 @@ final class ServerBoostStarpImpl(bool ssl) {
 		return this;
 	}
 
-	void run() {
+	void run()
+	{
 		trace("startt run");
 		Thread.getThis.name = "ServerBoostStarp_main";
-		if (!_addr.isVaild) {
+		if(!_addr.isVaild) {
 			writeln("address erro !");
 			return;
 		}
 
-		if (!_listen.listen(_addr)) {
+		if(!_listen.listen(_addr)) {
 			_listen.kill();
 			error("listen erro !");
 			return;
@@ -77,7 +85,7 @@ final class ServerBoostStarpImpl(bool ssl) {
 
 		if(size > 0) {
 			_thread.length = size;
-			foreach (i ; 0..size) {
+			foreach(i ; 0..size) {
 				auto th = new Thread(&listRun);
 				th.name = "ServerBoostStarp_Thread_"~to!string(i);
 				trace("start thread : ",th.name);
@@ -93,14 +101,15 @@ final class ServerBoostStarpImpl(bool ssl) {
 		_listen.kill();
 		info("exit listen at ",Thread.getThis.name);
 
-		foreach(th;_thread){
+		foreach(th;_thread) {
 			th.join(false);
 		}
 	}
 
-	@property EventLoop eventLoop(){ return _loop; }
+	@property EventLoop eventLoop() { return _loop; }
 
-	void stop() {
+	void stop()
+	{
 		_loop.stop();
 		while(!_loopList.empty) {
 			EventLoop loop;
@@ -112,20 +121,23 @@ final class ServerBoostStarpImpl(bool ssl) {
 		}
 	}
 
-	static if (ssl) {
-		bool setCertificateFile(string file) {
+	static if(ssl) {
+		bool setCertificateFile(string file)
+		{
 			_cfile = file;
 			return _listen.setCertificateFile(_cfile);
 		}
 
-		bool setPrivateKeyFile(string file) {
+		bool setPrivateKeyFile(string file)
+		{
 			_pkey = file;
 			return _listen.setPrivateKeyFile(_pkey);
 		}
 	}
 
 protected:
-	void listRun() {
+	void listRun()
+	{
 		auto loop = new EventLoop();
 		synchronized(_mutex) {
 			_loopList.enQueue(loop);
@@ -150,7 +162,7 @@ protected:
 			}
 
 		}
-		if (!listen.listen(_addr)) { 
+		if(!listen.listen(_addr)) {
 			error("bind erro at Thread:", Thread.getThis.name);
 			return;
 		}
@@ -160,21 +172,24 @@ protected:
 		info("exit listen at ",Thread.getThis.name);
 	}
 
-	bool acceptErro(int eron) {
+	bool acceptErro(int eron)
+	{
 		trace("stop server! acceptErro : ",eron);
 		stop();
 		return false;
 	}
 
-	static if(ssl){
-		void onConnection (SSLSocket sock) {
+	static if(ssl) {
+		void onConnection(SSLSocket sock)
+		{
 			auto line = new PiPeline(sock);
 			_pipelineFactory(line);
 			if(line.isVaild)
 				sock.start(); 
 		}
 	} else {
-		void onConnection (TCPSocket sock) {
+		void onConnection(TCPSocket sock)
+		{
 			auto line = new PiPeline(sock);
 			_pipelineFactory(line);
 			if(line.isVaild)
