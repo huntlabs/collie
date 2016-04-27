@@ -50,8 +50,7 @@ enum SOCKET_STATUS
 	IDLE  /**< 初始化类型 */
 }
 package:
-version (Posix) 
-{
+version(Posix) {
 	public import core.sys.posix.fcntl;
 	public import core.sys.posix.unistd;
 	public import core.sys.posix.sys.socket;
@@ -82,20 +81,20 @@ enum TCP_POOL_SIZE_ONE_THREAD = 500;
  * @param : size_t 写完一个包的数据的大小，如果出错返回0或-1
  * @param : bool 当前发送队列是不是为空
 */
-alias WriteHandler = void delegate (ubyte[],uint);
+alias WriteHandler = void delegate(ubyte[],uint);
 /** 读取完成一次数据的回调，如果出错也调用
  * @param : ubyte[] 读取数据存储的ubyte数组，可直接操作更改。
  *************************************************/
-alias ReadHandler = void delegate (ubyte[]);
+alias ReadHandler = void delegate(ubyte[]);
 
-alias CloseHandler = void delegate (ubyte[][]);
+alias CloseHandler = void delegate(ubyte[][]);
 
 /** 无返回值的一般callback */
-alias CallBack = void delegate ();
+alias CallBack = void delegate();
 
 alias StatusCallBck = void delegate(SOCKET_STATUS sfrom,SOCKET_STATUS sto);
 
-version(TCP_POOL)  :
+version(TCP_POOL):
 import collie.channel.utils.queue;
 import collie.channel.tcpsocket;
 version(SSL) {
@@ -103,18 +102,20 @@ version(SSL) {
 }
 
 
-static this() {
+static this()
+{
 	_tcpPool = SqQueue!TCPSocket(TCP_POOL_SIZE_ONE_THREAD);
 	version(SSL) {
 		_sslPool = SqQueue!SSLSocket(TCP_POOL_SIZE_ONE_THREAD);
 	}
 }
 
-@property SqQueue!TCPSocket * TCPPool(){
+@property SqQueue!TCPSocket* TCPPool()
+{
 	return &_tcpPool;
 }
 version(SSL) {
-	@property SqQueue!SSLSocket * SSLPool(){
+	@property SqQueue!SSLSocket* SSLPool(){
 		return &_sslPool;
 	}
 }

@@ -8,11 +8,14 @@ import collie.channel.address;
 
 final class ClientBoostStarp
 {
-	this(){
+	this()
+	{
 		auto loop = new EventLoop();
 		this(loop);
 	}
-	this(EventLoop loop) {
+
+	this(EventLoop loop)
+	{
 		_loop = loop;
 		_socket = new TCPSocket(_loop);
 		_pip = new PiPeline(_socket);
@@ -33,10 +36,12 @@ final class ClientBoostStarp
 	{
 		_pip.pushHandle(hand);
 	}
+
 	void pushInhandle(InHander handle)
 	{
 		_pip.pushInhandle(handle);
 	}
+
 	void pushOutHandle(OutHander handle)
 	{
 		_pip.pushOutHandle(handle);
@@ -44,7 +49,7 @@ final class ClientBoostStarp
 
 	void run()
 	{
-			_loop.run();
+		_loop.run();
 	}
 
 	void close()
@@ -52,11 +57,13 @@ final class ClientBoostStarp
 		_socket.close();
 	}
 
-	void stop(){
+	void stop()
+	{
 		_loop.stop();
 	}
-	@property EventLoop eventloop(){return _loop;}
-	@property PiPeline pipeline(){return _pip;}
+
+	@property EventLoop eventloop() { return _loop; }
+	@property PiPeline pipeline() { return _pip; }
 
 //	@property TCPSocket socket() {return _socket;}
 private:

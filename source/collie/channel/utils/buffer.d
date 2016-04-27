@@ -11,33 +11,31 @@ import core.memory;
 */
 struct WriteBuffer
 {
-private:
-     /** 存储数组的ubyte数组 */
-	ubyte[] _data = null;
-public:
-    /** 记录位置的buffer的有效开始位 */
-    size_t _start = 0;
+	/** 记录位置的buffer的有效开始位 */
+	size_t _start = 0;
 
-     /** 获取当前buffer的有效数据 */
-    ubyte[] data ()
-    {
-            return _data[_start .. $];
-    }
-
-	bool isInVaild(){
-		return (_data is null);
+	/** 获取当前buffer的有效数据 */
+	ubyte[] data()
+	{
+		return _data[_start .. $];
 	}
 
-	void clear(){
+	bool isInVaild()
+	{
+		return _data is null;
+	}
+
+	void clear()
+	{
 		_data = null;
 		_start = 0;
 	}
 
-    /** 获取当前buffer的有效的字节大小 */
-    size_t dataSize ()
-   {
+	/** 获取当前buffer的有效的字节大小 */
+	size_t dataSize()
+	{
 		return _data.length - _start;
-   }
+	}
 
 	this(ubyte[] data)
 	{
@@ -48,4 +46,8 @@ public:
 	{
 		return _data;
 	}
-};
+
+private:
+	/** 存储数组的ubyte数组 */
+	ubyte[] _data = null;
+}

@@ -10,7 +10,7 @@ import deimos.openssl.ssl;
 
 final class SSLSocket : Channel
 {
-public :
+public:
 	/** 构造函数
 	 @param : loop = 所属的事件循环。
 	 */
@@ -19,11 +19,11 @@ public :
 		this(loop,-1);
 	}*/
 	/** 析构函数 */
-	~this ()
+	~this()
 	{
 		onClose(); 
 		colliedAllocator.deallocate(_recvBuffer);
-		if(_ssl){
+		if(_ssl) {
 			SSL_shutdown (_ssl);
 			SSL_free(_ssl);
 			_ssl = null;
@@ -32,11 +32,12 @@ public :
 		//writeln("~this TCPSocket");
 	}
 	/** 关闭socket */
-	void close() {
+	void close()
+	{
 		if(!_start && !isInValid()) {
 			.close(fd);
 			_status = SOCKET_STATUS.IDLE;
-			if(_ssl){
+			if(_ssl) {
 				SSL_shutdown (_ssl);
 				SSL_free(_ssl);
 				_ssl = null;
@@ -47,20 +48,20 @@ public :
 	}
 	/** 混入Socket 选项模板 */
 	mixin SocketOption!();
-	
 	mixin TCPSocketMixin!(SSLlistener);
 package:
 	/** 构造函数
 	 @param : loop = 所属的事件循环。
 	 @param : socket = 此socket管理的FD。
 	 */
-	this (EventLoop loop, int socket,SSL * ssl = null)
+	this(EventLoop loop, int socket, SSL* ssl = null)
 	{
 		super(loop);
 		type = CHANNEL_TYPE.SSL_Socket;
 		fd = socket;
 
-		if(!this.isInValid()) {
+		if(!this.isInValid())
+		{
 			asynchronous = true;
 			_status = SOCKET_STATUS.SSLHandshake;
 		}
@@ -69,33 +70,35 @@ package:
 		_ssl = ssl;
 	}
 
-	void reset(EventLoop loop,int tfd,SSL * ssl) {
+	void reset(EventLoop loop, int tfd, SSL* ssl)
+	{
 		fd  = tfd;
 		eventLoop = loop;
 		_ssl = ssl;
 		_status = SOCKET_STATUS.SSLHandshake;
 	}
 protected:
-	final override void onRead () { //TODO:
-		if (isInValid()){return;}
-		if (status == SOCKET_STATUS.SSLHandshake)
-		{
+	final override void onRead() //TODO:
+	{
+		if(isInValid()) 
+			return;
+		if(status == SOCKET_STATUS.SSLHandshake) {
 			int i = doHandShake();
-			if(i == -1){
+			if(i == -1) {
 				onClose();
 			}
-			if (i <= 0) return;
+			if (i <= 0)
+				return;
 		}
 		int length = 0;
-		while (!isInValid() && status == SOCKET_STATUS.CONNECTED)
-		{
+		while(!isInValid() && status == SOCKET_STATUS.CONNECTED) {
 			length = SSL_read(_ssl, _recvBuffer.ptr, cast(int)(_recvBuffer.length));
 			trace("ssl on read: ",length);
-			if (length > 0) {
+			if(length > 0) {
 				_recvHandler(_recvBuffer[0..length]);
 			} else {
 				int ssle = SSL_get_error(_ssl, length);
-				if (ssle == SSL_ERROR_WANT_READ || errno == EWOULDBLOCK || errno == EAGAIN || errno == 4){ // erro 4 :系统中断组织了
+				if(ssle == SSL_ERROR_WANT_READ || errno == EWOULDBLOCK || errno == EAGAIN || errno == 4) { // erro 4 :系统中断组织了
 					break;
 				} else {
 					error("read ", fd, "failure with ", errno);
@@ -107,8 +110,10 @@ protected:
 	}
 
 	/** 从事件循环中移除socket并关闭 */
-	final override void onClose (){
-		if (isInValid()){return;}
+	final override void onClose()
+	{
+		if(isInValid())
+			return;
 		if(!_start) {
 			.close(fd);
 			return;
@@ -116,16 +121,16 @@ protected:
 		clearListenr();
 		_start = false;
 		eventLoop.delEvent(this);
-		if(_ssl){
+		if(_ssl) {
 			SSL_shutdown (_ssl);
 			SSL_free(_ssl);
 			_ssl = null;
 		}
 		fd = -1;
-		if(!_sendQueue.empty){
+		if(!_sendQueue.empty) {
 			scope ubyte[][] buffer = new ubyte[][_sendQueue.length];
 			int i = 0;
-			while(!_sendQueue.empty){
+			while(!_sendQueue.empty) {
 				buffer[i] = _sendQueue.deQueue().allData;
 				++i;
 			}
@@ -138,20 +143,21 @@ protected:
 	}
 
 	/** 有可写事件时调用的函数。*/
-	final override void onWrite ()
-	{
-		if (isInValid()){return;}
+	final override void onWrite() {
+		if(isInValid())
+			return;
 		if(status == SOCKET_STATUS.IDLE) { 
 			status(SOCKET_STATUS.SSLHandshake);
 		}
 		if(status == SOCKET_STATUS.SSLHandshake) {
 			int i = doHandShake();
-			if(i == -1){
+			if(i == -1)
 				onClose();
-			}
-			if (i <= 0) return;
+			if (i <= 0)
+				return;
 		}
-		if(_sendQueue.empty) return;
+		if(_sendQueue.empty)
+			return;
 		doWrite();
 	}
 
@@ -163,8 +169,8 @@ protected:
 		while(!isInValid() && !_sendQueue.empty) {
 			buffer = _sendQueue.front();
 			length = SSL_write(_ssl, buffer.data.ptr, cast(int)(buffer.dataSize));
-			if (length >  0) {
-				if (length < buffer.dataSize) {
+			if(length >  0) {
+				if(length < buffer.dataSize) {
 					buffer._start += length;
 					break;
 				} else {
@@ -173,31 +179,31 @@ protected:
 					continue;
 				}
 			} else  {
-				if (errno == EWOULDBLOCK || errno == EAGAIN)
-				{
+				if(errno == EWOULDBLOCK || errno == EAGAIN) {
 					break;
-				} else if (errno == 4){
+				} else if(errno == 4) {
 					continue;
-				}else{
+				} else {
 					onClose();
 				}
 			}
 		}
 	}
 
-	
-	int doHandShake(){
-		if(status != SOCKET_STATUS.SSLHandshake) return false;
+	int doHandShake()
+	{
+		if(status != SOCKET_STATUS.SSLHandshake)
+			return false;
 		int r = SSL_do_handshake(_ssl);
-		if (r == 1) {
+		if(r == 1) {
 			status = SOCKET_STATUS.CONNECTED;
 			trace("ssl connected fd : ", fd);
 			return 1;
 		}
 		int err = SSL_get_error(_ssl, r);
-		if (err == SSL_ERROR_WANT_WRITE) {
+		if(err == SSL_ERROR_WANT_WRITE) {
 			trace("return want write fd = ", fd);
-		} else if (err == SSL_ERROR_WANT_READ) {
+		} else if(err == SSL_ERROR_WANT_READ) {
 			trace("return want read fd = ", fd);
 		} else {
 			trace("SSL_do_handshake return: ", r,"  erro :" , err,"  errno:", errno, "  erro string:",strerror(errno));
@@ -206,6 +212,6 @@ protected:
 		return 0;
 	}
 private :
-	SSL * _ssl;
+	SSL* _ssl;
 }
 
