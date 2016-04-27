@@ -1,12 +1,12 @@
 ﻿module collie.channel.selector.kqueue;
 
-version (FreeBSD) {
+version(FreeBSD) {
 	version = KQUEUE;
-} else version (OpenBSD) {
+} else version(OpenBSD) {
 	version = KQUEUE;
-} else version (NetBSD) {
+} else version(NetBSD) {
 	version = KQUEUE;
-} else version (OSX) {
+} else version(OSX) {
 	version = KQUEUE;
 }
 
@@ -34,11 +34,13 @@ import collie.channel.timer;
 
 enum EVENT_KQUEUE_SIZE = 128;
 
-class KqueueLoop {
+class KqueueLoop
+{
 	/** 构造函数，构建一个epoll事件
 	 */
-	this () {
-		if ((_efd = kqueue()) < 0) {
+	this()
+	{
+		if((_efd = kqueue()) < 0) {
 			errnoEnforce("kqueue failed");
 		}
 		events =  colliedAllocator.makeArray!kevent_t(EVENT_KQUEUE_SIZE);
@@ -46,7 +48,8 @@ class KqueueLoop {
 	
 	/** 析构函数，释放epoll。
 	 */
-	~this () {
+	~this()
+	{
 		.close(_efd);
 		colliedAllocator.deallocate(events);
 	}
@@ -56,20 +59,21 @@ class KqueueLoop {
 	 @note : 此函数可以多线程同时执行，实现多个线程共用一个事件调度。
 
 	 */
-	void wait(int timeout) {
+	void wait(int timeout)
+	{
 		auto tm = timeout % 1000;
 		auto tspec = timespec(timeout / 1000 , tm * 1000 * 1000);
 		auto num = kevent(_efd, null, 0, cast(kevent_t*) events, cast(int) events.length, &tspec);
-		for(ulong i = 0; i < num; ++i){
+		for(ulong i = 0; i < num; ++i) {
 			auto channel = cast(Channel)events[i].udata;
 			//int event_flags = (_event.filter << 16) | (_event.flags & 0xffff);
-			if(channel.type == CHANNEL_TYPE.Timer){
+			if(channel.type == CHANNEL_TYPE.Timer) {
 				writeln("timer !!!");
 			}
-			if((events[i].flags & EV_EOF) || (events[i].flags &EV_ERROR)){
+			if((events[i].flags & EV_EOF) || (events[i].flags &EV_ERROR)) {
 				channel.onClose();
 			}
-			if(channel.type == CHANNEL_TYPE.Timer){
+			if(channel.type == CHANNEL_TYPE.Timer) {
 				channel.onRead();
 				writeln("timer !!! channel.onRead();");
 				continue;
@@ -79,7 +83,7 @@ class KqueueLoop {
 				channel.onRead();
 			}
 
-			if(events[i].filter & EVFILT_WRITE ){
+			if(events[i].filter & EVFILT_WRITE) {
 				channel.onWrite();
 			}
 		}
@@ -88,15 +92,16 @@ class KqueueLoop {
 	/**
 	 * 添加TcpSocket对象
 	 */
-	bool addEvent (Channel socket) {
-		if (socket.isInValid()) {
+	bool addEvent(Channel socket)
+	{
+		if(socket.isInValid()) {
 			return false;
 		}
 
 		auto ptr = cast(void *)socket;
 		int err = 0;
 		GC.setAttr(ptr,GC.BlkAttr.NO_MOVE);
-		switch (socket.type) {
+		switch(socket.type) {
 			case CHANNEL_TYPE.TCP_Listener:
 			case CHANNEL_TYPE.SSL_Listener:
 				kevent_t event;
@@ -134,14 +139,14 @@ class KqueueLoop {
 	}
 
 	// called on run
-	nothrow int createIndex() {
+	nothrow int createIndex()
+	{
 		size_t idx;
 		import std.algorithm : max;
 		try {
-			
-			size_t getIdx() {
-				
-				if (!g_evIdxAvailable.empty) {
+			size_t getIdx()
+			{
+				if(!g_evIdxAvailable.empty) {
 					immutable size_t ret = g_evIdxAvailable.back;
 					g_evIdxAvailable.removeBack();
 					return ret;
@@ -150,7 +155,7 @@ class KqueueLoop {
 			}
 			
 			idx = getIdx();
-			if (idx == 0) {
+			if(idx == 0) {
 				import std.range : iota;
 				g_evIdxAvailable.insert( iota(g_evIdxCapacity, max(32, g_evIdxCapacity * 2), 1) );
 				g_evIdxCapacity = max(32, g_evIdxCapacity * 2);
@@ -167,7 +172,8 @@ class KqueueLoop {
 		return cast(int)idx;
 	}
 	
-	nothrow void destroyIndex(int idx) {
+	nothrow void destroyIndex(int idx)
+	{
 		try {
 			g_evIdxAvailable.insert(cast(size_t)idx);
 		} catch (Exception e) {
@@ -175,24 +181,27 @@ class KqueueLoop {
 		}
 	}
 
-	bool removeTimer(Timer tm) {
+	bool removeTimer(Timer tm)
+	{
 		auto ptr = cast(void *)tm;
 		kevent_t event;
 		EV_SET(&event, tm.fd, EVFILT_TIMER, EV_DELETE, 0, 0, ptr);//单位毫秒
 		int err = kevent(_efd, &event, 1, null, 0, null);
-		if(err < 0) return false;
+		if(err < 0)
+			return false;
 		return true;
 	}
 
 	/**
 	 * del TcpSocket对象
 	 */
-	bool delEvent(Channel socket) {
-		if (!socket.isInValid()) {
+	bool delEvent(Channel socket)
+	{
+		if(!socket.isInValid()) {
 			//	int tfd = socket.fd;
 			auto ptr = cast(void *)socket;
 			int err = 0;
-			switch (socket.type) {
+			switch(socket.type) {
 				case CHANNEL_TYPE.TCP_Listener:
 				case CHANNEL_TYPE.SSL_Listener:
 					kevent_t event;
@@ -237,7 +246,7 @@ class KqueueLoop {
 		return false;
 	}
 
-	void weakUp(){}
+	void weakUp() {}
 private:
 	/** 存储 epoll的fd */
 	int _efd;
@@ -250,12 +259,14 @@ private:
 
 extern (C):
 @nogc:
-struct timespec {
+struct timespec
+{
 	time_t tv_sec;
 	c_long tv_nsec;
 }
 
-enum : short {
+enum : short
+{
 	EVFILT_READ	=  -1,
 	EVFILT_WRITE	=  -2,
 	EVFILT_AIO	=  -3, /* attached to aio requests */
@@ -270,11 +281,13 @@ enum : short {
 	EVFILT_SYSCOUNT =  11
 }
 
-extern(D) void EV_SET(kevent_t* kevp, typeof(kevent_t.tupleof) args) {
+extern(D) void EV_SET(kevent_t* kevp, typeof(kevent_t.tupleof) args)
+{
 	*kevp = kevent_t(args);
 }
 
-struct kevent_t {
+struct kevent_t
+{
 	uintptr_t	ident; /* identifier for this event */
 	short	filter; /* filter for event */
 	ushort	flags;
@@ -283,7 +296,8 @@ struct kevent_t {
 	void	*udata; /* opaque user data identifier */
 }
 
-enum {
+enum
+{
 	/* actions */
 	EV_ADD	= 0x0001, /* add event to kq (implies enable) */
 	EV_DELETE	= 0x0002, /* delete event from kq */
@@ -304,7 +318,8 @@ enum {
 	EV_ERROR	= 0x4000, /* error, data contains errno */
 }
 
-enum {
+enum
+{
 /*
 * data/hint flags/masks for EVFILT_USER, shared with userspace
 *

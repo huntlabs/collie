@@ -30,11 +30,13 @@ enum EVENT_POLL_SIZE = 1;
  @authors  Putao‘s Collie Team
  @date      2016.1
  */
-final class EpollLoop {
+final class EpollLoop
+{
 	/** 构造函数，构建一个epoll事件
 	 */
-	this () {
-		if ((_efd = epoll_create1(0)) < 0) {
+	this ()
+	{
+		if((_efd = epoll_create1(0)) < 0) {
 			errnoEnforce("epoll_create1 failed");
 		}
 		events =  colliedAllocator.makeArray!epoll_event(EVENT_POLL_SIZE);
@@ -44,7 +46,8 @@ final class EpollLoop {
 
 	/** 析构函数，释放epoll。
 	 */
-	~this () {
+	~this()
+	{
 		delEvent(_event);
 		.close(_efd);
 		_event = null;
@@ -55,23 +58,24 @@ final class EpollLoop {
 	 @param   socket = 添加到时间队列中的Channel对象，根据其type自动选择需要注册的事件。
 	 @return true 添加成功, false 添加失败，并把错误记录到日志中.
 	 */
-	bool addEvent (Channel socket) {
-		if (socket.isInValid()) {
+	bool addEvent(Channel socket)
+	{
+		if(socket.isInValid()) {
 			return false;
 		}
 		epoll_event  ev;
 		ev.data.ptr = cast(void *)socket;//socket.channelptr;
 		GC.setAttr(ev.data.ptr,GC.BlkAttr.NO_MOVE);
-		switch (socket.type) {
+		switch(socket.type) {
 			case CHANNEL_TYPE.TCP_Listener:
 			case CHANNEL_TYPE.SSL_Listener:
 				ev.events = 0 | EPOLLIN | EPOLLET;
 				break;
 			case CHANNEL_TYPE.Timer:
-			case CHANNEL_TYPE.Event :
+			case CHANNEL_TYPE.Event:
 				ev.events = 0 | EPOLLIN | EPOLLET;
 				break;
-			case CHANNEL_TYPE.TCP_Socket :
+			case CHANNEL_TYPE.TCP_Socket:
 			case CHANNEL_TYPE.SSL_Socket:
 				ev.events = 0 | EPOLLHUP | EPOLLERR | EPOLLIN |  EPOLLOUT  | EPOLLRDHUP | EPOLLET;//0 | EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLET;
 				break;
@@ -80,14 +84,13 @@ final class EpollLoop {
 		}
 
 		try {
-			if ((epoll_ctl(_efd, EPOLL_CTL_ADD, socket.fd, &ev)) != 0) {
+			if((epoll_ctl(_efd, EPOLL_CTL_ADD, socket.fd, &ev)) != 0) {
 				error("EPOLL_CTL_ADD fd :",socket.fd," failed with :",errno);
 				GC.clrAttr(ev.data.ptr,GC.BlkAttr.NO_MOVE);
 				return false;
 			}
 		} catch (ErrnoException e) {
-			if (e.errno != EEXIST)
-			{
+			if(e.errno != EEXIST) {
 				throw e;
 			}
 		}
@@ -100,12 +103,13 @@ final class EpollLoop {
 	 @param socket = 需要移除的Channel对象
 	 @return (true) 移除成功, (false) 移除失败，并把错误输出到控制台.
 	 */
-	bool delEvent (Channel socket) {
+	bool delEvent(Channel socket)
+	{
 		try {
-			if (!socket.isInValid()) {
+			if(!socket.isInValid()) {
 				//	int tfd = socket.fd;
 				epoll_event  ev;
-				if ((epoll_ctl(_efd, EPOLL_CTL_DEL, socket.fd, &ev)) != 0) {
+				if((epoll_ctl(_efd, EPOLL_CTL_DEL, socket.fd, &ev)) != 0) {
 					error("EPOLL_CTL_DEL erro! " ,socket.fd);
 					return false;
 				}
@@ -116,12 +120,10 @@ final class EpollLoop {
 			}
 			
 		} catch (ErrnoException e) {
-			if (e.errno != ENOENT) 
-			{
+			if(e.errno != ENOENT) {
 				throw e;
 			}
 		}
-
 		return true;
 	}
 
@@ -132,35 +134,37 @@ final class EpollLoop {
 	 *    @return 返回当前获取的事件的数量。
 	 */
 
-	void wait(int timeout) {
+	void wait(int timeout)
+	{
 		try {
 			int length = epoll_wait(_efd, events.ptr, EVENT_POLL_SIZE, timeout);
-			for (int i = 0; i < length; ++i) {
+			for(int i = 0; i < length; ++i) {
 				auto channelHandler = cast(Channel)(events[i].data.ptr);
 				assert(channelHandler);                
-				if (events[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
+				if(events[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
 					channelHandler.onClose();
 					return;
 				}
 				
-				if (events[i].events & EPOLLIN) {
+				if(events[i].events & EPOLLIN) {
 					channelHandler.onRead();
 				}
 				
-				if (events[i].events & EPOLLOUT) { //ET模式下，同时监听，每次epollin事件的时候总会带着epollout事件，这也是单线程监听一次监听多个有时不如每次注册的原因
+				if(events[i].events & EPOLLOUT) { //ET模式下，同时监听，每次epollin事件的时候总会带着epollout事件，这也是单线程监听一次监听多个有时不如每次注册的原因
 					channelHandler.onWrite();
 				}
 			}
 
 		} catch (ErrnoException e) {
-			if (e.errno != EINTR && e.errno != EAGAIN && e.errno != 4) {
+			if(e.errno != EINTR && e.errno != EAGAIN && e.errno != 4) {
 				throw e;
 			}
 		}
 		return;
 	}
 
-	void weakUp() {
+	void weakUp()
+	{
 		_event.write();
 	}
 
@@ -171,35 +175,41 @@ private:
 	EventChannel _event;
 }
 
-static this() {
+static this()
+{
 	import core.sys.posix.signal;
 	signal(SIGPIPE, SIG_IGN);
 }
 
-class EventChannel : Channel {
-	this() {
+class EventChannel : Channel
+{
+	this()
+	{
 		super(null);
 		type = CHANNEL_TYPE.Event;
 		fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
 	}
 
-	~this() {
+	~this()
+	{
 		if(!isInValid())
 			close(fd);
 	}
 	
-	void write() {
+	void write()
+	{
 		ulong ul = 1;
 		core.sys.posix.unistd.write(fd,&ul,ul.sizeof);
 	}
 
-	override void onRead() {
+	override void onRead()
+	{
 		ulong ul = 1;
 		size_t len = read(fd,&ul,ul.sizeof);
 	}
 
-	override void onWrite(){}
-	override void onClose(){}
+	override void onWrite() {}
+	override void onClose() {}
 };
 
 extern (C):
