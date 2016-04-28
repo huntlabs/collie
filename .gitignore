@@ -19,3 +19,6 @@ performance_test/*
 core
 callgrind.*
 .directory
+/collie-v2
+/trace.*
+__test__library__
