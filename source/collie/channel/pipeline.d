@@ -1,490 +1,339 @@
+﻿module collie.channel.pipeline;
 
-module collie.channel.pipeline;
+import std.typecons;
+import std.variant;
+import std.container.array;
+import std.functional;
 
-import core.sync.mutex;
+import collie.channel.handler;
+import collie.channel.handlercontext;
+import collie.socket;
 
-import collie.channel;
-import collie.handler.base;
+interface PipelineManager {
+	void deletePipeline(PipelineBase pipeline);
+	void refreshTimeout();
+};
 
-
-/** 
- * 事件系统产生和传递管理类。 
- * 每一级都可以拦截和产生新的时间向上传递。
- * 时间分为入和出，入为下层传递到上层，出为上层传递到下层。
- * 
- */
-
-string closeChannel(string pline, string handler)
+abstract class PipelineBase
 {
-	string str =  "{ scope auto mixins_event = new OutEventClose(" ~ pline ~ ", " ~ handler ~ ");
-	mixins_event.down(); }";
-	return str;
-}
+	this()
+	{
+	}
 
-string closeChannel(string event)
-{
-	string str =  " {scope auto mixins_event = new OutEventClose(" ~ event ~ ");
-	mixins_event.down(); }";
-	return str;
-}
+	@property final void pipelineManager(PipelineManager manager)
+	{
+		_manager = manager;
+	}
 
-string  writeChannel(string pline, string handler, string data)
-{
-	string str =  " {scope auto mixins_event = new OutEventTCPWrite(" ~ pline ~ ", " ~ handler ~ ");
-	mixins_event.data = " ~ data ~ ";
-	mixins_event.down(); }";
-	return str;
-}
+	@property final PipelineManager pipelineManager()
+	{
+		return _manager;
+	}
 
-string  writeChannel(string event, string data)
-{
-	string str =  " { scope auto mixins_event = new OutEventTCPWrite(" ~ event ~ ");
-	mixins_event.data = " ~ data ~ ";
-	mixins_event.down(); }";
-	return str;
-}
-
-class PiPeline
-{
-	@disable this();
-
-	this(Channel chan){
-		_channel = chan;
-		switch(_channel.type){
-			case CHANNEL_TYPE.TCP_Listener:
-			{
-				TCPListener listen = cast(TCPListener) _channel;
-				listen.setConnectHandler(&onNewTcp);
-			}
-				break;
-			case CHANNEL_TYPE.TCP_Socket:
-			{
-				auto sock = cast(TCPSocket) _channel;
-				sock.colsedHandler(&onClose);
-				sock.writeHandler(&onWrite);
-				sock.readHandler(&onRead);
-				sock.statusHandler(&onStatus);
-			}
-				break;
-				version(SSL) {
-					case CHANNEL_TYPE.SSL_Listener:
-					{
-						auto listen = cast(SSLlistener) _channel;
-						listen.setConnectHandler(&onNewSSL);
-					}
-					break;
-					case CHANNEL_TYPE.SSL_Socket:
-					{
-						auto sock = cast(SSLSocket) _channel;
-						sock.colsedHandler(&onClose);
-						sock.writeHandler(&onWrite);
-						sock.readHandler(&onRead);
-						sock.statusHandler(&onStatus);
-					}
-					break;
-				}
-			case CHANNEL_TYPE.Timer :
-			{
-				auto timer = cast(Timer) _channel;
-				timer.setCallBack(&onTimeOut);
-			}
-				break;
-			default:
-				break;
-
+	final void deletePipeline()
+	{
+		if(_manager) {
+			_manager.deletePipeline(this);
 		}
 	}
 
-	~this(){
-		//destroy(_out);
-		_out = null;
-	//	destroy(_in);
-		_in = null;
-		_channel = null;
+	@property final void transport(AsyncTransport transport)
+	{
+		_transport = transport;
 	}
 
-	void pushHandle(Handler hand){
-		_in ~= hand;
-		_out ~= hand;
+	@property final transport(){return _transport;}
+
+	
+	//	@property transportInfo(AsyncTransport tcpInfo){_transportInfo = tcpInfo};
+	//	@property transportInfo(){return _transportInfo;};
+
+	
+	final PipelineBase addBack(H)(H handler)
+	{
+		return addHelper(new ContextType!(H)(this,handler),false);
 	}
 
-	void pushInhandle(InHander handle){
-		_in ~= handle;
+	final PipelineBase addFront(H)(H handler)
+	{
+		return addHelper(new ContextType!(H)(this,handler),true);
 	}
 
-	void pushOutHandle(OutHander handle){
-		_out ~= handle;
+	final PipelineBase remove(H)(H handler)
+	{
+		return removeHelper!H(handler,true);
 	}
 
-	@property const(Channel) channel() const{
-		return _channel;
+	final PipelineBase remove(H)()
+	{
+		return removeHelper!H(null, false);
 	}
 
-	@property Channel channel(){
-		return _channel;
-	}
-
-	bool isVaild() const {
-		return (_out.length > 0) || (_in.length > 0);
-	}
-
-package:
-	void upEvent(InEvent event){
-		trace("up Event level:",event.level);
-		if (event.level >= _in.length){
-			return;
+	final PipelineBase removeFront()
+	{
+		if (_ctxs.empty()) {
+			throw new Exception("No handlers in pipeline");
 		}
-		_in[event.level].inEvent(event);
+		removeAt(0);
+		return this;
 	}
-	void downEvent(OutEvent event) {
-		trace("down Event level:",event.level);
-		if(event.level >= _out.length || event.level  < 0)  return;
-		if(event.level == 0){
-			if(event.type == OUTEVENT_TCP_WRITE){
-				scope auto ev = cast(OutEventTCPWrite)event;
-				bool suess = false;
-				switch (channel.type){
-					case CHANNEL_TYPE.TCP_Socket:
-					{
-						auto tcp = cast(TCPSocket) channel;
-						trace("write tcp:",cast(string)ev.data);
-						suess = tcp.write(ev.data);
-					}
-						break;
-					version(SSL){
-						case CHANNEL_TYPE.SSL_Socket:
-						{
-							auto ssl = cast(SSLSocket) channel;
-							trace("write ssl:",cast(string)ev.data);
-							suess = ssl.write(ev.data);
-						}
-							break;
-					}
-					default:
-						break;
-				}
-				if(!suess){
-					trace("write data erro:",ev.data.length);
-					scope auto inEv = new INEventWrite(this);
-					inEv.data = ev.data;
-					inEv.wsize = 0;
-					inEv.up();
-				}
-			} else if (event.type == OUTEVENT_UDP_WRITE && channel.type == CHANNEL_TYPE.UDP_Socket) {
 
-			} else if (event.type == OUTEVENT_CLOSE) {
-				switch (channel.type){
-					case CHANNEL_TYPE.TCP_Socket:
-					{
-						auto tcp = cast(TCPSocket) channel;
-						tcp.close();
-					}
-						break;
-					case CHANNEL_TYPE.Timer:
-					{
-						auto tm = cast(Timer) channel;
-						tm.kill();
-					}
-						break;
-					case CHANNEL_TYPE.TCP_Listener:
-					{
-						auto tl = cast(TCPListener) channel;
-						tl.kill();
-					}
-						break;
-					case CHANNEL_TYPE.UDP_Socket:
-					{
-					}
-						break;
-						version(SSL){
-							case CHANNEL_TYPE.SSL_Socket:
-							{
-								auto tcp = cast(SSLSocket) channel;
-								tcp.close();
-							}
-							break;
-							case CHANNEL_TYPE.SSL_Listener:
-							{
-								auto tl = cast(SSLlistener) channel;
-								tl.kill();
-							}
-							break;
-						}
-
-					default:
-						break;
-				}
-			}
-			return ;
+	final PipelineBase removeBack()
+	{
+		if (_ctxs.empty()) {
+			throw new Exception("No handlers in pipeline");
 		}
-		_out[event.level -1 ].outEvent(event);
+		removeAt(_ctxs.length - 1);
+		return this;
+	}
+
+	final auto getHandler(H)(int i)
+	{
+		getContext!H(i).handler;
+	}
+
+	final auto getHandler(H)()
+	{
+		auto ctx = getContext!H();
+		if(ctx) return ctx.handler;
+		return null;
+	}
+
+	auto getContext(H)(int i)
+	{
+		auto ctx = cast(ContextType!H)(_ctxs[i]);
+		assert(ctx);
+		return ctx;
+	}
+
+	auto getContext(H)()
+	{
+		foreach(tctx;_ctxs){
+			auto ctx = cast(ContextType!H)(tctx);
+			if(ctx) return ctx;
+		}
+		return null;
 	}
 
 	
-	void onRead(ubyte[] data){
-		trace("tcp on read:", cast(string)data);
-		scope auto ev = new INEventTCPRead(this);
-		ev.data = data;
-		ev.up();
-	}
-	void onClose(ubyte[][] buffers)
+	// If one of the handlers owns the pipeline itself, use setOwner to ensure
+	// that the pipeline doesn't try to detach the handler during destruction,
+	// lest destruction ordering issues occur.
+	// See thrift/lib/cpp2/async/Cpp2Channel.cpp for an example
+	final bool setOwner(H)(H handler)
 	{
-		scope auto ev = new InEventTCPClose(this);
-		ev.buffers = buffers;
-		ev.up();
-		version(TCP_POOL) {
-			if(!TCPPool.full) {
-				TCPPool.enQueue(cast(TCPSocket)_channel);
+		foreach (ctx ; _ctxs) {
+			auto ctxImpl = cast(ContextType!H)(ctx);
+			if (ctxImpl && ctxImpl.getHandler() == handler) {
+				owner_ = ctx;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void finalize();
+
+	final void detachHandlers()
+	{
+		foreach (ctx ; _ctxs) {
+			if (ctx != _owner) {
+				ctx.detachPipeline();
 			}
 		}
 	}
-	void onWrite(ubyte[] data,uint wsize)
+
+protected :
+	Array!PipelineContext _ctxs;
+	Array!PipelineContext _inCtxs;
+	Array!PipelineContext _outCtxs;
+
+	bool _isFinalize = true;
+private :
+	PipelineManager _manager = null;
+	AsyncTransport _transport;
+	//	AsynTransportInfo _transportInfo;
+	PipelineContext _owner;
+	
+	final PipelineBase addHelper(Context)(Context ctx, bool front)
 	{
-		scope auto ev = new INEventWrite(this);
-		ev.data = data;
-		ev.wsize = wsize;
-		ev.up();
+		_isFinalize = false;
+		front ? _ctxs.insertBefore(_ctxs[0..0],ctx) : _ctxs.insertBack(ctx);
+		if (Context.dir == HandlerDir.BOTH || Context.dir == HandlerDir.IN) {
+			front ? _inCtxs.insertBefore(_inCtxs[0..0],ctx) : _inCtxs.insertBack(ctx);
+		}
+		if (Context.dir == HandlerDir.BOTH || Context.dir == HandlerDir.OUT) {
+			front ? _outCtxs.insertBefore(_outCtxs[0..0],ctx) : _outCtxs.insertBack(ctx);
+		}
+		return this;
 	}
-	void onStatus(SOCKET_STATUS sfrom,SOCKET_STATUS sto)
+
+	final PipelineBase removeHelper(H)(H handler, bool checkEqual) 
 	{
-		scope auto ev = new INEventSocketStatusChanged(this);
-		ev.status_from = sfrom;
-		ev.status_to = sto;
-		ev.up();
+		bool removed = false;
+
+		for (int i = 0; i < _ctxs.length; ++i) {
+			auto ctx = cast(ContextType!H)_ctxs[i];
+			if(ctx && (!checkEqual || ctx.getHandler() == handler)) {
+				removeAt(site);
+				removed = true;
+				--i;
+				break;
+			}
+		}
+		if (!removed) {
+			throw new Exception("No such handler in pipeline");
+		}
+
+		return *this;
 	}
-	void onTimeOut()
+
+	final void removeAt(size_t site)
 	{
-		scope auto ev = new INEventTimeOut(this);
-		ev.up();
-	}
-	void onNewTcp(TCPSocket socket)
-	{
-		scope auto ev = new INEventNewConnect(this);
-		ev.sock = socket;
-		ev.up();
-	}
-	version(SSL) {
-		void onNewSSL(SSLSocket socket)
-		{
-			scope auto ev = new INEventNewConnect(this);
-			ev.sock = socket;
-			ev.up();
+		_isFinalize = false;
+		PipelineContext rctx = _ctxs[site];
+		rctx.detachPipeline();
+		_ctxs.linearRemove(_ctxs[site..(site + 1)]);
+		
+		import std.algorithm.searching;
+		
+		const auto dir = rctx.getDirection();
+		if (dir == HandlerDir.BOTH || dir == HandlerDir.IN) {
+			auto rm = find(_inCtxs[0..$],rctx);
+			_inCtxs.linearRemove(rm[0..1]);
+		}
+		
+		if (dir == HandlerDir.BOTH || dir == HandlerDir.OUT) {
+			auto rm = find(_outCtxs[0..$],rctx);
+			_outCtxs.linearRemove(rm[0..1]);
 		}
 	}
-
-	uint getOutLevel(OutHandle ou) const {
-		uint size = cast(uint)_out.length;
-		if(ou is null) return size;
-		while (size > 0) {
-			if(_out[size - 1] == ou) return size;
-			--size;
-		}
-		return 0;
-	}
-private:
-	OutHandle[] _out;
-	InHandle[] _in;
-	Channel _channel;
-};
-
-scope abstract class Event
-{
-	@disable this();
-	@property uint type() {return _type;}
-	@property const(PiPeline) pipeline() const {return _pipeline;}
-package:
-	this(const PiPeline pip,uint ty){_type = ty;_pipeline = pip; }
-private:
-	uint _type;
-	const PiPeline _pipeline;
-};
-
-abstract class InEvent: Event
-{
-	this(const InEvent ev,uint ty)
-	{super(ev.pipeline,ty);level = ev.level;}
-
-	final void up(){
-		++level;
-		auto pip = cast(PiPeline) this.pipeline;
-		pip.upEvent(this);
-	}
-package:
-	this(const PiPeline pip,uint ty){super(pip,ty);}
-
-private:
-	int level = -1;
-};
-
-abstract class OutEvent: Event
-{
-	this(const OutEvent ev,uint ty)
-	{super(ev.pipeline,ty);level = ev.level;}
-	this(const PiPeline pip,uint ty)
-	{super(pip,ty);level = pip.getOutLevel(null);}
-	this(const PiPeline pip,uint ty,OutHandle hand){
-		super(pip,ty);
-		level = pip.getOutLevel(hand);
-	}
-
-	final void down(){
-		--level;
-		auto pip = cast(PiPeline) this.pipeline;
-		pip.downEvent(this);
-	}
-private:
-	int level = -1;
-};
-
-enum {
-	INEVENT_TCP_CLOSED = 0,
-	INEVENT_TCP_READ = 1,
-	INEVENT_UDP_READ = 2,
-	INEVENT_WRITE = 3,
-	INEVENT_STATUS_CHANGED = 4,
-	INEVENT_TIMEROUT = 5,
-	INEVENT_NEWCONNECT = 6,
-	//INEVENT_TCP_CLOSED = 7,
-	OUTEVENT_TCP_WRITE = 8,
-	OUTEVENT_UDP_WRITE = 9,
-	OUTEVENT_CLOSE = 10
-	//	INEVENT_WRITE_EORR = 11,
-};
-
-/*final class INEventClosed : InEvent
- {
- package:
- this(const PiPeline pip){super(pip,INEVENT_CLOSED);}
- }*/
-
-final class INEventTCPRead : InEvent
-{
-	ubyte[] data;
-package:
-	this(const PiPeline pip){super(pip,INEVENT_TCP_READ);}
-}
-
-//final class INEventUDPRead : InEvent
-//{
-//}
-
-final class INEventWrite : InEvent
-{
-	ubyte[] data;
-	uint wsize;
-package:
-	this(const PiPeline pip){super(pip,INEVENT_WRITE);}
 }
 
 /*
- final class INEventWriteErro : InEvent
- {
- ubyte[] data;
- package:
- this(const PiPeline pip){super(pip,INEVENT_WRITE_EORR);}
- }*/
+ * R is the inbound type, i.e. inbound calls start with pipeline.read(R)
+ * W is the outbound type, i.e. outbound calls start with pipeline.write(W)
+ *
+ * Use Unit for one of the types if your pipeline is unidirectional.
+ * If R is void, read(),  will be disabled.
+ * If W is Unit, write() and close() will be disabled.
+ */
 
-
-final class INEventSocketStatusChanged : InEvent
+final class Pipeline(R, W = void) : PipelineBase 
 {
-	SOCKET_STATUS status_from;
-	SOCKET_STATUS status_to;
-package:
-	this(const PiPeline pip){super(pip,INEVENT_STATUS_CHANGED);}
-}
+	alias Pipeline!(R,W) Ptr;
 
-final class INEventTimeOut : InEvent
-{
-package:
-	this(const PiPeline pip){super(pip,INEVENT_TIMEROUT);}
-}
-
-final class INEventNewConnect : InEvent
-{
-	Channel sock;
-package:
-	this(const PiPeline pip){super(pip,INEVENT_NEWCONNECT);}
-}
-
-final class InEventTCPClose : InEvent
-{
-	ubyte[][] buffers = null;
-package:
-	this(const PiPeline pip){super(pip,INEVENT_TCP_CLOSED);}
-}
-
-
-final class OutEventTCPWrite : OutEvent
-{
-	this(const OutEvent ev) {super(ev,OUTEVENT_TCP_WRITE);}
-
-	this(const PiPeline pip){super(pip,OUTEVENT_TCP_WRITE);}
-
-	this(const PiPeline pip,OutHandle hand){
-		super(pip,OUTEVENT_TCP_WRITE,hand);
-	}
-	ubyte[] data;
-}
-
-final class OutEventUDPWrite : OutEvent
-{
-	this(const OutEvent ev){super(ev,OUTEVENT_UDP_WRITE);}
-
-	this(const PiPeline pip){super(pip,OUTEVENT_UDP_WRITE);}
-
-	this(const PiPeline pip,OutHandle hand){
-		super(pip,OUTEVENT_UDP_WRITE,hand);
-	}
-	ubyte[] data;
-	Address addr;
-}
-
-final class OutEventClose : OutEvent
-{
-	this(const OutEvent ev){super(ev,OUTEVENT_CLOSE);}
-
-	this(const PiPeline pip){super(pip,OUTEVENT_CLOSE);}
-
-	this(const PiPeline pip,OutHandle hand){
-		super(pip,OUTEVENT_CLOSE,hand);
-	}
-}
-
-private const uint eventStartType = 100;
-private __gshared uint eventTypeNum ;
-private __gshared Mutex m_mutex;
-
-shared static this()
-{
-	m_mutex = new Mutex();
-}
-
-uint getEventType()
-{
-	uint type;
-	synchronized (m_mutex) {
-		++eventTypeNum;
-		type = eventTypeNum + eventStartType;
-	}
-	return type;
-}
-
-
-unittest {//test scope calss数据传递方式，值传还是址传
-	import std.stdio;
-
-	void  fun1() 
-	{
-		scope auto c2 = new MyClass;
-		c2.tid = 1;
-		writeln("the class tid = ", c2.tid); //输出1
-		fun2(c2);
-		writeln("the fun2 after class tid = ", c2.tid); //输出5,是址传
-	}
 	
-	void fun2(MyClass c2)
+	static Ptr create()
 	{
-		c2.tid = 5;
+		return new Ptr();
 	}
 
+	static if(!is(R == void)) {
+		void read(R msg)
+		{
+			if(_front)
+				_front.read(forward!(msg));
+			else
+				throw new Exception("read(): no outbound handler in Pipeline");
+		}
+	}
+
+	void transportActive()
+	{
+		if (_front) {
+			_front.transportActive();
+		}
+	}
+
+	void transportInactive()
+	{
+		if (_front) {
+			_front.transportActive();
+		}
+	}
+
+	static if(!is(W == void)) {
+		alias TheCallBack = void delegate(W,uint);
+		void write(W msg,TheCallBack cback = null)
+		{
+			if(_back)
+				_back.write(forward!(msg,cback));
+			else
+				throw new Exception("close(): no outbound handler in Pipeline");
+		}
+
+		void close()
+		{
+			if(_back)
+				_back.close();
+			else
+				throw new Exception("close(): no outbound handler in Pipeline");
+		}
+	}
+
+	override void finalize()
+	{
+		if(_isFinalize) return;
+		_front = null;
+		static if(!is(R == void)) {
+			if (!_inCtxs.empty()) {
+				_front = cast(InboundLink!R)(_inCtxs[0]);
+				for (size_t i = 0; i < _inCtxs.length - 1; i++) {
+					_inCtxs[i].setNextIn(_inCtxs[i+1]);
+				}
+				_inCtxs[_inCtxs.length - 1].setNextIn(null);
+			}
+		}
+
+		_back = null;
+		static if(!is(W == void)) {
+
+			if (!_outCtxs.empty()) {
+				_back = cast(OutboundLink!W)(_outCtxs[_outCtxs.length - 1]);
+				for (size_t i = _outCtxs.length - 1; i > 0; --i) {
+					_outCtxs[i].setNextOut(_outCtxs[i-1]);
+				}
+				_outCtxs[0].setNextOut(null);
+			}
+		}
+		
+		for (int i = 0 ; i <  _ctxs.length(); ++i) {
+			_ctxs[i].attachPipeline();
+		}
+		
+		if(_front is null && _back is null) throw new Exception("No Handler in the Pipeline");
+		
+		_isFinalize = true;
+	}
+
+protected :
+	this(){};
+	this(bool isStatic){_isStatic = isStatic;};
+private :
+	bool _isStatic = false;
+
+	static if(!is(R == void)) {
+		InboundLink!R  _front = null;
+	} else {
+		Object _front = null;
+	}
+	static if(!is(W == void)) {
+		OutboundLink!W _back = null;
+	}else {
+		Object _back = null;
+	}
 }
+
+abstract class PipelineFactory(PipeLine)
+{
+	PipeLine newPipeline(TCPSocket transport);
+}
+
+
+alias Pipeline!(Socket,void) AcceptPipeline;
+abstract class AcceptPipelineFactory
+{
+	AcceptPipeline newPipeline(Accept acceptor);
+}
+
