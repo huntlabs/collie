@@ -42,10 +42,35 @@ final class ServerBootStrap(PipeLine)
 		_rusePort = ruse;
 		return this;
 	}
+	
+        /**
+            The Value will be 0 or 5s ~ 1800s.
+            0 is disable, 
+            if(value < 5) value = 5;
+            if(value > 3000) value = 1800;
+        */
+	auto heartbeatTimeOut(uint timeOut)
+	{
+            _timeOut = timeOut;
+            _timeOut = _timeOut < 5 ? 5 : _timeOut;
+            _timeOut = _timeOut > 1800 ? 1800 : _timeOut;
+            
+            return this;
+	}
 
 	void bind(Address addr)
 	{
 		_address = addr;
+	}
+	
+	void bind(ushort port)
+	{
+		_address = new InternetAddress(port);
+	}
+	
+	void bind(string ip,ushort port)
+	{
+            _address = new InternetAddress(ip,port);
 	}
 
 	void stop()
@@ -72,13 +97,21 @@ final class ServerBootStrap(PipeLine)
 	{
 		if(_runing) return;
 		if(_address is null || _childPipelineFactory is null) return;
+		uint wheel,time;
+		bool beat = getTimeWheelConfig(wheel,time);
 		_mainAccept = creatorAcceptor(_loop);
 		_mainAccept.initialize();
+		if(beat) {
+                    _mainAccept.startTimingWhile(wheel,time);
+		}
 		if(_group) {
                         foreach(loop;_group){
                             auto acceptor =  creatorAcceptor(loop);
                             acceptor.initialize();
                             _serverlist ~= acceptor;
+                            if(beat) {
+                                acceptor.startTimingWhile(wheel,time);
+                            }
                         }
 			_group.start();
 		}
@@ -99,6 +132,28 @@ protected:
 			pipe = AcceptPipeline.create();
 		return new ServerAceptor!(PipeLine)(accept,pipe,_childPipelineFactory);
 	}
+	
+	bool getTimeWheelConfig(out uint whileSize,out uint time)
+	{
+            if(_timeOut == 0) return false;
+            if(_timeOut <= 40 ) {
+                whileSize = 40;
+                time = _timeOut * 1000 / 50;
+            } else if(_timeOut <= 120) {
+                whileSize = 60;
+                time = _timeOut * 1000 / 60;
+            } else if(_timeOut <= 600) {
+                whileSize = 100;
+                time = _timeOut * 1000 / 100;
+            } else if(_timeOut < 1000) {
+                whileSize = 150;
+                time = _timeOut * 1000 / 150;
+            } else {
+                whileSize = 180;
+                time = _timeOut * 1000 / 180;
+            }
+            return true;
+	}
 
 private:
 	AcceptPipelineFactory  _acceptPipelineFactory;
@@ -112,17 +167,14 @@ private:
 
 	bool _runing = false;
 	bool _rusePort = true;
+	uint _timeOut = 0;
 	Address _address;
 }
 
 private :
 
 import std.functional;
-
-bool serverAceptorCmp(T)(inout T a, T b)
-{
-	return a.opCmp(b);
-}
+import collie.utils.timingwheel;
 
 final class ServerAceptor(PipeLine) : InboundHandler!(Socket)
 {
@@ -159,6 +211,7 @@ final class ServerAceptor(PipeLine) : InboundHandler!(Socket)
 		//_list.stableInsert(con);
 		_list[con] = 0;
 		con.initialize();
+		if(_wheel) _wheel.addNewTimer(con);
 	}
 	
 	override void transportActive(Context ctx)
@@ -170,7 +223,8 @@ final class ServerAceptor(PipeLine) : InboundHandler!(Socket)
 	{
 		_accept.close();
 		foreach (con , value; _list){
-			con.close();
+                        con.close();
+                        con.stop();
 		}
 		_list.clear();
 		_accept.eventLoop.stop();
@@ -178,6 +232,7 @@ final class ServerAceptor(PipeLine) : InboundHandler!(Socket)
 	
 	void remove(ServerConnection!PipeLine conn)
 	{
+                conn.stop();
 		_list.remove(conn);
 	}
 	
@@ -188,15 +243,35 @@ final class ServerAceptor(PipeLine) : InboundHandler!(Socket)
 
 	@property acceptor(){return _accept;}
 	
+	
+	
+	void startTimingWhile(uint whileSize,uint time)
+	{
+            if(_timer) return;
+            _timer = new Timer(_accept.eventLoop);
+            _timer.setCallBack(&doWheel);
+            _wheel = new TimingWheel(whileSize);
+             _timer.start(time);
+	}
+	
+protected:
+        void doWheel()
+        {
+            if(_wheel)
+                _wheel.prevWheel();
+        }
+
 private:
 	int[ServerConnection!PipeLine] _list;
 	//RedBlackTree!(ServerConnection!PipeLine) _list;
 	Accept _accept;
+        Timer _timer;
+        TimingWheel  _wheel;
 	AcceptPipeline _pipe;
 	PipelineFactory!PipeLine _pipeFactory;
 }
 
-final class ServerConnection(PipeLine) : PipelineManager
+final class ServerConnection(PipeLine) : WheelTimer,PipelineManager 
 {
 	this(PipeLine pipe)
 	{
@@ -233,8 +308,14 @@ final class ServerConnection(PipeLine) : PipelineManager
 	}
 	
 	override void refreshTimeout()
-	{}
+	{
+            rest();
+	}
 
+	override void onTimeOut() nothrow
+	{
+            try{ _pipe.timeOut(); }catch{}
+	}
 private:
 	ServerAceptor!PipeLine _manger;
 	PipeLine _pipe;

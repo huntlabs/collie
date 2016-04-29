@@ -229,48 +229,66 @@ final class Pipeline(R, W = void) : PipelineBase
 		return new Ptr();
 	}
 
-	static if(!is(R == void)) {
-		void read(R msg)
-		{
-			if(_front)
-				_front.read(forward!(msg));
-			else
-				throw new Exception("read(): no outbound handler in Pipeline");
-		}
-	}
+        void read(R msg)
+        {
+            static if(!is(R == void)) {
+                if(_front)
+                        _front.read(forward!(msg));
+                else
+                        throw new Exception("read(): no outbound handler in Pipeline");
+            }
+        }
+        
+        void timeOut()
+        {
+            static if(!is(R == void)) {
+                if(_front)
+                        _front.timeOut();
+                else
+                        throw new Exception("timeOut(): no outbound handler in Pipeline");
+            }
+        }
 
 	void transportActive()
 	{
+            static if(!is(R == void)) {
 		if (_front) {
 			_front.transportActive();
 		}
+            }
 	}
 
 	void transportInactive()
 	{
+            static if(!is(R == void)) {
 		if (_front) {
 			_front.transportActive();
 		}
+            }
 	}
 
 	static if(!is(W == void)) {
-		alias TheCallBack = void delegate(W,uint);
-		void write(W msg,TheCallBack cback = null)
-		{
-			if(_back)
-				_back.write(forward!(msg,cback));
-			else
-				throw new Exception("close(): no outbound handler in Pipeline");
-		}
+            alias TheCallBack = void delegate(W,uint);
+            void write(W msg,TheCallBack cback = null)
+            {
+               
+                if(_back)
+                        _back.write(forward!(msg,cback));
+                else
+                        throw new Exception("close(): no outbound handler in Pipeline");
+            }
+        }
 
-		void close()
-		{
-			if(_back)
-				_back.close();
-			else
-				throw new Exception("close(): no outbound handler in Pipeline");
-		}
-	}
+        void close()
+        {
+            static if(!is(W == void)) {
+                if(_back)
+                        _back.close();
+                else
+                        throw new Exception("close(): no outbound handler in Pipeline");
+            }
+        }
+        
 
 	override void finalize()
 	{
@@ -318,6 +336,7 @@ private :
 	} else {
 		Object _front = null;
 	}
+	
 	static if(!is(W == void)) {
 		OutboundLink!W _back = null;
 	}else {

@@ -13,6 +13,8 @@ interface HandlerContext(In, Out)
 	alias TheCallBack = void delegate(Out,uint);
 
 	void fireRead(In msg);
+	
+	void fireTimeOut();
 
 	void fireTransportActive();
 	void fireTransportInactive();
@@ -29,6 +31,8 @@ interface HandlerContext(In, Out)
 interface InboundHandlerContext(In)
 {
 	void fireRead(In msg);
+	void fireTimeOut();
+
 	void fireTransportActive();
 	void fireTransportInactive();
 	
@@ -40,7 +44,6 @@ interface InboundHandlerContext(In)
 
 interface OutboundHandlerContext(Out)
 {
-	//TODO
 	void fireWrite(Out msg);
 	void fireClose();
 	
@@ -169,15 +172,22 @@ mixin template ReadContextImpl()
 		}
 	}
 	
+	override void fireTimeOut()
+	{
+            if (this._nextIn) {
+                    this._nextIn.timeOut();
+            }
+	}
 	
-	
-	override void fireTransportActive()  {
+	override void fireTransportActive()  
+	{
 		if (this._nextIn) {
 			this._nextIn.transportActive();
 		}
 	}
 	
-	override void fireTransportInactive()  {
+	override void fireTransportInactive()  
+	{
 		if (this._nextIn) {
 			this._nextIn.transportInactive();
 		}
@@ -185,16 +195,23 @@ mixin template ReadContextImpl()
 
 
 	// InboundLink overrides
-	override void read(Rin msg)  {
+	override void read(Rin msg)  
+	{
 		_handler.read(this, forward!(msg));
 	}
 	
+	override void timeOut()
+	{
+            this._handler.timeOut(this);
+	}
 	
-	override void transportActive()  {
+	override void transportActive()  
+	{
 		this._handler.transportActive(this);
 	}
 	
-	override void transportInactive()  {
+	override void transportInactive()  
+	{
 		_handler.transportInactive(this);
 	}
 }

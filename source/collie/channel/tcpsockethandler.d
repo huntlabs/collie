@@ -48,7 +48,9 @@ protected:
 
 	void readCallBack(UniqueBuffer buf)
 	{
-		getContext().fireRead(buf);
+                auto ctx = getContext();
+                ctx.pipeline.pipelineManager.refreshTimeout();
+		ctx.fireRead(buf);
 	}
 
 private:

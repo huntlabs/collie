@@ -27,7 +27,7 @@ final class Timer : EventCallInterface
        }
     }
 
-    @property bool isActive() {return _event != null; }
+    @property bool isActive() {return _event.isActive; }
 
     void setCallBack(CallBack cback){_callBack = cback;}
     
@@ -39,7 +39,7 @@ final class Timer : EventCallInterface
         if(isActive() || msesc < 2) return false;
         
         _event.fd = cast(socket_t)timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC|TFD_NONBLOCK);
-        
+
         itimerspec its ;
         ulong sec,nsec ;
         sec = msesc / 1000 ;

@@ -27,6 +27,11 @@ public:
 	{
 		writeln("writed data : ", cast(string)data, "   the length is ",len);
 	}
+	
+	override void timeOut(Context ctx)
+	{
+                writeln("Sever beat time Out!");
+	}
 }
 
 class EchoPipelineFactory : PipelineFactory!EchoPipeline
@@ -45,8 +50,7 @@ public:
 void main()
 {
 	ser  = new ServerBootStrap!EchoPipeline();
-	ser.childPipeline(new EchoPipelineFactory()).bind(new InternetAddress("0.0.0.0",8094));
-	ser.group(new EventLoopGroup);
+	ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(10).group(new EventLoopGroup).bind(8094);
 	ser.waitForStop();
 
 	writeln("APP Stop!");

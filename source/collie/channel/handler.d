@@ -44,7 +44,12 @@ abstract class Handler(Rin, Rout = Rin,Win = Rout ,Wout = Rin)
 	static enum dir = HandlerDir.BOTH;
 	
 	void read(Context ctx, Rin msg);
-
+	
+	void timeOut(Context ctx)
+	{
+                ctx.fireTimeOut();
+	}
+	
 	void transportActive(Context ctx)
 	{
 		ctx.fireTransportActive();
@@ -75,11 +80,18 @@ public:
 	void read(Context ctx, Rin msg);
 
 
-	void transportActive(Context ctx) {
+	void timeOut(Context ctx)
+	{
+                ctx.fireTimeOut();
+	}
+	
+	void transportActive(Context ctx) 
+	{
 		ctx.fireTransportActive();
 	}
 
-	void transportInactive(Context ctx) {
+	void transportInactive(Context ctx) 
+	{
 		ctx.fireTransportInactive();
 	}
 
@@ -101,7 +113,8 @@ public:
 	
 	void write(Context ctx, Win msg, TheCallBack cback = null);
 
-	void close(Context ctx) {
+	void close(Context ctx) 
+	{
 		return ctx.fireClose();
 	}
 }
@@ -150,6 +163,7 @@ package:
 interface InboundLink(In) {
 public:
 	void read(In msg);
+	void timeOut();
 	void transportActive();
 	void transportInactive();
 }
