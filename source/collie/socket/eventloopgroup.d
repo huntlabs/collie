@@ -6,29 +6,33 @@ import std.container.array;
 
 import collie.socket.eventloop;
 import collie.socket.common;
+import collie.utils.functional;
+
+
 
 class EventLoopGroup
 {
-	this(uint size = (totalCPUs - 1))
+	this(uint size = (totalCPUs - 1),int waitTime = 2000)
 	{
             foreach(i;0..size){
-                _loops.insertBack(new EventLoop);
+                auto loop = new EventGroupLoop(new EventLoop);
+                loop.waiteTime = waitTime;
+                _loops[loop] = new Thread(&loop.start);
             }
 	}
 	
 	void start()
 	{
-            for(int i; i < _loops.length; ++i){
-                auto loop = _loops[i];
-                _group.create(cast(CallBack)(&loop.run));
+            foreach( ref t; _loops.values ){
+                t.start();
             }
             _started = true;
 	}
 	
 	void stop()
 	{
-            for(int i; i < _loops.length; ++i){
-                _loops[i].stop();
+            foreach( ref loop; _loops.keys ){
+                loop.stop();
             }
             _started = false;
             wait();
@@ -36,11 +40,14 @@ class EventLoopGroup
 
 	@property length(){ return _loops.length;}
 	
-	void addEventLoop(EventLoop loop)
+	void addEventLoop(EventLoop lop,int waitTime = 2000)
 	{
-            _loops.insertBack(loop);
+            auto loop = new EventGroupLoop(lop);
+            loop.waiteTime = waitTime;
+            auto th = new Thread(&loop.start);
+            _loops[loop] = th;
             if(_started)
-                _group.create(cast(CallBack)(&loop.run));
+                th.start();
 	}
 	
 	void post(uint index, CallBack cback)
@@ -55,17 +62,46 @@ class EventLoopGroup
 	
 	EventLoop at(size_t index)
 	{
-            auto i = index  / cast(uint)_loops.length;
-            return _loops[i];
+            auto loops =  _loops.keys ;
+            auto i = index  % cast(size_t)loops.length;
+            return loops[i].eventLoop;
 	}
 	
 	void wait()
 	{
-            _group.joinAll();
+            foreach( ref t; _loops.values ){
+                t.join(false);
+            }
 	}
-
+    
 private :
-	bool _started;
-	Array!(EventLoop) _loops;
-	ThreadGroup _group;
+	bool _started; 
+	Thread[EventGroupLoop] _loops;
+}
+
+
+private:
+
+class EventGroupLoop
+{
+    this(EventLoop loop)
+    {
+        _loop = loop;
+    }
+    
+    void start()
+    {
+        _loop.run();
+    }
+    
+    alias eventLoop this;
+    
+    @property eventLoop(){return _loop;}
+    
+    @property waitTime() {return _waitTime;}
+    
+    @property waiteTime(int time){_waitTime = time;}
+private:
+    EventLoop _loop;
+    int _waitTime = 5000;
 }

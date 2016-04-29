@@ -46,7 +46,7 @@ void main()
 {
 	ser  = new ServerBootStrap!EchoPipeline();
 	ser.childPipeline(new EchoPipelineFactory()).bind(new InternetAddress("0.0.0.0",8094));
-	//ser.group(new EventLoopGroup);
+	ser.group(new EventLoopGroup);
 	ser.waitForStop();
 
 	writeln("APP Stop!");
