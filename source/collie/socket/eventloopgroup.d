@@ -2,7 +2,6 @@
 
 import core.thread;
 import std.parallelism;
-import std.container.array;
 
 import collie.socket.eventloop;
 import collie.socket.common;
