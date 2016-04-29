@@ -6,6 +6,7 @@ It's like facebook/Wangle smooshed together, but written in D programing languag
 ## TODO
 - _timer and  Timing Wheel_ (__Complete ,but Need More Test__)
 - SSL suport
+- add Client support
 - add codec 
 - MAC and BSD suport (kqueue)
 - RPC
