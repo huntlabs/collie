@@ -38,7 +38,8 @@ enum AsynType
     ACCEPT ,
     TCP ,
     UDP,
-    EVENT
+    EVENT,
+    TIMER
 }
 
 interface EventCallInterface
@@ -53,22 +54,31 @@ struct AsyncEvent
 {
     import std.socket;
 
-    this(AsynType type,EventCallInterface obj,socket_t fd,bool enread = true, bool enwrite = false, bool etMode = false)
+    this(AsynType type,EventCallInterface obj,socket_t fd = socket_t.init,
+        bool enread = true, bool enwrite = false, bool etMode = false, bool oneShot = false)
     {
-	this.type = type;
-	this.obj = obj;
+	this._type = type;
+	this._obj = obj;
 	this.fd = fd;
 	this.enRead = enread;
 	this.enWrite = enwrite;
 	this.etMode = etMode;
+	this.oneShot = oneShot;
     }
 
+    @property  obj(){return _obj;}
+    @property  type() {return _type;}
+    
     socket_t fd;
-    EventCallInterface obj;
-
-    AsynType type;
-
+    
     bool enRead;
     bool enWrite;
     bool etMode;
+    bool oneShot;
+    
+    bool isActive = false;
+    
+private:
+    EventCallInterface _obj;
+    AsynType _type;
 }

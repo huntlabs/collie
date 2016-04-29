@@ -52,7 +52,7 @@ final class EpollLoop
 	{
 		delEvent(_event._event);
 		.close(_efd);
-		delete _events;
+		//delete _events;
 		_event = null;
 	}
 
@@ -70,6 +70,7 @@ final class EpollLoop
 			if(errno != EEXIST)
 				return false;
 		}
+		event.isActive = true;
 		return true;
 	}
 
@@ -82,6 +83,7 @@ final class EpollLoop
 		if ((epoll_ctl(_efd, EPOLL_CTL_MOD, event.fd, &ev)) != 0) {
 				return false;
 		}
+		event.isActive = true;
 		return true;
 	}
 	
@@ -99,7 +101,7 @@ final class EpollLoop
 			} catch{}
 			return false;
 		}
-
+                event.isActive = false;
 		return true;
 	}
 
@@ -119,14 +121,19 @@ final class EpollLoop
 				auto event = cast(AsyncEvent *)(_events[i].data.ptr);
 				assert(event);
 
-				if(isErro(_events[i].events))
+				if(isErro(_events[i].events)) {
 					event.obj.onClose();
+					return;
+                                }
 
 				if (isWrite(_events[i].events))
 					event.obj.onWrite();
 
-				if(isRead(_events[i].events))
+				if (isRead(_events[i].events))
 					event.obj.onRead();
+					
+                                if(event.oneShot) 
+                                    event.isActive = false;
 			}
 
 		}
@@ -172,7 +179,6 @@ static this()
 	signal(SIGPIPE, SIG_IGN);
 }
 
-private:
 enum EPOLL_EVENT : short { init = -5 };
 
 final class EventChannel : EventCallInterface
@@ -210,7 +216,7 @@ final class EventChannel : EventCallInterface
 string mixinModEvent()
 {
 	string str =  "epoll_event ev; \n ev.data.ptr = event; \n ev.events = EPOLLRDHUP | EPOLLERR | EPOLLHUP; \n if(event.enRead) ev.events |= EPOLLIN; \n " ;
-	str ~= "if(event.enWrite) ev.events |= EPOLLOUT; \n if(event.etMode) ev.events |= EPOLLET; " ;
+	str ~= "if(event.enWrite) ev.events |= EPOLLOUT;\n if(event.oneShot) ev.events |= EPOLLONESHOT; \n if(event.etMode) ev.events |= EPOLLET; " ;
 	return str;
 }
 

@@ -4,12 +4,16 @@ import core.thread;
 
 import std.datetime;
 import std.stdio;
+import std.functional;
 
 import collie.socket;
 import collie.channel;
 import collie.bootstrap.serverbootstrap;
 
 alias Pipeline!(UniqueBuffer,ubyte[]) EchoPipeline;
+
+ServerBootStrap!EchoPipeline ser;
+
 
 class EchoHandler : HandlerAdapter!(UniqueBuffer,ubyte[]) 
 {
@@ -40,8 +44,10 @@ public:
 
 void main()
 {
-	ServerBootStrap!EchoPipeline ser  = new ServerBootStrap!EchoPipeline();
+	ser  = new ServerBootStrap!EchoPipeline();
 	ser.childPipeline(new EchoPipelineFactory()).bind(new InternetAddress("0.0.0.0",8094));
+	//ser.group(new EventLoopGroup);
 	ser.waitForStop();
-}
 
+	writeln("APP Stop!");
+}

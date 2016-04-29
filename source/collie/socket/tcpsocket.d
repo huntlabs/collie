@@ -34,6 +34,17 @@ class TCPSocket : AsyncTransport , EventCallInterface
 		_socket.blocking = false;
 		_writeQueue = Queue!(WriteSite,true,false,GCAllocator)(32);
 		_readBuffer = new UniqueBuffer(TCP_READ_BUFFER_SIZE);
+		_event = new AsyncEvent(AsynType.TCP,this,_socket.handle,true,true,true);
+	}
+	
+	~this()
+	{
+            if(_event.isActive){
+                eventLoop.delEvent(_event);
+                //delete _event;
+                _event = null;
+            } 
+            if(_socket.isAlive()) _socket.close();
 	}
 
 	//	@property Socket socket(){return _socket;}
@@ -42,8 +53,8 @@ class TCPSocket : AsyncTransport , EventCallInterface
 
 	override bool start()
 	{
-		if(_event != null || !_socket.isAlive() || !_readCallBack) return false;
-		_event = new AsyncEvent(AsynType.TCP,this,_socket.handle,true,true,true);
+		if(_event.isActive || !_socket.isAlive() || !_readCallBack) return false;
+		_event.fd = _socket.handle();
 		_loop.addEvent(_event);
 		return true;
 	}
@@ -63,7 +74,7 @@ class TCPSocket : AsyncTransport , EventCallInterface
 	final override @property bool isAlive() @trusted nothrow
 	{
 		try {
-			return (_event != null) && _socket.isAlive();
+			return _event.isActive && _socket.isAlive();
 		} catch { return false;}
 	}
 
@@ -132,8 +143,7 @@ protected:
 	{
 		if(!isAlive) return;
 		eventLoop.delEvent(_event);
-		delete _event;
-		_event = null;
+	//	delete _event;
 		while(!_writeQueue.empty){
 			_writeQueue.deQueue().doCallBack();
 		}
@@ -178,7 +188,7 @@ protected:
 protected :
 	Socket _socket;
 	Queue!(WriteSite,true,false,GCAllocator)  _writeQueue;
-	AsyncEvent * _event = null;
+	AsyncEvent * _event;
 
 	UniqueBuffer _readBuffer;
 	
