@@ -75,11 +75,11 @@ final class ServerBootStrap(PipeLine)
 		_mainAccept = creatorAcceptor(_loop);
 		_mainAccept.initialize();
 		if(_group) {
-			for (uint i = 0; i < _group.length; ++i){
-				auto acceptor =  creatorAcceptor(_group[i]);
-				acceptor.initialize();
-				_serverlist ~= acceptor;
-			}
+                        foreach(loop;_group){
+                            auto acceptor =  creatorAcceptor(loop);
+                            acceptor.initialize();
+                            _serverlist ~= acceptor;
+                        }
 			_group.start();
 		}
 		_loop.run();

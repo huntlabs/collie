@@ -10,7 +10,7 @@ import collie.utils.functional;
 
 
 
-class EventLoopGroup
+final class EventLoopGroup
 {
 	this(uint size = (totalCPUs - 1),int waitTime = 2000)
 	{
@@ -73,6 +73,17 @@ class EventLoopGroup
                 t.join(false);
             }
 	}
+	
+        int opApply(int delegate(EventLoop ) dg )
+        {
+            int ret = 0;
+            foreach( ref loop ; _loops.keys ){
+                ret = dg(loop.eventLoop);
+                if( ret )
+                    break;
+            }
+            return ret;
+        }
     
 private :
 	bool _started; 
