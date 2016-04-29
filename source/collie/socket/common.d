@@ -75,7 +75,8 @@ struct AsyncEvent
     bool enWrite;
     bool etMode;
     bool oneShot;
-    
+
+package:
     bool isActive = false;
     
 private:
