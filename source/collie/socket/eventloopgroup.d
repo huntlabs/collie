@@ -15,7 +15,7 @@ class EventLoopGroup
 	this(uint size = (totalCPUs - 1),int waitTime = 2000)
 	{
             foreach(i;0..size){
-                auto loop = new EventGroupLoop(new EventLoop);
+                auto loop = new GroupMember(new EventLoop);
                 loop.waiteTime = waitTime;
                 _loops[loop] = new Thread(&loop.start);
             }
@@ -42,7 +42,7 @@ class EventLoopGroup
 	
 	void addEventLoop(EventLoop lop,int waitTime = 2000)
 	{
-            auto loop = new EventGroupLoop(lop);
+            auto loop = new GroupMember(lop);
             loop.waiteTime = waitTime;
             auto th = new Thread(&loop.start);
             _loops[loop] = th;
@@ -76,13 +76,13 @@ class EventLoopGroup
     
 private :
 	bool _started; 
-	Thread[EventGroupLoop] _loops;
+	Thread[GroupMember] _loops;
 }
 
 
 private:
 
-class EventGroupLoop
+class GroupMember
 {
     this(EventLoop loop)
     {
@@ -91,7 +91,7 @@ class EventGroupLoop
     
     void start()
     {
-        _loop.run();
+        _loop.run(_waitTime);
     }
     
     alias eventLoop this;
