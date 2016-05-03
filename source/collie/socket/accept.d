@@ -1,4 +1,4 @@
-﻿module collie.socket.accept;
+module collie.socket.accept;
 
 import core.memory;
 import core.sys.posix.sys.socket;
@@ -15,216 +15,264 @@ import collie.socket.tcpsocket;
 
 alias AcceptCallBack = void delegate(Socket sock);
 
-final class Accept : AsyncTransport , EventCallInterface
+final class Accept : AsyncTransport, EventCallInterface
 {
-	this(EventLoop loop, bool isIpV6 = false)
-	{
-		if(isIpV6)
-			_socket = new Socket(AddressFamily.INET6, SocketType.STREAM, ProtocolType.TCP);
-		else
-			_socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
-		super(loop);
-		_socket.blocking = false;
-	}
+    this(EventLoop loop, bool isIpV6 = false)
+    {
+        if (isIpV6)
+            _socket = new Socket(AddressFamily.INET6, SocketType.STREAM, ProtocolType.TCP);
+        else
+            _socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
+        super(loop);
+        _socket.blocking = false;
+    }
 
+    @property reusePort(bool use)
+    {
+        if (use)
+        {
+            _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, true);
+            version (Posix)
+                _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
+                    true);
+        }
+        else
+        {
+            _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
+                false);
+            version (Posix)
+                _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR,
+                    false);
+        }
+    }
 
-	@property reusePort(bool use) 
-	{
-		if(use) {
-			_socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, true);
-			version(Posix) _socket.setOption(SocketOptionLevel.SOCKET,cast(SocketOption)SO_REUSEPORT,true);
-		} else {
-			_socket.setOption(SocketOptionLevel.SOCKET,cast(SocketOption)SO_REUSEPORT,false);
-			version(Posix) _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, false);
-		}
-	}
+    void bind(Address addr) @trusted
+    {
+        _socket.bind(forward!addr);
+    }
 
-	void bind(Address addr) @trusted {_socket.bind(forward!addr);}
-	void listen(int backlog) @trusted {_socket.listen(forward!backlog);}
+    void listen(int backlog) @trusted
+    {
+        _socket.listen(forward!backlog);
+    }
 
-	override @property int fd () {return cast(int)_socket.handle();}
+    override @property int fd()
+    {
+        return cast(int) _socket.handle();
+    }
 
-	override bool start()
-	{
-		if(_event != null || !_socket.isAlive() || !_callBack) return false;
-		_event = new AsyncEvent(AsynType.ACCEPT,this,_socket.handle,true,false,false);
-		_loop.addEvent(_event);
-		return true;
-	}
-	
-	override void close()
-	{
-		if(isAlive) {
-			eventLoop.post(fun.bind(&onClose));
-		} else if(_socket.isAlive()) {
-			//Linger optLinger;
-			//_socket.setOption(SocketOptionLevel.SOCKET,SocketOption.LINGER,
-			_socket.close();
-		}
-	}
-	
-	override @property bool isAlive() @trusted nothrow
-	{
-		try {
-			return (_event != null) && _socket.isAlive();
-		} catch { return false;}
-	}
+    override bool start()
+    {
+        if (_event != null || !_socket.isAlive() || !_callBack)
+            return false;
+        _event = new AsyncEvent(AsynType.ACCEPT, this, _socket.handle, true, false,
+            false);
+        _loop.addEvent(_event);
+        return true;
+    }
 
+    override void close()
+    {
+        if (isAlive)
+        {
+            eventLoop.post(fun.bind(&onClose));
+        }
+        else if (_socket.isAlive())
+        {
+            //Linger optLinger;
+            //_socket.setOption(SocketOptionLevel.SOCKET,SocketOption.LINGER,
+            _socket.close();
+        }
+    }
 
-	mixin TCPSocketOption;
+    override @property bool isAlive() @trusted nothrow
+    {
+        try
+        {
+            return (_event != null) && _socket.isAlive();
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
+    mixin TCPSocketOption;
 
-	void setCallBack(AcceptCallBack cback){_callBack = cback;}
+    void setCallBack(AcceptCallBack cback)
+    {
+        _callBack = cback;
+    }
 
 protected:
-	override void onRead() nothrow
-	{
-		while (true) {
-			socket_t fd = cast(socket_t)(.accept(_socket.handle, null, null));
-			if(fd == socket_t.init) return;
-			try {
-				Socket sock = new Socket(fd,_socket.addressFamily);
-				_callBack(sock);
-			} catch (Exception e) {
-				try{
-					error("\n\n----accept Exception! erro : ", e.msg, "\n\n");
-				}catch{}
-			}
-		}
-	}
+    override void onRead() nothrow
+    {
+        while (true)
+        {
+            socket_t fd = cast(socket_t)(.accept(_socket.handle, null, null));
+            if (fd == socket_t.init)
+                return;
+            try
+            {
+                Socket sock = new Socket(fd, _socket.addressFamily);
+                _callBack(sock);
+            }
+            catch (Exception e)
+            {
+                try
+                {
+                    error("\n\n----accept Exception! erro : ", e.msg, "\n\n");
+                }
+                catch
+                {
+                }
+            }
+        }
+    }
 
-	override void onWrite() nothrow{}
+    override void onWrite() nothrow
+    {
+    }
 
-	override void onClose() nothrow {
-		if(!isAlive) return;
-		eventLoop.delEvent(_event);
-		delete _event;
-		_event = null;
-		_socket.close();
-	}
+    override void onClose() nothrow
+    {
+        if (!isAlive)
+            return;
+        eventLoop.delEvent(_event);
+        delete _event;
+        _event = null;
+        _socket.close();
+    }
+
 private:
-	Socket _socket;
-	AsyncEvent * _event = null;
+    Socket _socket;
+    AsyncEvent* _event = null;
 
-	AcceptCallBack _callBack;
+    AcceptCallBack _callBack;
 }
 
+static if (IOMode == IO_MODE.epoll)
+{
+    version (X86)
+    {
 
-static if(IOMode == IO_MODE.epoll){
-	version (X86)
-	{
-		
-		enum SO_REUSEPORT	= 15;
-	}
-	else version (X86_64)
-	{
-		enum SO_REUSEPORT	= 15;
-	}
-	else version (MIPS32)
-	{
-		enum SO_REUSEPORT	= 0x0200;
-		
-	}
-	else version (MIPS64)
-	{
-		enum SO_REUSEPORT	= 0x0200;
-	}
-	else version (PPC)
-	{
-		enum SO_REUSEPORT	= 15;
-	}
-	else version (PPC64)
-	{
-		enum SO_REUSEPORT	= 15;
-	}
-	else version (ARM)
-	{
-		enum SO_REUSEPORT	= 15;
-	}
-} else static if(IOMode == IO_MODE.kqueue) {
-	enum SO_REUSEPORT	= 0x0200;
+        enum SO_REUSEPORT = 15;
+    }
+    else version (X86_64)
+    {
+        enum SO_REUSEPORT = 15;
+    }
+    else version (MIPS32)
+    {
+        enum SO_REUSEPORT = 0x0200;
+
+    }
+    else version (MIPS64)
+    {
+        enum SO_REUSEPORT = 0x0200;
+    }
+    else version (PPC)
+    {
+        enum SO_REUSEPORT = 15;
+    }
+    else version (PPC64)
+    {
+        enum SO_REUSEPORT = 15;
+    }
+    else version (ARM)
+    {
+        enum SO_REUSEPORT = 15;
+    }
+}
+else static if (IOMode == IO_MODE.kqueue)
+{
+    enum SO_REUSEPORT = 0x0200;
 }
 
+unittest
+{
 
-unittest {
+    import std.datetime;
+    import std.stdio;
 
-	import std.datetime;
-	import std.stdio;
-	
-	import collie.socket;
+    import collie.socket;
 
-	EventLoop loop = new EventLoop();
+    EventLoop loop = new EventLoop();
 
-	int[TCP] tcpList;
-	
-	class TCP
-	{
-		this(EventLoop loop,Socket soc)
-		{
-			_socket = new TCPSocket(loop,soc);
-			_socket.setReadCallBack(&readed);
-			_socket.setCloseCallBack(&closed);
-			_socket.start();
-		}
-		
-		alias socket this;
-		@property socket(){return _socket;}
-		
-	protected:
-		void readed(UniqueBuffer buf){
-			writeln("read data :  ", cast(string)(buf.data));
-			socket.write(buf.data.dup,&writed);
-		}
-		
-		void writed(ubyte[] data,uint size)
-		{
-			writeln("write data Size :  ", size , "\t data size : ",data.length);
-			++ _size;
-			if(_size == 5)
-				socket.write(data,&writeClose);
-			else {
-				socket.write(data,&writed);
-			}
-			
-		}
-		
-		void writeClose(ubyte[] data,uint size)
-		{
-			writeln("write data Size :  ", size , "\t data size : ",data.length);
-			socket.close();
-			loop.strop();
-			//	throw new Exception("hahahahhaah ");
-		}
-		
-		void closed()
-		{
-			tcpList.remove(this);
-			writeln("Socket Closed .");
-		}
-	private:
-		TCPSocket _socket;
-		int _size = 0;
-	}
+    int[TCP] tcpList;
 
+    class TCP
+    {
+        this(EventLoop loop, Socket soc)
+        {
+            _socket = new TCPSocket(loop, soc);
+            _socket.setReadCallBack(&readed);
+            _socket.setCloseCallBack(&closed);
+            _socket.start();
+        }
 
-	
-	void newConnect(Socket soc)
-	{
-		auto tcp = new TCP(loop,soc);
-		tcpList[tcp] = 0;
-	}
-	
-	Accept accept = new Accept(loop);
-	
-	accept.setCallBack(&newConnect);
-	
-	accept.reusePort(true);
-	accept.bind(new InternetAddress("0.0.0.0",6553));
-	
-	accept.listen(64);
-	
-	accept.start();
-	
-	loop.run(5000);
-	
+        alias socket this;
+        @property socket()
+        {
+            return _socket;
+        }
+
+    protected:
+        void readed(UniqueBuffer buf)
+        {
+            writeln("read data :  ", cast(string)(buf.data));
+            socket.write(buf.data.dup, &writed);
+        }
+
+        void writed(ubyte[] data, uint size)
+        {
+            writeln("write data Size :  ", size, "\t data size : ", data.length);
+            ++_size;
+            if (_size == 5)
+                socket.write(data, &writeClose);
+            else
+            {
+                socket.write(data, &writed);
+            }
+
+        }
+
+        void writeClose(ubyte[] data, uint size)
+        {
+            writeln("write data Size :  ", size, "\t data size : ", data.length);
+            socket.close();
+            loop.strop();
+            //	throw new Exception("hahahahhaah ");
+        }
+
+        void closed()
+        {
+            tcpList.remove(this);
+            writeln("Socket Closed .");
+        }
+
+    private:
+        TCPSocket _socket;
+        int _size = 0;
+    }
+
+    void newConnect(Socket soc)
+    {
+        auto tcp = new TCP(loop, soc);
+        tcpList[tcp] = 0;
+    }
+
+    Accept accept = new Accept(loop);
+
+    accept.setCallBack(&newConnect);
+
+    accept.reusePort(true);
+    accept.bind(new InternetAddress("0.0.0.0", 6553));
+
+    accept.listen(64);
+
+    accept.start();
+
+    loop.run(5000);
+
 }

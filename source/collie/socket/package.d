@@ -1,4 +1,4 @@
-﻿module collie.socket;
+module collie.socket;
 
 public import std.socket;
 
@@ -8,3 +8,4 @@ public import collie.socket.eventloopgroup;
 public import collie.socket.tcpsocket;
 public import collie.socket.accept;
 public import collie.socket.timer;
+public import collie.socket.tcpclient;
