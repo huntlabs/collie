@@ -19,7 +19,7 @@ class EchoHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
 public:
     override void read(Context ctx, UniqueBuffer msg)
     {
-        write(ctx, msg.data.dup, &callBack);
+        this.write(ctx, msg.data.dup, &callBack);
     }
 
     void callBack(ubyte[] data, uint len)

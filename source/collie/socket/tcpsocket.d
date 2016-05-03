@@ -79,7 +79,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         }
     }
 
-    final override @property bool isAlive() @trusted nothrow
+    override @property bool isAlive() @trusted nothrow
     {
         try
         {
@@ -156,7 +156,7 @@ protected:
                 {
                     break;
                 }
-                else if (errno == -4)
+                else if (errno == 4)
                 {
                     continue;
                 }
@@ -231,7 +231,7 @@ protected:
                 {
                     break;
                 }
-                else if (errno == -4)
+                else if (errno == 4)
                 {
                     continue;
                 }
@@ -329,7 +329,7 @@ mixin template TCPSocketOption()
     }
 }
 
-private:
+package:
 final class WriteSite
 {
     this(ubyte[] data, TCPWriteCallBack cback = null)

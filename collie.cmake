@@ -1,9 +1,10 @@
 include(UseD)
-add_d_conditions(VERSION Have_collie DEBUG )
+add_d_conditions(VERSION Have_collie Have_openssl DEBUG )
 include_directories(/home/dsby/Code/dlang/work/github/collie/source/)
+include_directories(/home/dsby/.dub/packages/openssl-1.1.4_1.0.1g)
 add_library(collie 
-    /home/dsby/Code/dlang/work/github/collie/source/collie/bootstrap/clientbootstrap.d
-    /home/dsby/Code/dlang/work/github/collie/source/collie/bootstrap/serverbootstrap.d
+    /home/dsby/Code/dlang/work/github/collie/source/collie/bootstrap/client.d
+    /home/dsby/Code/dlang/work/github/collie/source/collie/bootstrap/server.d
     /home/dsby/Code/dlang/work/github/collie/source/collie/buffer/SectionBuffer.d
     /home/dsby/Code/dlang/work/github/collie/source/collie/buffer/buffer.d
     /home/dsby/Code/dlang/work/github/collie/source/collie/buffer/uniquebuffer.d
@@ -12,7 +13,7 @@ add_library(collie
     /home/dsby/Code/dlang/work/github/collie/source/collie/channel/package.d
     /home/dsby/Code/dlang/work/github/collie/source/collie/channel/pipeline.d
     /home/dsby/Code/dlang/work/github/collie/source/collie/channel/tcpsockethandler.d
-    /home/dsby/Code/dlang/work/github/collie/source/collie/socket/accept.d
+    /home/dsby/Code/dlang/work/github/collie/source/collie/socket/acceptor.d
     /home/dsby/Code/dlang/work/github/collie/source/collie/socket/common.d
     /home/dsby/Code/dlang/work/github/collie/source/collie/socket/eventloop.d
     /home/dsby/Code/dlang/work/github/collie/source/collie/socket/eventloopgroup.d
@@ -26,5 +27,5 @@ add_library(collie
     /home/dsby/Code/dlang/work/github/collie/source/collie/utils/queue.d
     /home/dsby/Code/dlang/work/github/collie/source/collie/utils/timingwheel.d
 )
-target_link_libraries(collie  )
+target_link_libraries(collie  ssl crypto)
 set_target_properties(collie PROPERTIES TEXT_INCLUDE_DIRECTORIES "")
