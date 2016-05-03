@@ -1,4 +1,4 @@
-module collie.socket.accept;
+module collie.socket.acceptor;
 
 import core.memory;
 import core.sys.posix.sys.socket;
@@ -15,7 +15,7 @@ import collie.socket.tcpsocket;
 
 alias AcceptCallBack = void delegate(Socket sock);
 
-final class Accept : AsyncTransport, EventCallInterface
+final class Acceptor : AsyncTransport, EventCallInterface
 {
     this(EventLoop loop, bool isIpV6 = false)
     {

@@ -12,7 +12,7 @@ import collie.bootstrap.server;
 
 alias Pipeline!(UniqueBuffer, ubyte[]) EchoPipeline;
 
-ServerBootStrap!EchoPipeline ser;
+ServerBootstrap!EchoPipeline ser;
 
 class EchoHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
 {
@@ -48,7 +48,7 @@ public:
 
 void main()
 {
-    ser = new ServerBootStrap!EchoPipeline();
+    ser = new ServerBootstrap!EchoPipeline();
     ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(20)
         .group(new EventLoopGroup).bind(8094);
     ser.waitForStop();

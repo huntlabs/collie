@@ -5,7 +5,7 @@ module collie.bootstrap.server;
 import collie.socket;
 import collie.channel;
 
-final class ServerBootStrap(PipeLine)
+final class ServerBootstrap(PipeLine)
 {
     this()
     {
@@ -19,7 +19,7 @@ final class ServerBootStrap(PipeLine)
 
     auto pipeline(AcceptPipelineFactory factory)
     {
-        _acceptPipelineFactory = factory;
+        _acceptorPipelineFactory = factory;
         return this;
     }
 
@@ -132,16 +132,16 @@ final class ServerBootStrap(PipeLine)
 protected:
     auto creatorAcceptor(EventLoop loop)
     {
-        auto accept = new Accept(loop, _address.addressFamily == AddressFamily.INET6);
-        accept.reusePort = _rusePort;
-        accept.bind(_address);
-        accept.listen(128);
+        auto acceptor = new Acceptor(loop, _address.addressFamily == AddressFamily.INET6);
+        acceptor.reusePort = _rusePort;
+        acceptor.bind(_address);
+        acceptor.listen(128);
         AcceptPipeline pipe;
-        if (_acceptPipelineFactory)
-            pipe = _acceptPipelineFactory.newPipeline(accept);
+        if (_acceptorPipelineFactory)
+            pipe = _acceptorPipelineFactory.newPipeline(acceptor);
         else
             pipe = AcceptPipeline.create();
-        return new ServerAceptor!(PipeLine)(accept, pipe, _childPipelineFactory);
+        return new ServerAcceptor!(PipeLine)(acceptor, pipe, _childPipelineFactory);
     }
 
     bool getTimeWheelConfig(out uint whileSize, out uint time)
@@ -177,13 +177,13 @@ protected:
     }
 
 private:
-    AcceptPipelineFactory _acceptPipelineFactory;
+    AcceptPipelineFactory _acceptorPipelineFactory;
     PipelineFactory!PipeLine _childPipelineFactory;
 
-    ServerAceptor!(PipeLine) _mainAccept;
+    ServerAcceptor!(PipeLine) _mainAccept;
     EventLoop _loop;
 
-    ServerAceptor!(PipeLine)[] _serverlist;
+    ServerAcceptor!(PipeLine)[] _serverlist;
     EventLoopGroup _group;
 
     bool _runing = false;
@@ -197,17 +197,17 @@ private:
 import std.functional;
 import collie.utils.timingwheel;
 
-final class ServerAceptor(PipeLine) : InboundHandler!(Socket)
+final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 {
-    this(Accept accept, AcceptPipeline pipe, PipelineFactory!PipeLine clientPipeFactory)
+    this(Acceptor acceptor, AcceptPipeline pipe, PipelineFactory!PipeLine clientPipeFactory)
     {
-        _accept = accept;
+        _acceptor = acceptor;
         _pipeFactory = clientPipeFactory;
         pipe.addBack(this);
         pipe.finalize();
         _pipe = pipe;
-        _pipe.transport(_accept);
-        _accept.setCallBack(&acceptCallBack);
+        _pipe.transport(_acceptor);
+        _acceptor.setCallBack(&acceptCallBack);
         //_list = new int[ServerConnection!PipeLine];//RedBlackTree!(ServerConnection!PipeLine)();
     }
 
@@ -223,7 +223,7 @@ final class ServerAceptor(PipeLine) : InboundHandler!(Socket)
 
     override void read(Context ctx, Socket msg)
     {
-        auto asyntcp = new TCPSocket(_accept.eventLoop, msg);
+        auto asyntcp = new TCPSocket(_acceptor.eventLoop, msg);
         auto pipe = _pipeFactory.newPipeline(asyntcp);
         if (!pipe)
             return;
@@ -239,19 +239,19 @@ final class ServerAceptor(PipeLine) : InboundHandler!(Socket)
 
     override void transportActive(Context ctx)
     {
-        _accept.start();
+        _acceptor.start();
     }
 
     override void transportInactive(Context ctx)
     {
-        _accept.close();
+        _acceptor.close();
         foreach (con, value; _list)
         {
             con.close();
             con.stop();
         }
         _list.clear();
-        _accept.eventLoop.stop();
+        _acceptor.eventLoop.stop();
     }
 
     void remove(ServerConnection!PipeLine conn)
@@ -267,14 +267,14 @@ final class ServerAceptor(PipeLine) : InboundHandler!(Socket)
 
     @property acceptor()
     {
-        return _accept;
+        return _acceptor;
     }
 
     void startTimingWhile(uint whileSize, uint time)
     {
         if (_timer)
             return;
-        _timer = new Timer(_accept.eventLoop);
+        _timer = new Timer(_acceptor.eventLoop);
         _timer.setCallBack(&doWheel);
         _wheel = new TimingWheel(whileSize);
         _timer.start(time);
@@ -290,7 +290,7 @@ protected:
 private:
     int[ServerConnection!PipeLine] _list;
     //RedBlackTree!(ServerConnection!PipeLine) _list;
-    Accept _accept;
+    Acceptor _acceptor;
     Timer _timer;
     TimingWheel _wheel;
     AcceptPipeline _pipe;
@@ -320,7 +320,7 @@ final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
         return _manger;
     }
 
-    @property serverAceptor(ServerAceptor!PipeLine manger)
+    @property serverAceptor(ServerAcceptor!PipeLine manger)
     {
         _manger = manger;
     }
@@ -350,6 +350,6 @@ final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
     }
 
 private:
-    ServerAceptor!PipeLine _manger;
+    ServerAcceptor!PipeLine _manger;
     PipeLine _pipe;
 }

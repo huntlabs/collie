@@ -5,7 +5,7 @@ import std.socket;
 import collie.socket;
 import collie.channel;
 
-final class ClientBootStrap(PipeLine)
+final class ClientBootstrap(PipeLine)
 {
     this(EventLoop loop)
     {

@@ -12,7 +12,7 @@ import collie.bootstrap.client;
 
 alias Pipeline!(UniqueBuffer, ubyte[]) EchoPipeline;
 
-ClientBootStrap!EchoPipeline client;
+ClientBootstrap!EchoPipeline client;
 EventLoop loop;
 
 class EchoHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
@@ -53,7 +53,7 @@ public:
 void main()
 {
     loop = new EventLoop();
-    client = new ClientBootStrap!EchoPipeline(loop);
+    client = new ClientBootstrap!EchoPipeline(loop);
     client.heartbeatTimeOut(2).setPipelineFactory(new EchoPipelineFactory()).connect("127.0.0.1",8094);
     loop.run();
     
