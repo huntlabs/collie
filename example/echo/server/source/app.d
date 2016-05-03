@@ -8,7 +8,7 @@ import std.functional;
 
 import collie.socket;
 import collie.channel;
-import collie.bootstrap.serverbootstrap;
+import collie.bootstrap.server;
 
 alias Pipeline!(UniqueBuffer, ubyte[]) EchoPipeline;
 
@@ -49,7 +49,7 @@ public:
 void main()
 {
     ser = new ServerBootStrap!EchoPipeline();
-    ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(10)
+    ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(20)
         .group(new EventLoopGroup).bind(8094);
     ser.waitForStop();
 

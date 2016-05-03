@@ -1,5 +1,5 @@
 {
-    "name"        : "collie-v2",
+    "name"        : "collie",
     "description" : "An asynchronous event-driven network framework written in D.",
     "homepage"    : "http://collied.org/" ,
     "copyright"   : "Copyright © 2016, putao.com",

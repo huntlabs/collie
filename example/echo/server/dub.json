@@ -1,0 +1,11 @@
+{
+	"name": "server",
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2016, dsby",
+	"authors": ["dsby"],
+	"dependencies": {
+            "collie" : {
+                "path" : "../../../"
+            }
+	}
+}

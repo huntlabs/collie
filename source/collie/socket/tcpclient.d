@@ -22,8 +22,8 @@ final class TCPClient : TCPSocket
 
     bool connect(Address addr)
     {
-        if (_isConnect)
-            close();
+        if (isConnect)
+            throw new ConnectedException("This Socket is Connected! Please close before connect!");
         if (!start())
             return false;
         _socket.connect(addr);
@@ -44,6 +44,7 @@ protected:
             {
                 _connectBack(false);
             } catch {}
+            return;
         }
         super.onClose();
         _isConnect = false;
@@ -65,4 +66,12 @@ protected:
 private:
     bool _isConnect = false;
     ConnectCallBack _connectBack;
+}
+
+class ConnectedException : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__)
+    {
+        super(msg,file,line);
+    }
 }

@@ -1,4 +1,4 @@
-module collie.bootstrap.serverbootstrap;
+module collie.bootstrap.server;
 
 //import std.container.rbtree;
 
@@ -52,9 +52,9 @@ final class ServerBootStrap(PipeLine)
             if(value < 5) value = 5;
             if(value > 3000) value = 1800;
         */
-    auto heartbeatTimeOut(uint timeOut)
+    auto heartbeatTimeOut(uint second)
     {
-        _timeOut = timeOut;
+        _timeOut = second;
         _timeOut = _timeOut < 5 ? 5 : _timeOut;
         _timeOut = _timeOut > 1800 ? 1800 : _timeOut;
 

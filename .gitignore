@@ -12,14 +12,14 @@ __dummy.html
 /obj
 /bin
 *.userprefs
-/Collied
-/collied
+/collie
 performance_test
 performance_test/*
 core
 callgrind.*
 .directory
-/collie-v2
 /trace.*
 __test__library__
 *.kdev4
+core
+/build

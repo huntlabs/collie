@@ -53,7 +53,8 @@ protected:
     void readCallBack(UniqueBuffer buf)
     {
         auto ctx = getContext();
-        ctx.pipeline.pipelineManager.refreshTimeout();
+        if(ctx.pipeline.pipelineManager)
+            ctx.pipeline.pipelineManager.refreshTimeout();
         ctx.fireRead(buf);
     }
 
