@@ -396,5 +396,5 @@ abstract class PipelineFactory(PipeLine)
 alias Pipeline!(Socket, void) AcceptPipeline;
 abstract class AcceptPipelineFactory
 {
-    AcceptPipeline newPipeline(Accept acceptor);
+    AcceptPipeline newPipeline(Acceptor acceptor);
 }
