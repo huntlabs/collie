@@ -4,8 +4,8 @@ Collie is a library that makes it easy to build protocols, application clients, 
 It's like facebook/Wangle smooshed together, but written in D programing language.
 
 ## TODO
-- _timer and  Timing Wheel_ (__Complete)
-- add TCP Client support (__Complete)
+- _timer and  Timing Wheel_ (__Complete__)
+- _add TCP Client support_ (__Complete__)
 - SSL suport
 - add codec 
 - MAC and BSD suport (kqueue)
