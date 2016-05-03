@@ -22,3 +22,4 @@ callgrind.*
 /collie-v2
 /trace.*
 __test__library__
+*.kdev4
