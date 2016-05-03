@@ -1,16 +1,14 @@
-## Collie
-An asynchronous event-driven network framework written in [dlang](http://dlang.org/).
+# Collie
+An asynchronous event-driven network framework written in D.
 Collie is a library that makes it easy to build protocols, application clients, and application servers.
-It's like netty, but written in [D programing language](http://dlang.org/).
+It's like facebook/Wangle smooshed together, but written in D programing language.
 
-## Examples
-See the examples/ directory for some example Collie servers and clients
-
-## Build echo server example
-```
-cd examples/echo/
-./build.sh
-```
-
-## License
-Collie is BSD-licensed. We also provide an additional patent grant.
+## TODO
+- _timer and  Timing Wheel_ (__Complete)
+- add TCP Client support (__Complete)
+- SSL suport
+- add codec 
+- MAC and BSD suport (kqueue)
+- RPC
+- UDP
+- Test Add Windows suport (select)
