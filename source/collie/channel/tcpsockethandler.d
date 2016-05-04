@@ -18,7 +18,8 @@ class TCPSocketHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
     override void transportActive(Context ctx)
     {
         attachReadCallback();
-        _socket.start();
+        bool isStaer = _socket.start();
+        trace("socket statrt : ", isStaer);
         ctx.fireTransportActive();
     }
 
@@ -52,6 +53,7 @@ protected:
 
     void readCallBack(UniqueBuffer buf)
     {
+        trace("readCallBack");
         auto ctx = getContext();
         if(ctx.pipeline.pipelineManager)
             ctx.pipeline.pipelineManager.refreshTimeout();

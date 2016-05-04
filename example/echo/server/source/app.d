@@ -49,7 +49,7 @@ public:
 void main()
 {
     ser = new ServerBootstrap!EchoPipeline();
-    ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(20)
+    ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(5)
         .group(new EventLoopGroup).bind(8094);
     ser.waitForStop();
 

@@ -14,19 +14,19 @@ final class Timer : EventCallInterface
     this(EventLoop loop)
     {
         _loop = loop;
-        _event = new AsyncEvent(AsynType.TIMER, this);
+        _event = AsyncEvent.create(AsynType.TIMER, this);
     }
 
     ~this()
     {
-        if (_event)
-        {
-            import core.sys.posix.unistd;
 
+        import core.sys.posix.unistd;
+        if(_event.isActive)
+        {
             _loop.delEvent(_event);
             close(_event.fd);
-            //  delete _event;
         }
+        AsyncEvent.free(_event);
     }
 
     @property bool isActive()
@@ -61,7 +61,6 @@ final class Timer : EventCallInterface
         if (err == -1)
         {
             import core.sys.posix.unistd;
-
             close(_event.fd);
             return false;
         }

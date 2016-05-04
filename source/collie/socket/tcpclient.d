@@ -58,6 +58,7 @@ protected:
             {
                 _connectBack(true);
             } catch {}
+            _isConnect = true;
         }
 
         super.onWrite();

@@ -198,7 +198,7 @@ private:
     uint _timeOut = 0;
     Address _address;
     
-    ServerSSLConfig _sslConfig;
+    ServerSSLConfig _sslConfig = null;
 }
 
 private:
@@ -275,6 +275,7 @@ protected:
     {
         conn.stop();
         _list.remove(conn);
+        delete conn;
     }
 
     void acceptCallBack(Socket soct)
@@ -315,11 +316,14 @@ protected:
         }
     }
 
-    void startSocket(TCPSocket socket)
+    void startSocket(TCPSocket sock)
     {
-        auto pipe = _pipeFactory.newPipeline(socket);
-        if (!pipe)
+        auto pipe = _pipeFactory.newPipeline(sock);
+        if (!pipe) {
+            sock.close();
+//            delete sock;
             return;
+        }
         pipe.finalize();
         auto con = new ServerConnection!PipeLine(pipe);
         con.serverAceptor = this;
@@ -339,7 +343,7 @@ private:
     AcceptPipeline _pipe;
     PipelineFactory!PipeLine _pipeFactory;
     
-    SSL_CTX * _sslctx;
+    SSL_CTX * _sslctx = null;
 }
 
 final class ServerConnection(PipeLine) : WheelTimer, PipelineManager

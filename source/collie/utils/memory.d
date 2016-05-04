@@ -6,6 +6,8 @@ import std.experimental.allocator.mallocator;
 
 struct MallocatorToGC
 {
+    enum uint alignment = Mallocator.alignment;
+    
     @trusted @nogc nothrow
     void[] allocate(size_t bytes) shared
     {
