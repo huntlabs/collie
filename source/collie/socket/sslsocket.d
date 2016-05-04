@@ -11,6 +11,7 @@ import collie.socket.tcpsocket;
 
 import deimos.openssl.ssl;
 
+//TODO: Need Test
 class SSLSocket : TCPSocket
 {
     this(EventLoop loop, Socket sock,SSL * ssl)

@@ -15,12 +15,12 @@ final class UniqueBuffer : Buffer
     {
         if (maxLength == 0)
             maxLength = 2;
-        _data = cast(ubyte[])(AlignedMallocator.instance.allocate(maxLength * ubyte.sizeof));
+        _data = cast(ubyte[])(Mallocator.instance.allocate(maxLength * ubyte.sizeof));
     }
 
     ~this()
     {
-        AlignedMallocator.instance.deallocate(_data);
+        Mallocator.instance.deallocate(_data);
     }
 
     override @property bool eof() const

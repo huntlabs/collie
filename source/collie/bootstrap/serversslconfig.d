@@ -1,5 +1,8 @@
 module collie.bootstrap.serversslconfig;
 
+import std.string;
+import std.experimental.logger;
+
 public import deimos.openssl.ssl;
 
 enum SSLMode
@@ -41,7 +44,24 @@ class ServerSSLConfig
                 break;
         }
         if(ctx is null) return null;
-        //TODO:
+        if(SSL_CTX_use_certificate_file(ctx,toStringz(_certificateFile) , SSL_FILETYPE_PEM) < 0) 
+        {
+            error("SSL_CTX_use_certificate_file failed ! file : ",_certificateFile);
+            SSL_CTX_free(ctx);
+            return null;
+        }
+        if(SSL_CTX_use_PrivateKey_file(ctx, toStringz(_privateKeyFile), SSL_FILETYPE_PEM) < 0)
+        {
+                error("SSL_CTX_use_PrivateKey_file failed! file : ",_privateKeyFile);
+                SSL_CTX_free(ctx);
+                return null;
+        }
+        if(SSL_CTX_check_private_key(ctx) < 0) {
+                error( "SSL_CTX_check_private_key failed");
+                SSL_CTX_free(ctx);
+                return null;
+        }
+        
         return ctx;
     }
     
