@@ -30,8 +30,8 @@ final class SectionBuffer : Buffer
             return;
         for (size_t i = 0; i < _buffer.length; ++i)
         {
-            //if(!GC.addrOf(_buffer[i].ptr)) //不是GC的内存就释放
-            _alloc.deallocate(_buffer[i]);
+            if(!GC.addrOf(_buffer[i].ptr)) //不是GC的内存就释放
+                _alloc.deallocate(_buffer[i]);
             _buffer[i] = null;
         }
         _buffer.clear();

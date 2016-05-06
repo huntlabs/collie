@@ -20,6 +20,12 @@ abstract class PipelineBase
     this()
     {
     }
+    
+    ~this()
+    {
+        import std.stdio;
+     //   writeln("PipelineBase ~this");
+    }
 
     @property final void pipelineManager(PipelineManager manager)
     {
@@ -246,6 +252,16 @@ final class Pipeline(R, W = void) : PipelineBase
         return new Ptr();
     }
 
+    ~this()
+    {
+        import std.stdio;
+       // writeln("Pipeline ~this");
+        if (!_isStatic) {
+            detachHandlers();
+        }
+    }
+
+    
     void read(R msg)
     {
         static if (!is(R == void))

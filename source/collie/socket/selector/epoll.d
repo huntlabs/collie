@@ -161,12 +161,9 @@ final class EpollLoop
         _event.doWrite();
     }
 
-    protected : void handleTCP(Object obj, uint events)
-    {
 
-    }
-
-    protected : pragma(inline, true);
+protected : 
+    pragma(inline, true);
     bool isErro(uint events)
     {
         return (events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) != 0;
@@ -182,7 +179,7 @@ final class EpollLoop
         return (events & EPOLLOUT) != 0;
     }
 
-    private : /** 存储 epoll的fd */
+private : /** 存储 epoll的fd */
     int _efd;
     epoll_event[] _events;
     EventChannel _event;
@@ -245,22 +242,10 @@ string mixinModEvent()
     return str;
 }
 
-string mixinIsErro(string ev)
-{
-    return ev ~ " & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)";
-}
-
-string mixinIsRead(string ev)
-{
-    return ev ~ " & EPOLLIN";
-}
-
-string mixinisWrite(string ev)
-{
-    return ev ~ "& EPOLLOUT";
-}
-
-extern (C) : @system : nothrow : extern (C) enum
+extern (C) : 
+@system : 
+nothrow : 
+enum
 {
     EFD_SEMAPHORE = 0x1,
     EFD_CLOEXEC = 0x80000,

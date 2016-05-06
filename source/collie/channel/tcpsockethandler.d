@@ -14,28 +14,37 @@ class TCPSocketHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
     {
         _socket = sock;
     }
+    
+    ~this()
+    {
+        import std.stdio;
+       // writeln("TCPSocketHandler ~this");
+    }
 
     override void transportActive(Context ctx)
     {
         attachReadCallback();
-        bool isStaer = _socket.start();
-        trace("socket statrt : ", isStaer);
+        _socket.start();
         ctx.fireTransportActive();
     }
 
     override void transportInactive(Context ctx)
     {
-        _socket.close();
+        if(_socket)
+            _socket.close();
     }
 
     override void write(Context ctx, ubyte[] msg, TheCallBack cback)
     {
-        _socket.write(msg, cback);
+        if(context.pipeline.pipelineManager)
+            context.pipeline.pipelineManager.refreshTimeout();
+       if(_socket) _socket.write(msg, cback);
     }
 
     override void close(Context ctx)
     {
-        _socket.close();
+        if(_socket)
+            _socket.close();
     }
 
 protected:
@@ -43,21 +52,22 @@ protected:
     {
         _socket.setReadCallBack(&readCallBack);
         _socket.setCloseCallBack(&closeCallBack);
+        context.pipeline.transport(_socket);
     }
 
     void closeCallBack()
     {
-        getContext().fireTransportInactive();
-        getContext().pipeline.deletePipeline();
+        context.fireTransportInactive();
+        context.pipeline.deletePipeline();
+        context.pipeline.transport(null);
+    //    delete _socket;
+        _socket = null;
+        
     }
 
     void readCallBack(UniqueBuffer buf)
     {
-        trace("readCallBack");
-        auto ctx = getContext();
-        if(ctx.pipeline.pipelineManager)
-            ctx.pipeline.pipelineManager.refreshTimeout();
-        ctx.fireRead(buf);
+        context.fireRead(buf);
     }
 
 private:

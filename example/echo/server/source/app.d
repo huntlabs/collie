@@ -5,6 +5,7 @@ import core.thread;
 import std.datetime;
 import std.stdio;
 import std.functional;
+import std.experimental.logger;
 
 import collie.socket;
 import collie.channel;
@@ -19,7 +20,7 @@ class EchoHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
 public:
     override void read(Context ctx, UniqueBuffer msg)
     {
-        this.write(ctx, msg.data.dup, &callBack);
+        write(ctx,msg.data.dup, &callBack);
     }
 
     void callBack(ubyte[] data, uint len)

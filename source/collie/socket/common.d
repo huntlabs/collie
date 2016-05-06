@@ -6,6 +6,8 @@ import std.experimental.allocator;
 import collie.socket.eventloop;
 import std.socket;
 
+import std.stdio;
+
 enum TCP_READ_BUFFER_SIZE = 4096;
 
 enum TransportType : short
@@ -101,7 +103,9 @@ struct AsyncEvent
     {
         event._obj = null;
         void * p = event;
+        writeln("free AsyncEvent To the free_list ");
         _eventAllocator.deallocate(p[0..AsyncEvent.sizeof]);
+        
     }
     
     @property isActive(){ return _isActive; }
@@ -117,5 +121,5 @@ private:
     import collie.utils.memory;
     import std.experimental.allocator.building_blocks.free_list;
     
-    static shared SharedFreeList!(MallocatorToGC,chooseAtRuntime, chooseAtRuntime) _eventAllocator;
+    static shared SharedFreeList!(MallocatorToGC,128, 2048) _eventAllocator;
 }

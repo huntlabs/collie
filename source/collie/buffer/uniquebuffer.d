@@ -3,6 +3,7 @@ module collie.buffer.uniquebuffer;
 import collie.buffer.buffer;
 
 import std.experimental.allocator.mallocator;
+import std.experimental.allocator.gc_allocator;
 
 /**
  * 唯一生命周期的buffer，对象析构的时候会释放掉所管理的buffer内存，不可转移。
@@ -15,12 +16,16 @@ final class UniqueBuffer : Buffer
     {
         if (maxLength == 0)
             maxLength = 2;
-        _data = cast(ubyte[])(Mallocator.instance.allocate(maxLength * ubyte.sizeof));
+        //_data = cast(ubyte[])(Mallocator.instance.allocate(maxLength * ubyte.sizeof));
+        _data = cast(ubyte[])(GCAllocator.instance.allocate(maxLength * ubyte.sizeof));
     }
 
     ~this()
     {
-        Mallocator.instance.deallocate(_data);
+       // Mallocator.instance.deallocate(_data);
+       GCAllocator.instance.deallocate(_data);
+        import std.stdio;
+        writeln("free C memoty");
     }
 
     override @property bool eof() const

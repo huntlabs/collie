@@ -4,6 +4,8 @@ import collie.socket;
 import collie.channel;
 import collie.bootstrap.serversslconfig;
 
+import std.stdio;
+
 //TODO: Need Test the ssl
 final class ServerBootstrap(PipeLine)
 {
@@ -23,7 +25,7 @@ final class ServerBootstrap(PipeLine)
         return this;
     }
 
-    auto SSLConfig(ServerSSLConfig config) 
+    auto setSSLConfig(ServerSSLConfig config) 
     {
         _sslConfig = config;
         return this;
@@ -105,6 +107,7 @@ final class ServerBootstrap(PipeLine)
             return;
         if (_address is null || _childPipelineFactory is null)
             return;
+        _runing = true;
         uint wheel, time;
         bool beat = getTimeWheelConfig(wheel, time);
         _mainAccept = creatorAcceptor(_loop);
@@ -273,9 +276,8 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 protected:
     void remove(ServerConnection!PipeLine conn)
     {
-        conn.stop();
         _list.remove(conn);
-        delete conn;
+       // delete conn;
     }
 
     void acceptCallBack(Socket soct)
@@ -327,7 +329,6 @@ protected:
         pipe.finalize();
         auto con = new ServerConnection!PipeLine(pipe);
         con.serverAceptor = this;
-        //_list.stableInsert(con);
         _list[con] = 0;
         con.initialize();
         if (_wheel)
@@ -353,6 +354,12 @@ final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
         _pipe = pipe;
         _pipe.pipelineManager = this;
     }
+    ~this()
+    {
+       // writeln("ServerConnection ~ this()");
+       // delete _pipe;
+       _pipe.destroy;
+    }
 
     void initialize()
     {
@@ -376,9 +383,10 @@ final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
 
     override void deletePipeline(PipelineBase pipeline)
     {
-        _manger.remove(this);
         pipeline.pipelineManager = null;
-        _pipe = null;
+        //_pipe = null;
+        stop();
+        _manger.remove(this);
         _manger = null;
     }
 

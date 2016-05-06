@@ -18,9 +18,12 @@ struct MallocatorToGC
     }
 
 
-    @system @nogc nothrow
+   // @system @nogc nothrow
     bool deallocate(void[] b) shared
     {
+        import std.stdio;
+        try{ writeln("free AsynEvent to C lib!");} catch{}
+    
         GC.removeRange(b.ptr);
         Mallocator.instance.deallocate(b);
         return true;

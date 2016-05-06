@@ -6,13 +6,17 @@ import std.functional;
 import collie.channel.pipeline;
 import collie.channel.handlercontext;
 
-template isClassOrInterface(T)
-{
-    enum isClassOrInterface = (is(T == class) || is(T == interface));
-}
+import std.stdio;
+
 
 abstract class HandlerBase(Context)
 {
+
+    ~this()
+    {
+    //    writeln("HandlerBase(Context) ~this");
+    }
+    
     void attachPipeline(Context /*ctx*/ )
     {
     }
@@ -21,7 +25,7 @@ abstract class HandlerBase(Context)
     {
     }
 
-    Context getContext()
+    final @property Context context()
     {
         if (_attachCount != 1)
         {
@@ -35,6 +39,10 @@ protected:
     ulong _attachCount = 0;
     Context _ctx;
 }
+/// Rin : the Handle will read type
+/// Rout : Next Handle will Read Type
+/// Win : the Handle will Write type
+/// Wout : Next Handle will write type
 
 abstract class Handler(Rin, Rout = Rin, Win = Rout, Wout = Rin) : HandlerBase!(
     HandlerContext!(Rout, Wout))
@@ -67,6 +75,7 @@ abstract class Handler(Rin, Rout = Rin, Win = Rout, Wout = Rin) : HandlerBase!(
     }
 
     void write(Context ctx, Win msg, TheCallBack cback = null);
+
     void close(Context ctx)
     {
         ctx.fireClose();
@@ -109,14 +118,14 @@ public:
     static enum dir = HandlerDir.OUT;
 
     alias OutboundHandlerContext!Wout Context;
-    alias TheCallBack = void delegate(Win, uint);
+    alias OutboundHandlerCallBack = void delegate(Win, uint);
 
     alias uint rin;
     alias uint rout;
     alias Win win;
     alias Wout wout;
 
-    void write(Context ctx, Win msg, TheCallBack cback = null);
+    void write(Context ctx, Win msg, OutboundHandlerCallBack cback = null);
 
     void close(Context ctx)
     {
@@ -136,14 +145,18 @@ class HandlerAdapter(R, W = R) : Handler!(R, R, W, W)
 
     override void write(Context ctx, W msg, TheCallBack cback)
     {
-        return ctx.fireWrite(forward!(msg, cback));
+        ctx.fireWrite(forward!(msg, cback));
     }
 }
 
 abstract class PipelineContext
 {
 public:
-
+    ~this()
+    {
+     //   writeln("PipelineContext ~ this");
+    }
+    
     void attachPipeline();
     void detachPipeline();
 
@@ -169,7 +182,6 @@ package:
 
 interface InboundLink(In)
 {
-public:
     void read(In msg);
     void timeOut();
     void transportActive();
@@ -178,8 +190,7 @@ public:
 
 interface OutboundLink(Out)
 {
-public:
-    alias TheCallBack = void delegate(Out, uint);
-    void write(Out msg, TheCallBack cback = null);
+    alias OutboundLinkCallBack = void delegate(Out, uint);
+    void write(Out msg, OutboundLinkCallBack cback = null);
     void close();
 };

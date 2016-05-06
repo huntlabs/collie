@@ -2,6 +2,9 @@ module collie.utils.timingwheel;
 
 import std.container.array;
 
+
+import std.stdio;
+
 final class TimingWheel
 {
     this(uint wheelSize)
@@ -109,9 +112,9 @@ abstract class WheelTimer
     }
 
 private:
-    WheelTimer _next;
-    WheelTimer _prev;
-    TimingWheel _manger;
+    WheelTimer _next = null;
+    WheelTimer _prev = null;
+    TimingWheel _manger = null;
     bool _oneShop = false;
 }
 
