@@ -9,8 +9,6 @@ import collie.socket.eventloop;
 import collie.socket.common;
 import collie.socket.tcpsocket;
 
-version(USE_SSL) :
-
 import deimos.openssl.ssl;
 
 //TODO: Need Test

@@ -15,10 +15,7 @@
             },
             {
                 "name": "ssl",
-                "versions": ["SSL"],
-                "subConfigurations": {
-                    "collie": "ssl"
-                }
+                "versions": ["SSL"]
             }
         ]
 }

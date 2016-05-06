@@ -2,17 +2,10 @@ module collie.bootstrap.server;
 
 import collie.socket;
 import collie.channel;
+import collie.bootstrap.serversslconfig;
 
 import std.stdio;
 
-version(USE_SSL)
-{
-    import collie.bootstrap.serversslconfig;
-}
-else
-{
-    alias SSL_CTX = void;
-}
 
 //TODO: Need Test the ssl
 final class ServerBootstrap(PipeLine)
@@ -32,14 +25,13 @@ final class ServerBootstrap(PipeLine)
         _acceptorPipelineFactory = factory;
         return this;
     }
-version(USE_SSL)
-{
+
     auto setSSLConfig(ServerSSLConfig config) 
     {
         _sslConfig = config;
         return this;
     } 
-}
+
     auto childPipeline(PipelineFactory!PipeLine factory)
     {
         _childPipelineFactory = factory;
@@ -155,14 +147,13 @@ protected:
         else
             pipe = AcceptPipeline.create();
         SSL_CTX * ctx = null;
-version(USE_SSL) 
-{
+
         if(_sslConfig)
         {
             ctx = _sslConfig.generateSSLCtx();
             if(!ctx) throw new Exception("Can not gengrate SSL_CTX");
         }
-}
+
         return new ServerAcceptor!(PipeLine)(acceptor, pipe, _childPipelineFactory,ctx);
     }
 
@@ -212,10 +203,8 @@ private:
     bool _rusePort = true;
     uint _timeOut = 0;
     Address _address;
-version(USE_SSL)
-{
+
     ServerSSLConfig _sslConfig = null;
-}
 }
 
 private:
@@ -252,8 +241,6 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 
         if (_sslctx) 
         {
-version(USE_SSL)
-{
             auto ssl = SSL_new (_sslctx);
             if(SSL_set_fd(ssl, msg.handle()) < 0) {
                 error("SSL_set_fd error: fd = ",msg.handle());
@@ -266,7 +253,6 @@ version(USE_SSL)
             auto shark = new SSLHandShark(asynssl,&doHandShark);
             _sharkList[shark] = 0;
             asynssl.start();
-}
         } 
         else     
         {
@@ -325,8 +311,6 @@ protected:
             _wheel.prevWheel();
     }
 
-version(USE_SSL)
-{
     void doHandShark(SSLHandShark shark, SSLSocket sock)
     {
         _sharkList.remove(shark);
@@ -337,7 +321,6 @@ version(USE_SSL)
             startSocket(sock);
         }
     }
-}
 
     void startSocket(TCPSocket sock)
     {
@@ -357,11 +340,8 @@ version(USE_SSL)
     }
 private:
     int[ServerConnection!PipeLine] _list;
-version(USE_SSL)
-{
     int[SSLHandShark]  _sharkList;
-}
-    //RedBlackTree!(ServerConnection!PipeLine) _list;
+    
     Acceptor _acceptor;
     Timer _timer;
     TimingWheel _wheel;
@@ -433,7 +413,6 @@ private:
     PipeLine _pipe;
 }
 
-version(USE_SSL) :
 final class SSLHandShark
 {
     alias SSLHandSharkCallBack = void delegate(SSLHandShark shark, SSLSocket sock);
