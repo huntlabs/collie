@@ -11,16 +11,16 @@ import collie.socket;
 import collie.channel;
 import collie.bootstrap.server;
 
-alias Pipeline!(UniqueBuffer, ubyte[]) EchoPipeline;
+alias Pipeline!(ubyte[], ubyte[]) EchoPipeline;
 
 ServerBootstrap!EchoPipeline ser;
 
-class EchoHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
+class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
 public:
-    override void read(Context ctx, UniqueBuffer msg)
+    override void read(Context ctx, ubyte[] msg)
     {
-        write(ctx,msg.data.dup, &callBack);
+        write(ctx,msg.dup, &callBack);
     }
 
     void callBack(ubyte[] data, uint len)

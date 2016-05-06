@@ -356,8 +356,6 @@ final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
     }
     ~this()
     {
-       // writeln("ServerConnection ~ this()");
-       // delete _pipe;
        _pipe.destroy;
     }
 
@@ -431,7 +429,7 @@ protected:
         _socket = null;
     }
     
-    void readCallBack(UniqueBuffer buffer){}
+    void readCallBack(ubyte[] buffer){}
     
     void onClose()
     {

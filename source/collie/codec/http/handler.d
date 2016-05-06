@@ -8,40 +8,24 @@ import std.digest.sha;
 import std.base64;
 
 import collie.channel;
-/*.handler;
-import collie.channel.handlercontext;
-import collie.channel.pipeline; */
 import collie.buffer;
-/*.uniquebuffer;
-import collie.buffer.SectionBuffer;
-import collie.buffer.buffer; */
-
 import collie.codec.http;
-/*.request;
-import collie.codec.http.response;
-import collie.codec.http.websocket;
-import collie.codec.http.header;
-import collie.codec.http.config;*/
-
-import std.socket;
 
 
-abstract class HTTPHandler : Handler!(UniqueBuffer, HTTPRequest,HTTPResponse,ubyte[])
+
+abstract class HTTPHandler : Handler!(ubyte[], HTTPRequest,HTTPResponse,ubyte[])
 {
 public:
     ~this()
     {
-        import std.stdio;
-        writeln("HTTPHandler ~this");
-        if(_req) _req.destroy;
+    //    if(_req) _req.destroy;
     }
 
-    final override void read(Context ctx, UniqueBuffer msg)
+    final override void read(Context ctx, ubyte[] msg)
     {
-        scope(exit) msg.release;
         if(_websocket)
         {
-            _frame.readFrame(msg.data(),&doFrame);
+            _frame.readFrame(msg,&doFrame);
         } 
         else 
         {
@@ -51,7 +35,7 @@ public:
                 _req.headerComplete = &reqHeaderDone;
                 _req.requestComplete = &requestDone;
             }
-            if(!_req.parserData(msg.data)){
+            if(!_req.parserData(msg)){
                 error("http parser erro :", _req.parser.errorString);
                 close(ctx);
             }
@@ -172,13 +156,11 @@ protected:
     final void freeBuffer(ubyte[] data,uint length)
     {
         httpAllocator.deallocate(data);
-        writeln("HTTP HANDLER freeBuffer");
     }
 
     final void lastWrited(ubyte[] data,uint len)
     {
         httpAllocator.deallocate(data);
-         writeln("HTTP HANDLER lastWrited freeBuffer");
         if(_shouldClose)
             close(context);
     }

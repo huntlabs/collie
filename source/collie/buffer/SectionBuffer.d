@@ -140,7 +140,6 @@ final class SectionBuffer : Buffer
     {
         size_t rlen = 0;
         return read(data.length, delegate(in ubyte[] dt) {
-            //writeln("read data = : ", cast(string)dt);
             memcpy((data.ptr + rlen), dt.ptr, dt.length);
             rlen += dt.length;
         });
@@ -392,8 +391,6 @@ final class SectionBuffer : Buffer
                 size_t i = 1;
                 for (++tsize; i < data.length && tsize < _wSize; ++i, ++tsize)
                 {
-                    //   writeln("i = ", i ,"  tsize = ",tsize);
-                    //  writeln("data [i] = ", data[i], " this[tsize] = ",this[tsize]);
                     if (data[i] != this[tsize])
                     {
                         size_t count = tsize / _sectionSize;

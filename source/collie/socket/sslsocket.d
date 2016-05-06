@@ -109,12 +109,10 @@ protected:
         {
             try
             {
-                auto len = SSL_read(_ssl,(_readBuffer.allData.ptr),cast(int)(_readBuffer.maxLength));
+                auto len = SSL_read(_ssl,(_readBuffer.ptr),cast(int)(_readBuffer.length));
                 if (len > 0)
                 {
-                    _readBuffer.setLength(len);
-                    _readCallBack(_readBuffer);
-                    _readBuffer = new UniqueBuffer(TCP_READ_BUFFER_SIZE);
+                    _readCallBack(_readBuffer[0..len]);
                 } 
                 else
                 {

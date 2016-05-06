@@ -23,8 +23,6 @@ abstract class PipelineBase
     
     ~this()
     {
-        import std.stdio;
-     //   writeln("PipelineBase ~this");
     }
 
     @property final void pipelineManager(PipelineManager manager)
@@ -254,8 +252,6 @@ final class Pipeline(R, W = void) : PipelineBase
 
     ~this()
     {
-        import std.stdio;
-       // writeln("Pipeline ~this");
         if (!_isStatic) {
             detachHandlers();
         }

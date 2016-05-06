@@ -94,7 +94,7 @@ struct AsyncEvent
         bool enread = true, bool enwrite = false, bool etMode = false, bool oneShot = false)
     {
         import std.conv : emplace;
-        auto bytes = /*_eventAllocator*/Mallocator.instance.allocate(AsyncEvent.sizeof);
+        auto bytes = _eventAllocator.allocate(AsyncEvent.sizeof);
         if(!bytes.ptr) return null;
         return emplace(cast(AsyncEvent *)bytes.ptr,type,obj,fd,enread,enwrite,etMode,oneShot);
     }
@@ -103,8 +103,7 @@ struct AsyncEvent
     {
         event._obj = null;
         void * p = event;
-        writeln("free AsyncEvent To the free_list ");
-        /*_eventAllocator*/Mallocator.instance.deallocate(p[0..AsyncEvent.sizeof]);
+        _eventAllocator.deallocate(p[0..AsyncEvent.sizeof]);
         
     }
     
@@ -122,6 +121,5 @@ private:
     import std.experimental.allocator.gc_allocator;
     import std.experimental.allocator.building_blocks.free_list;
     
-    static shared SharedFreeList!(Mallocator,128, 2048) _eventAllocator;
-    //static shared SharedFreeList!(GCAllocator,128, 2048) _eventAllocator;
+    static shared SharedFreeList!(Mallocator,8, 6666) _eventAllocator;
 }

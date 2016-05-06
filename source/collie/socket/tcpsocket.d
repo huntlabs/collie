@@ -1,19 +1,18 @@
 module collie.socket.tcpsocket;
 
-import core.memory;
 import core.stdc.errno;
 
 import std.socket;
-import std.experimental.allocator.gc_allocator;
 
 import collie.socket.common;
 import collie.socket.eventloop;
 import collie.utils.queue;
 import collie.utils.functional;
-public import collie.buffer.uniquebuffer;
+
+import std.stdio;
 
 alias TCPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
-alias TCPReadCallBack = void delegate(UniqueBuffer buffer);
+alias TCPReadCallBack = void delegate(ubyte[] buffer);
 
 class TCPSocket : AsyncTransport, EventCallInterface
 {
@@ -32,21 +31,25 @@ class TCPSocket : AsyncTransport, EventCallInterface
         _socket = sock;
         _socket.blocking = false;
         _writeQueue = Queue!(WriteSite, true, false, GCAllocator)(32);
-        _readBuffer = new UniqueBuffer(TCP_READ_BUFFER_SIZE);
+        _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
         _event = AsyncEvent(AsynType.TCP, this, _socket.handle, true, true, true).create(AsynType.TCP, this, _socket.handle, true, true, true);
+        ++COUNT;
     }
 
-    ~this()
+    ~this() 
     {
-        import std.stdio;
-       // writeln("TCPSocket ~this");
+        scope(exit)
+        {
+            AsyncEvent.free(_event);
+            _readBuffer = null;
+        }
         _socket.destroy;
         if (_event.isActive)
         {
             eventLoop.delEvent(_event);
         }
-        
-        AsyncEvent.free(_event);
+          
+         
     }
 
     //	@property Socket socket(){return _socket;}
@@ -222,12 +225,10 @@ protected:
         {
             try
             {
-                auto len = _socket.receive(_readBuffer.allData);
+                auto len = _socket.receive(_readBuffer);
                 if (len > 0)
                 {
-                    _readBuffer.setLength(len);
-                    _readCallBack(_readBuffer);
-                    _readBuffer = new UniqueBuffer(TCP_READ_BUFFER_SIZE);
+                    _readCallBack(_readBuffer[0..len]);
                 }
                 else if (errno == EWOULDBLOCK || errno == EAGAIN)
                 {
@@ -259,11 +260,11 @@ protected:
     }
 
 protected:
+    import std.experimental.allocator.gc_allocator;
     Socket _socket;
     Queue!(WriteSite, true, false, GCAllocator) _writeQueue;
     AsyncEvent* _event;
-    ubyte[] _buffer;
-    UniqueBuffer _readBuffer;
+    ubyte[] _readBuffer;
 
     CallBack _unActive;
     TCPReadCallBack _readCallBack;

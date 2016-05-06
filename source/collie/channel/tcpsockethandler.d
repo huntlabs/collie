@@ -1,11 +1,10 @@
 module collie.channel.tcpsockethandler;
 
-import collie.buffer.uniquebuffer;
 import collie.socket;
 import collie.channel.handler;
 import collie.channel.handlercontext;
 
-class TCPSocketHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
+class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
     //alias TheCallBack = void delegate(ubyte[],uint);
     //alias HandleContext!(UniqueBuffer, ubyte[]) Context;
@@ -17,8 +16,6 @@ class TCPSocketHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
     
     ~this()
     {
-        import std.stdio;
-       // writeln("TCPSocketHandler ~this");
     }
 
     override void transportActive(Context ctx)
@@ -65,7 +62,7 @@ protected:
         
     }
 
-    void readCallBack(UniqueBuffer buf)
+    void readCallBack(ubyte[] buf)
     {
         context.fireRead(buf);
     }

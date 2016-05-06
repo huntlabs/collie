@@ -65,7 +65,6 @@ class ContextImplBase(H, Context) : PipelineContext
 {
     ~this()
     {
-       // writeln("ContextImplBase ~ this");
     }
 
     final @property auto handler()
