@@ -39,31 +39,31 @@ class HTTPRequest
 		_parser = null;
 	}
 
-	final @property const(HTTPHeader) header() const {return _header;}
-	final @property SectionBuffer HTTPBody(){return _body;}
+	final @property const(HTTPHeader)       Header() const {return _header;}
+	final @property SectionBuffer           Body(){return _body;}
 
 	final @property Address clientAddress() {return _addr;} 
 
 	final bool parserData(ubyte[] data){
 		_dorun = true;
 		ulong len = _parser.httpParserExecute(data);
-		if((len == data.length || header.upgrade()) && _dorun) {
-			if(_headerComplete && fn_headerComplete) fn_headerComplete(_header);
-			if(_meassComplete && fn_RequestComplete) fn_RequestComplete(this);
+		if((len == data.length || Header.upgrade()) && _dorun) {
+			if(_headerCompleted && _headerComplete) _headerComplete(_header);
+			if(_meassComplete && _RequestComplete) _RequestComplete(this);
 			return true;
 		} 
 		return false;
 	}
 
-	final @property headerComplete(CallBackHeader cback){fn_headerComplete = cback;}
-	final @property requestComplete(CallBackRequest cback){fn_RequestComplete = cback;}
+	final @property headerComplete(CallBackHeader cback){_headerComplete = cback;}
+	final @property requestComplete(CallBackRequest cback){_RequestComplete = cback;}
 
 package:
 	final void clear(){
 		_dorun = false;
 		_header.clear();
 		_body.clear();
-		_headerComplete = false;
+		_headerCompleted = false;
 		_meassComplete = false;
 		_parser.rest(HTTPParserType.HTTP_REQUEST);
 		_addr = null;
@@ -132,7 +132,7 @@ protected:
 	{
 		trace("HTTPRequest.onHeadersComplete");
 		if(!_dorun) {_parser.handleIng = false; return;}
-		_headerComplete = true;
+		_headerCompleted = true;
 		_header.upgrade = _parser.isUpgrade;
 		if (_parser.major == 1) {
 			if(_parser.minor > 0) {
@@ -182,13 +182,13 @@ protected:
 private:
 	HTTPHeader _header;
 	HTTPParser _parser;
-	bool _headerComplete = false;
+	bool _headerCompleted = false;
 	bool _meassComplete = false;
 
 	Address _addr;
 
-	CallBackHeader fn_headerComplete;
-	CallBackRequest fn_RequestComplete;
+	CallBackHeader _headerComplete;
+	CallBackRequest _RequestComplete;
 	bool _dorun;
 private:
 	ubyte[] _hkey;

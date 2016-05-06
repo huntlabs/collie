@@ -60,8 +60,8 @@ class HTTPResponse
 		_header = null;
 	}
 
-	final @property header() {return _header;}
-	final @property HTTPBody(){return _body;}
+	final @property Header() {return _header;}
+	final @property Body(){return _body;}
 
 	final bool append(ubyte[] data)
 	{
@@ -70,17 +70,17 @@ class HTTPResponse
 		return true;
 	}
 	
-	final bool sent()
+	final bool done()
 	{
-            return sent(null,0);
+            return done(null,0);
 	}
 	
-	final bool sent(string file)
+	final bool done(string file)
 	{
-            return sent(file,0);
+            return done(file,0);
 	}
 
-	final bool sent(string file , ulong begin) 
+	final bool done(string file , ulong begin) 
 	{
             if( !_done && _resDone) {
                 _done = true;

@@ -20,13 +20,13 @@ alias Pipeline!(ubyte[], HTTPResponse) HTTPPipeline;
 
 class HttpServer : HTTPHandler
 {
-    override void doHttpHandle(HTTPRequest req, HTTPResponse rep)
+    override void requestHandle(HTTPRequest req, HTTPResponse rep)
     {
        // writeln("req path : ", req.header.path());
-        rep.header.setHeaderValue("content-type","text/html;charset=UTF-8");
+        rep.Header.setHeaderValue("content-type","text/html;charset=UTF-8");
 
-        rep.HTTPBody.write(cast(ubyte[])"hello wrold!");
-        rep.sent();
+        rep.Body.write(cast(ubyte[])"hello wrold!");
+        rep.done();
     }
     
     override WebSocket newWebSocket(const HTTPHeader header)
@@ -61,6 +61,7 @@ void main()
     ser.childPipeline(new HTTPPipelineFactory()).heartbeatTimeOut(30)
         .group(new EventLoopGroup)
         .bind(8080);
+        
     version (SSL) 
     {
         ServerSSLConfig ssl = new ServerSSLConfig(SSLMode.SSLv2v3);
