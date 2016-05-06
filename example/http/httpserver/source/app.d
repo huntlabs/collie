@@ -7,10 +7,6 @@ import collie.bootstrap.server;
 import collie.bootstrap.serversslconfig;
 import collie.socket;
 
-import collie.codec.http.handler;
-import collie.codec.http.request;
-import collie.codec.http.response;
-import collie.codec.http.header;
 
 debug { 
         extern(C) __gshared string[] rt_options = [ "gcopt=profile:1"];// maxPoolSize:50" ];
