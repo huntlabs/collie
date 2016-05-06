@@ -11,51 +11,50 @@ import collie.channel;
 import collie.buffer;
 import collie.codec.http;
 
-
-
-abstract class HTTPHandler : Handler!(ubyte[], HTTPRequest,HTTPResponse,ubyte[])
+abstract class HTTPHandler : Handler!(ubyte[], HTTPRequest, HTTPResponse, ubyte[])
 {
 public:
-    ~this()
+     ~this()
     {
-    //    if(_req) _req.destroy;
+        //    if(_req) _req.destroy;
     }
 
     final override void read(Context ctx, ubyte[] msg)
     {
-        if(_websocket)
+        if (_websocket)
         {
-            _frame.readFrame(msg,&doFrame);
-        } 
-        else 
+            _frame.readFrame(msg, &doFrame);
+        }
+        else
         {
-            if(_req is null)
+            if (_req is null)
             {
                 _req = new HTTPRequest();
                 _req.headerComplete = &reqHeaderDone;
                 _req.requestComplete = &requestDone;
             }
-            if(!_req.parserData(msg)){
+            if (!_req.parserData(msg))
+            {
                 error("http parser erro :", _req.parser.errorString);
                 close(ctx);
             }
         }
     }
-    
-    final override void write(Context ctx,HTTPResponse resp,TheCallBack back = null)
+
+    final override void write(Context ctx, HTTPResponse resp, TheCallBack back = null)
     {
-        auto buffer = scoped!SectionBuffer(HTTPConfig.HeaderStectionSize,httpAllocator);
+        auto buffer = scoped!SectionBuffer(HTTPConfig.HeaderStectionSize, httpAllocator);
         const bool nullBody = (resp.Body.length == 0);
-        if(nullBody)
+        if (nullBody)
         {
             resp.Header.statusCode = 404;
         }
-        resp.Header.setHeaderValue("Content-Length",resp.Body.length);
-        HTTPResponse.generateHeader(resp,buffer);
+        resp.Header.setHeaderValue("Content-Length", resp.Body.length);
+        HTTPResponse.generateHeader(resp, buffer);
 
-        writeStection(buffer,nullBody);
+        writeStection(buffer, nullBody);
         trace("header write over, Go write body! ");
-        writeStection(resp.Body(),true);
+        writeStection(resp.Body(), true);
     }
 
     final override void timeOut(Context ctx)
@@ -63,23 +62,25 @@ public:
         trace("HTTP handle Time out!");
         close(ctx);
     }
-    
+
     override void transportActive(Context ctx)
-    {}
-    
+    {
+    }
+
     override void transportInactive(Context ctx)
-    {}
-    
-    void requestHandle(HTTPRequest req,HTTPResponse res);
-    
-    
+    {
+    }
+
+    void requestHandle(HTTPRequest req, HTTPResponse res);
+
     WebSocket newWebSocket(const HTTPHeader header);
-    
+
 protected:
     final void reqHeaderDone(HTTPHeader header)
     {
         trace("reqHeaderDone");
-        if(header.upgrade){
+        if (header.upgrade)
+        {
             if (_res is null)
             {
                 _res = new HTTPResponse();
@@ -89,266 +90,300 @@ protected:
             doUpgrade();
         }
     }
-    
+
     final void requestDone(HTTPRequest req)
     {
-        try{
-        
+        try
+        {
+
             trace("requestDone");
             import collie.socket.tcpsocket;
-            TCPSocket sock = cast(TCPSocket)context.transport;
+
+            TCPSocket sock = cast(TCPSocket) context.transport;
             _req.clientAddress = sock.remoteAddress();
-            if(req.Header.httpVersion == HTTPVersion.HTTP1_0)_shouldClose = true;
+            if (req.Header.httpVersion == HTTPVersion.HTTP1_0)
+                _shouldClose = true;
             if (_res is null)
             {
                 _res = new HTTPResponse();
                 _res.sentCall(&responseSent);
                 _res.closeCall(&responseClose);
             }
-            requestHandle(_req,_res);
-        } catch (Exception e){
-            error("handle erro! close the Socket, the erro : ",e.msg);
+            requestHandle(_req, _res);
+        }
+        catch (Exception e)
+        {
+            error("handle erro! close the Socket, the erro : ", e.msg);
             close(context());
         }
     }
-    
+
     final void responseSent(HTTPResponse resp, string file, ulong begin)
     {
         trace("responseSent");
-        if(!context.transport.isAlive()) return;
-        scope(exit) clear();
-        if(file is null)
+        if (!context.transport.isAlive())
+            return;
+        scope (exit)
+            clear();
+        if (file is null)
         {
-           trace("write(context(),resp);");
-           write(context(),resp);
+            trace("write(context(),resp);");
+            write(context(), resp);
         }
-        else 
+        else
         {
             import std.file;
-            auto buffer = scoped!SectionBuffer(HTTPConfig.HeaderStectionSize,httpAllocator);
+
+            auto buffer = scoped!SectionBuffer(HTTPConfig.HeaderStectionSize, httpAllocator);
             ulong size = exists(file) && isFile(file) ? getSize(file) : 0;
             size = size > begin ? size - begin : 0;
             if (size == 0)
             {
                 resp.Header.statusCode = 404;
-                resp.Header.setHeaderValue("Content-Length",0);
-                HTTPResponse.generateHeader(resp,buffer);
-                writeStection(buffer,true);
-            } 
+                resp.Header.setHeaderValue("Content-Length", 0);
+                HTTPResponse.generateHeader(resp, buffer);
+                writeStection(buffer, true);
+            }
             else
             {
-                _file = new File(file,"r");
+                _file = new File(file, "r");
                 _file.seek(begin);
-                resp.Header.setHeaderValue("Content-Length",size);
-                HTTPResponse.generateHeader(resp,buffer);
-                writeStection(buffer,false,true);
-            } 
+                resp.Header.setHeaderValue("Content-Length", size);
+                HTTPResponse.generateHeader(resp, buffer);
+                writeStection(buffer, false, true);
+            }
         }
     }
-    
+
     final void responseClose(HTTPResponse red)
     {
         clear();
         close(context());
     }
-    
-    
-    final void freeBuffer(ubyte[] data,uint length)
+
+    final void freeBuffer(ubyte[] data, uint length)
     {
         httpAllocator.deallocate(data);
     }
 
-    final void lastWrited(ubyte[] data,uint len)
+    final void lastWrited(ubyte[] data, uint len)
     {
         httpAllocator.deallocate(data);
-        if(_shouldClose)
+        if (_shouldClose)
             close(context);
     }
-    
+
     final bool writeStection(SectionBuffer buffer, bool isLast, bool isFile = false)
     {
-        trace("writeStection ,isLast = ", isLast, " the buffer length = ",buffer.length);
+        trace("writeStection ,isLast = ", isLast, " the buffer length = ", buffer.length);
         import std.container.array;
         import std.functional;
         import core.stdc.string;
-        
-        if(buffer.length == 0){
-                return false;
+
+        if (buffer.length == 0)
+        {
+            return false;
         }
 
-        size_t wsize =  buffer.writeSite;
+        size_t wsize = buffer.writeSite;
         Array!(ubyte[]) arbuffer;
         buffer.swap(&arbuffer);
         size_t wcount = arbuffer.length;
-        -- wcount;
-        for(uint i = 0; i < wcount ; ++i)
+        --wcount;
+        for (uint i = 0; i < wcount; ++i)
         {
-            context.fireWrite(arbuffer[i],&freeBuffer);
+            context.fireWrite(arbuffer[i], &freeBuffer);
         }
-        ubyte[] data = arbuffer[wcount][0..wsize];
-        if(isFile)
-            context.fireWrite(data,&sendFile);
+        ubyte[] data = arbuffer[wcount][0 .. wsize];
+        if (isFile)
+            context.fireWrite(data, &sendFile);
         else
-            isLast ? context.fireWrite(data,&lastWrited) : context.fireWrite(data,&freeBuffer);
-        
+            isLast ? context.fireWrite(data, &lastWrited) : context.fireWrite(data,
+                &freeBuffer);
+
         return true;
     }
 
     pragma(inline, true);
     final void clear()
     {
-        if(_req)
+        if (_req)
             _req.clear();
-        if(_res)
+        if (_res)
             _res.clear();
-        if(_frame) _frame.clear();
+        if (_frame)
+            _frame.clear();
         _shouldClose = false;
     }
+
 protected: //WebSocket
-    final void sendFile(ubyte[] data,uint len)
+    final void sendFile(ubyte[] data, uint len)
     {
-        try{
-            if(_file.eof())
+        try
+        {
+            if (_file.eof())
             {
-                 httpAllocator.deallocate(data);
-                 _file.close();
-                 delete _file;
-                 _file = null;
-                 if(_shouldClose)
+                httpAllocator.deallocate(data);
+                _file.close();
+                delete _file;
+                _file = null;
+                if (_shouldClose)
                     close(context());
             }
             else
             {
-                if(_file.tell() == 0)
+                if (_file.tell() == 0)
                 {
                     httpAllocator.deallocate(data);
-                    data = cast(ubyte[])httpAllocator.allocate(4096);
+                    data = cast(ubyte[]) httpAllocator.allocate(4096);
                 }
-                data =  _file.rawRead(data);
-                context.fireWrite(data,&sendFile);
+                data = _file.rawRead(data);
+                context.fireWrite(data, &sendFile);
             }
-        } 
+        }
         catch
         {
-             httpAllocator.deallocate(data);
-             close(context());
+            httpAllocator.deallocate(data);
+            close(context());
         }
-        
-    } 
-    
-    
+
+    }
+
     final void doUpgrade()
     {
         trace(" doUpgrade()");
         import std.string;
+
         auto header = _req.Header();
         string upgrade = header.getHeaderValue("upgrade"); // "upgrade" in header.headerMap();
-        string connection =   header.getHeaderValue("connection");//"connection" in header.headerMap();
-        string key =  header.getHeaderValue("sec-websocket-key"); //"sec-websocket-key" in header.headerMap();
+        string connection = header.getHeaderValue("connection"); //"connection" in header.headerMap();
+        string key = header.getHeaderValue("sec-websocket-key"); //"sec-websocket-key" in header.headerMap();
         //auto pProtocol = "sec-webSocket-protocol" in req.headers;
-        string pVersion =  header.getHeaderValue("sec-websocket-version");//"sec-websocket-version" in header.headerMap();
-        
+        string pVersion = header.getHeaderValue("sec-websocket-version"); //"sec-websocket-version" in header.headerMap();
+
         auto isUpgrade = false;
 
-        if( connection.length > 0 ) {
-                auto connectionTypes = split(connection, ",");
-                foreach( t ; connectionTypes ) {
-                        if( t.strip().toLower() == "upgrade" ) {
-                                isUpgrade = true;
-                                break;
-                        }
-                }
-        }
-        trace("isUpgrade = ",isUpgrade, "  pVersion = ", pVersion, "   upgrade = ",upgrade);
-        if( !(isUpgrade && (icmp(upgrade, "websocket") == 0) && (key.length > 0 ) && (pVersion == "13") ))
+        if (connection.length > 0)
         {
-                _res.Body.write(cast(ubyte[])"Browser sent invalid WebSocket request.");
-                _res.Header.statusCode = 400;
-                _shouldClose = true;
-                _res.done();
-                return;
+            auto connectionTypes = split(connection, ",");
+            foreach (t; connectionTypes)
+            {
+                if (t.strip().toLower() == "upgrade")
+                {
+                    isUpgrade = true;
+                    break;
+                }
+            }
+        }
+        trace("isUpgrade = ", isUpgrade, "  pVersion = ", pVersion, "   upgrade = ",
+            upgrade);
+        if (!(isUpgrade && (icmp(upgrade, "websocket") == 0) && (key.length > 0)
+                && (pVersion == "13")))
+        {
+            _res.Body.write(cast(ubyte[]) "Browser sent invalid WebSocket request.");
+            _res.Header.statusCode = 400;
+            _shouldClose = true;
+            _res.done();
+            return;
         }
 
-        auto accept = cast(string)Base64.encode(sha1Of(key ~ WebSocketGuid));
-    
+        auto accept = cast(string) Base64.encode(sha1Of(key ~ WebSocketGuid));
+
         _websocket = newWebSocket(header);
-        
-        if(_websocket){
+
+        if (_websocket)
+        {
             import collie.socket.tcpsocket;
-                _websocket._hand = this;
-                TCPSocket sock = cast(TCPSocket)context.transport;
-                _req.clientAddress = sock.remoteAddress();
-                _frame = new HandleFrame(false);
-                _res.Header.statusCode = 101;
-                _res.Header.setHeaderValue("Sec-WebSocket-Accept",accept);
-                _res.Header.setHeaderValue("Connection","Upgrade");
-                _res.Header.setHeaderValue("Upgrade","websocket");
-                _res.done();
-        } else {
-                _res.Body.write(cast(ubyte[])"Browser sent invalid WebSocket request.");
-                _res.Header.statusCode = 400;
-                _shouldClose = true;
-                _res.done();
-        } 
+
+            _websocket._hand = this;
+            TCPSocket sock = cast(TCPSocket) context.transport;
+            _req.clientAddress = sock.remoteAddress();
+            _frame = new HandleFrame(false);
+            _res.Header.statusCode = 101;
+            _res.Header.setHeaderValue("Sec-WebSocket-Accept", accept);
+            _res.Header.setHeaderValue("Connection", "Upgrade");
+            _res.Header.setHeaderValue("Upgrade", "websocket");
+            _res.done();
+        }
+        else
+        {
+            _res.Body.write(cast(ubyte[]) "Browser sent invalid WebSocket request.");
+            _res.Header.statusCode = 400;
+            _shouldClose = true;
+            _res.done();
+        }
     }
 
     final void doFrame(Frame frame, bool text)
     {
-        if(frame.isControlFrame){
-            switch (frame.opCode()) {
-                case OpCode.OpCodePing:
-                {//DO pong
+        if (frame.isControlFrame)
+        {
+            switch (frame.opCode())
+            {
+            case OpCode.OpCodePing:
+                { //DO pong
                     ubyte[] tdata = cast(ubyte[]) httpAllocator.allocate(128);
                     auto buf = scoped!PieceBuffer(tdata);
-                    _frame.pong(frame.data,buf);
-                    context().fireWrite(buf.data(),&freeBuffer);
+                    _frame.pong(frame.data, buf);
+                    context().fireWrite(buf.data(), &freeBuffer);
                 }
                 break;
-                        
-                case OpCode.OpCodePong:
-                    _websocket.onPongFrame(frame);
-                    break;
-                default :
-                    close(context);
-                    break;
+
+            case OpCode.OpCodePong:
+                _websocket.onPongFrame(frame);
+                break;
+            default:
+                close(context);
+                break;
             }
-        } else {
-                if(text){
-                        _websocket.onTextFrame(frame);
-                } else {
-                        _websocket.onBinaryFrame(frame);
-                }
-        } 
+        }
+        else
+        {
+            if (text)
+            {
+                _websocket.onTextFrame(frame);
+            }
+            else
+            {
+                _websocket.onBinaryFrame(frame);
+            }
+        }
     }
-    
+
 package:
     bool ping(ubyte[] data)
     {
-            if(!context().transport.isAlive()) return false;
-            ubyte[] tdata = cast(ubyte[]) httpAllocator.allocate(128);
-            auto buf = scoped!PieceBuffer(tdata);
-            _frame.ping(data,buf);
-            context().fireWrite(buf.data(),&freeBuffer);
-            return true;
+        if (!context().transport.isAlive())
+            return false;
+        ubyte[] tdata = cast(ubyte[]) httpAllocator.allocate(128);
+        auto buf = scoped!PieceBuffer(tdata);
+        _frame.ping(data, buf);
+        context().fireWrite(buf.data(), &freeBuffer);
+        return true;
     }
 
     bool send(ubyte[] data, bool isBin)
-    { 
-            if(!context().transport.isAlive()) return false;
-            auto buffer = scoped!SectionBuffer(HTTPConfig.ResponseBodyStectionSize,httpAllocator);
-            const len = data.length + 35;
-            buffer.reserve(len);
-            _frame.writeFrame(data,isBin,buffer);
-            return writeStection(buffer,false);
+    {
+        if (!context().transport.isAlive())
+            return false;
+        auto buffer = scoped!SectionBuffer(HTTPConfig.ResponseBodyStectionSize, httpAllocator);
+        const len = data.length + 35;
+        buffer.reserve(len);
+        _frame.writeFrame(data, isBin, buffer);
+        return writeStection(buffer, false);
     }
+
     pragma(inline, true);
-    void doClose(){close(context);}
+    void doClose()
+    {
+        close(context);
+    }
+
 private:
     HTTPRequest _req = null;
     HTTPResponse _res = null;
     WebSocket _websocket = null;
     HandleFrame _frame = null;
     bool _shouldClose = false;
-    File * _file;
+    File* _file;
 }
-
