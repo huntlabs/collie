@@ -1,19 +1,18 @@
 module collie.socket.tcpsocket;
 
-import core.memory;
 import core.stdc.errno;
 
 import std.socket;
-import std.experimental.allocator.gc_allocator;
 
 import collie.socket.common;
 import collie.socket.eventloop;
 import collie.utils.queue;
 import collie.utils.functional;
-public import collie.buffer.uniquebuffer;
+
+import std.stdio;
 
 alias TCPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
-alias TCPReadCallBack = void delegate(UniqueBuffer buffer);
+alias TCPReadCallBack = void delegate(ubyte[] buffer);
 
 class TCPSocket : AsyncTransport, EventCallInterface
 {
@@ -32,23 +31,23 @@ class TCPSocket : AsyncTransport, EventCallInterface
         _socket = sock;
         _socket.blocking = false;
         _writeQueue = Queue!(WriteSite, true, false, GCAllocator)(32);
-        _readBuffer = new UniqueBuffer(TCP_READ_BUFFER_SIZE);
-        _event = new AsyncEvent(AsynType.TCP, this, _socket.handle, true, true, true);
+        _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
+        _event = AsyncEvent(AsynType.TCP, this, _socket.handle, true, true, true).create(AsynType.TCP, this, _socket.handle, true, true, true);
     }
 
-    ~this()
+    ~this() 
     {
+        scope(exit)
+        {
+            AsyncEvent.free(_event);
+            _readBuffer = null;
+        }
+        _socket.destroy;
         if (_event.isActive)
         {
             eventLoop.delEvent(_event);
-            //delete _event;
-            _event = null;
-        }
-        if (_socket.isAlive())
-            _socket.close();
+        }   
     }
-
-    //	@property Socket socket(){return _socket;}
 
     final override @property int fd()
     {
@@ -79,7 +78,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         }
     }
 
-    final override @property bool isAlive() @trusted nothrow
+    override @property bool isAlive() @trusted nothrow
     {
         try
         {
@@ -156,7 +155,7 @@ protected:
                 {
                     break;
                 }
-                else if (errno == -4)
+                else if (errno == 4)
                 {
                     continue;
                 }
@@ -216,22 +215,21 @@ protected:
 
     override void onRead() nothrow
     {
+        try{trace("onread  tecp ");}catch{}
         while (isAlive)
         {
             try
             {
-                auto len = _socket.receive(_readBuffer.allData);
+                auto len = _socket.receive(_readBuffer);
                 if (len > 0)
                 {
-                    _readBuffer.setLength(len);
-                    _readCallBack(_readBuffer);
-                    _readBuffer = new UniqueBuffer(TCP_READ_BUFFER_SIZE);
+                    _readCallBack(_readBuffer[0..len]);
                 }
                 else if (errno == EWOULDBLOCK || errno == EAGAIN)
                 {
                     break;
                 }
-                else if (errno == -4)
+                else if (errno == 4)
                 {
                     continue;
                 }
@@ -257,11 +255,11 @@ protected:
     }
 
 protected:
+    import std.experimental.allocator.gc_allocator;
     Socket _socket;
     Queue!(WriteSite, true, false, GCAllocator) _writeQueue;
     AsyncEvent* _event;
-
-    UniqueBuffer _readBuffer;
+    ubyte[] _readBuffer;
 
     CallBack _unActive;
     TCPReadCallBack _readCallBack;
@@ -329,7 +327,7 @@ mixin template TCPSocketOption()
     }
 }
 
-private:
+package:
 final class WriteSite
 {
     this(ubyte[] data, TCPWriteCallBack cback = null)

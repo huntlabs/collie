@@ -1,9 +1,12 @@
 module collie.socket.common;
 
 public import std.experimental.logger;
+import std.experimental.allocator;
 
 import collie.socket.eventloop;
 import std.socket;
+
+import std.stdio;
 
 enum TCP_READ_BUFFER_SIZE = 4096;
 
@@ -85,11 +88,38 @@ struct AsyncEvent
     bool enWrite;
     bool etMode;
     bool oneShot;
+    
+    
+    static AsyncEvent * create(AsynType type, EventCallInterface obj, socket_t fd = socket_t.init,
+        bool enread = true, bool enwrite = false, bool etMode = false, bool oneShot = false)
+    {
+        import std.conv : emplace;
+        auto bytes = _eventAllocator.allocate(AsyncEvent.sizeof);
+        if(!bytes.ptr) return null;
+        return emplace(cast(AsyncEvent *)bytes.ptr,type,obj,fd,enread,enwrite,etMode,oneShot);
+    }
 
+    static void free(AsyncEvent * event)
+    {
+        event._obj = null;
+        void * p = event;
+        _eventAllocator.deallocate(p[0..AsyncEvent.sizeof]);
+        
+    }
+    
+    @property isActive(){ return _isActive; }
+    
 package:
-    bool isActive = false;
+    @property isActive(bool active){_isActive = active;}
 
 private:
     EventCallInterface _obj;
     AsynType _type;
+    bool _isActive = false;
+    
+    import std.experimental.allocator.mallocator;
+    import std.experimental.allocator.gc_allocator;
+    import std.experimental.allocator.building_blocks.free_list;
+    
+    static shared SharedFreeList!(Mallocator,8, 6666) _eventAllocator;
 }

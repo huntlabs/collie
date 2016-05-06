@@ -7,9 +7,11 @@ import collie.channel.pipeline;
 import collie.channel.handler;
 import collie.socket;
 
+import std.stdio;
+
 interface HandlerContext(In, Out)
 {
-    alias TheCallBack = void delegate(Out, uint);
+    alias HandlerTheCallBack = void delegate(Out, uint);
 
     void fireRead(In msg);
 
@@ -18,7 +20,7 @@ interface HandlerContext(In, Out)
     void fireTransportActive();
     void fireTransportInactive();
 
-    void fireWrite(Out msg, TheCallBack cback = null);
+    void fireWrite(Out msg, HandlerTheCallBack cback = null);
     void fireClose();
 
     @property PipelineBase pipeline();
@@ -42,7 +44,9 @@ interface InboundHandlerContext(In)
 
 interface OutboundHandlerContext(Out)
 {
-    void fireWrite(Out msg);
+    alias OutboundTheCallBack = void delegate(Out, uint);
+    
+    void fireWrite(Out msg, OutboundTheCallBack cback = null);
     void fireClose();
 
     @property PipelineBase pipeline();
@@ -59,6 +63,10 @@ enum HandlerDir
 
 class ContextImplBase(H, Context) : PipelineContext
 {
+    ~this()
+    {
+    }
+
     final @property auto handler()
     {
         return _handler;
@@ -233,9 +241,9 @@ mixin template ReadContextImpl()
 
 mixin template WriteContextImpl()
 {
-    alias TheCallBack = void delegate(Wout, uint);
+    alias NextCallBack = void delegate(Wout, uint);
 
-    override void fireWrite(Wout msg, TheCallBack cback = null)
+    override void fireWrite(Wout msg, NextCallBack cback = null)
     {
         if (_nextOut)
         {
@@ -258,9 +266,10 @@ mixin template WriteContextImpl()
             info("close reached end of pipeline");
         }
     }
-
+    
     // OutboundLink overrides
-    override void write(Win msg, TheCallBack cback = null)
+    alias ThisCallBack = void delegate(Win, uint);
+    override void write(Win msg, ThisCallBack cback = null)
     {
         _handler.write(this, forward!(msg, cback));
     }
@@ -272,20 +281,21 @@ mixin template WriteContextImpl()
 
 }
 
-class ContextImpl(H) : ContextImplBase!(H, HandlerContext!(H.rout, H.wout)),
+final class ContextImpl(H) : ContextImplBase!(H, HandlerContext!(H.rout, H.wout)),
     HandlerContext!(H.rout, H.wout), InboundLink!(H.rin), OutboundLink!(H.win)
 {
 
     static enum dir = HandlerDir.BOTH;
 
     mixin CommonContextImpl;
+    
+    mixin WriteContextImpl;
 
     mixin ReadContextImpl;
 
-    mixin WriteContextImpl;
 };
 
-class InboundContextImpl(H) : ContextImplBase!(H,
+final class InboundContextImpl(H) : ContextImplBase!(H,
     InboundHandlerContext!(H.rout)), InboundHandlerContext!(H.rout), InboundLink!(H.rin)
 {
     static enum dir = HandlerDir.IN;
@@ -296,9 +306,9 @@ class InboundContextImpl(H) : ContextImplBase!(H,
 
 }
 
-class OutboundContextImpl(H) : ContextImplBase!(H,
+final class OutboundContextImpl(H) : ContextImplBase!(H,
     OutboundHandlerContext!(H.wout)), OutboundHandlerContext!(H.wout), OutboundLink!(H.win)
-{
+ {
 
     static enum dir = HandlerDir.OUT;
 

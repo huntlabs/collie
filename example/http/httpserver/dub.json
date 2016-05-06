@@ -1,5 +1,5 @@
 {
-	"name": "client",
+	"name": "httpserver",
 	"description": "A minimal D application.",
 	"copyright": "Copyright © 2016, dsby",
 	"authors": ["dsby"],
@@ -8,5 +8,14 @@
             "collie" : {
                 "path" : "../../../"
             }
-	}
+	},
+	"configurations": [
+            {
+                "name": "default",
+            },
+            {
+                "name": "ssl",
+                "versions": ["SSL"],
+            }
+        ]
 }

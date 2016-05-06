@@ -5,21 +5,22 @@ import core.thread;
 import std.datetime;
 import std.stdio;
 import std.functional;
+import std.experimental.logger;
 
 import collie.socket;
 import collie.channel;
 import collie.bootstrap.server;
 
-alias Pipeline!(UniqueBuffer, ubyte[]) EchoPipeline;
+alias Pipeline!(ubyte[], ubyte[]) EchoPipeline;
 
 ServerBootstrap!EchoPipeline ser;
 
-class EchoHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
+class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
 public:
-    override void read(Context ctx, UniqueBuffer msg)
+    override void read(Context ctx, ubyte[] msg)
     {
-        write(ctx, msg.data.dup, &callBack);
+        write(ctx,msg.dup, &callBack);
     }
 
     void callBack(ubyte[] data, uint len)
@@ -49,7 +50,7 @@ public:
 void main()
 {
     ser = new ServerBootstrap!EchoPipeline();
-    ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(20)
+    ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(5)
         .group(new EventLoopGroup).bind(8094);
     ser.waitForStop();
 

@@ -10,17 +10,17 @@ import collie.socket;
 import collie.channel;
 import collie.bootstrap.client;
 
-alias Pipeline!(UniqueBuffer, ubyte[]) EchoPipeline;
+alias Pipeline!(ubyte[], ubyte[]) EchoPipeline;
 
 ClientBootstrap!EchoPipeline client;
 EventLoop loop;
 
-class EchoHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
+class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
 public:
-    override void read(Context ctx, UniqueBuffer msg)
+    override void read(Context ctx, ubyte[] msg)
     {
-         writeln("Read data : ", cast(string) msg.data, "   the length is ", msg.length());
+         writeln("Read data : ", cast(string) msg.dup, "   the length is ", msg.length());
     }
 
     void callBack(ubyte[] data, uint len)

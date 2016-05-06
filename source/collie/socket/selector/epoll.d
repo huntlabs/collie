@@ -23,7 +23,7 @@ import std.experimental.logger;
 
 import collie.socket.common;
 
-enum EVENT_POLL_SIZE = 1;
+enum EVENT_POLL_SIZE = 128;
 
 /** 系统I/O事件处理类，epoll操作的封装
  @authors  Putao‘s Collie Team
@@ -124,25 +124,25 @@ final class EpollLoop
         try
         {
             int length = epoll_wait(_efd, _events.ptr, EVENT_POLL_SIZE, timeout);
+            EventCallInterface[EVENT_POLL_SIZE] objs;
+            foreach(i;0..length)
+            {
+                objs[i] = (cast(AsyncEvent * )(_events[i].data.ptr)).obj;
+                assert(objs[i]);
+            }
             for (int i = 0; i < length; ++i)
             {
-                auto event = cast(AsyncEvent * )(_events[i].data.ptr);
-                assert(event);
-
                 if (isErro(_events[i].events))
                 {
-                    event.obj.onClose();
+                    objs[i].onClose();
                     return;
                 }
 
                 if (isWrite(_events[i].events))
-                    event.obj.onWrite();
+                   objs[i].onWrite();
 
                 if (isRead(_events[i].events))
-                    event.obj.onRead();
-
-                if (event.oneShot)
-                    event.isActive = false;
+                    objs[i].onRead();
             }
 
         }
@@ -161,12 +161,9 @@ final class EpollLoop
         _event.doWrite();
     }
 
-    protected : void handleTCP(Object obj, uint events)
-    {
 
-    }
-
-    protected : pragma(inline, true);
+protected : 
+    pragma(inline, true);
     bool isErro(uint events)
     {
         return (events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) != 0;
@@ -182,7 +179,7 @@ final class EpollLoop
         return (events & EPOLLOUT) != 0;
     }
 
-    private : /** 存储 epoll的fd */
+private : /** 存储 epoll的fd */
     int _efd;
     epoll_event[] _events;
     EventChannel _event;
@@ -245,22 +242,10 @@ string mixinModEvent()
     return str;
 }
 
-string mixinIsErro(string ev)
-{
-    return ev ~ " & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)";
-}
-
-string mixinIsRead(string ev)
-{
-    return ev ~ " & EPOLLIN";
-}
-
-string mixinisWrite(string ev)
-{
-    return ev ~ "& EPOLLOUT";
-}
-
-extern (C) : @system : nothrow : extern (C) enum
+extern (C) : 
+@system : 
+nothrow : 
+enum
 {
     EFD_SEMAPHORE = 0x1,
     EFD_CLOEXEC = 0x80000,

@@ -5,6 +5,8 @@ import std.socket;
 import collie.socket;
 import collie.channel;
 
+//TODO: timer closed
+
 final class ClientBootstrap(PipeLine)
 {
     this(EventLoop loop)
@@ -35,7 +37,7 @@ final class ClientBootstrap(PipeLine)
         
         if(_pipelineFactory is null) throw new NeedPipeFactoryException("Pipeline must be not null! Please set Pipeline frist!");
         if(_socket is null) _socket = new TCPClient(_loop,(to.addressFamily() == AddressFamily.INET6));
-         if (_socket.isConnect)
+         if (_socket.isAlive())
             throw new ConnectedException("This Socket is Connected! Please close before connect!");
         if(_pipe is null) 
         {
@@ -113,3 +115,4 @@ class NeedPipeFactoryException : Exception
         super(msg,file,line);
     }
 }
+

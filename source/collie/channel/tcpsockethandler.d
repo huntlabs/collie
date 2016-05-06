@@ -1,11 +1,10 @@
 module collie.channel.tcpsockethandler;
 
-import collie.buffer.uniquebuffer;
 import collie.socket;
 import collie.channel.handler;
 import collie.channel.handlercontext;
 
-class TCPSocketHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
+class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
     //alias TheCallBack = void delegate(ubyte[],uint);
     //alias HandleContext!(UniqueBuffer, ubyte[]) Context;
@@ -13,6 +12,10 @@ class TCPSocketHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
     this(TCPSocket sock)
     {
         _socket = sock;
+    }
+    
+    ~this()
+    {
     }
 
     override void transportActive(Context ctx)
@@ -24,17 +27,21 @@ class TCPSocketHandler : HandlerAdapter!(UniqueBuffer, ubyte[])
 
     override void transportInactive(Context ctx)
     {
-        _socket.close();
+        if(_socket)
+            _socket.close();
     }
 
     override void write(Context ctx, ubyte[] msg, TheCallBack cback)
     {
-        _socket.write(msg, cback);
+        if(context.pipeline.pipelineManager)
+            context.pipeline.pipelineManager.refreshTimeout();
+       if(_socket) _socket.write(msg, cback);
     }
 
     override void close(Context ctx)
     {
-        _socket.close();
+        if(_socket)
+            _socket.close();
     }
 
 protected:
@@ -42,20 +49,21 @@ protected:
     {
         _socket.setReadCallBack(&readCallBack);
         _socket.setCloseCallBack(&closeCallBack);
+        context.pipeline.transport(_socket);
     }
 
     void closeCallBack()
     {
-        getContext().fireTransportInactive();
-        getContext().pipeline.deletePipeline();
+        context.fireTransportInactive();
+        context.pipeline.deletePipeline();
+        context.pipeline.transport(null);
+        _socket = null;
+        
     }
 
-    void readCallBack(UniqueBuffer buf)
+    void readCallBack(ubyte[] buf)
     {
-        auto ctx = getContext();
-        if(ctx.pipeline.pipelineManager)
-            ctx.pipeline.pipelineManager.refreshTimeout();
-        ctx.fireRead(buf);
+        context.fireRead(buf);
     }
 
 private:

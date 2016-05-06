@@ -6,7 +6,6 @@ import core.memory;
 import std.container.array;
 import std.string;
 import std.experimental.allocator;
-import std.experimental.allocator.mallocator;
 
 interface Buffer
 {

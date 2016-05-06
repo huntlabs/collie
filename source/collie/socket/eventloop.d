@@ -104,7 +104,7 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
         }
     }
 
-package:
+
 
     bool addEvent(AsyncEvent* event) nothrow
     {

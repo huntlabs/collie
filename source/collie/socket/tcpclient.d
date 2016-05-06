@@ -15,14 +15,14 @@ final class TCPClient : TCPSocket
         super(loop, isIpV6);
     }
 
-    @property bool isConnect()
+    override @property bool isAlive() @trusted nothrow
     {
-        return _isConnect;
+        return super.isAlive() && _isConnect;
     }
 
     bool connect(Address addr)
     {
-        if (isConnect)
+        if (isAlive())
             throw new ConnectedException("This Socket is Connected! Please close before connect!");
         if (!start())
             return false;
@@ -58,6 +58,7 @@ protected:
             {
                 _connectBack(true);
             } catch {}
+            _isConnect = true;
         }
 
         super.onWrite();

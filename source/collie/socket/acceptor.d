@@ -10,7 +10,6 @@ import collie.socket.common;
 import collie.socket.eventloop;
 import collie.utils.queue;
 import fun = collie.utils.functional;
-import collie.buffer.uniquebuffer;
 import collie.socket.tcpsocket;
 
 alias AcceptCallBack = void delegate(Socket sock);
@@ -218,10 +217,10 @@ unittest
         }
 
     protected:
-        void readed(UniqueBuffer buf)
+        void readed(ubyte[] buf)
         {
-            writeln("read data :  ", cast(string)(buf.data));
-            socket.write(buf.data.dup, &writed);
+            writeln("read data :  ", cast(string)(buf));
+            socket.write(buf.dup, &writed);
         }
 
         void writed(ubyte[] data, uint size)
