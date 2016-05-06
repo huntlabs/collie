@@ -10,7 +10,6 @@ public import deimos.openssl.ssl;
 
 enum SSLMode
 {
-    SSLv3 = 1,
     SSLv2v3 = 3,
     TLSv1 = 4,
     TLSv1_1 = 5,
@@ -30,9 +29,6 @@ class ServerSSLConfig
         SSL_CTX * ctx = null;
         final switch (_mode)
         {
-            case SSLMode.SSLv3 :
-                ctx = SSL_CTX_new (SSLv3_method ());
-                break;
             case SSLMode.SSLv2v3 :
                 ctx = SSL_CTX_new (SSLv23_method ());
                 break;
