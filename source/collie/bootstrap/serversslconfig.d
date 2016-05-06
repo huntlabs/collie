@@ -1,7 +1,10 @@
 module collie.bootstrap.serversslconfig;
 
+
 import std.string;
 import std.experimental.logger;
+
+version(USE_SSL) :
 
 public import deimos.openssl.ssl;
 

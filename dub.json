@@ -13,7 +13,16 @@
             "buildOptions" :  ["releaseMode",   "inline",       "optimize" ]
         }
     },
-    "dependencies": {
-        "openssl": "~>1.1.4+1.0.1g"
-    }
+    "configurations": [
+            {
+                "name": "default",
+            },
+            {
+                "name": "ssl",
+                "versions": ["USE_SSL"],
+                 "dependencies": {
+                    "openssl": "~>1.1.4+1.0.1g"
+                },
+            }
+        ]
 } 
