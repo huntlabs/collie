@@ -57,7 +57,6 @@ protected:
         context.fireTransportInactive();
         context.pipeline.deletePipeline();
         context.pipeline.transport(null);
-    //    delete _socket;
         _socket = null;
         
     }

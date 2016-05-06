@@ -12,9 +12,9 @@ import collie.codec.http.request;
 import collie.codec.http.response;
 import collie.codec.http.header;
 
-//debug { 
+debug { 
         extern(C) __gshared string[] rt_options = [ "gcopt=profile:1"];// maxPoolSize:50" ];
-//}
+}
 
 alias Pipeline!(ubyte[], HTTPResponse) HTTPPipeline;
 
@@ -59,7 +59,7 @@ void main()
     EventLoop loop = new EventLoop();
     auto ser = new ServerBootstrap!HTTPPipeline(loop);
     ser.childPipeline(new HTTPPipelineFactory()).heartbeatTimeOut(30)
-       // .group(new EventLoopGroup)
+        .group(new EventLoopGroup)
         .bind(8080);
     version (SSL) 
     {
@@ -69,15 +69,17 @@ void main()
         ser.setSSLConfig(ssl);
     }
     
-  //  debug {
+    debug {
             Timer tm = new Timer(loop);
             tm.setCallBack(delegate(){writeln("close time out : ");
         /*    import core.memory;
             GC.collect();
             GC.minimize(); */
-            tm.stop();ser.stop();});
+            tm.stop();
+            ser.stop();
+            });
             tm.start(120 * 1000);
-   //     }
+        }
         
     ser.waitForStop();
 }

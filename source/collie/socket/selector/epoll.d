@@ -23,7 +23,7 @@ import std.experimental.logger;
 
 import collie.socket.common;
 
-enum EVENT_POLL_SIZE = 1;
+enum EVENT_POLL_SIZE = 128;
 
 /** 系统I/O事件处理类，epoll操作的封装
  @authors  Putao‘s Collie Team

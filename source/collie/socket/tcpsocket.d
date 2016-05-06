@@ -33,7 +33,6 @@ class TCPSocket : AsyncTransport, EventCallInterface
         _writeQueue = Queue!(WriteSite, true, false, GCAllocator)(32);
         _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
         _event = AsyncEvent(AsynType.TCP, this, _socket.handle, true, true, true).create(AsynType.TCP, this, _socket.handle, true, true, true);
-        ++COUNT;
     }
 
     ~this() 
@@ -47,12 +46,8 @@ class TCPSocket : AsyncTransport, EventCallInterface
         if (_event.isActive)
         {
             eventLoop.delEvent(_event);
-        }
-          
-         
+        }   
     }
-
-    //	@property Socket socket(){return _socket;}
 
     final override @property int fd()
     {
