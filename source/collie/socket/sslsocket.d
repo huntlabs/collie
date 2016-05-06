@@ -17,6 +17,7 @@ class SSLSocket : TCPSocket
     this(EventLoop loop, Socket sock,SSL * ssl)
     {
         super(loop, sock);
+        _ssl = ssl;
     }
     
     ~this()

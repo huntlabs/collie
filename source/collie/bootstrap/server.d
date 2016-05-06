@@ -421,6 +421,9 @@ final class SSLHandShark
         _socket.setHandshakeCallBack(&handSharkCallBack);
     }
     
+    ~this()
+    {
+    }
 protected:
     void handSharkCallBack()
     {
