@@ -6,8 +6,8 @@ It's like facebook/Wangle smooshed together, but written in D programing languag
 ## TODO
 - _timer and  Timing Wheel_ (__Complete__)
 - _add TCP Client support_ (__Complete__)
-- SSL suport
-- add codec 
+- _SSL suport_(Now Only Server)
+- add codec (processing )
 - MAC and BSD suport (kqueue)
 - RPC
 - UDP
