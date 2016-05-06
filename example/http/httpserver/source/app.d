@@ -60,7 +60,7 @@ void main()
         
     version (SSL) 
     {
-        ServerSSLConfig ssl = new ServerSSLConfig(SSLMode.SSLv2v3);
+        ServerSSLConfig ssl = new ServerSSLConfig(SSLMode.TLSv1_1);
         ssl.certificateFile("server.pem");
         ssl.privateKeyFile("server.pem");
         ser.setSSLConfig(ssl);
