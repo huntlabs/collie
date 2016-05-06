@@ -45,17 +45,17 @@ public:
     final override void write(Context ctx,HTTPResponse resp,TheCallBack back = null)
     {
         auto buffer = scoped!SectionBuffer(HTTPConfig.HeaderStectionSize,httpAllocator);
-        const bool nullBody = (resp.HTTPBody.length == 0);
+        const bool nullBody = (resp.Body.length == 0);
         if(nullBody)
         {
-            resp.header.statusCode = 404;
+            resp.Header.statusCode = 404;
         }
-        resp.header.setHeaderValue("Content-Length",resp.HTTPBody.length);
+        resp.Header.setHeaderValue("Content-Length",resp.Body.length);
         HTTPResponse.generateHeader(resp,buffer);
 
         writeStection(buffer,nullBody);
         trace("header write over, Go write body! ");
-        writeStection(resp.HTTPBody(),true);
+        writeStection(resp.Body(),true);
     }
 
     final override void timeOut(Context ctx)
@@ -70,7 +70,7 @@ public:
     override void transportInactive(Context ctx)
     {}
     
-    void doHttpHandle(HTTPRequest req,HTTPResponse res);
+    void requestHandle(HTTPRequest req,HTTPResponse res);
     
     
     WebSocket newWebSocket(const HTTPHeader header);
@@ -98,14 +98,14 @@ protected:
             import collie.socket.tcpsocket;
             TCPSocket sock = cast(TCPSocket)context.transport;
             _req.clientAddress = sock.remoteAddress();
-            if(req.header.httpVersion == HTTPVersion.HTTP1_0)_shouldClose = true;
+            if(req.Header.httpVersion == HTTPVersion.HTTP1_0)_shouldClose = true;
             if (_res is null)
             {
                 _res = new HTTPResponse();
                 _res.sentCall(&responseSent);
                 _res.closeCall(&responseClose);
             }
-            doHttpHandle(_req,_res);
+            requestHandle(_req,_res);
         } catch (Exception e){
             error("handle erro! close the Socket, the erro : ",e.msg);
             close(context());
@@ -130,8 +130,8 @@ protected:
             size = size > begin ? size - begin : 0;
             if (size == 0)
             {
-                resp.header.statusCode = 404;
-                resp.header.setHeaderValue("Content-Length",0);
+                resp.Header.statusCode = 404;
+                resp.Header.setHeaderValue("Content-Length",0);
                 HTTPResponse.generateHeader(resp,buffer);
                 writeStection(buffer,true);
             } 
@@ -139,7 +139,7 @@ protected:
             {
                 _file = new File(file,"r");
                 _file.seek(begin);
-                resp.header.setHeaderValue("Content-Length",size);
+                resp.Header.setHeaderValue("Content-Length",size);
                 HTTPResponse.generateHeader(resp,buffer);
                 writeStection(buffer,false,true);
             } 
@@ -241,7 +241,7 @@ protected: //WebSocket
     {
         trace(" doUpgrade()");
         import std.string;
-        auto header = _req.header();
+        auto header = _req.Header();
         string upgrade = header.getHeaderValue("upgrade"); // "upgrade" in header.headerMap();
         string connection =   header.getHeaderValue("connection");//"connection" in header.headerMap();
         string key =  header.getHeaderValue("sec-websocket-key"); //"sec-websocket-key" in header.headerMap();
@@ -262,10 +262,10 @@ protected: //WebSocket
         trace("isUpgrade = ",isUpgrade, "  pVersion = ", pVersion, "   upgrade = ",upgrade);
         if( !(isUpgrade && (icmp(upgrade, "websocket") == 0) && (key.length > 0 ) && (pVersion == "13") ))
         {
-                _res.HTTPBody.write(cast(ubyte[])"Browser sent invalid WebSocket request.");
-                _res.header.statusCode = 400;
+                _res.Body.write(cast(ubyte[])"Browser sent invalid WebSocket request.");
+                _res.Header.statusCode = 400;
                 _shouldClose = true;
-                _res.sent();
+                _res.done();
                 return;
         }
 
@@ -279,16 +279,16 @@ protected: //WebSocket
                 TCPSocket sock = cast(TCPSocket)context.transport;
                 _req.clientAddress = sock.remoteAddress();
                 _frame = new HandleFrame(false);
-                _res.header.statusCode = 101;
-                _res.header.setHeaderValue("Sec-WebSocket-Accept",accept);
-                _res.header.setHeaderValue("Connection","Upgrade");
-                _res.header.setHeaderValue("Upgrade","websocket");
-                _res.sent();
+                _res.Header.statusCode = 101;
+                _res.Header.setHeaderValue("Sec-WebSocket-Accept",accept);
+                _res.Header.setHeaderValue("Connection","Upgrade");
+                _res.Header.setHeaderValue("Upgrade","websocket");
+                _res.done();
         } else {
-                _res.HTTPBody.write(cast(ubyte[])"Browser sent invalid WebSocket request.");
-                _res.header.statusCode = 400;
+                _res.Body.write(cast(ubyte[])"Browser sent invalid WebSocket request.");
+                _res.Header.statusCode = 400;
                 _shouldClose = true;
-                _res.sent();
+                _res.done();
         } 
     }
 
