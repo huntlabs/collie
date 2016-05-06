@@ -1,4 +1,4 @@
-﻿module collie.codec.http;
+module collie.codec.http;
 
 public import collie.codec.http.websocket;
 public import collie.codec.http.header;
