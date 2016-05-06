@@ -33,7 +33,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         _socket.blocking = false;
         _writeQueue = Queue!(WriteSite, true, false, GCAllocator)(32);
         _readBuffer = new UniqueBuffer(TCP_READ_BUFFER_SIZE);
-        _event = new AsyncEvent(AsynType.TCP, this, _socket.handle, true, true, true);//.create(AsynType.TCP, this, _socket.handle, true, true, true);
+        _event = AsyncEvent(AsynType.TCP, this, _socket.handle, true, true, true).create(AsynType.TCP, this, _socket.handle, true, true, true);
     }
 
     ~this()
@@ -46,7 +46,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
             eventLoop.delEvent(_event);
         }
         
-       // AsyncEvent.free(_event);
+        AsyncEvent.free(_event);
     }
 
     //	@property Socket socket(){return _socket;}
@@ -262,7 +262,7 @@ protected:
     Socket _socket;
     Queue!(WriteSite, true, false, GCAllocator) _writeQueue;
     AsyncEvent* _event;
-
+    ubyte[] _buffer;
     UniqueBuffer _readBuffer;
 
     CallBack _unActive;

@@ -38,6 +38,7 @@ public:
 
     final override void read(Context ctx, UniqueBuffer msg)
     {
+        scope(exit) msg.release;
         if(_websocket)
         {
             _frame.readFrame(msg.data(),&doFrame);
@@ -171,11 +172,13 @@ protected:
     final void freeBuffer(ubyte[] data,uint length)
     {
         httpAllocator.deallocate(data);
+        writeln("HTTP HANDLER freeBuffer");
     }
 
     final void lastWrited(ubyte[] data,uint len)
     {
         httpAllocator.deallocate(data);
+         writeln("HTTP HANDLER lastWrited freeBuffer");
         if(_shouldClose)
             close(context);
     }

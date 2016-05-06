@@ -124,25 +124,25 @@ final class EpollLoop
         try
         {
             int length = epoll_wait(_efd, _events.ptr, EVENT_POLL_SIZE, timeout);
+            EventCallInterface[EVENT_POLL_SIZE] objs;
+            foreach(i;0..length)
+            {
+                objs[i] = (cast(AsyncEvent * )(_events[i].data.ptr)).obj;
+                assert(objs[i]);
+            }
             for (int i = 0; i < length; ++i)
             {
-                auto event = cast(AsyncEvent * )(_events[i].data.ptr);
-                assert(event);
-
                 if (isErro(_events[i].events))
                 {
-                    event.obj.onClose();
+                    objs[i].onClose();
                     return;
                 }
 
                 if (isWrite(_events[i].events))
-                    event.obj.onWrite();
+                   objs[i].onWrite();
 
                 if (isRead(_events[i].events))
-                    event.obj.onRead();
-
-                if (event.oneShot)
-                    event.isActive = false;
+                    objs[i].onRead();
             }
 
         }

@@ -10,27 +10,26 @@ import std.experimental.allocator.gc_allocator;
  * 主要用于Socket读取出来的数据，内存分配采取对齐分配，
  */
 
-final class UniqueBuffer : Buffer
+final class UniqueBuffer : Buffer //内存泄漏
 {
     this(uint maxLength)
     {
         if (maxLength == 0)
             maxLength = 2;
-        //_data = cast(ubyte[])(Mallocator.instance.allocate(maxLength * ubyte.sizeof));
-        _data = cast(ubyte[])(GCAllocator.instance.allocate(maxLength * ubyte.sizeof));
+        _data = cast(ubyte[])(Mallocator.instance.allocate(maxLength * ubyte.sizeof));
+        //_data = cast(ubyte[])(GCAllocator.instance.allocate(maxLength * ubyte.sizeof));
     }
 
     ~this()
     {
-       // Mallocator.instance.deallocate(_data);
-       GCAllocator.instance.deallocate(_data);
-        import std.stdio;
-        writeln("free C memoty");
+        release();
+      // GCAllocator.instance.deallocate(_data);
+       
     }
 
     override @property bool eof() const
     {
-        return _rsite == _wsite;
+        return (!_data.ptr) || _rsite == _wsite;
     }
 
     override size_t read(size_t size, void delegate(in ubyte[]) cback)
@@ -46,6 +45,7 @@ final class UniqueBuffer : Buffer
 
     override size_t write(in ubyte[] data)
     {
+        if(!_data.ptr) return 0;
         size_t len = data.length;
         size_t tlen = _data.length - _wsite;
         len = len > tlen ? tlen : len;
@@ -87,7 +87,7 @@ final class UniqueBuffer : Buffer
 
     @property usedData()
     {
-        return _data[0 .. _wsite];
+        return _data.ptr ?  _data[0 .. _wsite] : null;
     }
 
     @property beginPtr()
@@ -100,6 +100,19 @@ final class UniqueBuffer : Buffer
         return _data;
     }
 
+    @property release()// nothrow// @nogc
+    {
+        if(_data.ptr) {
+             import std.stdio;
+             try{ writeln("free C memoty");} catch{}
+             Mallocator.instance.deallocate(_data);
+             //GCAllocator.instance.deallocate(_data);
+        }
+        _data = null;
+        _rsite = 0;
+        _wsite = 0;
+    }
+    
 private:
     size_t _rsite = 0;
     size_t _wsite = 0;

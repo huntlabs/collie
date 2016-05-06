@@ -20,6 +20,6 @@ shared static this()
 {
     import std.experimental.allocator.mallocator;
     
-   // httpAllocator = allocatorObject(Mallocator.instance);
-   httpAllocator = allocatorObject(GCAllocator.instance);
+    httpAllocator = allocatorObject(Mallocator.instance);
+  // httpAllocator = allocatorObject(GCAllocator.instance);
 }

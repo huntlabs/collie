@@ -94,7 +94,7 @@ struct AsyncEvent
         bool enread = true, bool enwrite = false, bool etMode = false, bool oneShot = false)
     {
         import std.conv : emplace;
-        auto bytes = _eventAllocator.allocate(AsyncEvent.sizeof);
+        auto bytes = /*_eventAllocator*/Mallocator.instance.allocate(AsyncEvent.sizeof);
         if(!bytes.ptr) return null;
         return emplace(cast(AsyncEvent *)bytes.ptr,type,obj,fd,enread,enwrite,etMode,oneShot);
     }
@@ -104,7 +104,7 @@ struct AsyncEvent
         event._obj = null;
         void * p = event;
         writeln("free AsyncEvent To the free_list ");
-        _eventAllocator.deallocate(p[0..AsyncEvent.sizeof]);
+        /*_eventAllocator*/Mallocator.instance.deallocate(p[0..AsyncEvent.sizeof]);
         
     }
     
@@ -118,8 +118,10 @@ private:
     AsynType _type;
     bool _isActive = false;
     
-    import collie.utils.memory;
+    import std.experimental.allocator.mallocator;
+    import std.experimental.allocator.gc_allocator;
     import std.experimental.allocator.building_blocks.free_list;
     
-    static shared SharedFreeList!(MallocatorToGC,128, 2048) _eventAllocator;
+    static shared SharedFreeList!(Mallocator,128, 2048) _eventAllocator;
+    //static shared SharedFreeList!(GCAllocator,128, 2048) _eventAllocator;
 }

@@ -71,8 +71,12 @@ void main()
     
   //  debug {
             Timer tm = new Timer(loop);
-            tm.setCallBack(delegate(){writeln("close time out : ");tm.stop();ser.stop();});
-            tm.start(180 * 1000);
+            tm.setCallBack(delegate(){writeln("close time out : ");
+            import core.memory;
+            GC.collect();
+            GC.minimize();
+            /*tm.stop();ser.stop();*/});
+            tm.start(30 * 1000);
    //     }
         
     ser.waitForStop();
