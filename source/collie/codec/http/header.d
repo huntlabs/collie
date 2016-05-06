@@ -64,7 +64,7 @@ class HTTPHeader
 		else return "";
 	}
 
-	@property path() const {return _queryString[0.._fileStart];}
+	@property path() const {return decode(_queryString[0.._fileStart]);}
 	@property string[string] queryMap()  const 
 	{
 		if (_fileStart == cast(uint)_queryString.length) return string[string].init;

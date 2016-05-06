@@ -15,8 +15,9 @@ class HttpFileServer : HTTPHandler
 {
     override void requestHandle(HTTPRequest req, HTTPResponse rep)
     {
-       // writeln("req path : ", req.header.path());
+        
        string file = req.Header.path();
+       writeln("get File : ", file);
        if(file == "/")
        {
             rep.Header.statusCode = 404;
