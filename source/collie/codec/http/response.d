@@ -9,7 +9,7 @@ import std.conv;
 import collie.codec.http.header;
 import collie.codec.http.request;
 import collie.codec.http.config;
-import collie.buffer.SectionBuffer;
+import collie.buffer.sectionbuffer;
 
 enum XPoweredBy = "collied ( " ~ getComplierName() ~ " )  http://collied.org/";
 

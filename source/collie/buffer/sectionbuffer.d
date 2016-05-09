@@ -1,4 +1,4 @@
-module collie.buffer.SectionBuffer;
+module collie.buffer.sectionbuffer;
 
 import core.stdc.string;
 import core.memory;

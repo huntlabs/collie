@@ -5,7 +5,7 @@ import std.socket;
 
 import collie.codec.http.header;
 import collie.codec.http.parser;
-import collie.buffer.SectionBuffer;
+import collie.buffer.sectionbuffer;
 import collie.codec.http.config;
 
 alias CallBackHeader = void delegate(HTTPHeader header);

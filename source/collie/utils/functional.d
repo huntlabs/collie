@@ -20,6 +20,10 @@ auto bind(T, Args...)(auto ref T fun, Args args) if (isCallable!(T))
 
 unittest
 {
+    
+    import std.stdio;
+    import core.thread;
+    
     class AA
     {
         void show(int i)

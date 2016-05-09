@@ -2474,7 +2474,7 @@ unittest
         writeln("\t error ! ", par.errorString);
         writeln("\tHTTPMethod is = ", par.methodString);
     }
-    par.rest();
+    par.rest(HTTPParserType.HTTP_BOTH);
     data = "POST /post_chunked_all_your_base HTTP/1.1\r\nHost:0.0.0.0=5000\r\nTransfer-Encoding:chunked\r\n\r\n5\r\nhello\r\n";
 
     data2 = "0\r\n\r\n";
