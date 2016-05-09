@@ -193,15 +193,17 @@ unittest
 
     import std.datetime;
     import std.stdio;
+    import std.functional;
 
     import collie.socket;
 
     EventLoop loop = new EventLoop();
 
-    int[TCP] tcpList;
+    
 
     class TCP
     {
+        static int[TCP] tcpList;
         this(EventLoop loop, Socket soc)
         {
             _socket = new TCPSocket(loop, soc);
@@ -240,7 +242,7 @@ unittest
         {
             writeln("write data Size :  ", size, "\t data size : ", data.length);
             socket.close();
-            loop.strop();
+            loop.stop();
             //	throw new Exception("hahahahhaah ");
         }
 
@@ -254,16 +256,18 @@ unittest
         TCPSocket _socket;
         int _size = 0;
     }
-
+      
     void newConnect(Socket soc)
     {
         auto tcp = new TCP(loop, soc);
-        tcpList[tcp] = 0;
+        TCP.tcpList[tcp] = 0;
     }
+    
+    
 
-    Accept accept = new Accept(loop);
+    Acceptor accept = new Acceptor(loop);
 
-    accept.setCallBack(&newConnect);
+    accept.setCallBack(toDelegate(&newConnect));
 
     accept.reusePort(true);
     accept.bind(new InternetAddress("0.0.0.0", 6553));

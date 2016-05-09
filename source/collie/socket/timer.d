@@ -121,11 +121,16 @@ private:
 
 unittest
 {
+    import std.stdio;
+    import std.datetime;
 
     EventLoop loop = new EventLoop();
 
     Timer tm = new Timer(loop);
 
+    int cout = -1;
+    ulong time;
+    
     void timeout()
     {
         writeln("time  : ", Clock.currTime().toSimpleString());
