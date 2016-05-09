@@ -32,7 +32,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         _socket.blocking = false;
         _writeQueue = Queue!(WriteSite, true, false, GCAllocator)(32);
         _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
-        _event = AsyncEvent(AsynType.TCP, this, _socket.handle, true, true, true).create(AsynType.TCP, this, _socket.handle, true, true, true);
+        _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true, true, true).create(AsynType.TCP, this, _socket.handle, true, true, true);
     }
 
     ~this() 

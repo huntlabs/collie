@@ -64,7 +64,7 @@ final class EpollLoop
             return false;
 
         mixin(mixinModEvent());
-
+        GC.setAttr(event,GC.BlkAttr.NO_MOVE);
         if ((epoll_ctl(_efd, EPOLL_CTL_ADD, event.fd,  & ev)) != 0)
         {
             if (errno != EEXIST)
@@ -108,6 +108,7 @@ final class EpollLoop
             }
             return false;
         }
+        GC.clrAttr(event,GC.BlkAttr.NO_MOVE);
         event.isActive = false;
         return true;
     }
