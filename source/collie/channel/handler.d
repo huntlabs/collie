@@ -82,6 +82,8 @@ abstract class Handler(Rin, Rout = Rin, Win = Rout, Wout = Rin) : HandlerBase!(
     }
 }
 
+/// Rin : the Handle will read type
+/// Rout : Next Handle will Read Type
 abstract class InboundHandler(Rin, Rout = Rin) : HandlerBase!(InboundHandlerContext!Rout)
 {
 public:
@@ -112,6 +114,9 @@ public:
 
 }
 
+
+/// Win : the Handle will Write type
+/// Wout : Next Handle will write type
 abstract class OutboundHandler(Win, Wout = Win) : HandlerBase!(OutboundHandlerContext!Wout)
 {
 public:

@@ -1,4 +1,4 @@
-module collie.codec.bytestopackbytes;
+module collie.codec.lengthfieldbasedframe;
 
 import std.bitmanip;
 
@@ -11,7 +11,7 @@ import collie.channel.handlercontext;
 /// Compress Type: ubyte one "00"
 /// the data is a data.
 
-class BytesToPackBytes (bool littleEndian = false)  : HandlerAdapter!(ubyte[])
+class LengthFieldBasedFrame (bool littleEndian = false)  : HandlerAdapter!(ubyte[])
 {
     this(uint max, ubyte compressType = 0x00)
     {
