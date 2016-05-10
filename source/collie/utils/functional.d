@@ -2,19 +2,24 @@ module collie.utils.functional;
 
 public import std.functional;
 public import std.traits;
+import std.typecons;
+import std.typetuple;
 
-auto bind(T, Args...)(auto ref T fun, Args args) if (isCallable!(T))
+auto  bind(T,Args...)(auto ref T fun,Args args) if (isCallable!(T))
 {
-    static if (is(Args == void))
-    {
-        static if (isDelegate!T)
+     static if(is(Args == void)) {
+        static if(isDelegate!T)
             return fun;
-        else
+        else 
             return toDelegate(fun);
-    }
-    else
-    {
-        return delegate() { return fun(forward!args); };
+    } else{
+        alias FUNTYPE = Parameters!(fun);
+        alias DTYPE = FUNTYPE[args.length..$];
+        return delegate(DTYPE ars){
+                    TypeTuple!(FUNTYPE) value;
+                    value[0..args.length] = args[];
+                    value[args.length..$] = ars[];
+                    return fun(value);};
     }
 }
 
@@ -53,25 +58,28 @@ unittest
         writeln("bbbbbbbbbbbb");
     }
 
-    void main()
+  //  void main()
     {
+        auto tdel = bind(&listRun);
+        tdel(9);
+        bind(&listRun2,4)(5);
+        bind(&listRun2,40,50)();
+        
+        AA a = new AA();
+        bind(&a.dshow,5,"hahah")(20.05);
+        
         Thread[4] _thread;
         Thread[4] _thread2;
-        AA a = new AA();
-        foreach (i; 0 .. 4)
-        {
-            auto th = new Thread(bind(&a.aa)); //bind!(void delegate(int,int))(&a.show,i,i));
-            _thread[i] = th;
-            auto th2 = new Thread(bind(&list)); //&listRun,(i + 10)));
-            _thread2[i] = th2;
-        }
-
-        foreach (i; 0 .. 4)
+        // AA a = new AA();
+        
+        dooo(_thread,_thread2,a);
+        
+        foreach(i;0..4)
         {
             _thread[i].start();
         }
-
-        foreach (i; 0 .. 4)
+        
+        foreach(i;0..4)
         {
             _thread2[i].start();
         }
