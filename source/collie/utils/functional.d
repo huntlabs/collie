@@ -7,19 +7,28 @@ import std.typetuple;
 
 auto  bind(T,Args...)(auto ref T fun,Args args) if (isCallable!(T))
 {
-     static if(is(Args == void)) {
+    alias FUNTYPE = Parameters!(fun);
+    static if(is(Args == void)) 
+    {
         static if(isDelegate!T)
             return fun;
         else 
             return toDelegate(fun);
-    } else{
-        alias FUNTYPE = Parameters!(fun);
+    } 
+    else static if(FUNTYPE.length > args.length)
+    {
         alias DTYPE = FUNTYPE[args.length..$];
-        return delegate(DTYPE ars){
-                    TypeTuple!(FUNTYPE) value;
-                    value[0..args.length] = args[];
-                    value[args.length..$] = ars[];
-                    return fun(value);};
+        return 
+            delegate(DTYPE ars){
+                TypeTuple!(FUNTYPE) value;
+                value[0..args.length] = args[];
+                value[args.length..$] = ars[];
+                return fun(value);
+            };
+    } 
+    else 
+    {
+        return delegate(){return fun(args);};
     }
 }
 
