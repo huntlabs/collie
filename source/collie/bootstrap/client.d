@@ -14,7 +14,7 @@ final class ClientBootstrap(PipeLine)
         _loop = loop;
     }
 
-    auto setPipelineFactory(PipelineFactory!PipeLine  pipeFactory)
+    auto setPipelineFactory(shared PipelineFactory!PipeLine  pipeFactory)
     {
         _pipelineFactory = pipeFactory;
         return this;
@@ -88,7 +88,7 @@ protected:
         
     }
     
-    void readCallBack(UniqueBuffer buffer)
+    void readCallBack(ubyte[] buffer)
     {
         _pipe.read(buffer);
     }
@@ -101,7 +101,7 @@ protected:
 private:
     EventLoop _loop;
     PipeLine _pipe;
-    PipelineFactory!PipeLine _pipelineFactory;
+    shared  PipelineFactory!PipeLine _pipelineFactory;
     TCPClient _socket;
     Timer _timer;
     uint _timeOut = 0;

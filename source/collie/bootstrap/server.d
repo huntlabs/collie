@@ -20,7 +20,7 @@ final class ServerBootstrap(PipeLine)
         _loop = loop;
     }
 
-    auto pipeline(AcceptPipelineFactory factory)
+    auto pipeline(shared AcceptPipelineFactory factory)
     {
         _acceptorPipelineFactory = factory;
         return this;
@@ -32,7 +32,7 @@ final class ServerBootstrap(PipeLine)
         return this;
     } 
 
-    auto childPipeline(PipelineFactory!PipeLine factory)
+    auto childPipeline(shared PipelineFactory!PipeLine factory)
     {
         _childPipelineFactory = factory;
         return this;
@@ -190,8 +190,8 @@ protected:
     }
 
 private:
-    AcceptPipelineFactory _acceptorPipelineFactory;
-    PipelineFactory!PipeLine _childPipelineFactory;
+    shared AcceptPipelineFactory _acceptorPipelineFactory;
+    shared PipelineFactory!PipeLine _childPipelineFactory;
 
     ServerAcceptor!(PipeLine) _mainAccept;
     EventLoop _loop;
@@ -214,7 +214,7 @@ import collie.utils.timingwheel;
 
 final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 {
-    this(Acceptor acceptor, AcceptPipeline pipe, PipelineFactory!PipeLine clientPipeFactory, SSL_CTX * ctx = null)
+    this(Acceptor acceptor, AcceptPipeline pipe,shared PipelineFactory!PipeLine clientPipeFactory, SSL_CTX * ctx = null)
     {
         _acceptor = acceptor;
         _pipeFactory = clientPipeFactory;
@@ -346,7 +346,7 @@ private:
     Timer _timer;
     TimingWheel _wheel;
     AcceptPipeline _pipe;
-    PipelineFactory!PipeLine _pipeFactory;
+    shared PipelineFactory!PipeLine _pipeFactory;
     
     SSL_CTX * _sslctx = null;
 }
