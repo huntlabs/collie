@@ -143,6 +143,7 @@ unittest
     import std.datetime;
     import std.stdio;
     import std.conv;
+    import core.thread;
 
     class TestWheelTimer : WheelTimer
     {
@@ -188,11 +189,11 @@ unittest
     }
     writeln("prevWheel(5) the _now  = ", wheel._now);
     wheel.prevWheel(5);
-    readln();
+    Thread.sleep(2.seconds);
     timers[4].stop();
     writeln("prevWheel(5) the _now  = ", wheel._now);
     wheel.prevWheel(5);
-    readln();
+    Thread.sleep(2.seconds);
     writeln("prevWheel(3) the _now  = ", wheel._now);
     wheel.prevWheel(3);
     assert(wheel._now == 3);
@@ -204,7 +205,7 @@ unittest
 
     foreach (u; 0 .. 20)
     {
-        readln();
+        Thread.sleep(2.seconds);
         writeln("prevWheel() the _now  = ", wheel._now);
         wheel.prevWheel();
     }

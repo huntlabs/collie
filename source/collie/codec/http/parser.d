@@ -2444,8 +2444,7 @@ unittest
         writeln(" ");
     }
 
-    string data = "GET /test HTTP/1.1\r\nUser-Agent: curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1\r\nHost: 0.0.0";
-    string data2 = ".0=5000\r\nAccept: */*\r\n\r\n";
+    string data = "GET /test HTTP/1.1\r\nUser-Agent: curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1\r\nHost:0.0.0.0=5000\r\nAccept: */*\r\n\r\n";
     HTTPParser par = new HTTPParser();
     par.onMessageBegin = toDelegate(&on_message_begin);
     par.onMessageComplete = toDelegate(&on_message_complete);
@@ -2458,22 +2457,14 @@ unittest
     par.onBody = toDelegate(&on_body);
 
     ulong len = par.httpParserExecute(cast(ubyte[]) data);
-    writeln("ulong len = par.httpParserExecute(cast(ubyte[]) data);");
     if (data.length != len)
     {
         writeln("\t error ! ", par.error);
-       // return;
-    }
-    len = par.httpParserExecute(cast(ubyte[]) data2);
-    if (data2.length != len)
-    {
-        writeln("\t error ! ", par.errorString);
-        writeln("\tHTTPMethod is = ", par.methodString);
     }
     par.rest(HTTPParserType.HTTP_BOTH);
     data = "POST /post_chunked_all_your_base HTTP/1.1\r\nHost:0.0.0.0=5000\r\nTransfer-Encoding:chunked\r\n\r\n5\r\nhello\r\n";
 
-    data2 = "0\r\n\r\n";
+    auto data2 = "0\r\n\r\n";
 
     len = par.httpParserExecute(cast(ubyte[]) data);
     if (data.length != len)
