@@ -190,7 +190,7 @@ else static if (IOMode == IO_MODE.kqueue)
 
 unittest
 {
-
+/*
     import std.datetime;
     import std.stdio;
     import std.functional;
@@ -277,5 +277,5 @@ unittest
     accept.start();
 
     loop.run(5000);
-
+*/
 }

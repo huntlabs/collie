@@ -177,7 +177,7 @@ unittest
     
     Contex ctx = new Contex();
     
-    auto hander = new BytesToPackBytes!false(2048);
+    auto hander = new LengthFieldBasedFrame!false(2048);
     string data = "i am a test string";
     ubyte[] tdata = cast(ubyte[])data;
     hander.write(ctx,tdata);

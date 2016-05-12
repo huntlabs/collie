@@ -38,61 +38,81 @@ unittest
     import std.stdio;
     import core.thread;
     
-    class AA
-    {
-        void show(int i)
-        {
-            writeln("i = ", i); // the value is not(0,1,2,3), it all is 2.
-        }
+   class AA
+   {
+       void show(int i)
+       {
+           writeln("i = ", i); // the value is not(0,1,2,3), it all is 2.
+       }
 
-        void show(int i, int b)
-        {
-            b += i * 10;
-            writeln("b = ", b); // the value is not(0,1,2,3), it all is 2.
-        }
+       void show(int i, int b)
+       {
+           b += i * 10;
+           writeln("b = ", b); // the value is not(0,1,2,3), it all is 2.
+       }
 
-        void aa()
-        {
+       void aa()
+       {
             writeln("aaaaaaaa ");
-        }
-    }
+       }
 
-    void listRun(int i)
-    {
+       void dshow(int i, string str, double t)
+       {
+           writeln("i = ", i, "   str = ", str, "   t = ",t);
+       }
+   }
+
+
+   void listRun(int i)
+   {
         writeln("i = ", i);
+   }
+
+   void listRun2(int i,int b)
+   {
+        writeln("i = ", i, "  b = ", b);
+   }
+
+   void list()
+   {
+       writeln("bbbbbbbbbbbb");
+   }
+
+   void dooo(Thread[] t1, Thread[] t2, AA a)
+   {
+       foreach (i ; 0..4) {
+           auto th = new Thread(bind!(void delegate(int,int))(&a.show,i,i));
+           t1[i]= th;
+           auto th2 = new Thread(bind(&listRun,(i + 10)));
+           t2[i]= th2;
+       }
+   }
+
+ //  void main()
+   {
+       auto tdel = bind(&listRun);
+       tdel(9);
+       bind(&listRun2,4)(5);
+       bind(&listRun2,40,50)();
+
+       AA a = new AA();
+       bind(&a.dshow,5,"hahah")(20.05);
+
+       Thread[4] _thread;
+       Thread[4] _thread2;
+       // AA a = new AA();
+
+       dooo(_thread,_thread2,a);
+
+       foreach(i;0..4)
+       {
+           _thread[i].start();
+       }
+
+       foreach(i;0..4)
+       {
+           _thread2[i].start();
+       }
+
     }
-
-    void list()
-    {
-        writeln("bbbbbbbbbbbb");
-    }
-
-  //  void main()
-    {
-        auto tdel = bind(&listRun);
-        tdel(9);
-        bind(&listRun2,4)(5);
-        bind(&listRun2,40,50)();
-        
-        AA a = new AA();
-        bind(&a.dshow,5,"hahah")(20.05);
-        
-        Thread[4] _thread;
-        Thread[4] _thread2;
-        // AA a = new AA();
-        
-        dooo(_thread,_thread2,a);
-        
-        foreach(i;0..4)
-        {
-            _thread[i].start();
-        }
-        
-        foreach(i;0..4)
-        {
-            _thread2[i].start();
-        }
-
-    }
-
 }
