@@ -2368,6 +2368,8 @@ unittest
     import std.stdio;
     import std.functional;
 
+    writeln("\n\n\n");
+
     void on_message_begin(HTTPParser)
     {
         writeln("_on_message_begin");
@@ -2456,10 +2458,11 @@ unittest
     par.onBody = toDelegate(&on_body);
 
     ulong len = par.httpParserExecute(cast(ubyte[]) data);
+    writeln("ulong len = par.httpParserExecute(cast(ubyte[]) data);");
     if (data.length != len)
     {
         writeln("\t error ! ", par.error);
-        return;
+       // return;
     }
     len = par.httpParserExecute(cast(ubyte[]) data2);
     if (data2.length != len)
