@@ -222,9 +222,9 @@ class HandleFrame
 		//in this case, we still need to send a frame
 		if (numFrames == 0)
 			numFrames = 1;
-		ulong currentPosition = 0;
-		ulong bytesLeft = data.length;
-		ulong bytesWritten = 0;
+		size_t currentPosition = 0;
+		size_t bytesLeft = data.length;
+		size_t bytesWritten = 0;
 		
 		for (int i = 0; i < numFrames; ++i) {
 			
@@ -233,7 +233,7 @@ class HandleFrame
 
 			const OpCode opcode = isFirstFrame ? firstOpCode : OpCode.OpCodeContinue;
 
-			const ulong payloadLength = bytesLeft < FRAME_SIZE_IN_BYTES ? bytesLeft : FRAME_SIZE_IN_BYTES;
+			const size_t payloadLength = bytesLeft < FRAME_SIZE_IN_BYTES ? bytesLeft : FRAME_SIZE_IN_BYTES;
 
 			getFrameHeader(opcode, payloadLength, isLastFrame,buffer);
 			if(doMask){
@@ -280,8 +280,8 @@ class HandleFrame
 			clear();
 		}
 
-		const long len  = data.length;
-		for (long  i = 0; i < len; ++i)
+		const size_t len  = data.length;
+		for (size_t i = 0; i < len; ++i)
 		{
 			ubyte ch = data[i];
 			final switch(_state){
@@ -349,7 +349,7 @@ class HandleFrame
 					if(llen >= 8){
 						ubyte[8] tlen = data[i..(i + 8)];
 						i += 7;
-						_length = bigEndianToNative!ulong(tlen);
+						_length = cast(size_t)bigEndianToNative!ulong(tlen);
 						frame.data = new ubyte[_length];
 						_state = _hasMask ? ProcessingState.PS_READ_MASK : ProcessingState.PS_READ_PAYLOAD;
 						_readLen = 0;
@@ -368,7 +368,7 @@ class HandleFrame
 					if(llen >= rlen){
 						_buffer[_readLen..8] = data[i..(i + rlen)];
 						i += rlen; --i;
-						_length = bigEndianToNative!ulong(_buffer);
+						_length = cast(size_t)bigEndianToNative!ulong(_buffer);
 						frame.data = new ubyte[_length];
 						_state = _hasMask ? ProcessingState.PS_READ_MASK : ProcessingState.PS_READ_PAYLOAD;
 						_readLen = 0;
@@ -508,8 +508,8 @@ private:
 	ubyte[4] _mask;
 	bool _hasMask;
 	ubyte[8] _buffer;
-	ulong  _length;
-	ulong  _readLen;
+	size_t _length;
+	size_t _readLen;
 	Frame frame;
 	bool doMask = false;
 }

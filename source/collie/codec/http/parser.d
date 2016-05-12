@@ -81,13 +81,13 @@ public:
 		scope(exit) handleIng = false;
 		ubyte c,ch;
 		byte unhex_val;
-		long header_field_mark = uint.max;
-		long header_value_mark = uint.max;
-		long url_mark  = uint.max;
-		long body_mark = uint.max;
-		long status_mark  = uint.max;
-		long maxP =  cast(long)data.length ;
-		long p = 0;
+		size_t header_field_mark = uint.max;
+		size_t header_value_mark = uint.max;
+		size_t url_mark  = uint.max;
+		size_t body_mark = uint.max;
+		size_t status_mark  = uint.max;
+		size_t maxP =  cast(long)data.length ;
+		size_t p = 0;
 		if(http_errno != HTTPParserErrno.HPE_OK){
 			return 0;
 		}
