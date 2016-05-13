@@ -21,6 +21,8 @@ class HttpServer : HTTPHandler
        // writeln("req path : ", req.header.path());
         rep.Header.setHeaderValue("content-type","text/html;charset=UTF-8");
 
+        rep.Header.setHeaderValue("set-cookie","token=qwqeqwe");
+        rep.Header.setHeaderValue("set-cookie","uid=4545544");
         rep.Body.write(cast(ubyte[])"hello wrold!");
         rep.done();
     }

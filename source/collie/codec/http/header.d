@@ -3,6 +3,7 @@
 import std.conv;
 import std.uri;
 import std.string;
+import std.container.array;
 
 public import collie.codec.http.parsertype;
 import collie.codec.http.config;
@@ -134,7 +135,30 @@ class HTTPHeader
     void setHeaderValue(T)(string key, T value)
     {
         key = toLower(key.strip); //capitalizeHeader(strip(key));//
-        _header[key] = to!string(value);
+        if(key == "set-cookie")
+        {
+              setCookieString(to!string(value));
+        }
+        else
+        {
+            _header[key] = to!string(value);
+        }
+    }
+
+    void setCookieString(string value)
+    {
+        _setCookies.insertBack(value);
+    }
+
+    Array!string getSetedCookieString()
+    {
+        return _setCookies;
+    }
+
+    void swapSetedCookieString(ref Array!string array)
+    {
+          import std.algorithm : swap;
+          swap(_setCookies, array);
     }
 
     string getHeaderValue(string key) const
@@ -142,7 +166,6 @@ class HTTPHeader
         key = toLower(key.strip); //capitalizeHeader(strip(key));//
         return _header.get(key, "");
     }
-
     void removeHeaderKey(string key)
     {
         key = toLower(key.strip); //capitalizeHeader(key);//
@@ -176,8 +199,7 @@ package:
         _queryString = "";
         _fileStart = 0;
         _header.clear();
-        //foreach(key; _header.keys)
-        //_header.remove(key);  
+        _setCookies.clear();
     }
 
     @property void upgrade(bool up)
@@ -191,6 +213,7 @@ private:
     HTTPHeaderType _type;
     HTTPVersion _hversion;
     string[string] _header;
+    Array!string _setCookies;
     string _queryString;
     bool _upgrade = false;
     uint _fileStart;

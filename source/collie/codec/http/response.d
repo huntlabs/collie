@@ -147,6 +147,15 @@ class HTTPResponse
             buffer.write(cast(ubyte[]) value);
             buffer.write(cast(ubyte[]) "\r\n");
         }
+        import std.container.array;
+        Array!string cokkies;
+        resp._header.swapSetedCookieString(cokkies);
+        foreach (value; cokkies)
+        {
+             buffer.write(cast(ubyte[]) "set-cookie: ");
+             buffer.write(cast(ubyte[]) value);
+             buffer.write(cast(ubyte[]) "\r\n");
+        }
 
         buffer.write(cast(ubyte[]) "\r\n");
     }
