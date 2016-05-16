@@ -5,15 +5,16 @@ import std.experimental.allocator.gc_allocator;
 
 final class HTTPConfig
 {
-    __gshared static uint MaxBodySize = 8 * 1024 * 1024; //2M
-    __gshared static uint MaxHeaderSize = 16 * 1024; //8K;
+    uint maxBodySize = 8 * 1024 * 1024; //2M
+    uint maxHeaderSize = 16 * 1024; //8K;
     //buffer Size;
-    __gshared static uint HeaderStectionSize = 1024;
-    __gshared static uint RequestBodyStectionSize = 4096;
-    __gshared static uint ResponseBodyStectionSize = 4096;
+    uint headerStectionSize = 1024;
+    uint requestBodyStectionSize = 4096;
+    uint responseBodyStectionSize = 4096;
 }
 
 __gshared IAllocator httpAllocator;
+__gshared HTTPConfig httpConfig;
 
 shared static this()
 {
@@ -21,4 +22,6 @@ shared static this()
 
     httpAllocator = allocatorObject(Mallocator.instance);
     // httpAllocator = allocatorObject(GCAllocator.instance);
+    
+    httpConfig = new HTTPConfig;
 }

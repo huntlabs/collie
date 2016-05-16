@@ -13,10 +13,11 @@ alias CallBackRequest = void delegate(HTTPRequest header);
 
 class HTTPRequest
 {
-    this()
+    this(HTTPConfig config = httpConfig)
     {
+        _config = config;
         _header = new HTTPHeader(HTTPHeaderType.HTTP_REQUEST);
-        _parser = new HTTPParser(HTTPParserType.HTTP_REQUEST);
+        _parser = new HTTPParser(HTTPParserType.HTTP_REQUEST,_config.maxHeaderSize);
         _parser.onMessageBegin = &onMessageBegin;
         _parser.onMessageComplete = &onMssageComplete;
         _parser.onUrl = &onURI;
@@ -26,7 +27,7 @@ class HTTPRequest
         _parser.onChunkHeader = &onChunkHeader;
         _parser.onBody = &onBody;
         _parser.onChunkComplete = &onChunkComplete;
-        _body = new SectionBuffer(HTTPConfig.RequestBodyStectionSize, httpAllocator);
+        _body = new SectionBuffer(_config.requestBodyStectionSize, httpAllocator);
         _addr = null;
     }
 
@@ -231,7 +232,7 @@ protected:
             return;
         }
         _body.write(data);
-        if (_body.length > HTTPConfig.MaxBodySize)
+        if (_body.length > _config.maxBodySize)
         {
             _parser.handleIng = false;
         }
@@ -283,4 +284,5 @@ private:
     ubyte[] _hkey;
     ubyte[] _hvalue;
     SectionBuffer _body;
+    HTTPConfig _config;
 }

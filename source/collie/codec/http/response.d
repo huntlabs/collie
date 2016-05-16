@@ -51,11 +51,12 @@ alias ResponseSend = void delegate(HTTPResponse, string, ulong begin);
 
 class HTTPResponse
 {
-    this()
+    this(HTTPConfig config = httpConfig)
     {
+        _config = config;
         _header = new HTTPHeader(HTTPHeaderType.HTTP_RESPONSE);
         _header.statusCode = 200;
-        _body = new SectionBuffer(HTTPConfig.ResponseBodyStectionSize, httpAllocator);
+        _body = new SectionBuffer(_config.responseBodyStectionSize, httpAllocator);
     }
 
     ~this()
@@ -174,6 +175,7 @@ private:
     SectionBuffer _body;
     ResponseSend _resDone;
     CallBackResponse _resClose;
+    HTTPConfig _config;
 }
 
 private string statusText(int code)

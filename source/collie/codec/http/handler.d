@@ -29,7 +29,7 @@ public:
         {
             if (_req is null)
             {
-                _req = new HTTPRequest();
+                _req = new HTTPRequest(config);
                 _req.headerComplete = &reqHeaderDone;
                 _req.requestComplete = &requestDone;
             }
@@ -43,7 +43,7 @@ public:
 
     final override void write(Context ctx, HTTPResponse resp, TheCallBack back = null)
     {
-        auto buffer = scoped!SectionBuffer(HTTPConfig.HeaderStectionSize, httpAllocator);
+        auto buffer = scoped!SectionBuffer(config.headerStectionSize, httpAllocator);
         const bool nullBody = (resp.Body.length == 0);
         if (nullBody)
         {
@@ -74,6 +74,11 @@ public:
     void requestHandle(HTTPRequest req, HTTPResponse res);
 
     WebSocket newWebSocket(const HTTPHeader header);
+    
+    @property HTTPConfig config()
+    {
+        return httpConfig;
+    }
 
 protected:
     final void reqHeaderDone(HTTPHeader header)
@@ -83,7 +88,7 @@ protected:
         {
             if (_res is null)
             {
-                _res = new HTTPResponse();
+                _res = new HTTPResponse(config);
                 _res.sentCall(&responseSent);
                 _res.closeCall(&responseClose);
             }
@@ -105,7 +110,7 @@ protected:
                 _shouldClose = true;
             if (_res is null)
             {
-                _res = new HTTPResponse();
+                _res = new HTTPResponse(config);
                 _res.sentCall(&responseSent);
                 _res.closeCall(&responseClose);
             }
@@ -134,7 +139,7 @@ protected:
         {
             import std.file;
 
-            auto buffer = scoped!SectionBuffer(HTTPConfig.HeaderStectionSize, httpAllocator);
+            auto buffer = scoped!SectionBuffer(config.headerStectionSize, httpAllocator);
             ulong size = exists(file) && isFile(file) ? getSize(file) : 0;
             size = size > begin ? size - begin : 0;
             if (size == 0)
@@ -366,7 +371,7 @@ package:
     {
         if (!context().transport.isAlive())
             return false;
-        auto buffer = scoped!SectionBuffer(HTTPConfig.ResponseBodyStectionSize, httpAllocator);
+        auto buffer = scoped!SectionBuffer(config.responseBodyStectionSize, httpAllocator);
         const len = data.length + 35;
         buffer.reserve(len);
         _frame.writeFrame(data, isBin, buffer);

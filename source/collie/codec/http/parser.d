@@ -11,9 +11,10 @@ alias CallBackNotify = void delegate(HTTPParser);
 
 final class HTTPParser
 {
-    this(HTTPParserType ty = HTTPParserType.HTTP_BOTH)
+    this(HTTPParserType ty = HTTPParserType.HTTP_BOTH, uint maxHeaderSize = 1024)
     {
         rest(ty);
+        _maxHeaderSize = maxHeaderSize;
     }
 
     @property type()
@@ -240,7 +241,7 @@ public:
             if (state <= HTTPParserState.s_headers_done)
             {
                 nread += 1;
-                if (nread > HTTPConfig.MaxHeaderSize)
+                if (nread > _maxHeaderSize)
                 {
                     http_errno = HTTPParserErrno.HPE_HEADER_OVERFLOW;
                     goto error;
@@ -1193,7 +1194,7 @@ public:
 
                     //COUNT_HEADER_SIZE(p - start);
                     nread += (p - start);
-                    if (nread > (HTTPConfig.MaxHeaderSize))
+                    if (nread > _maxHeaderSize)
                     {
                         http_errno = HTTPParserErrno.HPE_HEADER_OVERFLOW;
                         goto error;
@@ -1328,7 +1329,7 @@ public:
                             state = HTTPParserState.s_header_almost_done;
                             //COUNT_HEADER_SIZE(p - start);
                             nread += (p - start);
-                            if (nread > (HTTPConfig.MaxHeaderSize))
+                            if (nread > _maxHeaderSize)
                             {
                                 http_errno = HTTPParserErrno.HPE_HEADER_OVERFLOW;
                                 goto error;
@@ -1357,8 +1358,8 @@ public:
                                 size_t limit = maxP - p;
 
                                 limit = (
-                                    limit < HTTPConfig.MaxHeaderSize ? limit
-                                    : HTTPConfig.MaxHeaderSize); //MIN(limit, TTPConfig.instance.MaxHeaderSize);
+                                    limit < _maxHeaderSize ? limit
+                                    : _maxHeaderSize); //MIN(limit, TTPConfig.instance.MaxHeaderSize);
                                 string str = cast(string) data[p .. maxP];
                                 auto p_cr = str.indexOf(CR); // memchr(p, CR, limit);
                                 auto p_lf = str.indexOf(LF); // memchr(p, LF, limit);
@@ -1552,7 +1553,7 @@ public:
 
                     //COUNT_HEADER_SIZE(p - start);
                     nread += (p - start);
-                    if (nread > (HTTPConfig.MaxHeaderSize))
+                    if (nread > _maxHeaderSize)
                     {
                         http_errno = HTTPParserErrno.HPE_HEADER_OVERFLOW;
                         goto error;
@@ -2027,6 +2028,9 @@ private:
     bool _isHandle = false;
 
     bool _skipBody = false;
+    
+    
+    uint _maxHeaderSize = 1024;
 
 protected:
     @property type(HTTPParserType ty)

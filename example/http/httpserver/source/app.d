@@ -51,9 +51,9 @@ void main()
     writeln("Edit source/app.d to start your project.");
     globalLogLevel(LogLevel.warning);
     
-    HTTPConfig.HeaderStectionSize = 256;
-    HTTPConfig.ResponseBodyStectionSize = 256;
-    HTTPConfig.RequestBodyStectionSize = 256;
+    httpConfig.headerStectionSize = 256;
+    httpConfig.responseBodyStectionSize = 256;
+    httpConfig.requestBodyStectionSize = 256;
     EventLoop loop = new EventLoop();
     auto ser = new ServerBootstrap!HTTPPipeline(loop);
     ser.childPipeline(new HTTPPipelineFactory()).heartbeatTimeOut(30)
