@@ -168,35 +168,28 @@ protected:
     CallBackData _on_body;
 
 public:
-    bool bodyIsFinal()
-    {
-        return state == HTTPParserState.s_message_done;
-    }
 
-    ulong httpParserExecute(ubyte[] data)
-    {
-        handleIng = true;
-        scope (exit)
-            handleIng = false;
-        ubyte c, ch;
-        byte unhex_val;
-        long header_field_mark = uint.max;
-        long header_value_mark = uint.max;
-        long url_mark = uint.max;
-        long body_mark = uint.max;
-        long status_mark = uint.max;
-        long maxP = cast(long) data.length;
-        long p = 0;
-        if (http_errno != HTTPParserErrno.HPE_OK)
-        {
-            return 0;
-        }
-        if (data.length == 0)
-        {
-            switch (state)
-            {
-            case HTTPParserState.s_body_identity_eof:
-                /* Use of CALLBACK_NOTIFY() here would erroneously return 1 byte read if
+	bool bodyIsFinal() {return state == HTTPParserState.s_message_done;}
+	ulong httpParserExecute(ubyte[] data)
+	{
+		handleIng = true;
+		scope(exit) handleIng = false;
+		ubyte c,ch;
+		byte unhex_val;
+		size_t header_field_mark = uint.max;
+		size_t header_value_mark = uint.max;
+		size_t url_mark  = uint.max;
+		size_t body_mark = uint.max;
+		size_t status_mark  = uint.max;
+		size_t maxP =  cast(long)data.length ;
+		size_t p = 0;
+		if(http_errno != HTTPParserErrno.HPE_OK){
+			return 0;
+		}
+		if(data.length == 0){
+			switch (state) {
+				case HTTPParserState.s_body_identity_eof:
+					/* Use of CALLBACK_NOTIFY() here would erroneously return 1 byte read if
 					 * we got paused.
 					 */
                 mixin(
@@ -2375,6 +2368,8 @@ unittest
     import std.stdio;
     import std.functional;
 
+    writeln("\n\n\n");
+
     void on_message_begin(HTTPParser)
     {
         writeln("_on_message_begin");
@@ -2449,8 +2444,7 @@ unittest
         writeln(" ");
     }
 
-    string data = "GET /test HTTP/1.1\r\nUser-Agent: curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1\r\nHost: 0.0.0";
-    string data2 = ".0=5000\r\nAccept: */*\r\n\r\n";
+    string data = "GET /test HTTP/1.1\r\nUser-Agent: curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1\r\nHost:0.0.0.0=5000\r\nAccept: */*\r\n\r\n";
     HTTPParser par = new HTTPParser();
     par.onMessageBegin = toDelegate(&on_message_begin);
     par.onMessageComplete = toDelegate(&on_message_complete);
@@ -2466,18 +2460,11 @@ unittest
     if (data.length != len)
     {
         writeln("\t error ! ", par.error);
-        return;
-    }
-    len = par.httpParserExecute(cast(ubyte[]) data2);
-    if (data2.length != len)
-    {
-        writeln("\t error ! ", par.errorString);
-        writeln("\tHTTPMethod is = ", par.methodString);
     }
     par.rest(HTTPParserType.HTTP_BOTH);
     data = "POST /post_chunked_all_your_base HTTP/1.1\r\nHost:0.0.0.0=5000\r\nTransfer-Encoding:chunked\r\n\r\n5\r\nhello\r\n";
 
-    data2 = "0\r\n\r\n";
+    auto data2 = "0\r\n\r\n";
 
     len = par.httpParserExecute(cast(ubyte[]) data);
     if (data.length != len)

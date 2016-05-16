@@ -34,7 +34,7 @@ public:
     }
 }
 
-class EchoPipelineFactory : PipelineFactory!EchoPipeline
+shared class EchoPipelineFactory : PipelineFactory!EchoPipeline
 {
 public:
     override EchoPipeline newPipeline(TCPSocket sock)

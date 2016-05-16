@@ -39,7 +39,7 @@ class HttpFileServer : HTTPHandler
     }
 }
 
-class HTTPPipelineFactory : PipelineFactory!HTTPPipeline
+shared class HTTPPipelineFactory : PipelineFactory!HTTPPipeline
 {
 public:
     override HTTPPipeline newPipeline(TCPSocket sock)

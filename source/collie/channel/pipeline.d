@@ -400,13 +400,13 @@ private:
     }
 }
 
-abstract class PipelineFactory(PipeLine)
+abstract shared class PipelineFactory(PipeLine)
 {
     PipeLine newPipeline(TCPSocket transport);
 }
 
 alias Pipeline!(Socket, void) AcceptPipeline;
-abstract class AcceptPipelineFactory
+abstract shared class AcceptPipelineFactory
 {
     AcceptPipeline newPipeline(Acceptor acceptor);
 }

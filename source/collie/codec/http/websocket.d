@@ -186,344 +186,294 @@ private:
 
 class HandleFrame
 {
-    this(bool mask)
-    {
-        clear();
-        doMask = mask;
-    }
 
-    void clear()
-    {
-        _state = ProcessingState.PS_READ_HEADER;
-        _mask[] = 0;
-        _hasMask = false;
-        _buffer[] = 0;
-        _readLen = 0;
-        frame = new Frame();
-    }
+	this(bool mask)
+	{
+		clear();
+		doMask = mask;
+	}
 
-    void ping(ubyte[] data, Buffer buffer)
-    {
-        if (data.length > 125)
-        {
-            data = data[0 .. 125];
-        }
-        getFrameHeader(OpCode.OpCodePing, data.length, true, buffer);
-        if (doMask)
-        {
-            ubyte[4] mask = generateMaskingKey();
-            buffer.write(mask);
-            buffer.write(data);
-            buffer.rest(buffer.length - data.length);
-            buffer.read(data.length, delegate(in ubyte[] data) {
-                auto tdata = cast(ubyte[]) data; //强转去掉const属性
-                for (size_t i = 0; i < tdata.length; i++)
-                {
-                    tdata[i] ^= mask[i % 4];
-                }
-            });
+	void clear()
+	{
+		_state = ProcessingState.PS_READ_HEADER;
+		_mask[] = 0;
+		_hasMask = false;
+		_buffer[] = 0;
+		_readLen = 0;
+		frame = new Frame();
+	}
 
-        }
-        else
-        {
-            buffer.write(data);
-        }
-    }
+	void ping(ubyte[] data,Buffer buffer)
+	{
+		if(data.length > 125) {
+			data = data[0..125];
+		}
+		getFrameHeader(OpCode.OpCodePing, data.length, true,buffer);
+		if(doMask){
+			ubyte[4] mask = generateMaskingKey(); 
+			buffer.write(mask);
+			buffer.write(data);
+			buffer.rest(buffer.length - data.length);
+			buffer.read(data.length,delegate(in ubyte[] data){
+					auto tdata = cast(ubyte[])data; //强转去掉const属性
+					for (size_t i = 0; i < tdata.length; i++) {
+						tdata[i] ^= mask[i % 4];
+					}
+				});
+			
+		} else {
+			buffer.write(data);
+		}
+	}
 
-    void pong(ubyte[] data, Buffer buffer)
-    {
-        if (data.length > 125)
-        {
-            data = data[0 .. 125];
-        }
-        getFrameHeader(OpCode.OpCodePong, data.length, true, buffer);
-        if (doMask)
-        {
-            ubyte[4] mask = generateMaskingKey();
-            buffer.write(mask);
-            buffer.write(data);
-            buffer.rest(buffer.length - data.length);
-            buffer.read(data.length, delegate(in ubyte[] data) {
-                auto tdata = cast(ubyte[]) data; //强转去掉const属性
-                for (size_t i = 0; i < tdata.length; i++)
-                {
-                    tdata[i] ^= mask[i % 4];
-                }
-            });
+	void pong(ubyte[] data,Buffer buffer)
+	{
+		if(data.length > 125) {
+			data = data[0..125];
+		}
+		getFrameHeader(OpCode.OpCodePong, data.length, true,buffer);
+		if(doMask){
+			ubyte[4] mask = generateMaskingKey(); 
+			buffer.write(mask);
+			buffer.write(data);
+			buffer.rest(buffer.length - data.length);
+			buffer.read(data.length,delegate(in ubyte[] data){
+					auto tdata = cast(ubyte[])data; //强转去掉const属性
+					for (size_t i = 0; i < tdata.length; i++) {
+						tdata[i] ^= mask[i % 4];
+					}
+				});
+			
+		} else {
+			buffer.write(data);
+		}
+	}
 
-        }
-        else
-        {
-            buffer.write(data);
-        }
-    }
+	void writeFrame(ubyte[] data, bool isBinary,Buffer buffer) 
+	{
+		const OpCode firstOpCode = isBinary ? OpCode.OpCodeBinary : OpCode.OpCodeText;
+		
+		int numFrames = cast(int)(data.length / FRAME_SIZE_IN_BYTES);
 
-    void writeFrame(ubyte[] data, bool isBinary, Buffer buffer)
-    {
-        const OpCode firstOpCode = isBinary ? OpCode.OpCodeBinary : OpCode.OpCodeText;
+		auto sizeLeft = data.length % FRAME_SIZE_IN_BYTES;
+		if (sizeLeft > 0)
+			++numFrames;
+		
+		//catch the case where the payload is zero bytes;
+		//in this case, we still need to send a frame
+		if (numFrames == 0)
+			numFrames = 1;
+		size_t currentPosition = 0;
+		size_t bytesLeft = data.length;
+		size_t bytesWritten = 0;
+		
+		for (int i = 0; i < numFrames; ++i) {
+			
+			const bool isLastFrame = (i == (numFrames - 1));
+			const bool isFirstFrame = (i == 0);
 
-        int numFrames = cast(int)(data.length / FRAME_SIZE_IN_BYTES);
+			const OpCode opcode = isFirstFrame ? firstOpCode : OpCode.OpCodeContinue;
 
-        auto sizeLeft = data.length % FRAME_SIZE_IN_BYTES;
-        if (sizeLeft > 0)
-            ++numFrames;
+			const size_t payloadLength = bytesLeft < FRAME_SIZE_IN_BYTES ? bytesLeft : FRAME_SIZE_IN_BYTES;
 
-        //catch the case where the payload is zero bytes;
-        //in this case, we still need to send a frame
-        if (numFrames == 0)
-            numFrames = 1;
-        ulong currentPosition = 0;
-        ulong bytesLeft = data.length;
-        ulong bytesWritten = 0;
+			getFrameHeader(opcode, payloadLength, isLastFrame,buffer);
+			if(doMask){
+				ubyte[4] mask = generateMaskingKey(); //TODO：生成mask
+				buffer.write(mask);
+				buffer.write(data);
+				buffer.rest(buffer.length - payloadLength);
+				buffer.read(payloadLength,delegate(in ubyte[] data){
+						auto tdata = cast(ubyte[])data; //强转去掉const属性
+						for (size_t i = 0; i < tdata.length; i++) {
+							tdata[i] ^= mask[i % 4];
+						}
+					});
 
-        for (int i = 0; i < numFrames; ++i)
-        {
+			} else {
+				buffer.write(data);
+			}
+			bytesLeft -= payloadLength;
+			bytesWritten += payloadLength;
+		}
 
-            const bool isLastFrame = (i == (numFrames - 1));
-            const bool isFirstFrame = (i == 0);
+		return ;
+	}
 
-            const OpCode opcode = isFirstFrame ? firstOpCode : OpCode.OpCodeContinue;
+	void readFrame(in ubyte[] data,void delegate(Frame frame,bool text) callback)
+	{
 
-            const ulong payloadLength = bytesLeft < FRAME_SIZE_IN_BYTES ? bytesLeft
-                : FRAME_SIZE_IN_BYTES;
+		void resultOne()
+		{
+			bool text = false;
+			if(frame.isValid && frame.isDataFrame()){
+				if (!frame.isContinuationFrame()) {
+					_lastcode = frame.opCode();
+				}
+				text = (_lastcode == OpCode.OpCodeText);
+				if(_hasMask){ //解析mask
+					for( size_t i = 0; i < _length; ++i ) {
+						frame.data[i] = frame.data[i] ^ _mask[i % 4];
+					}
+				}
+			}
 
-            getFrameHeader(opcode, payloadLength, isLastFrame, buffer);
-            if (doMask)
-            {
-                ubyte[4] mask = generateMaskingKey(); //TODO：生成mask
-                buffer.write(mask);
-                buffer.write(data);
-                buffer.rest(buffer.length - payloadLength);
-                buffer.read(payloadLength, delegate(in ubyte[] data) {
-                    auto tdata = cast(ubyte[]) data; //强转去掉const属性
-                    for (size_t i = 0; i < tdata.length; i++)
-                    {
-                        tdata[i] ^= mask[i % 4];
-                    }
-                });
+			callback(frame,text);
+			clear();
+		}
 
-            }
-            else
-            {
-                buffer.write(data);
-            }
-            bytesLeft -= payloadLength;
-            bytesWritten += payloadLength;
-        }
+		const size_t len  = data.length;
+		for (size_t i = 0; i < len; ++i)
+		{
+			ubyte ch = data[i];
+			final switch(_state){
+				case ProcessingState.PS_READ_HEADER :
+					frame._isFinalFrame = (ch & 0x80) != 0;
+					frame._rsv1 = ((ch & 0x40) != 0);
+					frame._rsv2 = ((ch & 0x20) != 0);
+					frame._rsv3 = ((ch & 0x10) != 0);
+					frame._opCode = cast(OpCode)(ch & 0x0F);
+					_state = ProcessingState.PS_READ_Do_LENGTH;
+					break;
+				case ProcessingState.PS_READ_Do_LENGTH : {
+					_hasMask = (ch & 0x80) != 0;
+					auto tlen  = (ch & 0x7F);
+					switch (tlen)
+					{
+						case 126:
+						{
+							_state = ProcessingState.PS_READ_PAYLOAD_LENGTH;
+							break;
+						}
+						case 127:
+						{
+							_state = ProcessingState.PS_READ_BIG_PAYLOAD_LENGTH;
+							break;
+						}
+						default:
+						{
+							_length = tlen ;
+							frame.data = new ubyte[_length];
+							_state = _hasMask ? ProcessingState.PS_READ_MASK : ProcessingState.PS_READ_PAYLOAD;
+							break;
+						}
+					}
+					if (!checkValidity()){
+						_state = ProcessingState.PS_READ_HEADER;
+						resultOne();
+					}
+				}
+					break;
+				case ProcessingState.PS_READ_PAYLOAD_LENGTH : {
+					if(len - i >= 2){
+						ubyte[2] tlen = data[i..(i + 2)];
+						++i;
+						_length = bigEndianToNative!(ushort)(tlen);
+						frame.data = new ubyte[_length];
+						_state = _hasMask ? ProcessingState.PS_READ_MASK : ProcessingState.PS_READ_PAYLOAD;
+					} else {
+						_buffer[] = 0;
+						_buffer[0] = ch;
+						_state = ProcessingState.PS_READ_PAYLOAD_LENGTH_1;
+					}
+				}
+					break;
+				case ProcessingState.PS_READ_PAYLOAD_LENGTH_1 :{
+					_buffer[1] = ch;
+					ubyte[2] tlen = _buffer[0..2];
+					_length = bigEndianToNative!ushort(tlen);
+					frame.data = new ubyte[_length];
+					_state = _hasMask ? ProcessingState.PS_READ_MASK : ProcessingState.PS_READ_PAYLOAD;
+				}
+					break;
+				case ProcessingState.PS_READ_BIG_PAYLOAD_LENGTH :
+					auto llen = len - i;
+					if(llen >= 8){
+						ubyte[8] tlen = data[i..(i + 8)];
+						i += 7;
+						_length = cast(size_t)bigEndianToNative!ulong(tlen);
+						frame.data = new ubyte[_length];
+						_state = _hasMask ? ProcessingState.PS_READ_MASK : ProcessingState.PS_READ_PAYLOAD;
+						_readLen = 0;
+					} else {
+						_buffer[] = 0;
+						_buffer[0..llen] = data[i..$];
+						_readLen = llen;
+						i += llen;
+						_state = ProcessingState.PS_READ_BIG_PAYLOAD_LENGTH_1;
+					}
+					break;
+				case ProcessingState.PS_READ_BIG_PAYLOAD_LENGTH_1 :
+				{
+					auto llen = len - i;
+					auto rlen  = 8 - _readLen;
+					if(llen >= rlen){
+						_buffer[_readLen..8] = data[i..(i + rlen)];
+						i += rlen; --i;
+						_length = cast(size_t)bigEndianToNative!ulong(_buffer);
+						frame.data = new ubyte[_length];
+						_state = _hasMask ? ProcessingState.PS_READ_MASK : ProcessingState.PS_READ_PAYLOAD;
+						_readLen = 0;
+					} else {
+						_buffer[_readLen..(_readLen + llen)] = data[i..$];
+						_readLen += llen;
+						i += llen;
+						_state = ProcessingState.PS_READ_BIG_PAYLOAD_LENGTH_1;
+					}
+				}
+					break;
+				case ProcessingState.PS_READ_MASK :
+					auto llen = len - i;
+					if(llen >= 4){
+						const ubyte[] tlen = data[i..(i + 4)];
+						i += 3;
+						_mask[] = tlen[];
+						_state = ProcessingState.PS_READ_PAYLOAD;
+						_readLen = 0;
+					} else {
+						_mask[] = 0;
+						_mask[0..llen] = data[i..$];
+						_readLen = llen;
+						i += llen;
+						_state = ProcessingState.PS_READ_MASK_1;
+					}
+					break;
+				case ProcessingState.PS_READ_MASK_1 :
+				{
+					auto llen = len - i;
+					auto rlen  = 4 - _readLen;
+					if(llen >= rlen){
+						_mask[_readLen..4] = data[i..(i + rlen)];
+						i += rlen; --i;
+						_state = ProcessingState.PS_READ_PAYLOAD;
+						_readLen = 0;
+					} else {
+						_mask[_readLen..(_readLen + llen)] = data[i..$];
+						_readLen += llen;
+						i += llen;
+						_state = ProcessingState.PS_READ_MASK_1;
+					}
+				}
+					break;
+				case ProcessingState.PS_READ_PAYLOAD :
+				{
+					trace("\n\t_length = ", _length);
+					auto llen = len - i;
+					auto rlen  = _length - _readLen;
+					if(llen >= rlen){
+						frame.data[_readLen..(_readLen + rlen)] = data[i..(i + rlen)];
+						i += rlen; --i;
+						_state = ProcessingState.PS_READ_HEADER;
+						resultOne();
+					} else {
+						frame.data[_readLen..(_readLen + llen)] = data[i..$];
+						_readLen += llen;
+					}
+				}
+					break;
 
-        return;
-    }
-
-    void readFrame(in ubyte[] data, void delegate(Frame frame, bool text) callback)
-    {
-
-        void resultOne()
-        {
-            bool text = false;
-            if (frame.isValid && frame.isDataFrame())
-            {
-                if (!frame.isContinuationFrame())
-                {
-                    _lastcode = frame.opCode();
-                }
-                text = (_lastcode == OpCode.OpCodeText);
-                if (_hasMask)
-                { //解析mask
-                    for (size_t i = 0; i < _length; ++i)
-                    {
-                        frame.data[i] = frame.data[i] ^ _mask[i % 4];
-                    }
-                }
-            }
-
-            callback(frame, text);
-            clear();
-        }
-
-        const long len = data.length;
-        for (long i = 0; i < len; ++i)
-        {
-            ubyte ch = data[i];
-            final switch (_state)
-            {
-            case ProcessingState.PS_READ_HEADER:
-                frame._isFinalFrame = (ch & 0x80) != 0;
-                frame._rsv1 = ((ch & 0x40) != 0);
-                frame._rsv2 = ((ch & 0x20) != 0);
-                frame._rsv3 = ((ch & 0x10) != 0);
-                frame._opCode = cast(OpCode)(ch & 0x0F);
-                _state = ProcessingState.PS_READ_Do_LENGTH;
-                break;
-            case ProcessingState.PS_READ_Do_LENGTH:
-                {
-                    _hasMask = (ch & 0x80) != 0;
-                    auto tlen = (ch & 0x7F);
-                    switch (tlen)
-                    {
-                    case 126:
-                        {
-                            _state = ProcessingState.PS_READ_PAYLOAD_LENGTH;
-                            break;
-                        }
-                    case 127:
-                        {
-                            _state = ProcessingState.PS_READ_BIG_PAYLOAD_LENGTH;
-                            break;
-                        }
-                    default:
-                        {
-                            _length = tlen;
-                            frame.data = new ubyte[_length];
-                            _state = _hasMask ? ProcessingState.PS_READ_MASK
-                                : ProcessingState.PS_READ_PAYLOAD;
-                            break;
-                        }
-                    }
-                    if (!checkValidity())
-                    {
-                        _state = ProcessingState.PS_READ_HEADER;
-                        resultOne();
-                    }
-                }
-                break;
-            case ProcessingState.PS_READ_PAYLOAD_LENGTH:
-                {
-                    if (len - i >= 2)
-                    {
-                        ubyte[2] tlen = data[i .. (i + 2)];
-                        ++i;
-                        _length = bigEndianToNative!(ushort)(tlen);
-                        frame.data = new ubyte[_length];
-                        _state = _hasMask ? ProcessingState.PS_READ_MASK
-                            : ProcessingState.PS_READ_PAYLOAD;
-                    }
-                    else
-                    {
-                        _buffer[] = 0;
-                        _buffer[0] = ch;
-                        _state = ProcessingState.PS_READ_PAYLOAD_LENGTH_1;
-                    }
-                }
-                break;
-            case ProcessingState.PS_READ_PAYLOAD_LENGTH_1:
-                {
-                    _buffer[1] = ch;
-                    ubyte[2] tlen = _buffer[0 .. 2];
-                    _length = bigEndianToNative!ushort(tlen);
-                    frame.data = new ubyte[_length];
-                    _state = _hasMask ? ProcessingState.PS_READ_MASK
-                        : ProcessingState.PS_READ_PAYLOAD;
-                }
-                break;
-            case ProcessingState.PS_READ_BIG_PAYLOAD_LENGTH:
-                auto llen = len - i;
-                if (llen >= 8)
-                {
-                    ubyte[8] tlen = data[i .. (i + 8)];
-                    i += 7;
-                    _length = bigEndianToNative!ulong(tlen);
-                    frame.data = new ubyte[_length];
-                    _state = _hasMask ? ProcessingState.PS_READ_MASK
-                        : ProcessingState.PS_READ_PAYLOAD;
-                    _readLen = 0;
-                }
-                else
-                {
-                    _buffer[] = 0;
-                    _buffer[0 .. llen] = data[i .. $];
-                    _readLen = llen;
-                    i += llen;
-                    _state = ProcessingState.PS_READ_BIG_PAYLOAD_LENGTH_1;
-                }
-                break;
-            case ProcessingState.PS_READ_BIG_PAYLOAD_LENGTH_1:
-                {
-                    auto llen = len - i;
-                    auto rlen = 8 - _readLen;
-                    if (llen >= rlen)
-                    {
-                        _buffer[_readLen .. 8] = data[i .. (i + rlen)];
-                        i += rlen;
-                        --i;
-                        _length = bigEndianToNative!ulong(_buffer);
-                        frame.data = new ubyte[_length];
-                        _state = _hasMask ? ProcessingState.PS_READ_MASK
-                            : ProcessingState.PS_READ_PAYLOAD;
-                        _readLen = 0;
-                    }
-                    else
-                    {
-                        _buffer[_readLen .. (_readLen + llen)] = data[i .. $];
-                        _readLen += llen;
-                        i += llen;
-                        _state = ProcessingState.PS_READ_BIG_PAYLOAD_LENGTH_1;
-                    }
-                }
-                break;
-            case ProcessingState.PS_READ_MASK:
-                auto llen = len - i;
-                if (llen >= 4)
-                {
-                    const ubyte[] tlen = data[i .. (i + 4)];
-                    i += 3;
-                    _mask[] = tlen[];
-                    _state = ProcessingState.PS_READ_PAYLOAD;
-                    _readLen = 0;
-                }
-                else
-                {
-                    _mask[] = 0;
-                    _mask[0 .. llen] = data[i .. $];
-                    _readLen = llen;
-                    i += llen;
-                    _state = ProcessingState.PS_READ_MASK_1;
-                }
-                break;
-            case ProcessingState.PS_READ_MASK_1:
-                {
-                    auto llen = len - i;
-                    auto rlen = 4 - _readLen;
-                    if (llen >= rlen)
-                    {
-                        _mask[_readLen .. 4] = data[i .. (i + rlen)];
-                        i += rlen;
-                        --i;
-                        _state = ProcessingState.PS_READ_PAYLOAD;
-                        _readLen = 0;
-                    }
-                    else
-                    {
-                        _mask[_readLen .. (_readLen + llen)] = data[i .. $];
-                        _readLen += llen;
-                        i += llen;
-                        _state = ProcessingState.PS_READ_MASK_1;
-                    }
-                }
-                break;
-            case ProcessingState.PS_READ_PAYLOAD:
-                {
-                    trace("\n\t_length = ", _length);
-                    auto llen = len - i;
-                    auto rlen = _length - _readLen;
-                    if (llen >= rlen)
-                    {
-                        frame.data[_readLen .. (_readLen + rlen)] = data[i .. (i + rlen)];
-                        i += rlen;
-                        --i;
-                        _state = ProcessingState.PS_READ_HEADER;
-                        resultOne();
-                    }
-                    else
-                    {
-                        frame.data[_readLen .. (_readLen + llen)] = data[i .. $];
-                        _readLen += llen;
-                    }
-                }
-                break;
-
-            }
-        }
-    }
+			}
+		}
+	}
 
 protected:
 
@@ -610,13 +560,13 @@ protected:
     }
 
 private:
-    ProcessingState _state;
-    OpCode _lastcode;
-    ubyte[4] _mask;
-    bool _hasMask;
-    ubyte[8] _buffer;
-    ulong _length;
-    ulong _readLen;
-    Frame frame;
-    bool doMask = false;
+	ProcessingState _state;
+	OpCode _lastcode;
+	ubyte[4] _mask;
+	bool _hasMask;
+	ubyte[8] _buffer;
+	size_t _length;
+	size_t _readLen;
+	Frame frame;
+	bool doMask = false;
 }

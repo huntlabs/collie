@@ -20,7 +20,7 @@ class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
 public:
     override void read(Context ctx, ubyte[] msg)
     {
-         writeln("Read data : ", cast(string) msg.dup, "   the length is ", msg.length());
+         writeln("Read data : ", cast(string) msg.dup, "   the length is ", msg.length);
     }
 
     void callBack(ubyte[] data, uint len)
