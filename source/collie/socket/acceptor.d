@@ -37,11 +37,12 @@ final class Acceptor : AsyncTransport, EventCallInterface
         }
         else
         {
-            _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
-                false);
-            version (Posix)
-                _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR,
+            _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR,
                     false);
+            version (Posix)
+                _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
+                false);
+                
         }
     }
 
