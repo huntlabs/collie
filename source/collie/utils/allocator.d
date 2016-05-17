@@ -1,5 +1,5 @@
 module collie.utils.allocator;
-
+version(DigitalMars):
 import core.memory;
 
 import std.experimental.allocator.mallocator;

@@ -140,7 +140,7 @@ protected:
         auto acceptor = new Acceptor(loop, _address.addressFamily == AddressFamily.INET6);
         acceptor.reusePort = _rusePort;
         acceptor.bind(_address);
-        acceptor.listen(128);
+        acceptor.listen(1024);
         AcceptPipeline pipe;
         if (_acceptorPipelineFactory)
             pipe = _acceptorPipelineFactory.newPipeline(acceptor);
@@ -274,7 +274,11 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
             con.close();
             con.stop();
         }
-        _list.clear();
+        version(DigitalMars){
+            _list.clear();
+        } else {
+            _list = null;
+        }
         _acceptor.eventLoop.stop();
     }
 protected:

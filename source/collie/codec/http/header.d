@@ -198,7 +198,11 @@ package:
         _method = HTTPMethod.HTTP_INVAILD;
         _queryString = "";
         _fileStart = 0;
-        _header.clear();
+        version(DigitalMars){
+            _header.clear();
+        } else {
+            _header = null;
+        }
         _setCookies.clear();
     }
 
