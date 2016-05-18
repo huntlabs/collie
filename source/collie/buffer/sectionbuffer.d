@@ -436,26 +436,31 @@ final class SectionBuffer : Buffer
         return _buffer[count][site];
     }
 
+    pragma(inline, true);
     @property readSize() const
     {
         return _rSize;
     }
 
+    pragma(inline, true);
     @property readCount() const
     {
         return _rSize / _sectionSize;
     }
 
+    pragma(inline, true);
     @property readSite() const
     {
         return _rSize % _sectionSize;
     }
 
+    pragma(inline, true);
     @property writeCount() const
     {
         return _wSize / _sectionSize;
     }
 
+    pragma(inline, true);
     @property writeSite() const
     {
         return _wSize % _sectionSize;

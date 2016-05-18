@@ -129,7 +129,7 @@ class HTTPHeader
 
     @property host() const
     {
-        return _header["Host"];
+        return _header["host"];
     }
 
     void setHeaderValue(T)(string key, T value)

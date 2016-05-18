@@ -226,11 +226,13 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
         _sslctx = ctx;
     }
 
+    pragma(inline, true);
     void initialize()
     {
         _pipe.transportActive();
     }
 
+    pragma(inline, true);
     void stop()
     {
         _pipe.transportInactive();
@@ -285,7 +287,10 @@ protected:
     void remove(ServerConnection!PipeLine conn)
     {
         _list.remove(conn);
-       // delete conn;
+        conn.destroy;
+        import core.memory;
+        GC.free(cast(void *)conn);
+     //   delete conn;
     }
 
     void acceptCallBack(Socket soct)
@@ -330,7 +335,9 @@ protected:
     {
         auto pipe = _pipeFactory.newPipeline(sock);
         if (!pipe) {
-            sock.close();
+            sock.destroy;
+            import core.memory;
+            GC.free(cast(void *) sock);
 //            delete sock;
             return;
         }
@@ -365,23 +372,29 @@ final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
     ~this()
     {
        _pipe.destroy;
+       import core.memory;
+       GC.free(cast(void *)_pipe);
     }
 
+    pragma(inline, true);
     void initialize()
     {
         _pipe.transportActive();
     }
 
+    pragma(inline, true);
     void close()
     {
         _pipe.transportInactive();
     }
 
+    pragma(inline, true);
     @property serverAceptor()
     {
         return _manger;
     }
 
+    pragma(inline, true);
     @property serverAceptor(ServerAcceptor!PipeLine manger)
     {
         _manger = manger;

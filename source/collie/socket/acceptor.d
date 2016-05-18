@@ -66,7 +66,8 @@ final class Acceptor : AsyncTransport, EventCallInterface
         if (_event != null || !_socket.isAlive() || !_callBack)
             return false;
         _event = new AsyncEvent(AsynType.ACCEPT, this, _socket.handle, true, false,
-            true);
+            false);
+       //  _event.etMode = false;
         _loop.addEvent(_event);
         return true;
     }

@@ -59,7 +59,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         if (_event.isActive || !_socket.isAlive() || !_readCallBack)
             return false;
         _event.fd = _socket.handle();
-        _event.enWrite = false;
+       // _event.enWrite = false;
         _loop.addEvent(_event);
         return true;
     }
@@ -67,9 +67,9 @@ class TCPSocket : AsyncTransport, EventCallInterface
     final override void close()
     {
         trace("Close the socket!");
-        if (isAlive)
+        if (alive)
         {
-            eventLoop.post(bind(&onClose));
+            eventLoop.post(&onClose);
         }
         else if (_socket.isAlive())
         {
@@ -81,16 +81,10 @@ class TCPSocket : AsyncTransport, EventCallInterface
 
     override @property bool isAlive() @trusted nothrow
     {
-        try
-        {
-            return _event.isActive && _socket.isAlive();
-        }
-        catch
-        {
-            return false;
-        }
+        return alive();
     }
-
+    
+    pragma(inline, true);
     void write(ubyte[] data, TCPWriteCallBack cback)
     {
         if (!isAlive)
@@ -98,48 +92,71 @@ class TCPSocket : AsyncTransport, EventCallInterface
             cback(data, 0);
             return;
         }
-        eventLoop.post(bind!(void delegate(WriteSite))(&doWrite, new WriteSite(data,
-            cback))); //利用eventloop的post处理跨线程问题
+        eventLoop.post(delegate(){
+            auto buffer = new WriteSite(data,cback);
+            if (!isAlive || !_writeQueue.enQueue(buffer) )
+            {
+                buffer.doCallBack();
+                import core.memory;
+                GC.free(cast(void *)buffer);
+            }
+            onWrite();
+        });
+        //bind!(void delegate(WriteSite))(&doWrite, /*new */WriteSite(data, cback))); //利用eventloop的post处理跨线程问题
     }
 
     mixin TCPSocketOption;
 
+    pragma(inline, true);
     void setKeepAlive(int time, int interval) @trusted
     {
         return _socket.setKeepAlive(forward!(time, interval));
     }
 
+    pragma(inline, true);
     @property @trusted Address remoteAddress()
     {
         return _socket.remoteAddress();
     }
 
+    pragma(inline, true);
     final void setReadCallBack(TCPReadCallBack cback)
     {
         _readCallBack = cback;
     }
 
+    pragma(inline, true);
     final void setCloseCallBack(CallBack cback)
     {
         _unActive = cback;
     }
 
 protected:
+    pragma(inline, true);
+    final @property bool alive() @trusted nothrow
+    {
+
+        return _event.isActive && _socket.handle() != socket_t.init;
+    }
     /**
 	 * 放入队列里的写。
 	 */
-    void doWrite(WriteSite buffer)
+  /*  void doWrite(WriteSite buffer)
     {
         if (!isAlive || !_writeQueue.enQueue(buffer))
         {
             buffer.doCallBack();
         }
         onWrite();
-    }
+    } */
 
     override void onWrite() nothrow
     {
-        while (isAlive && !_writeQueue.empty)
+        if(_writeQueue.empty || !alive)
+        {
+            return;
+        }
+        while (!_writeQueue.empty)
         {
             try
             {
@@ -149,7 +166,10 @@ protected:
                 {
                     if (buffer.add(len))
                     {
-                        _writeQueue.deQueue().doCallBack();
+                        auto buf = _writeQueue.deQueue();
+                        buf.doCallBack();
+                        import core.memory;
+                        GC.free(cast(void *)buf);
                     }
                 }
                 else if (errno == EWOULDBLOCK || errno == EAGAIN)
@@ -179,26 +199,19 @@ protected:
                 onClose();
             }
         }
-        if(_writeQueue.empty)
-        {
-            _event.enWrite = false; 
-        }
-        else
-        {
-            _event.enWrite = true; 
-        }
-        _loop.modEvent(_event);
     }
 
     override void onClose() nothrow
     {
-        if (!isAlive)
+        if (!alive)
             return;
         eventLoop.delEvent(_event);
-        //	delete _event;
         while (!_writeQueue.empty)
         {
-            _writeQueue.deQueue().doCallBack();
+             auto buf = _writeQueue.deQueue();
+             buf.doCallBack();
+             import core.memory;
+             GC.free(cast(void *)buf);
         }
         try
         {
@@ -225,8 +238,11 @@ protected:
 
     override void onRead() nothrow
     {
-        try{trace("onread  tecp ");}catch{}
-        while (isAlive)
+        if(!alive)
+        {
+            return;
+        }
+        while (true)
         {
             try
             {
@@ -284,54 +300,63 @@ mixin template TCPSocketOption()
     /// Get a socket option.
     /// Returns: The number of bytes written to $(D result).
     //returns the length, in bytes, of the actual result - very different from getsockopt()
-    int getOption(SocketOptionLevel level, SocketOption option, void[] result) @trusted
+    pragma(inline, true);
+    final int getOption(SocketOptionLevel level, SocketOption option, void[] result) @trusted
     {
 
         return _socket.getOption(level, option, result);
     }
 
     /// Common case of getting integer and boolean options.
-    int getOption(SocketOptionLevel level, SocketOption option, ref int32_t result) @trusted
+    pragma(inline, true);
+    final int getOption(SocketOptionLevel level, SocketOption option, ref int32_t result) @trusted
     {
         return _socket.getOption(level, option, result);
     }
 
     /// Get the linger option.
-    int getOption(SocketOptionLevel level, SocketOption option, ref Linger result) @trusted
+    pragma(inline, true);
+    final int getOption(SocketOptionLevel level, SocketOption option, ref Linger result) @trusted
     {
         return _socket.getOption(level, option, result);
     }
 
     /// Get a timeout (duration) option.
-    void getOption(SocketOptionLevel level, SocketOption option, ref Duration result) @trusted
+    pragma(inline, true);
+    final void getOption(SocketOptionLevel level, SocketOption option, ref Duration result) @trusted
     {
         _socket.getOption(level, option, result);
     }
 
     /// Set a socket option.
-    void setOption(SocketOptionLevel level, SocketOption option, void[] value) @trusted
+    pragma(inline, true);
+    final void setOption(SocketOptionLevel level, SocketOption option, void[] value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
     /// Common case for setting integer and boolean options.
-    void setOption(SocketOptionLevel level, SocketOption option, int32_t value) @trusted
+    pragma(inline, true);
+    final void setOption(SocketOptionLevel level, SocketOption option, int32_t value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
     /// Set the linger option.
-    void setOption(SocketOptionLevel level, SocketOption option, Linger value) @trusted
+    pragma(inline, true);
+    final void setOption(SocketOptionLevel level, SocketOption option, Linger value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
-    void setOption(SocketOptionLevel level, SocketOption option, Duration value) @trusted
+    pragma(inline, true);
+    final void setOption(SocketOptionLevel level, SocketOption option, Duration value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
-    @property @trusted Address localAddress()
+    pragma(inline, true);
+    final @property @trusted Address localAddress()
     {
         return _socket.localAddress();
     }
@@ -347,6 +372,7 @@ final class WriteSite
         _cback = cback;
     }
 
+    pragma(inline, true);
     bool add(size_t size) //如果写完了就返回true。
     {
         _site += size;
@@ -356,16 +382,19 @@ final class WriteSite
             return false;
     }
 
+    pragma(inline, true);
     @property size_t length() const
     {
         return (_data.length - _site);
     }
 
+    pragma(inline, true);
     @property data()
     {
         return _data[_site .. $];
     }
 
+    pragma(inline, true);
     void doCallBack() nothrow
     {
 

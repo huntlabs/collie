@@ -29,11 +29,13 @@ final class Timer : EventCallInterface
         AsyncEvent.free(_event);
     }
 
+    pragma(inline, true);
     @property bool isActive()
     {
         return _event.isActive;
     }
 
+    pragma(inline, true);
     void setCallBack(CallBack cback)
     {
         _callBack = cback;
@@ -69,11 +71,12 @@ final class Timer : EventCallInterface
         return true;
     }
 
+    pragma(inline, true);
     void stop()
     {
         if (isActive())
         {
-            _loop.post(bind(&onClose));
+            _loop.post(&onClose);
         }
     }
 
