@@ -290,7 +290,6 @@ protected:
         conn.destroy;
         import core.memory;
         GC.free(cast(void *)conn);
-     //   delete conn;
     }
 
     void acceptCallBack(Socket soct)
@@ -406,7 +405,6 @@ final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
         //_pipe = null;
         stop();
         _manger.remove(this);
-        _manger = null;
     }
 
     override void refreshTimeout()

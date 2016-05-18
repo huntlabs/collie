@@ -55,9 +55,9 @@ protected:
     void closeCallBack()
     {
         context.fireTransportInactive();
-        context.pipeline.deletePipeline();
         context.pipeline.transport(null);
         _socket = null;
+        context.pipeline.deletePipeline();
         
     }
 

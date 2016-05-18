@@ -88,9 +88,9 @@ protected:
         {
             if (_res is null)
             {
-                res = new HTTPResponse(config);
-                res.sentCall(&responseSent);
-                res.closeCall(&responseClose);
+                _res = new HTTPResponse(config);
+                _res.sentCall(&responseSent);
+                _res.closeCall(&responseClose);
             }
             doUpgrade();
         }
@@ -128,8 +128,6 @@ protected:
         trace("responseSent");
         if (!context.transport.isAlive())
             return;
-        scope (exit)
-            clear();
         if (file is null)
         {
             trace("write(context(),resp);");
@@ -176,6 +174,7 @@ protected:
         httpAllocator.deallocate(data);
         if (_shouldClose)
             close(context);
+        clear();
     }
 
     final bool writeSection(SectionBuffer buffer, bool isLast, bool isFile = false)
@@ -210,11 +209,17 @@ protected:
     final void clear()
     {
         if (_req)
+        {
             _req.clear();
-        if (_res)
+        }
+        if (_res) 
+        {
             _res.clear();
-        if (_frame)
+        }
+        if (_frame) 
+        {
             _frame.clear();
+        }
         _shouldClose = false;
     }
 
@@ -385,7 +390,7 @@ package:
 
 private:
     HTTPRequest _req = null;
-//    HTTPResponse _res = null;
+    HTTPResponse _res = null;
     WebSocket _websocket = null;
     HandleFrame _frame = null;
     bool _shouldClose = false;
