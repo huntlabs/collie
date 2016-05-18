@@ -52,9 +52,9 @@ public:
         resp.Header.setHeaderValue("Content-Length", resp.Body.length);
         HTTPResponse.generateHeader(resp, buffer);
 
-        writeStection(buffer, nullBody);
+        writeSection(buffer, nullBody);
         trace("header write over, Go write body! ");
-        writeStection(resp.Body(), true);
+        writeSection(resp.Body(), true);
     }
 
     final override void timeOut(Context ctx)
@@ -88,9 +88,9 @@ protected:
         {
             if (_res is null)
             {
-                _res = new HTTPResponse(config);
-                _res.sentCall(&responseSent);
-                _res.closeCall(&responseClose);
+                res = new HTTPResponse(config);
+                res.sentCall(&responseSent);
+                res.closeCall(&responseClose);
             }
             doUpgrade();
         }
@@ -147,7 +147,7 @@ protected:
                 resp.Header.statusCode = 404;
                 resp.Header.setHeaderValue("Content-Length", 0);
                 HTTPResponse.generateHeader(resp, buffer);
-                writeStection(buffer, true);
+                writeSection(buffer, true);
             }
             else
             {
@@ -155,7 +155,7 @@ protected:
                 _file.seek(begin);
                 resp.Header.setHeaderValue("Content-Length", size);
                 HTTPResponse.generateHeader(resp, buffer);
-                writeStection(buffer, false, true);
+                writeSection(buffer, false, true);
             }
         }
     }
@@ -178,12 +178,9 @@ protected:
             close(context);
     }
 
-    final bool writeStection(SectionBuffer buffer, bool isLast, bool isFile = false)
+    final bool writeSection(SectionBuffer buffer, bool isLast, bool isFile = false)
     {
-        trace("writeStection ,isLast = ", isLast, " the buffer length = ", buffer.length);
-        import std.container.array;
-        import std.functional;
-        import core.stdc.string;
+        trace("writeSection ,isLast = ", isLast, " the buffer length = ", buffer.length);
 
         if (buffer.length == 0)
         {
@@ -191,15 +188,15 @@ protected:
         }
 
         size_t wsize = buffer.writeSite;
-        Array!(ubyte[]) arbuffer;
-        buffer.swap(&arbuffer);
-        size_t wcount = arbuffer.length;
+        SectionBuffer.BufferVector tmpBuffer;
+        buffer.swap(tmpBuffer);
+        size_t wcount = tmpBuffer.length;
         --wcount;
         for (uint i = 0; i < wcount; ++i)
         {
-            context.fireWrite(arbuffer[i], &freeBuffer);
+            context.fireWrite(tmpBuffer[i], &freeBuffer);
         }
-        ubyte[] data = arbuffer[wcount][0 .. wsize];
+        ubyte[] data = tmpBuffer[wcount][0 .. wsize];
         if (isFile)
             context.fireWrite(data, &sendFile);
         else
@@ -356,6 +353,7 @@ protected: //WebSocket
     }
 
 package:
+    pragma(inline, true);
     bool ping(ubyte[] data)
     {
         if (!context().transport.isAlive())
@@ -367,6 +365,7 @@ package:
         return true;
     }
 
+    pragma(inline, true);
     bool send(ubyte[] data, bool isBin)
     {
         if (!context().transport.isAlive())
@@ -375,7 +374,7 @@ package:
         const len = data.length + 35;
         buffer.reserve(len);
         _frame.writeFrame(data, isBin, buffer);
-        return writeStection(buffer, false);
+        return writeSection(buffer, false);
     }
 
     pragma(inline, true);
@@ -386,7 +385,7 @@ package:
 
 private:
     HTTPRequest _req = null;
-    HTTPResponse _res = null;
+//    HTTPResponse _res = null;
     WebSocket _websocket = null;
     HandleFrame _frame = null;
     bool _shouldClose = false;

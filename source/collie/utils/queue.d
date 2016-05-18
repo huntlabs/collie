@@ -25,13 +25,14 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
             GC.addRange(_data.ptr, len);
         }
     }
-
+static if (stateSize!Allocator != 0) 
+{
     this(uint size, Allocator alloc)
     {
         this._alloc = alloc;
         this(size);
     }
-
+}
     ~this()
     {
         //clear();
@@ -39,7 +40,8 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
         {
             GC.removeRange(_data.ptr);
         }
-        _alloc.deallocate(_data);
+        if(_data.ptr)
+            _alloc.deallocate(_data);
     }
 
     pragma(inline, true);
