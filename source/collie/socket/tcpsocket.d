@@ -59,6 +59,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         if (_event.isActive || !_socket.isAlive() || !_readCallBack)
             return false;
         _event.fd = _socket.handle();
+        _event.enWrite = false;
         _loop.addEvent(_event);
         return true;
     }
@@ -178,6 +179,15 @@ protected:
                 onClose();
             }
         }
+        if(_writeQueue.empty)
+        {
+            _event.enWrite = false; 
+        }
+        else
+        {
+            _event.enWrite = true; 
+        }
+        _loop.modEvent(_event);
     }
 
     override void onClose() nothrow
