@@ -4,7 +4,7 @@ import collie.socket;
 import collie.channel.handler;
 import collie.channel.handlercontext;
 
-class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
+final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
     //alias TheCallBack = void delegate(ubyte[],uint);
     //alias HandleContext!(UniqueBuffer, ubyte[]) Context;
@@ -55,9 +55,9 @@ protected:
     void closeCallBack()
     {
         context.fireTransportInactive();
-        context.pipeline.deletePipeline();
         context.pipeline.transport(null);
         _socket = null;
+        context.pipeline.deletePipeline();
         
     }
 

@@ -3,7 +3,8 @@
 
 module collie.socket.selector.epoll;
 
-version (linux)  : import core.time;
+version (linux)  : 
+import core.time;
 import core.stdc.errno;
 import core.memory;
 
@@ -23,7 +24,6 @@ import std.experimental.logger;
 
 import collie.socket.common;
 
-enum EVENT_POLL_SIZE = 128;
 
 /** 系统I/O事件处理类，epoll操作的封装
  @authors  Putao‘s Collie Team
@@ -39,7 +39,7 @@ final class EpollLoop
         {
             errnoEnforce("epoll_create1 failed");
         }
-        _events = new epoll_event[EVENT_POLL_SIZE];
+
         _event = new EventChannel();
         addEvent(_event._event);
     }
@@ -124,27 +124,22 @@ final class EpollLoop
     {
         try
         {
-            int length = epoll_wait(_efd, _events.ptr, EVENT_POLL_SIZE, timeout);
-            EventCallInterface[EVENT_POLL_SIZE] objs;
-            foreach(i;0..length)
-            {
-                objs[i] = (cast(AsyncEvent * )(_events[i].data.ptr)).obj;
-                assert(objs[i]);
-            }
-            for (int i = 0; i < length; ++i)
-            {
-                if (isErro(_events[i].events))
-                {
-                    objs[i].onClose();
-                    return;
-                }
+            epoll_event event;
+            if( epoll_wait(_efd, &event, 1, timeout) < 1) return;
+            
+            EventCallInterface obj = (cast(AsyncEvent * )(event.data.ptr)).obj;
 
-                if (isWrite(_events[i].events))
-                   objs[i].onWrite();
-
-                if (isRead(_events[i].events))
-                    objs[i].onRead();
+            if (isErro(event.events))
+            {
+                obj.onClose();
+                return;
             }
+
+            if (isWrite(event.events))
+                obj.onWrite();
+
+            if (isRead(event.events))
+                obj.onRead();
 
         }
         catch (ErrnoException e)
@@ -182,7 +177,6 @@ protected :
 
 private : /** 存储 epoll的fd */
     int _efd;
-    epoll_event[] _events;
     EventChannel _event;
 }
 

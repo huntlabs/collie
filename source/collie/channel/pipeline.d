@@ -2,12 +2,14 @@ module collie.channel.pipeline;
 
 import std.typecons;
 import std.variant;
-import std.container.array;
 import std.functional;
+import std.experimental.allocator.gc_allocator;
 
+import collie.utils.vector;
 import collie.channel.handler;
 import collie.channel.handlercontext;
 import collie.socket;
+
 
 interface PipelineManager
 {
@@ -19,22 +21,28 @@ abstract class PipelineBase
 {
     this()
     {
+        _ctxs = Vector!(PipelineContext,false,GCAllocator)(8);
+        _inCtxs = Vector!(PipelineContext,false,GCAllocator)(8);
+        _outCtxs = Vector!(PipelineContext,false,GCAllocator)(8);
     }
     
     ~this()
     {
     }
 
+    pragma(inline, true);
     @property final void pipelineManager(PipelineManager manager)
     {
         _manager = manager;
     }
 
+    pragma(inline, true);
     @property final PipelineManager pipelineManager()
     {
         return _manager;
     }
 
+    pragma(inline, true);
     final void deletePipeline()
     {
         if (_manager)
@@ -43,39 +51,43 @@ abstract class PipelineBase
         }
     }
 
+    pragma(inline, true);
     @property final void transport(AsyncTransport transport)
     {
         _transport = transport;
     }
 
+    pragma(inline, true);
     @property final transport()
     {
         return _transport;
     }
 
-    //	@property transportInfo(AsyncTransport tcpInfo){_transportInfo = tcpInfo};
-    //	@property transportInfo(){return _transportInfo;};
-
+    pragma(inline, true);
     final PipelineBase addBack(H)(H handler)
     {
         return addHelper(new ContextType!(H)(this, handler), false);
     }
 
+    pragma(inline, true);
     final PipelineBase addFront(H)(H handler)
     {
         return addHelper(new ContextType!(H)(this, handler), true);
     }
 
+    pragma(inline, true);
     final PipelineBase remove(H)(H handler)
     {
         return removeHelper!H(handler, true);
     }
 
+    pragma(inline, true);
     final PipelineBase remove(H)()
     {
         return removeHelper!H(null, false);
     }
 
+    pragma(inline, true);
     final PipelineBase removeFront()
     {
         if (_ctxs.empty())
@@ -86,6 +98,7 @@ abstract class PipelineBase
         return this;
     }
 
+    pragma(inline, true);
     final PipelineBase removeBack()
     {
         if (_ctxs.empty())
@@ -96,11 +109,13 @@ abstract class PipelineBase
         return this;
     }
 
+    pragma(inline, true);
     final auto getHandler(H)(int i)
     {
         getContext!H(i).handler;
     }
 
+    pragma(inline, true);
     final auto getHandler(H)()
     {
         auto ctx = getContext!H();
@@ -109,6 +124,7 @@ abstract class PipelineBase
         return null;
     }
 
+    pragma(inline, true);
     auto getContext(H)(int i)
     {
         auto ctx = cast(ContextType!H)(_ctxs[i]);
@@ -116,10 +132,12 @@ abstract class PipelineBase
         return ctx;
     }
 
+    
     auto getContext(H)()
     {
-        foreach (tctx; _ctxs)
+        foreach (i; 0.._ctxs.length)
         {
+            auto tctx = _ctxs.at(i);
             auto ctx = cast(ContextType!H)(tctx);
             if (ctx)
                 return ctx;
@@ -133,8 +151,9 @@ abstract class PipelineBase
     // See thrift/lib/cpp2/async/Cpp2Channel.cpp for an example
     final bool setOwner(H)(H handler)
     {
-        foreach (ctx; _ctxs)
+        foreach (i; 0.._ctxs.length)
         {
+            auto ctx = _ctxs.at(i);
             auto ctxImpl = cast(ContextType!H)(ctx);
             if (ctxImpl && ctxImpl.getHandler() == handler)
             {
@@ -149,8 +168,9 @@ abstract class PipelineBase
 
     final void detachHandlers()
     {
-        foreach (ctx; _ctxs)
+        foreach (i; 0.._ctxs.length)
         {
+            auto ctx = _ctxs.at(i);
             if (ctx != _owner)
             {
                 ctx.detachPipeline();
@@ -159,9 +179,9 @@ abstract class PipelineBase
     }
 
 protected:
-    Array!PipelineContext _ctxs;
-    Array!PipelineContext _inCtxs;
-    Array!PipelineContext _outCtxs;
+    Vector!(PipelineContext,false,GCAllocator)  _ctxs = void;
+    Vector!(PipelineContext,false,GCAllocator)  _inCtxs = void;
+    Vector!(PipelineContext,false,GCAllocator)  _outCtxs = void;
 
     bool _isFinalize = true;
 private:
@@ -173,14 +193,14 @@ private:
     final PipelineBase addHelper(Context)(Context ctx, bool front)
     {
         _isFinalize = false;
-        front ? _ctxs.insertBefore(_ctxs[0 .. 0], ctx) : _ctxs.insertBack(ctx);
+        front ? _ctxs.insertBefore(ctx) : _ctxs.insertBack(ctx);
         if (Context.dir == HandlerDir.BOTH || Context.dir == HandlerDir.IN)
         {
-            front ? _inCtxs.insertBefore(_inCtxs[0 .. 0], ctx) : _inCtxs.insertBack(ctx);
+            front ? _inCtxs.insertBefore(ctx) : _inCtxs.insertBack(ctx);
         }
         if (Context.dir == HandlerDir.BOTH || Context.dir == HandlerDir.OUT)
         {
-            front ? _outCtxs.insertBefore(_outCtxs[0 .. 0], ctx) : _outCtxs.insertBack(ctx);
+            front ? _outCtxs.insertBefore(ctx) : _outCtxs.insertBack(ctx);
         }
         return this;
     }
@@ -189,12 +209,12 @@ private:
     {
         bool removed = false;
 
-        for (int i = 0; i < _ctxs.length; ++i)
+        for (size_t i = 0; i < _ctxs.length; ++i)
         {
             auto ctx = cast(ContextType!H) _ctxs[i];
             if (ctx && (!checkEqual || ctx.getHandler() == handler))
             {
-                removeAt(site);
+                removeAt(i);
                 removed = true;
                 --i;
                 break;
@@ -213,21 +233,19 @@ private:
         _isFinalize = false;
         PipelineContext rctx = _ctxs[site];
         rctx.detachPipeline();
-        _ctxs.linearRemove(_ctxs[site .. (site + 1)]);
+        _ctxs.removeSite(site);
 
         import std.algorithm.searching;
 
         const auto dir = rctx.getDirection();
         if (dir == HandlerDir.BOTH || dir == HandlerDir.IN)
         {
-            auto rm = find(_inCtxs[0 .. $], rctx);
-            _inCtxs.linearRemove(rm[0 .. 1]);
+            _inCtxs.removeOne(rctx);
         }
 
         if (dir == HandlerDir.BOTH || dir == HandlerDir.OUT)
         {
-            auto rm = find(_outCtxs[0 .. $], rctx);
-            _outCtxs.linearRemove(rm[0 .. 1]);
+            _outCtxs.removeOne(rctx);
         }
     }
 }
@@ -257,7 +275,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
-    
+    pragma(inline, true);
     void read(R msg)
     {
         static if (!is(R == void))
@@ -269,6 +287,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
+    pragma(inline, true);
     void timeOut()
     {
         static if (!is(R == void))
@@ -280,6 +299,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
+    pragma(inline, true);
     void transportActive()
     {
         static if (!is(R == void))
@@ -291,6 +311,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
+    pragma(inline, true);
     void transportInactive()
     {
         static if (!is(R == void))
@@ -304,6 +325,7 @@ final class Pipeline(R, W = void) : PipelineBase
 
     static if (!is(W == void))
     {
+        pragma(inline, true);
         alias TheCallBack = void delegate(W, uint);
         void write(W msg, TheCallBack cback = null)
         {
@@ -315,6 +337,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
+    pragma(inline, true);
     void close()
     {
         static if (!is(W == void))
@@ -373,11 +396,13 @@ final class Pipeline(R, W = void) : PipelineBase
 protected:
     this()
     {
-    };
+        super();
+    }
     this(bool isStatic)
     {
         _isStatic = isStatic;
-    };
+        super();
+    }
 private:
     bool _isStatic = false;
 

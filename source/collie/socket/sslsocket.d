@@ -11,7 +11,6 @@ import collie.socket.tcpsocket;
 
 import deimos.openssl.ssl;
 
-//TODO: Need Test
 class SSLSocket : TCPSocket
 {
     this(EventLoop loop, Socket sock,SSL * ssl)
@@ -32,9 +31,10 @@ class SSLSocket : TCPSocket
     
     override @property bool isAlive() @trusted nothrow
     {
-        return super.isAlive() && _isHandshaked;
+        return alive() && _isHandshaked;
     }
 
+    pragma(inline, true);
     void setHandshakeCallBack(CallBack cback)
     {
         _handshakeCback = cback;
@@ -54,11 +54,12 @@ protected:
 
     override void onWrite()
     {
+        if(!alive)return;
         if(!_isHandshaked)
         {
             if(!handlshake()) return;
         }
-        while (isAlive && !_writeQueue.empty)
+        while (!_writeQueue.empty)
         {
             try
             {
@@ -102,11 +103,12 @@ protected:
 
     override void onRead()
     {
+        if(!alive)return;
         if(!_isHandshaked)
         {
             if(!handlshake()) return;
         }
-        while (isAlive)
+        while (true)
         {
             try
             {

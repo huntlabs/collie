@@ -1,13 +1,14 @@
 module collie.buffer.sectionbuffer;
 
-import core.stdc.string;
+//import core.stdc.string;
 import core.memory;
 
-import std.container.array;
 import std.string;
 import std.experimental.allocator;
+import std.experimental.allocator.mallocator;
 
 import collie.buffer.buffer;
+import collie.utils.vector;
 
 /** 
  * 分段buffer，把整块的很大大内存分成多快小内存存放在内存中，防止一次申请过大内存导致的问题，理论可以无限写入，会自己增加内存。
@@ -18,6 +19,8 @@ import collie.buffer.buffer;
 
 final class SectionBuffer : Buffer
 {
+    alias BufferVector = Vector!(ubyte[],false,Mallocator);
+    
     this(size_t sectionSize, IAllocator clloc = _processAllocator)
     {
         _alloc = clloc;
@@ -26,15 +29,7 @@ final class SectionBuffer : Buffer
 
     ~this()
     {
-        if (eof())
-            return;
-        for (size_t i = 0; i < _buffer.length; ++i)
-        {
-          //  if(!GC.addrOf(_buffer[i].ptr)) //不是GC的内存就释放
-             _alloc.deallocate(_buffer[i]);
-            _buffer[i] = null;
-        }
-        _buffer.clear();
+        clear();
     }
 
     void reserve(size_t size)
@@ -80,20 +75,21 @@ final class SectionBuffer : Buffer
         }
     }
 
+    pragma(inline, true);
     @property void clear()
     {
-        if (eof())
+        if (isEof())
             return;
         for (size_t i = 0; i < _buffer.length; ++i)
         {
             _alloc.deallocate(_buffer[i]);
             _buffer[i] = null;
         }
-        _buffer.clear();
         _rSize = 0;
         _wSize = 0;
     }
 
+    pragma(inline, true);
     @property void clearWithOutMemory()
     {
         if (maxSize() != size_t.max)
@@ -104,21 +100,23 @@ final class SectionBuffer : Buffer
         _rSize = 0;
         _wSize = 0;
     }
-
-    size_t swap(Array!(ubyte[])* uarray)
+   
+   pragma(inline, true);
+    size_t swap(ref BufferVector uarray)
     {
         auto size = _wSize;
         import std.algorithm : swap;
 
-        swap((*uarray), _buffer);
+        swap(uarray, _buffer);
         _rSize = 0;
         _wSize = 0;
         return size;
     }
 
+    
     override @property bool eof() const
     {
-        return (_rSize >= _wSize);
+        return isEof;
     }
 
     override void rest(size_t size = 0)
@@ -131,17 +129,21 @@ final class SectionBuffer : Buffer
         return _wSize;
     }
 
+    pragma(inline, true);
     @property size_t stectionSize()
     {
         return _sectionSize;
     }
 
+    pragma(inline, true);
     size_t read(ubyte[] data)
     {
         size_t rlen = 0;
         return read(data.length, delegate(in ubyte[] dt) {
-            memcpy((data.ptr + rlen), dt.ptr, dt.length);
+            auto len = rlen;
             rlen += dt.length;
+            data[len..rlen] = dt[];
+            
         });
 
     }
@@ -160,7 +162,6 @@ final class SectionBuffer : Buffer
             len = by.length - rsite;
             if (len >= tlen)
             {
-                // memcpy((data.ptr + rlen),(by.ptr + rsite),tlen);
                 cback(by[rsite .. (tlen + rsite)]);
                 rlen += tlen;
                 _rSize += tlen;
@@ -168,7 +169,6 @@ final class SectionBuffer : Buffer
             }
             else
             {
-                // memcpy((data.ptr + rlen),(by.ptr + rsite),len);
                 cback(by[rsite .. $]);
                 _rSize += len;
                 rlen += len;
@@ -199,14 +199,12 @@ final class SectionBuffer : Buffer
             len = by.length - wsite;
             if (len >= tlen)
             {
-                memcpy((by.ptr + wsite), (data.ptr + wlen), tlen);
-                //_wSize += tlen;
+                by[wsite..(wsite + tlen)] = data[wlen..(wlen + tlen)];
                 break;
             }
             else
             {
-                memcpy((by.ptr + wsite), (data.ptr + wlen), len);
-                // _wSize += len;
+                by[wsite..(wsite + len)] = data[wlen..(wlen + len)];
                 wlen += len;
                 wsite = 0;
                 ++wcount;
@@ -216,6 +214,7 @@ final class SectionBuffer : Buffer
         return maxlen;
     }
 
+    pragma(inline, true);
     ubyte[] readLine(bool hasRN = false)() //返回的数据有copy
     {
         ubyte[] rbyte;
@@ -225,7 +224,7 @@ final class SectionBuffer : Buffer
 
     size_t readLine(bool hasRN = false)(void delegate(in ubyte[]) cback) //回调模式，数据不copy
     {
-        if (eof())
+        if (isEof())
             return 0;
         size_t rcount = readCount();
         size_t rsite = readSite();
@@ -235,7 +234,7 @@ final class SectionBuffer : Buffer
         size_t wsite = writeSite();
         size_t wcount = writeCount();
         ubyte[] byptr, by;
-        while (rcount <= wcount && !eof())
+        while (rcount <= wcount && !isEof())
         {
             by = _buffer[rcount];
             if (rcount == wcount)
@@ -329,7 +328,7 @@ final class SectionBuffer : Buffer
         size_t wcount = writeCount();
         size_t wsize = writeSite();
         ubyte[] rbyte;
-        while (rcount <= wcount && !eof())
+        while (rcount <= wcount && !isEof())
         {
             ubyte[] by = _buffer[rcount];
             if (rcount == wcount)
@@ -348,6 +347,7 @@ final class SectionBuffer : Buffer
         return _wSize - _rSize;
     }
 
+    pragma(inline, true);
     ubyte[] readAll() //返回的数据有copy
     {
         ubyte[] rbyte;
@@ -357,7 +357,7 @@ final class SectionBuffer : Buffer
 
     size_t readUtil(in ubyte[] data, void delegate(in ubyte[]) cback) //data.length 必须小于分段大小！
     {
-        if (data.length == 0 || eof() || data.length >= _sectionSize)
+        if (data.length == 0 || isEof() || data.length >= _sectionSize)
             return 0;
         auto ch = data[0];
         size_t rcount = readCount();
@@ -366,7 +366,7 @@ final class SectionBuffer : Buffer
         size_t wsite = writeSite();
         size_t wcount = writeCount();
         ubyte[] byptr, by;
-        while (rcount <= wcount && !eof())
+        while (rcount <= wcount && !isEof())
         {
             by = _buffer[rcount];
             if (rcount == wcount)
@@ -428,6 +428,7 @@ final class SectionBuffer : Buffer
         return (_rSize - size);
     }
 
+    pragma(inline, true);
     ref ubyte opIndex(size_t i)
     {
         assert(i < _wSize);
@@ -436,35 +437,46 @@ final class SectionBuffer : Buffer
         return _buffer[count][site];
     }
 
+    pragma(inline, true);
     @property readSize() const
     {
         return _rSize;
     }
 
+    pragma(inline, true);
     @property readCount() const
     {
         return _rSize / _sectionSize;
     }
 
+    pragma(inline, true);
     @property readSite() const
     {
         return _rSize % _sectionSize;
     }
 
+    pragma(inline, true);
     @property writeCount() const
     {
         return _wSize / _sectionSize;
     }
 
+    pragma(inline, true);
     @property writeSite() const
     {
         return _wSize % _sectionSize;
     }
 
 private:
+    pragma(inline, true);
+    @property bool isEof() const
+    {
+        return (_rSize >= _wSize);
+    }
+
     size_t _rSize;
     size_t _wSize;
-    Array!(ubyte[]) _buffer;
+    BufferVector _buffer;
     size_t _sectionSize;
     IAllocator _alloc;
 }
@@ -500,7 +512,7 @@ unittest
 
     writeln("\r\nswitch \r\n");
 
-    Array!(ubyte[]) tary;
+    SectionBuffer.BufferVector tary;
     buf.swap(&tary);
     writeln("buffer  size:", buf.length);
     writeln("buffer max size:", buf.maxSize());

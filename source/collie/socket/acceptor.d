@@ -67,6 +67,7 @@ final class Acceptor : AsyncTransport, EventCallInterface
             return false;
         _event = new AsyncEvent(AsynType.ACCEPT, this, _socket.handle, true, false,
             false);
+       //  _event.etMode = false;
         _loop.addEvent(_event);
         return true;
     }
