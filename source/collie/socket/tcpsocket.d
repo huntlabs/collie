@@ -138,17 +138,6 @@ protected:
 
         return _event.isActive && _socket.handle() != socket_t.init;
     }
-    /**
-	 * 放入队列里的写。
-	 */
-  /*  void doWrite(WriteSite buffer)
-    {
-        if (!isAlive || !_writeQueue.enQueue(buffer))
-        {
-            buffer.doCallBack();
-        }
-        onWrite();
-    } */
 
     override void onWrite() nothrow
     {
