@@ -2,7 +2,7 @@ module collie.codec.http.response;
 
 import core.stdc.string : memcpy;
 
-import std.string;
+import std.string;cokkies
 import std.array;
 import std.conv;
 
@@ -149,9 +149,9 @@ class HTTPResponse
             buffer.write(cast(ubyte[]) "\r\n");
         }
         import std.container.array;
-        Array!string cokkies;
-        resp._header.swapSetedCookieString(cokkies);
-        foreach (value; cokkies)
+        Array!string cookies;
+        resp._header.swapSetedCookieString(cookies);
+        foreach (value; cookies)
         {
              buffer.write(cast(ubyte[]) "set-cookie: ");
              buffer.write(cast(ubyte[]) value);

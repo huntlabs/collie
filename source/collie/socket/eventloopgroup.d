@@ -11,6 +11,7 @@ final class EventLoopGroup
 {
     this(uint size = (totalCPUs - 1), int waitTime = 2000)
     {
+        assert(size > 0, "size must be lt 1");
         foreach (i; 0 .. size)
         {
             auto loop = new GroupMember(new EventLoop);
