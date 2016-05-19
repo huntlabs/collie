@@ -67,13 +67,13 @@ class ContextImplBase(H, Context) : PipelineContext
     {
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final @property auto handler()
     {
         return _handler;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final void initialize(PipelineBase pipeline, H handler)
     {
         _pipeline = pipeline;
@@ -92,14 +92,14 @@ class ContextImplBase(H, Context) : PipelineContext
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final override void detachPipeline()
     {
         _handler.detachPipeline(_impl);
         _attached = false;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final override void setNextIn(PipelineContext ctx)
     {
         if (!ctx)
@@ -118,7 +118,7 @@ class ContextImplBase(H, Context) : PipelineContext
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final override void setNextOut(PipelineContext ctx)
     {
         if (!ctx)
@@ -137,7 +137,7 @@ class ContextImplBase(H, Context) : PipelineContext
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final override HandlerDir getDirection()
     {
         return H.dir;
@@ -173,13 +173,13 @@ mixin template CommonContextImpl()
         _impl = this;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final override @property AsyncTransport transport()
     {
         return pipeline.transport();
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final override @property PipelineBase pipeline()
     {
         return _pipeline;
@@ -190,7 +190,7 @@ mixin template ReadContextImpl()
 {
 
     // HandlerContext overrides
-    pragma(inline, true);
+    pragma(inline)
     override void fireRead(Rout msg)
     {
         if (this._nextIn)

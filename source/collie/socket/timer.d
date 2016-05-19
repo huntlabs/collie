@@ -30,13 +30,13 @@ final class Timer : EventCallInterface
         AsyncEvent.free(_event);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property bool isActive()
     {
         return _event.isActive;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void setCallBack(CallBack cback)
     {
         _callBack = cback;
@@ -73,7 +73,7 @@ final class Timer : EventCallInterface
         return true;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void stop()
     {
         if (isActive())

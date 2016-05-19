@@ -12,7 +12,7 @@ enum WebSocketGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
 abstract class WebSocket
 {
-    pragma(inline, true);
+    pragma(inline)
     final bool ping(ubyte[] data)
     {
         if (_hand)
@@ -21,7 +21,7 @@ abstract class WebSocket
             return false;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final bool sendText(string text)
     {
         if (_hand)
@@ -34,7 +34,7 @@ abstract class WebSocket
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final bool sendBinary(ubyte[] data)
     {
         if (_hand)
@@ -43,14 +43,14 @@ abstract class WebSocket
             return false;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final void close()
     {
         if (_hand)
             _hand.doClose();
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final @property Address remoteAdress()
     {
         return _addr;
@@ -198,7 +198,7 @@ final class HandleFrame
         doMask = mask;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void clear()
     {
         _state = ProcessingState.PS_READ_HEADER;

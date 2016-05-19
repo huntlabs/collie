@@ -156,17 +156,17 @@ final class EpollLoop
         _event.doWrite();
     }
 
-    protected : pragma(inline, true);
+    protected : pragma(inline)
     bool isErro(uint events)
     {
         return (events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) != 0;
     }
-    pragma(inline, true);
+    pragma(inline)
     bool isRead(uint events)
     {
         return (events & EPOLLIN) != 0;
     }
-    pragma(inline, true);
+    pragma(inline)
     bool isWrite(uint events)
     {
         return (events & EPOLLOUT) != 0;

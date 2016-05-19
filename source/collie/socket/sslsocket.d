@@ -34,7 +34,7 @@ class SSLSocket : TCPSocket
         return alive() && _isHandshaked;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void setHandshakeCallBack(CallBack cback)
     {
         _handshakeCback = cback;

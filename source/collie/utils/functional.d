@@ -5,6 +5,7 @@ public import std.traits;
 import std.typecons;
 import std.typetuple;
 
+pragma(inline)
 auto bind(T, Args...)(T fun, Args args) if (isCallable!(T))
 {
     alias FUNTYPE = Parameters!(fun);

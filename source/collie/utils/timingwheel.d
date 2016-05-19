@@ -17,7 +17,7 @@ final class TimingWheel
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void addNewTimer(WheelTimer tm) nothrow
     {
         NullWheelTimer timer = _list[getPrev()];
@@ -41,7 +41,7 @@ final class TimingWheel
     }
 
 protected:
-    pragma(inline, true);
+    pragma(inline)
     size_t getPrev() const nothrow
     {
         if (_now == 0)
@@ -50,7 +50,7 @@ protected:
             return (_now - 1);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     NullWheelTimer doNext() nothrow
     {
         ++_now;
@@ -59,14 +59,14 @@ protected:
         return _list[_now];
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void rest(WheelTimer tm) nothrow
     {
         remove(tm);
         addNewTimer(tm);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void remove(WheelTimer tm) nothrow
     {
         tm._prev._next = tm._next;
@@ -86,7 +86,7 @@ abstract class WheelTimer
 {
     void onTimeOut() nothrow;
 
-    pragma(inline, true);
+    pragma(inline)
     final void rest() nothrow
     {
         if (!_manger)
@@ -94,7 +94,7 @@ abstract class WheelTimer
         _manger.rest(this);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final void stop() nothrow
     {
         if (!_manger)
@@ -102,19 +102,19 @@ abstract class WheelTimer
         _manger.remove(this);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final bool isActive() const nothrow
     {
         return _manger !is null;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final @property oneShop()
     {
         return _oneShop;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final @property oneShop(bool one)
     {
         _oneShop = one;

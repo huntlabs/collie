@@ -29,19 +29,19 @@ abstract class PipelineBase
     {
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property final void pipelineManager(PipelineManager manager)
     {
         _manager = manager;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property final PipelineManager pipelineManager()
     {
         return _manager;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final void deletePipeline()
     {
         if (_manager)
@@ -50,43 +50,43 @@ abstract class PipelineBase
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property final void transport(AsyncTransport transport)
     {
         _transport = transport;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property final transport()
     {
         return _transport;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final PipelineBase addBack(H)(H handler)
     {
         return addHelper(new ContextType!(H)(this, handler), false);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final PipelineBase addFront(H)(H handler)
     {
         return addHelper(new ContextType!(H)(this, handler), true);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final PipelineBase remove(H)(H handler)
     {
         return removeHelper!H(handler, true);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final PipelineBase remove(H)()
     {
         return removeHelper!H(null, false);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final PipelineBase removeFront()
     {
         if (_ctxs.empty())
@@ -97,7 +97,7 @@ abstract class PipelineBase
         return this;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final PipelineBase removeBack()
     {
         if (_ctxs.empty())
@@ -108,13 +108,13 @@ abstract class PipelineBase
         return this;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final auto getHandler(H)(int i)
     {
         getContext!H(i).handler;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final auto getHandler(H)()
     {
         auto ctx = getContext!H();
@@ -123,7 +123,7 @@ abstract class PipelineBase
         return null;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     auto getContext(H)(int i)
     {
         auto ctx = cast(ContextType!H)(_ctxs[i]);
@@ -274,7 +274,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void read(R msg)
     {
         static if (!is(R == void))
@@ -286,7 +286,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void timeOut()
     {
         static if (!is(R == void))
@@ -298,7 +298,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void transportActive()
     {
         static if (!is(R == void))
@@ -310,7 +310,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void transportInactive()
     {
         static if (!is(R == void))
@@ -324,7 +324,7 @@ final class Pipeline(R, W = void) : PipelineBase
 
     static if (!is(W == void))
     {
-        pragma(inline, true);
+        pragma(inline)
         alias TheCallBack = void delegate(W, uint);
         void write(W msg, TheCallBack cback = null)
         {
@@ -336,7 +336,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void close()
     {
         static if (!is(W == void))

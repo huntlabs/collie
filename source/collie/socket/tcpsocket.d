@@ -85,7 +85,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         return alive();
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void write(ubyte[] data, TCPWriteCallBack cback)
     {
         if (!isAlive)
@@ -109,32 +109,32 @@ class TCPSocket : AsyncTransport, EventCallInterface
 
     mixin TCPSocketOption;
 
-    pragma(inline, true);
+    pragma(inline)
     void setKeepAlive(int time, int interval) @trusted
     {
         return _socket.setKeepAlive(forward!(time, interval));
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property @trusted Address remoteAddress()
     {
         return _socket.remoteAddress();
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final void setReadCallBack(TCPReadCallBack cback)
     {
         _readCallBack = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final void setCloseCallBack(CallBack cback)
     {
         _unActive = cback;
     }
 
 protected:
-    pragma(inline, true);
+    pragma(inline)
     final @property bool alive() @trusted nothrow
     {
 
@@ -294,7 +294,7 @@ mixin template TCPSocketOption()
     /// Get a socket option.
     /// Returns: The number of bytes written to $(D result).
     //returns the length, in bytes, of the actual result - very different from getsockopt()
-    pragma(inline, true);
+    pragma(inline)
     final int getOption(SocketOptionLevel level, SocketOption option, void[] result) @trusted
     {
 
@@ -302,54 +302,54 @@ mixin template TCPSocketOption()
     }
 
     /// Common case of getting integer and boolean options.
-    pragma(inline, true);
+    pragma(inline)
     final int getOption(SocketOptionLevel level, SocketOption option, ref int32_t result) @trusted
     {
         return _socket.getOption(level, option, result);
     }
 
     /// Get the linger option.
-    pragma(inline, true);
+    pragma(inline)
     final int getOption(SocketOptionLevel level, SocketOption option, ref Linger result) @trusted
     {
         return _socket.getOption(level, option, result);
     }
 
     /// Get a timeout (duration) option.
-    pragma(inline, true);
+    pragma(inline)
     final void getOption(SocketOptionLevel level, SocketOption option, ref Duration result) @trusted
     {
         _socket.getOption(level, option, result);
     }
 
     /// Set a socket option.
-    pragma(inline, true);
+    pragma(inline)
     final void setOption(SocketOptionLevel level, SocketOption option, void[] value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
     /// Common case for setting integer and boolean options.
-    pragma(inline, true);
+    pragma(inline)
     final void setOption(SocketOptionLevel level, SocketOption option, int32_t value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
     /// Set the linger option.
-    pragma(inline, true);
+    pragma(inline)
     final void setOption(SocketOptionLevel level, SocketOption option, Linger value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final void setOption(SocketOptionLevel level, SocketOption option, Duration value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final @property @trusted Address localAddress()
     {
         return _socket.localAddress();
@@ -366,7 +366,7 @@ final class WriteSite
         _cback = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     bool add(size_t size) //如果写完了就返回true。
     {
         _site += size;
@@ -376,19 +376,19 @@ final class WriteSite
             return false;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property size_t length() const
     {
         return (_data.length - _site);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property data()
     {
         return _data[_site .. $];
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void doCallBack() nothrow
     {
 

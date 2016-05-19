@@ -43,25 +43,25 @@ class HTTPRequest
         _parser = null;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final @property const(HTTPHeader) Header() const
     {
         return _header;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final @property SectionBuffer Body()
     {
         return _body;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final @property Address clientAddress()
     {
         return _addr;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final bool parserData(ubyte[] data)
     {
         _dorun = true;
@@ -77,20 +77,20 @@ class HTTPRequest
         return false;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final @property headerComplete(CallBackHeader cback)
     {
         _headerComplete = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final @property requestComplete(CallBackRequest cback)
     {
         _RequestComplete = cback;
     }
 
 package:
-    pragma(inline, true);
+    pragma(inline)
     final void clear()
     {
         _dorun = false;
@@ -103,19 +103,19 @@ package:
 
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final @property clientAddress(Address addr)
     {
         _addr = addr;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property HTTPParser parser()
     {
         return _parser;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property isRuning()
     {
         return _parser.handleIng;

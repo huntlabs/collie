@@ -51,7 +51,7 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
             _alloc.deallocate(_data);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void insertBack(T value)
     {
         if (full)
@@ -60,7 +60,7 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
         ++_len;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void insertBack(T[] value)
     {
         if (_data.length < (_len + value.length))
@@ -94,7 +94,7 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
         ++_len;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     size_t removeBack(size_t howMany = 1)
     {
         if (howMany >= _len)
@@ -143,7 +143,7 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property T[] dup()
     {
         auto list = new T[length];
@@ -151,33 +151,33 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
         return list;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     inout ref inout(T) opIndex(size_t i)
     {
         assert(i < _len);
         return _data[i];
     }
 
-    pragma(inline, true);
+    pragma(inline)
     T at(size_t i)
     {
         assert(i < _len);
         return _data[i];
     }
 
-    pragma(inline, true);
+    pragma(inline)
     const @property bool empty()
     {
         return (_len == 0);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     const @property size_t length()
     {
         return _len;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void clear()
     {
         _data[] = T.init;

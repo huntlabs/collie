@@ -9,7 +9,7 @@
             "buildOptions" :  ["debugMode",     "debugInfo",    "profile" ]
         } ,
         "release"   : {
-            "buildOptions" :  ["releaseMode",   "inline",       "optimize" ]
+            "buildOptions" :  ["releaseMode",   "inline",       "optimize"]
         }
     },
     "dependencies": {

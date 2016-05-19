@@ -76,7 +76,6 @@ final class SectionBuffer : Buffer
         }
     }
 
-    pragma(inline, true);
     @property void clear()
     {
         if (isEof())
@@ -90,7 +89,7 @@ final class SectionBuffer : Buffer
         _wSize = 0;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property void clearWithOutMemory()
     {
         if (maxSize() != size_t.max)
@@ -102,7 +101,7 @@ final class SectionBuffer : Buffer
         _wSize = 0;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     size_t swap(ref BufferVector uarray)
     {
         auto size = _wSize;
@@ -129,13 +128,13 @@ final class SectionBuffer : Buffer
         return _wSize;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property size_t stectionSize()
     {
         return _sectionSize;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     size_t read(ubyte[] data)
     {
         size_t rlen = 0;
@@ -214,7 +213,7 @@ final class SectionBuffer : Buffer
         return maxlen;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     ubyte[] readLine(bool hasRN = false)() //返回的数据有copy
     {
         ubyte[] rbyte;
@@ -347,7 +346,7 @@ final class SectionBuffer : Buffer
         return _wSize - _rSize;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     ubyte[] readAll() //返回的数据有copy
     {
         ubyte[] rbyte;
@@ -428,7 +427,7 @@ final class SectionBuffer : Buffer
         return (_rSize - size);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     ref ubyte opIndex(size_t i)
     {
         assert(i < _wSize);
@@ -437,38 +436,38 @@ final class SectionBuffer : Buffer
         return _buffer[count][site];
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property readSize() const
     {
         return _rSize;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property readCount() const
     {
         return _rSize / _sectionSize;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property readSite() const
     {
         return _rSize % _sectionSize;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property writeCount() const
     {
         return _wSize / _sectionSize;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property writeSite() const
     {
         return _wSize % _sectionSize;
     }
 
 private:
-    pragma(inline, true);
+    pragma(inline)
     @property bool isEof() const
     {
         return (_rSize >= _wSize);

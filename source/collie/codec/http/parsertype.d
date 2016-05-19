@@ -232,7 +232,7 @@ __gshared static const byte[256] unhex = [-1, -1, -1, -1, -1, -1, -1,
 
 version (HTTP_PARSER_STRICT)
 {
-    pragma(inline, true);
+    pragma(inline)
     ubyte T(ubyte v)
     {
         return 0;
@@ -240,7 +240,7 @@ version (HTTP_PARSER_STRICT)
 }
 else
 {
-    pragma(inline, true);
+    pragma(inline)
     ubyte T(ubyte v)
     {
         return v;

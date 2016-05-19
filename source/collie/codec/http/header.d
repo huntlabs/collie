@@ -37,74 +37,74 @@ final class HTTPHeader
         _header = null;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property HTTPHeaderType type() const
     {
         return _type;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property void type(HTTPHeaderType type)
     {
         _type = type;
     }
     // REQUEST
-    pragma(inline, true);
+    pragma(inline)
     @property HTTPMethod method() const
     {
         return _method;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property void method(HTTPMethod met)
     {
         _method = met;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property string methodString() const
     {
         return method_strings[_method];
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property bool upgrade() const
     {
         return _upgrade;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property int statusCode() const
     {
         return _statuCode;
     }
 
     // RESPONSE only
-    pragma(inline, true);
+    pragma(inline)
     @property void statusCode(int code)
     {
         _statuCode = code;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property httpVersion() const
     {
         return _hversion;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property httpVersion(HTTPVersion ver)
     {
         _hversion = ver;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property requestString() const
     {
         return _queryString;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property requestString(string str)
     {
         _queryString = str;
@@ -119,7 +119,7 @@ final class HTTPHeader
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property queryString() const
     {
         if (_fileStart + 1 < _queryString.length)
@@ -128,13 +128,13 @@ final class HTTPHeader
             return "";
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property path() const
     {
         return decode(_queryString[0 .. _fileStart]);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property string[string] queryMap() const
     {
         if (_fileStart == cast(uint) _queryString.length)
@@ -142,19 +142,19 @@ final class HTTPHeader
         return parseKeyValues(queryString);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property const(string[string]) headerMap() const
     {
         return _header;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property host() const
     {
         return _header["host"];
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void setHeaderValue(T)(string key, T value)
     {
         key = toLower(key.strip); //capitalizeHeader(strip(key));//
@@ -168,19 +168,19 @@ final class HTTPHeader
         }
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void setCookieString(string value)
     {
         _setCookies.insertBack(value);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     CookieVector getSetedCookieString()
     {
         return _setCookies;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void swapSetedCookieString(ref CookieVector array)
     {
         import std.algorithm : swap;
@@ -188,21 +188,21 @@ final class HTTPHeader
         swap(_setCookies, array);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     string getHeaderValue(string key) const
     {
         key = toLower(key.strip); //capitalizeHeader(strip(key));//
         return _header.get(key, "");
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void removeHeaderKey(string key)
     {
         key = toLower(key.strip); //capitalizeHeader(key);//
         _header.remove(key);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     string contentType(bool toLow = false)() const
     {
         string type = getHeaderValue("Content-Type");
@@ -218,13 +218,13 @@ final class HTTPHeader
         return type;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     bool isInVaild() const
     {
         return (_method == HTTPMethod.HTTP_INVAILD && _statuCode == -1);
     } // 无效的
 package:
-    pragma(inline, true);
+    pragma(inline)
     void clear()
     {
         _statuCode = -1;
@@ -242,7 +242,7 @@ package:
         _setCookies.clear();
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property void upgrade(bool up)
     {
         _upgrade = up;

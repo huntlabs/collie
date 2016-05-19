@@ -17,154 +17,154 @@ final class HTTPParser
         _maxHeaderSize = maxHeaderSize;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property type()
     {
         return _type;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property isUpgrade()
     {
         return upgrade;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property contentLength()
     {
         return content_length;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property isChunked()
     {
         return (flags & HTTPParserFlags.F_CHUNKED) == 0 ? false : true;
     }
     //@property status() {return status_code;}
-    pragma(inline, true);
+    pragma(inline)
     @property error()
     {
         return http_errno;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property errorString()
     {
         return error_string[http_errno];
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property methodCode()
     {
         return method;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property methodString()
     {
         return method_strings[method];
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property major()
     {
         return http_major;
     }
 
     //版本号首位
-    pragma(inline, true);
+    pragma(inline)
     @property minor()
     {
         return http_minor;
     }
 
     //版本号末尾
-    pragma(inline, true);
+    pragma(inline)
     @property handleIng()
     {
         return _isHandle;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property handleIng(bool handle)
     {
         _isHandle = handle;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property skipBody()
     {
         return _skipBody;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property skipBody(bool skip)
     {
         return _skipBody = skip;
     }
 
     /** 回调函数指定 */
-    pragma(inline, true);
+    pragma(inline)
     @property onMessageBegin(CallBackNotify cback)
     {
         _on_message_begin = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property onMessageComplete(CallBackNotify cback)
     {
         _on_message_complete = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property onHeaderComplete(CallBackNotify cback)
     {
         _on_headers_complete = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property onChunkHeader(CallBackNotify cback)
     {
         _on_chunk_header = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property onChunkComplete(CallBackNotify cback)
     {
         _on_chunk_complete = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property onUrl(CallBackData cback)
     {
         _on_url = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property onStatus(CallBackData cback)
     {
         _on_status = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property onHeaderField(CallBackData cback)
     {
         _on_header_field = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property onHeaderValue(CallBackData cback)
     {
         _on_header_value = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property onBody(CallBackData cback)
     {
         _on_body = cback;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void rest(HTTPParserType ty)
     {
         type = ty;
@@ -199,7 +199,7 @@ protected:
 
 public:
 
-    pragma(inline, true);
+    pragma(inline)
     bool bodyIsFinal()
     {
         return state == HTTPParserState.s_message_done;
@@ -2073,7 +2073,7 @@ protected:
         _type = ty;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     bool httpMessageNeedsEof()
     {
         if (type == HTTPParserType.HTTP_REQUEST)
@@ -2099,7 +2099,7 @@ protected:
         return true;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     bool httpShouldKeepAlive()
     {
         if (http_major > 0 && http_minor > 0)
@@ -2308,7 +2308,7 @@ protected:
 
 private:
 
-pragma(inline, true);
+pragma(inline)
 bool IS_USERINFO_CHAR2(ubyte c)
 {
     bool alpha = mixin(IS_ALPHA("c"));

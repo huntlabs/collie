@@ -27,13 +27,14 @@ final class PieceBuffer : Buffer
         _wSize = writed;
     }
 
+    pragma(inline)
     void clear()
     {
         _rSize = 0;
         _wSize = 0;
     }
 
-    @property bool eof() const
+    override @property bool eof() const
     {
         return (_rSize >= _wSize);
     }
@@ -64,6 +65,7 @@ final class PieceBuffer : Buffer
         return len;
     }
 
+    pragma(inline)
     ubyte[] data(bool all = false)
     {
         if (all)

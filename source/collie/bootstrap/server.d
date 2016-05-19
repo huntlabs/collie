@@ -226,13 +226,13 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
         _sslctx = ctx;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void initialize()
     {
         _pipe.transportActive();
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void stop()
     {
         _pipe.transportInactive();
@@ -375,25 +375,25 @@ final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
        GC.free(cast(void *)_pipe);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void initialize()
     {
         _pipe.transportActive();
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void close()
     {
         _pipe.transportInactive();
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property serverAceptor()
     {
         return _manger;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     @property serverAceptor(ServerAcceptor!PipeLine manger)
     {
         _manger = manger;

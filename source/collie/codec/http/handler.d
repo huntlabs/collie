@@ -205,7 +205,7 @@ protected:
         return true;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     final void clear()
     {
         if (_req)
@@ -358,7 +358,7 @@ protected: //WebSocket
     }
 
 package:
-    pragma(inline, true);
+    pragma(inline)
     bool ping(ubyte[] data)
     {
         if (!context().transport.isAlive())
@@ -370,7 +370,7 @@ package:
         return true;
     }
 
-    pragma(inline, true);
+    pragma(inline)
     bool send(ubyte[] data, bool isBin)
     {
         if (!context().transport.isAlive())
@@ -382,7 +382,7 @@ package:
         return writeSection(buffer, false);
     }
 
-    pragma(inline, true);
+    pragma(inline)
     void doClose()
     {
         close(context);
