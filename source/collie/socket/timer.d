@@ -21,7 +21,8 @@ final class Timer : EventCallInterface
     {
 
         import core.sys.posix.unistd;
-        if(_event.isActive)
+
+        if (_event.isActive)
         {
             _loop.delEvent(_event);
             close(_event.fd);
@@ -63,6 +64,7 @@ final class Timer : EventCallInterface
         if (err == -1)
         {
             import core.sys.posix.unistd;
+
             close(_event.fd);
             return false;
         }
@@ -133,7 +135,7 @@ unittest
 
     int cout = -1;
     ulong time;
-    
+
     void timeout()
     {
         writeln("time  : ", Clock.currTime().toSimpleString());

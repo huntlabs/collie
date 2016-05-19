@@ -2,7 +2,6 @@ module collie.utils.timingwheel;
 
 import std.container.array;
 
-
 import std.stdio;
 
 final class TimingWheel
@@ -114,6 +113,7 @@ abstract class WheelTimer
     {
         return _oneShop;
     }
+
     pragma(inline, true);
     final @property oneShop(bool one)
     {

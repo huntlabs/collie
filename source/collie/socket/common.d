@@ -7,7 +7,6 @@ import std.experimental.allocator;
 
 import collie.socket.eventloop;
 
-
 enum TCP_READ_BUFFER_SIZE = 4096;
 
 enum TransportType : short
@@ -88,22 +87,28 @@ struct AsyncEvent
     bool enWrite;
     bool etMode;
     bool oneShot;
-    
-    
-    static AsyncEvent * create(AsynType type, EventCallInterface obj, socket_t fd = socket_t.init,
-        bool enread = true, bool enwrite = false, bool etMode = false, bool oneShot = false)
+
+    static AsyncEvent* create(AsynType type, EventCallInterface obj,
+        socket_t fd = socket_t.init, bool enread = true, bool enwrite = false,
+        bool etMode = false, bool oneShot = false)
     {
-        return new AsyncEvent(type,obj,fd,enread,enwrite,etMode,oneShot);     
+        return new AsyncEvent(type, obj, fd, enread, enwrite, etMode, oneShot);
     }
 
-    static void free(AsyncEvent * event)
+    static void free(AsyncEvent* event)
     {
     }
-    
-    @property isActive(){ return _isActive; }
-    
+
+    @property isActive()
+    {
+        return _isActive;
+    }
+
 package:
-    @property isActive(bool active){_isActive = active;}
+    @property isActive(bool active)
+    {
+        _isActive = active;
+    }
 
 private:
     EventCallInterface _obj;

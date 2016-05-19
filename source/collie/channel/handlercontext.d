@@ -45,7 +45,7 @@ interface InboundHandlerContext(In)
 interface OutboundHandlerContext(Out)
 {
     alias OutboundTheCallBack = void delegate(Out, uint);
-    
+
     void fireWrite(Out msg, OutboundTheCallBack cback = null);
     void fireClose();
 
@@ -72,6 +72,7 @@ class ContextImplBase(H, Context) : PipelineContext
     {
         return _handler;
     }
+
     pragma(inline, true);
     final void initialize(PipelineBase pipeline, H handler)
     {
@@ -80,7 +81,7 @@ class ContextImplBase(H, Context) : PipelineContext
     }
 
     // PipelineContext overrides
-    
+
     final override void attachPipeline()
     {
         if (!_attached)
@@ -97,7 +98,7 @@ class ContextImplBase(H, Context) : PipelineContext
         _handler.detachPipeline(_impl);
         _attached = false;
     }
-    
+
     pragma(inline, true);
     final override void setNextIn(PipelineContext ctx)
     {
@@ -135,7 +136,7 @@ class ContextImplBase(H, Context) : PipelineContext
             throw new Exception("outbound type mismatch after ");
         }
     }
-    
+
     pragma(inline, true);
     final override HandlerDir getDirection()
     {
@@ -151,14 +152,14 @@ protected:
 
 private:
     bool _attached = false;
-};
+}
 
 mixin template CommonContextImpl()
 {
-    alias H.rin Rin;
-    alias H.rout Rout;
-    alias H.win Win;
-    alias H.wout Wout;
+    alias Rin = H.rin;
+    alias Rout = H.rout;
+    alias Win = H.win;
+    alias Wout = H.wout;
 
     this(PipelineBase pipeline, H handler)
     {
@@ -275,7 +276,7 @@ mixin template WriteContextImpl()
             info("close reached end of pipeline");
         }
     }
-    
+
     // OutboundLink overrides
     alias ThisCallBack = void delegate(Win, uint);
     override void write(Win msg, ThisCallBack cback = null)
@@ -290,19 +291,19 @@ mixin template WriteContextImpl()
 
 }
 
-final class ContextImpl(H) : ContextImplBase!(H, HandlerContext!(H.rout, H.wout)),
-    HandlerContext!(H.rout, H.wout), InboundLink!(H.rin), OutboundLink!(H.win)
+final class ContextImpl(H) : ContextImplBase!(H, HandlerContext!(H.rout,
+    H.wout)), HandlerContext!(H.rout, H.wout), InboundLink!(H.rin), OutboundLink!(H.win)
 {
 
     static enum dir = HandlerDir.BOTH;
 
     mixin CommonContextImpl;
-    
+
     mixin WriteContextImpl;
 
     mixin ReadContextImpl;
 
-};
+}
 
 final class InboundContextImpl(H) : ContextImplBase!(H,
     InboundHandlerContext!(H.rout)), InboundHandlerContext!(H.rout), InboundLink!(H.rin)
@@ -317,7 +318,7 @@ final class InboundContextImpl(H) : ContextImplBase!(H,
 
 final class OutboundContextImpl(H) : ContextImplBase!(H,
     OutboundHandlerContext!(H.wout)), OutboundHandlerContext!(H.wout), OutboundLink!(H.win)
- {
+{
 
     static enum dir = HandlerDir.OUT;
 

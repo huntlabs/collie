@@ -6,6 +6,7 @@ import core.memory;
 import std.string;
 import std.experimental.allocator;
 import std.experimental.allocator.mallocator;
+import std.experimental.allocator.gc_allocator;
 
 import collie.buffer.buffer;
 import collie.utils.vector;
@@ -19,8 +20,8 @@ import collie.utils.vector;
 
 final class SectionBuffer : Buffer
 {
-    alias BufferVector = Vector!(ubyte[],false,Mallocator);
-    
+    alias BufferVector = Vector!(ubyte[], false, GCAllocator); //Mallocator);
+
     this(size_t sectionSize, IAllocator clloc = _processAllocator)
     {
         _alloc = clloc;
@@ -100,8 +101,8 @@ final class SectionBuffer : Buffer
         _rSize = 0;
         _wSize = 0;
     }
-   
-   pragma(inline, true);
+
+    pragma(inline, true);
     size_t swap(ref BufferVector uarray)
     {
         auto size = _wSize;
@@ -113,7 +114,6 @@ final class SectionBuffer : Buffer
         return size;
     }
 
-    
     override @property bool eof() const
     {
         return isEof;
@@ -142,8 +142,8 @@ final class SectionBuffer : Buffer
         return read(data.length, delegate(in ubyte[] dt) {
             auto len = rlen;
             rlen += dt.length;
-            data[len..rlen] = dt[];
-            
+            data[len .. rlen] = dt[];
+
         });
 
     }
@@ -199,12 +199,12 @@ final class SectionBuffer : Buffer
             len = by.length - wsite;
             if (len >= tlen)
             {
-                by[wsite..(wsite + tlen)] = data[wlen..(wlen + tlen)];
+                by[wsite .. (wsite + tlen)] = data[wlen .. (wlen + tlen)];
                 break;
             }
             else
             {
-                by[wsite..(wsite + len)] = data[wlen..(wlen + len)];
+                by[wsite .. (wsite + len)] = data[wlen .. (wlen + len)];
                 wlen += len;
                 wsite = 0;
                 ++wcount;

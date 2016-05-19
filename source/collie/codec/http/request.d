@@ -2,11 +2,13 @@ module collie.codec.http.request;
 
 import std.experimental.logger;
 import std.socket;
+import std.experimental.allocator.gc_allocator;
 
 import collie.codec.http.header;
 import collie.codec.http.parser;
 import collie.buffer.sectionbuffer;
 import collie.codec.http.config;
+import collie.utils.vector;
 
 alias CallBackHeader = void delegate(HTTPHeader header);
 alias CallBackRequest = void delegate(HTTPRequest header);
@@ -17,7 +19,7 @@ class HTTPRequest
     {
         _config = config;
         _header = new HTTPHeader(HTTPHeaderType.HTTP_REQUEST);
-        _parser = new HTTPParser(HTTPParserType.HTTP_REQUEST,_config.maxHeaderSize);
+        _parser = new HTTPParser(HTTPParserType.HTTP_REQUEST, _config.maxHeaderSize);
         _parser.onMessageBegin = &onMessageBegin;
         _parser.onMessageComplete = &onMssageComplete;
         _parser.onUrl = &onURI;
@@ -41,21 +43,25 @@ class HTTPRequest
         _parser = null;
     }
 
+    pragma(inline, true);
     final @property const(HTTPHeader) Header() const
     {
         return _header;
     }
 
+    pragma(inline, true);
     final @property SectionBuffer Body()
     {
         return _body;
     }
 
+    pragma(inline, true);
     final @property Address clientAddress()
     {
         return _addr;
     }
 
+    pragma(inline, true);
     final bool parserData(ubyte[] data)
     {
         _dorun = true;
@@ -71,17 +77,20 @@ class HTTPRequest
         return false;
     }
 
+    pragma(inline, true);
     final @property headerComplete(CallBackHeader cback)
     {
         _headerComplete = cback;
     }
 
+    pragma(inline, true);
     final @property requestComplete(CallBackRequest cback)
     {
         _RequestComplete = cback;
     }
 
 package:
+    pragma(inline, true);
     final void clear()
     {
         _dorun = false;
@@ -94,16 +103,19 @@ package:
 
     }
 
+    pragma(inline, true);
     final @property clientAddress(Address addr)
     {
         _addr = addr;
     }
 
+    pragma(inline, true);
     @property HTTPParser parser()
     {
         return _parser;
     }
 
+    pragma(inline, true);
     @property isRuning()
     {
         return _parser.handleIng;
@@ -119,8 +131,8 @@ protected:
             return;
         }
         _header.clear();
-        _hkey.length = 0;
-        _hvalue.length = 0;
+        _hkey.clear();
+        _hvalue.clear();
         _body.clear();
     }
 
@@ -132,20 +144,29 @@ protected:
             _parser.handleIng = false;
             return;
         }
-        if (_hkey.length > 0)
+        if (_hkey.empty)
         {
-            _hkey ~= data;
+            if (adv)
+            {
+                _header.requestString = cast(string) data.dup;
+                _header.method = _parser.methodCode;
+            }
+            else
+            {
+                _hkey.insertBack(data);
+            }
         }
         else
         {
-            _hkey = data.dup;
+            _hkey.insertBack(data);
+            if (adv)
+            {
+                _header.requestString = cast(string) _hkey.dup;
+                _hkey.clear();
+                _header.method = _parser.methodCode;
+            }
         }
-        if (adv)
-        {
-            _header.requestString = cast(string) _hkey;
-            _hkey.length = 0;
-            _header.method = _parser.methodCode;
-        }
+
     }
 
     final void onHeaderKey(HTTPParser, ubyte[] data, bool adv)
@@ -156,14 +177,7 @@ protected:
             _parser.handleIng = false;
             return;
         }
-        if (_hkey.length > 0)
-        {
-            _hkey ~= data;
-        }
-        else
-        {
-            _hkey = data.dup;
-        }
+        _hkey.insertBack(data);
     }
 
     final void onHeaderValue(HTTPParser, ubyte[] data, bool adv)
@@ -174,19 +188,27 @@ protected:
             _parser.handleIng = false;
             return;
         }
-        if (_hvalue.length > 0)
+        if (_hvalue.empty)
         {
-            _hvalue ~= data;
+            if (adv)
+            {
+                _header.setHeaderValue(cast(string) _hkey.dup, cast(string) data.dup);
+                _hkey.clear();
+            }
+            else
+            {
+                _hvalue.insertBack(data);
+            }
         }
         else
         {
-            _hvalue = data.dup;
-        }
-        if (adv)
-        {
-            _header.setHeaderValue(cast(string) _hkey, cast(string) _hvalue);
-            _hkey.length = 0;
-            _hvalue.length = 0;
+            _hvalue.insertBack(data);
+            if (adv)
+            {
+                _header.setHeaderValue(cast(string) _hkey.dup, cast(string) _hvalue.dup);
+                _hkey.clear();
+                _hvalue.clear();
+            }
         }
     }
 
@@ -281,8 +303,8 @@ private:
     CallBackRequest _RequestComplete;
     bool _dorun;
 private:
-    ubyte[] _hkey;
-    ubyte[] _hvalue;
+    Vector!(ubyte, false, GCAllocator) _hkey;
+    Vector!(ubyte, false, GCAllocator) _hvalue;
     SectionBuffer _body;
     HTTPConfig _config;
 }

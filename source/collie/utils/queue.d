@@ -25,14 +25,15 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
             GC.addRange(_data.ptr, len);
         }
     }
-static if (stateSize!Allocator != 0) 
-{
-    this(uint size, Allocator alloc)
+
+    static if (stateSize!Allocator != 0)
     {
-        this._alloc = alloc;
-        this(size);
+        this(uint size, Allocator alloc)
+        {
+            this._alloc = alloc;
+            this(size);
+        }
     }
-}
     ~this()
     {
         //clear();
@@ -40,7 +41,7 @@ static if (stateSize!Allocator != 0)
         {
             GC.removeRange(_data.ptr);
         }
-        if(_data.ptr)
+        if (_data.ptr)
             _alloc.deallocate(_data);
     }
 
@@ -51,7 +52,7 @@ static if (stateSize!Allocator != 0)
         _data[] = T.init;
         _front = _rear = 0;
     }
-    
+
     pragma(inline, true);
     @property bool empty() const nothrow
     {
@@ -167,7 +168,7 @@ private:
         alias _alloc = Allocator.instance;
     else
         Allocator _alloc;
-};
+}
 
 unittest
 {

@@ -43,7 +43,10 @@ protected:
             try
             {
                 _connectBack(false);
-            } catch {}
+            }
+            catch
+            {
+            }
             return;
         }
         super.onClose();
@@ -57,7 +60,10 @@ protected:
             try
             {
                 _connectBack(true);
-            } catch {}
+            }
+            catch
+            {
+            }
             _isConnect = true;
         }
 
@@ -73,6 +79,6 @@ class ConnectedException : Exception
 {
     this(string msg, string file = __FILE__, size_t line = __LINE__)
     {
-        super(msg,file,line);
+        super(msg, file, line);
     }
 }

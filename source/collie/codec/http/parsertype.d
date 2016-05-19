@@ -5,7 +5,7 @@ enum HTTPParserType
     HTTP_REQUEST,
     HTTP_RESPONSE,
     HTTP_BOTH
-};
+}
 
 enum HTTPMethod
 {
@@ -92,14 +92,13 @@ enum HTTPParserErrno
     HPE_STRICT = 30, // "strict mode assertion failed")                         \
     HPE_PAUSED = 31, //"parser is paused")                                     \
     HPE_UNKNOWN = 32 //"an unknown error occurred")
-};
+}
 
 package:
 
 enum CR = '\r';
 enum LF = '\n';
 
-//TODO
 enum ubyte[] PROXY_CONNECTION = cast(ubyte[]) "proxy-connection";
 enum ubyte[] CONNECTION = cast(ubyte[]) "connection";
 enum ubyte[] CONTENT_LENGTH = cast(ubyte[]) "content-length";
@@ -112,18 +111,17 @@ enum ubyte[] CLOSE = cast(ubyte[]) "close";
 enum ULLONG_MAX = ulong.max;
 
 __gshared static const string[34] method_strings = [
-    "DELETE", "GET", "HEAD", "POST", "PUT",/* pathological */
+    "DELETE", "GET", "HEAD", "POST", "PUT", /* pathological */
     "CONNECT", "OPTIONS", "TRACE",
     /* WebDAV */
     "COPY", "LOCK", "MKCOL", "MOVE", "PROPFIND", "PROPPATCH", "SEARCH",
-    "UNLOCK", "BIND", "REBIND", "UNBIND", "ACL",/* subversion */
+    "UNLOCK", "BIND", "REBIND", "UNBIND", "ACL", /* subversion */
     "REPORT", "MKACTIVITY",
-    "CHECKOUT", "MERGE",/* upnp */
-    "MSEARCH", "NOTIFY", "SUBSCRIBE" "UNSUBSCRIBE",/* RFC-5789 */
-    "PATCH",
-    "PURGE",/* CalDAV */
-    "MKCALENDAR",/* RFC-2068, section 19.6.1.2 */
-    "LINK", "UNLINK",/* 无效的 */
+    "CHECKOUT", "MERGE", /* upnp */
+    "MSEARCH", "NOTIFY", "SUBSCRIBE", "UNSUBSCRIBE", /* RFC-5789 */
+    "PATCH", "PURGE", /* CalDAV */
+    "MKCALENDAR", /* RFC-2068, section 19.6.1.2 */
+    "LINK", "UNLINK", /* 无效的 */
     "INVAILD"
 ];
 
@@ -186,7 +184,7 @@ enum HTTPParserFlags
     F_SKIPBODY = 1 << 6,
     F_CONTENTLENGTH = 1 << 7,
     F_ZERO = 0
-};
+}
 
 enum HTTPParserURLFields
 {
@@ -198,27 +196,27 @@ enum HTTPParserURLFields
     UF_FRAGMENT = 5,
     UF_USERINFO = 6,
     UF_MAX = 7
-};
+}
 
-__gshared static const char[256] tokens = [/*   0 nul    1 soh    2 stx    3 etx    4 eot    5 enq    6 ack    7 bel  */
-0, 0, 0, 0, 0, 0, 0, 0,/*   8 bs     9 ht    10 nl    11 vt    12 np    13 cr    14 so    15 si   */
-    0, 0, 0, 0, 0, 0, 0, 0,/*  16 dle   17 dc1   18 dc2   19 dc3   20 dc4   21 nak   22 syn   23 etb */
-    0, 0, 0, 0, 0, 0, 0, 0,/*  24 can   25 em    26 sub   27 esc   28 fs    29 gs    30 rs    31 us  */
-    0, 0, 0, 0, 0, 0, 0, 0,/*  32 sp    33  !    34  "    35  #    36  $    37  %    38  &    39  '  */
-    0, '!', 0, '#', '$', '%', '&', '\'',/*  40  (    41  )    42  *    43  +    44  ,    45  -    46  .    47  /  */
-    0, 0, '*', '+', 0, '-', '.', 0,/*  48  0    49  1    50  2    51  3    52  4    53  5    54  6    55  7  */
+__gshared static const char[256] tokens = [ /*   0 nul    1 soh    2 stx    3 etx    4 eot    5 enq    6 ack    7 bel  */
+0, 0, 0, 0, 0, 0, 0, 0, /*   8 bs     9 ht    10 nl    11 vt    12 np    13 cr    14 so    15 si   */
+    0, 0, 0, 0, 0, 0, 0, 0, /*  16 dle   17 dc1   18 dc2   19 dc3   20 dc4   21 nak   22 syn   23 etb */
+    0, 0, 0, 0, 0, 0, 0, 0, /*  24 can   25 em    26 sub   27 esc   28 fs    29 gs    30 rs    31 us  */
+    0, 0, 0, 0, 0, 0, 0, 0, /*  32 sp    33  !    34  "    35  #    36  $    37  %    38  &    39  '  */
+    0, '!', 0, '#', '$', '%', '&', '\'', /*  40  (    41  )    42  *    43  +    44  ,    45  -    46  .    47  /  */
+    0, 0, '*', '+', 0, '-', '.', 0, /*  48  0    49  1    50  2    51  3    52  4    53  5    54  6    55  7  */
     '0',
-    '1', '2', '3', '4', '5', '6', '7',/*  56  8    57  9    58  :    59  ;    60  <    61  =    62  >    63  ?  */
-    '8', '9', 0, 0, 0, 0, 0, 0,/*  64  @    65  A    66  B    67  C    68  D    69  E    70  F    71  G  */
-    0, 'a', 'b', 'c', 'd', 'e', 'f', 'g',/*  72  H    73  I    74  J    75  K    76  L    77  M    78  N    79  O  */
+    '1', '2', '3', '4', '5', '6', '7', /*  56  8    57  9    58  :    59  ;    60  <    61  =    62  >    63  ?  */
+    '8', '9', 0, 0, 0, 0, 0, 0, /*  64  @    65  A    66  B    67  C    68  D    69  E    70  F    71  G  */
+    0, 'a', 'b', 'c', 'd', 'e', 'f', 'g', /*  72  H    73  I    74  J    75  K    76  L    77  M    78  N    79  O  */
     'h', 'i',
-    'j', 'k', 'l', 'm', 'n', 'o',/*  80  P    81  Q    82  R    83  S    84  T    85  U    86  V    87  W  */
-    'p', 'q', 'r', 's', 't', 'u', 'v', 'w',/*  88  X    89  Y    90  Z    91  [    92  \    93  ]    94  ^    95  _  */
+    'j', 'k', 'l', 'm', 'n', 'o', /*  80  P    81  Q    82  R    83  S    84  T    85  U    86  V    87  W  */
+    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', /*  88  X    89  Y    90  Z    91  [    92  \    93  ]    94  ^    95  _  */
     'x',
-    'y', 'z', 0, 0, 0, '^', '_',/*  96  `    97  a    98  b    99  c   100  d   101  e   102  f   103  g  */
-    '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',/* 104  h   105  i   106  j   107  k   108  l   109  m   110  n   111  o  */
+    'y', 'z', 0, 0, 0, '^', '_', /*  96  `    97  a    98  b    99  c   100  d   101  e   102  f   103  g  */
+    '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', /* 104  h   105  i   106  j   107  k   108  l   109  m   110  n   111  o  */
     'h',
-    'i', 'j', 'k', 'l', 'm', 'n', 'o',/* 112  p   113  q   114  r   115  s   116  t   117  u   118  v   119  w  */
+    'i', 'j', 'k', 'l', 'm', 'n', 'o', /* 112  p   113  q   114  r   115  s   116  t   117  u   118  v   119  w  */
     'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
     /* 120  x   121  y   122  z   123  {   124  |   125  }   126  ~   127 del */
     'x', 'y', 'z', 0, '|', 0, '~', 0];
@@ -234,6 +232,7 @@ __gshared static const byte[256] unhex = [-1, -1, -1, -1, -1, -1, -1,
 
 version (HTTP_PARSER_STRICT)
 {
+    pragma(inline, true);
     ubyte T(ubyte v)
     {
         return 0;
@@ -241,28 +240,29 @@ version (HTTP_PARSER_STRICT)
 }
 else
 {
+    pragma(inline, true);
     ubyte T(ubyte v)
     {
         return v;
     }
 }
 
-__gshared const ubyte[32] normal_url_char = [/*   0 nul    1 soh    2 stx    3 etx    4 eot    5 enq    6 ack    7 bel  */
-0 | 0 | 0 | 0 | 0 | 0 | 0 | 0,/*   8 bs     9 ht    10 nl    11 vt    12 np    13 cr    14 so    15 si   */
-    0 | T(2) | 0 | 0 | T(16) | 0 | 0 | 0,/*  16 dle   17 dc1   18 dc2   19 dc3   20 dc4   21 nak   22 syn   23 etb */
-    0 | 0 | 0 | 0 | 0 | 0 | 0 | 0,/*  24 can   25 em    26 sub   27 esc   28 fs    29 gs    30 rs    31 us  */
-    0 | 0 | 0 | 0 | 0 | 0 | 0 | 0,/*  32 sp    33  !    34  "    35  #    36  $    37  %    38  &    39  '  */
-    0 | 2 | 4 | 0 | 16 | 32 | 64 | 128,/*  40  (    41  )    42  *    43  +    44  ,    45  -    46  .    47  /  */
-    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128,/*  48  0    49  1    50  2    51  3    52  4    53  5    54  6    55  7  */
-    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128,/*  56  8    57  9    58  :    59  ;    60  <    61  =    62  >    63  ?  */
-    1 | 2 | 4 | 8 | 16 | 32 | 64 | 0,/*  64  @    65  A    66  B    67  C    68  D    69  E    70  F    71  G  */
-    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128,/*  72  H    73  I    74  J    75  K    76  L    77  M    78  N    79  O  */
-    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128,/*  80  P    81  Q    82  R    83  S    84  T    85  U    86  V    87  W  */
-    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128,/*  88  X    89  Y    90  Z    91  [    92  \    93  ]    94  ^    95  _  */
-    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128,/*  96  `    97  a    98  b    99  c   100  d   101  e   102  f   103  g  */
-    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128,/* 104  h   105  i   106  j   107  k   108  l   109  m   110  n   111  o  */
-    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128,/* 112  p   113  q   114  r   115  s   116  t   117  u   118  v   119  w  */
-    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128,/* 120  x   121  y   122  z   123  {   124  |   125  }   126  ~   127 del */
+__gshared const ubyte[32] normal_url_char = [ /*   0 nul    1 soh    2 stx    3 etx    4 eot    5 enq    6 ack    7 bel  */
+0 | 0 | 0 | 0 | 0 | 0 | 0 | 0, /*   8 bs     9 ht    10 nl    11 vt    12 np    13 cr    14 so    15 si   */
+    0 | T(2) | 0 | 0 | T(16) | 0 | 0 | 0, /*  16 dle   17 dc1   18 dc2   19 dc3   20 dc4   21 nak   22 syn   23 etb */
+    0 | 0 | 0 | 0 | 0 | 0 | 0 | 0, /*  24 can   25 em    26 sub   27 esc   28 fs    29 gs    30 rs    31 us  */
+    0 | 0 | 0 | 0 | 0 | 0 | 0 | 0, /*  32 sp    33  !    34  "    35  #    36  $    37  %    38  &    39  '  */
+    0 | 2 | 4 | 0 | 16 | 32 | 64 | 128, /*  40  (    41  )    42  *    43  +    44  ,    45  -    46  .    47  /  */
+    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128, /*  48  0    49  1    50  2    51  3    52  4    53  5    54  6    55  7  */
+    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128, /*  56  8    57  9    58  :    59  ;    60  <    61  =    62  >    63  ?  */
+    1 | 2 | 4 | 8 | 16 | 32 | 64 | 0, /*  64  @    65  A    66  B    67  C    68  D    69  E    70  F    71  G  */
+    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128, /*  72  H    73  I    74  J    75  K    76  L    77  M    78  N    79  O  */
+    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128, /*  80  P    81  Q    82  R    83  S    84  T    85  U    86  V    87  W  */
+    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128, /*  88  X    89  Y    90  Z    91  [    92  \    93  ]    94  ^    95  _  */
+    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128, /*  96  `    97  a    98  b    99  c   100  d   101  e   102  f   103  g  */
+    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128, /* 104  h   105  i   106  j   107  k   108  l   109  m   110  n   111  o  */
+    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128, /* 112  p   113  q   114  r   115  s   116  t   117  u   118  v   119  w  */
+    1 | 2 | 4 | 8 | 16 | 32 | 64 | 128, /* 120  x   121  y   122  z   123  {   124  |   125  }   126  ~   127 del */
     1 | 2 | 4 | 8 | 16 | 32 | 64 | 0,];
 
 enum HTTPParserState
@@ -324,7 +324,7 @@ enum HTTPParserState
     s_chunk_parameters,
     s_chunk_size_almost_done,
     s_headers_almost_done,
-    s_headers_done/* Important: 's_headers_done' must be the last 'header' state. All
+    s_headers_done /* Important: 's_headers_done' must be the last 'header' state. All
    * states beyond this must be 'body' states. It is used for overflow
    * checking. See the PARSING_HEADER() macro.
    */
@@ -336,7 +336,7 @@ enum HTTPParserState
     s_body_identity,
     s_body_identity_eof,
     s_message_done
-};
+}
 
 enum HTTPParserHeaderstates
 {
@@ -363,7 +363,7 @@ enum HTTPParserHeaderstates
     h_connection_keep_alive,
     h_connection_close,
     h_connection_upgrade
-};
+}
 
 enum HTTPParserHostState
 {
@@ -379,4 +379,4 @@ enum HTTPParserHostState
     s_http_host_v6_zone,
     s_http_host_port_start,
     s_http_host_port
-};
+}

@@ -22,6 +22,6 @@ shared static this()
 
     httpAllocator = allocatorObject(Mallocator.instance);
     // httpAllocator = allocatorObject(GCAllocator.instance);
-    
+
     httpConfig = new HTTPConfig;
 }

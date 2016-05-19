@@ -18,11 +18,15 @@ class HttpServer : HTTPHandler
 {
     override void requestHandle(HTTPRequest req, HTTPResponse rep)
     {
-       // writeln("req path : ", req.header.path());
-        rep.Header.setHeaderValue("content-type","text/html;charset=UTF-8");
+        //writeln("req path : ", req.Header.path());
 
-        rep.Header.setHeaderValue("set-cookie","token=qwqeqwe");
-        rep.Header.setHeaderValue("set-cookie","uid=4545544");
+        //auto headMap = req.Header.headerMap;
+        //foreach(key,value;headMap)
+        //{
+        //      writeln("header key = ", key, "\t value = ",value);
+        //}
+       
+        rep.Header.setHeaderValue("content-type","text/html;charset=UTF-8");
         rep.Body.write(cast(ubyte[])"hello wrold!");
         rep.done();
     }

@@ -32,12 +32,13 @@ class TCPSocket : AsyncTransport, EventCallInterface
         _socket.blocking = false;
         _writeQueue = Queue!(WriteSite, true, false, GCAllocator)(32);
         _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
-        _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true, true, true).create(AsynType.TCP, this, _socket.handle, true, true, true);
+        _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true,
+            true, true).create(AsynType.TCP, this, _socket.handle, true, true, true);
     }
 
-    ~this() 
+    ~this()
     {
-        scope(exit)
+        scope (exit)
         {
             AsyncEvent.free(_event);
             _readBuffer = null;
@@ -46,7 +47,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         if (_event.isActive)
         {
             eventLoop.delEvent(_event);
-        }   
+        }
     }
 
     final override @property int fd()
@@ -59,7 +60,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         if (_event.isActive || !_socket.isAlive() || !_readCallBack)
             return false;
         _event.fd = _socket.handle();
-       // _event.enWrite = false;
+        // _event.enWrite = false;
         _loop.addEvent(_event);
         return true;
     }
@@ -83,7 +84,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
     {
         return alive();
     }
-    
+
     pragma(inline, true);
     void write(ubyte[] data, TCPWriteCallBack cback)
     {
@@ -92,13 +93,14 @@ class TCPSocket : AsyncTransport, EventCallInterface
             cback(data, 0);
             return;
         }
-        eventLoop.post(delegate(){
-            auto buffer = new WriteSite(data,cback);
-            if (!isAlive || !_writeQueue.enQueue(buffer) )
+        eventLoop.post(delegate() {
+            auto buffer = new WriteSite(data, cback);
+            if (!isAlive || !_writeQueue.enQueue(buffer))
             {
                 buffer.doCallBack();
                 import core.memory;
-                GC.free(cast(void *)buffer);
+
+                GC.free(cast(void*) buffer);
             }
             onWrite();
         });
@@ -141,7 +143,7 @@ protected:
 
     override void onWrite() nothrow
     {
-        if(_writeQueue.empty || !alive)
+        if (_writeQueue.empty || !alive)
         {
             return;
         }
@@ -158,7 +160,8 @@ protected:
                         auto buf = _writeQueue.deQueue();
                         buf.doCallBack();
                         import core.memory;
-                        GC.free(cast(void *)buf);
+
+                        GC.free(cast(void*) buf);
                     }
                 }
                 else if (errno == EWOULDBLOCK || errno == EAGAIN)
@@ -197,10 +200,11 @@ protected:
         eventLoop.delEvent(_event);
         while (!_writeQueue.empty)
         {
-             auto buf = _writeQueue.deQueue();
-             buf.doCallBack();
-             import core.memory;
-             GC.free(cast(void *)buf);
+            auto buf = _writeQueue.deQueue();
+            buf.doCallBack();
+            import core.memory;
+
+            GC.free(cast(void*) buf);
         }
         try
         {
@@ -227,7 +231,7 @@ protected:
 
     override void onRead() nothrow
     {
-        if(!alive)
+        if (!alive)
         {
             return;
         }
@@ -238,7 +242,7 @@ protected:
                 auto len = _socket.receive(_readBuffer);
                 if (len > 0)
                 {
-                    _readCallBack(_readBuffer[0..len]);
+                    _readCallBack(_readBuffer[0 .. len]);
                 }
                 else if (errno == EWOULDBLOCK || errno == EAGAIN)
                 {
@@ -271,6 +275,7 @@ protected:
 
 protected:
     import std.experimental.allocator.gc_allocator;
+
     Socket _socket;
     Queue!(WriteSite, true, false, GCAllocator) _writeQueue;
     AsyncEvent* _event;

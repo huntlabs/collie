@@ -10,22 +10,21 @@ import collie.channel.handler;
 import collie.channel.handlercontext;
 import collie.socket;
 
-
 interface PipelineManager
 {
     void deletePipeline(PipelineBase pipeline);
     void refreshTimeout();
-};
+}
 
 abstract class PipelineBase
 {
     this()
     {
-        _ctxs = Vector!(PipelineContext,false,GCAllocator)(8);
-        _inCtxs = Vector!(PipelineContext,false,GCAllocator)(8);
-        _outCtxs = Vector!(PipelineContext,false,GCAllocator)(8);
+        _ctxs = Vector!(PipelineContext, false, GCAllocator)(8);
+        _inCtxs = Vector!(PipelineContext, false, GCAllocator)(8);
+        _outCtxs = Vector!(PipelineContext, false, GCAllocator)(8);
     }
-    
+
     ~this()
     {
     }
@@ -132,10 +131,9 @@ abstract class PipelineBase
         return ctx;
     }
 
-    
     auto getContext(H)()
     {
-        foreach (i; 0.._ctxs.length)
+        foreach (i; 0 .. _ctxs.length)
         {
             auto tctx = _ctxs.at(i);
             auto ctx = cast(ContextType!H)(tctx);
@@ -151,7 +149,7 @@ abstract class PipelineBase
     // See thrift/lib/cpp2/async/Cpp2Channel.cpp for an example
     final bool setOwner(H)(H handler)
     {
-        foreach (i; 0.._ctxs.length)
+        foreach (i; 0 .. _ctxs.length)
         {
             auto ctx = _ctxs.at(i);
             auto ctxImpl = cast(ContextType!H)(ctx);
@@ -168,7 +166,7 @@ abstract class PipelineBase
 
     final void detachHandlers()
     {
-        foreach (i; 0.._ctxs.length)
+        foreach (i; 0 .. _ctxs.length)
         {
             auto ctx = _ctxs.at(i);
             if (ctx != _owner)
@@ -179,9 +177,9 @@ abstract class PipelineBase
     }
 
 protected:
-    Vector!(PipelineContext,false,GCAllocator)  _ctxs = void;
-    Vector!(PipelineContext,false,GCAllocator)  _inCtxs = void;
-    Vector!(PipelineContext,false,GCAllocator)  _outCtxs = void;
+    Vector!(PipelineContext, false, GCAllocator) _ctxs = void;
+    Vector!(PipelineContext, false, GCAllocator) _inCtxs = void;
+    Vector!(PipelineContext, false, GCAllocator) _outCtxs = void;
 
     bool _isFinalize = true;
 private:
@@ -261,7 +259,7 @@ private:
 
 final class Pipeline(R, W = void) : PipelineBase
 {
-    alias Pipeline!(R, W) Ptr;
+    alias Ptr = Pipeline!(R, W);
 
     static Ptr create()
     {
@@ -270,7 +268,8 @@ final class Pipeline(R, W = void) : PipelineBase
 
     ~this()
     {
-        if (!_isStatic) {
+        if (!_isStatic)
+        {
             detachHandlers();
         }
     }
@@ -398,11 +397,13 @@ protected:
     {
         super();
     }
+
     this(bool isStatic)
     {
         _isStatic = isStatic;
         super();
     }
+
 private:
     bool _isStatic = false;
 
@@ -430,7 +431,7 @@ abstract shared class PipelineFactory(PipeLine)
     PipeLine newPipeline(TCPSocket transport);
 }
 
-alias Pipeline!(Socket, void) AcceptPipeline;
+alias AcceptPipeline = Pipeline!(Socket, uint);
 abstract shared class AcceptPipelineFactory
 {
     AcceptPipeline newPipeline(Acceptor acceptor);

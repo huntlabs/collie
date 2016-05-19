@@ -74,7 +74,7 @@ public:
     void requestHandle(HTTPRequest req, HTTPResponse res);
 
     WebSocket newWebSocket(const HTTPHeader header);
-    
+
     @property HTTPConfig config()
     {
         return httpConfig;
@@ -212,11 +212,11 @@ protected:
         {
             _req.clear();
         }
-        if (_res) 
+        if (_res)
         {
             _res.clear();
         }
-        if (_frame) 
+        if (_frame)
         {
             _frame.clear();
         }

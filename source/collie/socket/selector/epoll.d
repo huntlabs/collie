@@ -3,8 +3,7 @@
 
 module collie.socket.selector.epoll;
 
-version (linux)  : 
-import core.time;
+version (linux)  : import core.time;
 import core.stdc.errno;
 import core.memory;
 
@@ -23,7 +22,6 @@ import std.socket;
 import std.experimental.logger;
 
 import collie.socket.common;
-
 
 /** 系统I/O事件处理类，epoll操作的封装
  @authors  Putao‘s Collie Team
@@ -64,7 +62,7 @@ final class EpollLoop
             return false;
 
         mixin(mixinModEvent());
-        GC.setAttr(event,GC.BlkAttr.NO_MOVE);
+        GC.setAttr(event, GC.BlkAttr.NO_MOVE);
         if ((epoll_ctl(_efd, EPOLL_CTL_ADD, event.fd,  & ev)) != 0)
         {
             if (errno != EEXIST)
@@ -108,7 +106,7 @@ final class EpollLoop
             }
             return false;
         }
-        GC.clrAttr(event,GC.BlkAttr.NO_MOVE);
+        GC.clrAttr(event, GC.BlkAttr.NO_MOVE);
         event.isActive = false;
         return true;
     }
@@ -125,8 +123,9 @@ final class EpollLoop
         try
         {
             epoll_event event;
-            if( epoll_wait(_efd, &event, 1, timeout) < 1) return;
-            
+            if (epoll_wait(_efd,  & event, 1, timeout) < 1)
+                return;
+
             EventCallInterface obj = (cast(AsyncEvent * )(event.data.ptr)).obj;
 
             if (isErro(event.events))
@@ -157,9 +156,7 @@ final class EpollLoop
         _event.doWrite();
     }
 
-
-protected : 
-    pragma(inline, true);
+    protected : pragma(inline, true);
     bool isErro(uint events)
     {
         return (events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) != 0;
@@ -175,7 +172,7 @@ protected :
         return (events & EPOLLOUT) != 0;
     }
 
-private : /** 存储 epoll的fd */
+    private :  /** 存储 epoll的fd */
     int _efd;
     EventChannel _event;
 }
@@ -237,10 +234,7 @@ string mixinModEvent()
     return str;
 }
 
-extern (C) : 
-@system : 
-nothrow : 
-enum
+extern (C) : @system : nothrow : enum
 {
     EFD_SEMAPHORE = 0x1,
     EFD_CLOEXEC = 0x80000,
