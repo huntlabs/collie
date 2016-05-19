@@ -94,7 +94,6 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
         ++_len;
     }
 
-    pragma(inline)
     size_t removeBack(size_t howMany = 1)
     {
         if (howMany >= _len)
@@ -158,26 +157,26 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
         return _data[i];
     }
 
-    pragma(inline)
+    pragma(inline,true)
     T at(size_t i)
     {
         assert(i < _len);
         return _data[i];
     }
 
-    pragma(inline)
+    pragma(inline,true)
     const @property bool empty()
     {
         return (_len == 0);
     }
 
-    pragma(inline)
+    pragma(inline,true)
     const @property size_t length()
     {
         return _len;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     void clear()
     {
         _data[] = T.init;

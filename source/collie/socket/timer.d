@@ -30,7 +30,7 @@ final class Timer : EventCallInterface
         AsyncEvent.free(_event);
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property bool isActive()
     {
         return _event.isActive;
@@ -73,7 +73,7 @@ final class Timer : EventCallInterface
         return true;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     void stop()
     {
         if (isActive())

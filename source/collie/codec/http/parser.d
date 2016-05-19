@@ -17,69 +17,69 @@ final class HTTPParser
         _maxHeaderSize = maxHeaderSize;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property type()
     {
         return _type;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property isUpgrade()
     {
         return upgrade;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property contentLength()
     {
         return content_length;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property isChunked()
     {
         return (flags & HTTPParserFlags.F_CHUNKED) == 0 ? false : true;
     }
     //@property status() {return status_code;}
-    pragma(inline)
+    pragma(inline,true)
     @property error()
     {
         return http_errno;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property errorString()
     {
         return error_string[http_errno];
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property methodCode()
     {
         return method;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property methodString()
     {
         return method_strings[method];
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property major()
     {
         return http_major;
     }
 
     //版本号首位
-    pragma(inline)
+    pragma(inline,true)
     @property minor()
     {
         return http_minor;
     }
 
     //版本号末尾
-    pragma(inline)
+    pragma(inline,true)
     @property handleIng()
     {
         return _isHandle;
@@ -91,7 +91,7 @@ final class HTTPParser
         _isHandle = handle;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property skipBody()
     {
         return _skipBody;
@@ -2308,7 +2308,7 @@ protected:
 
 private:
 
-pragma(inline)
+pragma(inline,true)
 bool IS_USERINFO_CHAR2(ubyte c)
 {
     bool alpha = mixin(IS_ALPHA("c"));

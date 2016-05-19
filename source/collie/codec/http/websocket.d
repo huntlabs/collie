@@ -43,14 +43,14 @@ abstract class WebSocket
             return false;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     final void close()
     {
         if (_hand)
             _hand.doClose();
     }
 
-    pragma(inline)
+    pragma(inline,true)
     final @property Address remoteAdress()
     {
         return _addr;
@@ -198,7 +198,7 @@ final class HandleFrame
         doMask = mask;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     void clear()
     {
         _state = ProcessingState.PS_READ_HEADER;

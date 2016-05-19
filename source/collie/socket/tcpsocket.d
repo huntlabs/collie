@@ -115,8 +115,8 @@ class TCPSocket : AsyncTransport, EventCallInterface
         return _socket.setKeepAlive(forward!(time, interval));
     }
 
-    pragma(inline)
-    @property @trusted Address remoteAddress()
+    pragma(inline,true)
+    final @property @trusted Address remoteAddress()
     {
         return _socket.remoteAddress();
     }
@@ -134,7 +134,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
     }
 
 protected:
-    pragma(inline)
+    pragma(inline,true)
     final @property bool alive() @trusted nothrow
     {
 
@@ -294,7 +294,7 @@ mixin template TCPSocketOption()
     /// Get a socket option.
     /// Returns: The number of bytes written to $(D result).
     //returns the length, in bytes, of the actual result - very different from getsockopt()
-    pragma(inline)
+    pragma(inline,true)
     final int getOption(SocketOptionLevel level, SocketOption option, void[] result) @trusted
     {
 
@@ -302,54 +302,54 @@ mixin template TCPSocketOption()
     }
 
     /// Common case of getting integer and boolean options.
-    pragma(inline)
+    pragma(inline,true)
     final int getOption(SocketOptionLevel level, SocketOption option, ref int32_t result) @trusted
     {
         return _socket.getOption(level, option, result);
     }
 
     /// Get the linger option.
-    pragma(inline)
+    pragma(inline,true)
     final int getOption(SocketOptionLevel level, SocketOption option, ref Linger result) @trusted
     {
         return _socket.getOption(level, option, result);
     }
 
     /// Get a timeout (duration) option.
-    pragma(inline)
+    pragma(inline,true)
     final void getOption(SocketOptionLevel level, SocketOption option, ref Duration result) @trusted
     {
         _socket.getOption(level, option, result);
     }
 
     /// Set a socket option.
-    pragma(inline)
+    pragma(inline,true)
     final void setOption(SocketOptionLevel level, SocketOption option, void[] value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
     /// Common case for setting integer and boolean options.
-    pragma(inline)
+    pragma(inline,true)
     final void setOption(SocketOptionLevel level, SocketOption option, int32_t value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
     /// Set the linger option.
-    pragma(inline)
+    pragma(inline,true)
     final void setOption(SocketOptionLevel level, SocketOption option, Linger value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
-    pragma(inline)
+    pragma(inline,true)
     final void setOption(SocketOptionLevel level, SocketOption option, Duration value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
-    pragma(inline)
+    pragma(inline,true)
     final @property @trusted Address localAddress()
     {
         return _socket.localAddress();
@@ -376,13 +376,13 @@ final class WriteSite
             return false;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property size_t length() const
     {
         return (_data.length - _site);
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property data()
     {
         return _data[_site .. $];

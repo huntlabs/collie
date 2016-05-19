@@ -163,8 +163,8 @@ public:
     void attachPipeline();
     void detachPipeline();
 
-    pragma(inline)
-    void attachContext(H, HandlerContext)(H handler, HandlerContext ctx)
+    pragma(inline,true)
+    final void attachContext(H, HandlerContext)(H handler, HandlerContext ctx)
     {
         if (++handler._attachCount == 1)
         {

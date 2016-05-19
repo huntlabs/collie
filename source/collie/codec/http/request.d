@@ -43,19 +43,19 @@ class HTTPRequest
         _parser = null;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     final @property const(HTTPHeader) Header() const
     {
         return _header;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     final @property SectionBuffer Body()
     {
         return _body;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     final @property Address clientAddress()
     {
         return _addr;
@@ -90,7 +90,7 @@ class HTTPRequest
     }
 
 package:
-    pragma(inline)
+    pragma(inline,true)
     final void clear()
     {
         _dorun = false;
@@ -109,13 +109,13 @@ package:
         _addr = addr;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property HTTPParser parser()
     {
         return _parser;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property isRuning()
     {
         return _parser.handleIng;

@@ -27,7 +27,7 @@ final class PieceBuffer : Buffer
         _wSize = writed;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     void clear()
     {
         _rSize = 0;
@@ -65,7 +65,6 @@ final class PieceBuffer : Buffer
         return len;
     }
 
-    pragma(inline)
     ubyte[] data(bool all = false)
     {
         if (all)

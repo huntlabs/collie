@@ -45,7 +45,7 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
             _alloc.deallocate(_data);
     }
 
-    pragma(inline)
+    pragma(inline,true)
     void clear()
     {
 
@@ -53,7 +53,7 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
         _front = _rear = 0;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property bool empty() const nothrow
     {
         if (_rear == _front)
@@ -62,7 +62,7 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
             return false;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property bool full() const
     {
         if ((_rear + 1) % _size == _front)
@@ -71,20 +71,20 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
             return false;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property T front()
     {
         assert(!empty());
         return _data[_front];
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property uint length()
     {
         return (_rear - _front + _size) % _size;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property uint maxLength() nothrow
     {
         static if (autoExten)
@@ -96,8 +96,7 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
             return _size - 1;
         }
     }
-
-    pragma(inline)
+    
     bool enQueue(T x)
     {
         if (full())
@@ -116,7 +115,7 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
         return true;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     T deQueue(T v = T.init) nothrow
     {
         assert(!empty());

@@ -226,13 +226,13 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
         _sslctx = ctx;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     void initialize()
     {
         _pipe.transportActive();
     }
 
-    pragma(inline)
+    pragma(inline,true)
     void stop()
     {
         _pipe.transportInactive();
@@ -284,6 +284,7 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
         _acceptor.eventLoop.stop();
     }
 protected:
+    pragma(inline)
     void remove(ServerConnection!PipeLine conn)
     {
         _list.remove(conn);
@@ -297,6 +298,7 @@ protected:
         _pipe.read(soct);
     }
 
+    pragma(inline,true)
     @property acceptor()
     {
         return _acceptor;
@@ -375,25 +377,25 @@ final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
        GC.free(cast(void *)_pipe);
     }
 
-    pragma(inline)
+    pragma(inline,true)
     void initialize()
     {
         _pipe.transportActive();
     }
 
-    pragma(inline)
+    pragma(inline,true)
     void close()
     {
         _pipe.transportInactive();
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property serverAceptor()
     {
         return _manger;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property serverAceptor(ServerAcceptor!PipeLine manger)
     {
         _manger = manger;

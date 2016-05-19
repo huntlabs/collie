@@ -67,13 +67,13 @@ class ContextImplBase(H, Context) : PipelineContext
     {
     }
 
-    pragma(inline)
+    pragma(inline,true)
     final @property auto handler()
     {
         return _handler;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     final void initialize(PipelineBase pipeline, H handler)
     {
         _pipeline = pipeline;
@@ -92,14 +92,12 @@ class ContextImplBase(H, Context) : PipelineContext
         }
     }
 
-    pragma(inline)
     final override void detachPipeline()
     {
         _handler.detachPipeline(_impl);
         _attached = false;
     }
 
-    pragma(inline)
     final override void setNextIn(PipelineContext ctx)
     {
         if (!ctx)
@@ -118,7 +116,6 @@ class ContextImplBase(H, Context) : PipelineContext
         }
     }
 
-    pragma(inline)
     final override void setNextOut(PipelineContext ctx)
     {
         if (!ctx)
@@ -189,8 +186,6 @@ mixin template CommonContextImpl()
 mixin template ReadContextImpl()
 {
 
-    // HandlerContext overrides
-    pragma(inline)
     override void fireRead(Rout msg)
     {
         if (this._nextIn)
@@ -203,6 +198,7 @@ mixin template ReadContextImpl()
         }
     }
 
+    pragma(inline)
     override void fireTimeOut()
     {
         if (this._nextIn)
@@ -211,6 +207,7 @@ mixin template ReadContextImpl()
         }
     }
 
+    pragma(inline)
     override void fireTransportActive()
     {
         if (this._nextIn)
@@ -219,6 +216,7 @@ mixin template ReadContextImpl()
         }
     }
 
+    pragma(inline)
     override void fireTransportInactive()
     {
         if (this._nextIn)
@@ -228,21 +226,25 @@ mixin template ReadContextImpl()
     }
 
     // InboundLink overrides
+    pragma(inline)
     override void read(Rin msg)
     {
         _handler.read(this, forward!(msg));
     }
 
+    pragma(inline)
     override void timeOut()
     {
         this._handler.timeOut(this);
     }
 
+    pragma(inline)
     override void transportActive()
     {
         this._handler.transportActive(this);
     }
 
+    pragma(inline)
     override void transportInactive()
     {
         _handler.transportInactive(this);
@@ -253,6 +255,7 @@ mixin template WriteContextImpl()
 {
     alias NextCallBack = void delegate(Wout, uint);
 
+    pragma(inline)
     override void fireWrite(Wout msg, NextCallBack cback = null)
     {
         if (_nextOut)
@@ -265,6 +268,7 @@ mixin template WriteContextImpl()
         }
     }
 
+    pragma(inline)
     override void fireClose()
     {
         if (_nextOut)
@@ -279,11 +283,13 @@ mixin template WriteContextImpl()
 
     // OutboundLink overrides
     alias ThisCallBack = void delegate(Win, uint);
+    pragma(inline)
     override void write(Win msg, ThisCallBack cback = null)
     {
         _handler.write(this, forward!(msg, cback));
     }
 
+    pragma(inline)
     override void close()
     {
         _handler.close(this);

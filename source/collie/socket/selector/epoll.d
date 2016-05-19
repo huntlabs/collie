@@ -156,23 +156,25 @@ final class EpollLoop
         _event.doWrite();
     }
 
-    protected : pragma(inline)
+protected : 
+    pragma(inline,true)
     bool isErro(uint events)
     {
         return (events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) != 0;
     }
-    pragma(inline)
+    pragma(inline,true)
     bool isRead(uint events)
     {
         return (events & EPOLLIN) != 0;
     }
-    pragma(inline)
+    pragma(inline,true)
     bool isWrite(uint events)
     {
         return (events & EPOLLOUT) != 0;
     }
 
-    private :  /** 存储 epoll的fd */
+private :  
+/** 存储 epoll的fd */
     int _efd;
     EventChannel _event;
 }

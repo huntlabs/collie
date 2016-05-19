@@ -4,8 +4,8 @@ module collie.buffer.sectionbuffer;
 import core.memory;
 
 import std.string;
+import std.algorithm : swap;
 import std.experimental.allocator;
-import std.experimental.allocator.mallocator;
 import std.experimental.allocator.gc_allocator;
 
 import collie.buffer.buffer;
@@ -76,6 +76,7 @@ final class SectionBuffer : Buffer
         }
     }
 
+    
     @property void clear()
     {
         if (isEof())
@@ -89,7 +90,7 @@ final class SectionBuffer : Buffer
         _wSize = 0;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property void clearWithOutMemory()
     {
         if (maxSize() != size_t.max)
@@ -105,9 +106,7 @@ final class SectionBuffer : Buffer
     size_t swap(ref BufferVector uarray)
     {
         auto size = _wSize;
-        import std.algorithm : swap;
-
-        swap(uarray, _buffer);
+        .swap(uarray, _buffer);
         _rSize = 0;
         _wSize = 0;
         return size;
@@ -128,7 +127,7 @@ final class SectionBuffer : Buffer
         return _wSize;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property size_t stectionSize()
     {
         return _sectionSize;
@@ -427,7 +426,7 @@ final class SectionBuffer : Buffer
         return (_rSize - size);
     }
 
-    pragma(inline)
+    pragma(inline,true)
     ref ubyte opIndex(size_t i)
     {
         assert(i < _wSize);
@@ -436,38 +435,38 @@ final class SectionBuffer : Buffer
         return _buffer[count][site];
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property readSize() const
     {
         return _rSize;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property readCount() const
     {
         return _rSize / _sectionSize;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property readSite() const
     {
         return _rSize % _sectionSize;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property writeCount() const
     {
         return _wSize / _sectionSize;
     }
 
-    pragma(inline)
+    pragma(inline,true)
     @property writeSite() const
     {
         return _wSize % _sectionSize;
     }
 
 private:
-    pragma(inline)
+    pragma(inline,true)
     @property bool isEof() const
     {
         return (_rSize >= _wSize);
@@ -512,7 +511,7 @@ unittest
     writeln("\r\nswitch \r\n");
 
     SectionBuffer.BufferVector tary;
-    buf.swap(&tary);
+    buf.swap(tary);
     writeln("buffer  size:", buf.length);
     writeln("buffer max size:", buf.maxSize());
     writeln("Array!(ubyte[]) length : ", tary.length);
