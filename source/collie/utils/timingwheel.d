@@ -49,7 +49,7 @@ protected:
             return (_now - 1);
     }
 
-    pragma(inline,true)
+    pragma(inline)
     NullWheelTimer doNext() nothrow
     {
         ++_now;
@@ -65,7 +65,7 @@ protected:
         addNewTimer(tm);
     }
 
-    pragma(inline,true)
+    pragma(inline)
     void remove(WheelTimer tm) nothrow
     {
         tm._prev._next = tm._next;
@@ -85,7 +85,7 @@ abstract class WheelTimer
 {
     void onTimeOut() nothrow;
 
-    pragma(inline,true)
+    pragma(inline)
     final void rest() nothrow
     {
         if (_manger) 
@@ -94,7 +94,7 @@ abstract class WheelTimer
         }
     }
 
-    pragma(inline,true)
+    pragma(inline)
     final void stop() nothrow
     {
         if (_manger) 

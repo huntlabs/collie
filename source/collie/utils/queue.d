@@ -62,7 +62,7 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
             return false;
     }
 
-    pragma(inline,true)
+    pragma(inline)
     @property bool full() const
     {
         if ((_rear + 1) % _size == _front)

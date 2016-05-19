@@ -66,12 +66,13 @@ class HTTPResponse
         _header.destroy;
         _header = null;
     }
-
+    pragma(inline,true)
     final @property Header()
     {
         return _header;
     }
 
+    pragma(inline,true)
     final @property Body()
     {
         return _body;
@@ -85,11 +86,13 @@ class HTTPResponse
         return true;
     }
 
+    pragma(inline)
     final bool done()
     {
         return done(null, 0);
     }
 
+    pragma(inline)
     final bool done(string file)
     {
         return done(file, 0);
@@ -106,6 +109,7 @@ class HTTPResponse
         return false;
     }
 
+    pragma(inline)
     final void close()
     {
         if (!_done && _resClose)
@@ -113,11 +117,13 @@ class HTTPResponse
         _done = true;
     }
 
+    pragma(inline)
     final @property sentCall(ResponseSend cback)
     {
         _resDone = cback;
     }
 
+    pragma(inline)
     final @property closeCall(CallBackResponse cback)
     {
         _resClose = cback;
@@ -164,6 +170,7 @@ class HTTPResponse
     }
 
 package:
+    pragma(inline,true)
     final void clear()
     {
         _header.clear();

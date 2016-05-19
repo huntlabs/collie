@@ -73,7 +73,7 @@ final class Timer : EventCallInterface
         return true;
     }
 
-    pragma(inline,true)
+    pragma(inline)
     void stop()
     {
         if (isActive())

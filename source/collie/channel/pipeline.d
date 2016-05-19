@@ -41,7 +41,7 @@ abstract class PipelineBase
         return _manager;
     }
 
-    pragma(inline,true)
+    pragma(inline)
     final void deletePipeline()
     {
         if (_manager)
@@ -297,7 +297,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
-    pragma(inline,true)
+    pragma(inline)
     void transportActive()
     {
         static if (!is(R == void))
@@ -309,7 +309,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
-    pragma(inline,true)
+    pragma(inline)
     void transportInactive()
     {
         static if (!is(R == void))
@@ -335,7 +335,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
     }
 
-    pragma(inline,true)
+    pragma(inline)
     void close()
     {
         static if (!is(W == void))

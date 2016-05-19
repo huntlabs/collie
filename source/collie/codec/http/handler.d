@@ -205,7 +205,7 @@ protected:
         return true;
     }
 
-    pragma(inline,true)
+    pragma(inline)
     final void clear()
     {
         if (_req)

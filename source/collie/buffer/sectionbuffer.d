@@ -90,7 +90,7 @@ final class SectionBuffer : Buffer
         _wSize = 0;
     }
 
-    pragma(inline,true)
+    pragma(inline)
     @property void clearWithOutMemory()
     {
         if (maxSize() != size_t.max)
@@ -426,7 +426,7 @@ final class SectionBuffer : Buffer
         return (_rSize - size);
     }
 
-    pragma(inline,true)
+    pragma(inline)
     ref ubyte opIndex(size_t i)
     {
         assert(i < _wSize);
