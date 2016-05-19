@@ -1,10 +1,9 @@
 {
     "name"        : "collie",
     "description" : "An asynchronous event-driven network framework written in D.",
-    "homepage"    : "http://collied.org/" ,
     "copyright"   : "Copyright © 2016, putao.com",
-    "authors"     : ["putao.com Dlang team."],
-    "license"     : "BSD" ,
+    "authors"     : ["putao.com dlang team."],
+    "license"     : "Apache-2.0" ,
     "buildTypes"  : {
         "debug"   : {
             "buildOptions" :  ["debugMode",     "debugInfo",    "profile" ]
