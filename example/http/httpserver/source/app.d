@@ -18,13 +18,13 @@ class HttpServer : HTTPHandler
 {
     override void requestHandle(HTTPRequest req, HTTPResponse rep)
     {
-        writeln("req path : ", req.Header.path());
-
-        auto headMap = req.Header.headerMap;
-        foreach(key,value;headMap)
-        {
-              writeln("header key = ", key, "\t value = ",value);
-        }
+//         writeln("req path : ", req.Header.path());
+// 
+//         auto headMap = req.Header.headerMap;
+//         foreach(key,value;headMap)
+//         {
+//               writeln("header key = ", key, "\t value = ",value);
+//         }
        
         rep.Header.setHeaderValue("content-type","text/html;charset=UTF-8");
         rep.Body.write(cast(ubyte[])"hello wrold!");
@@ -61,7 +61,7 @@ void main()
     EventLoop loop = new EventLoop();
     auto ser = new ServerBootstrap!HTTPPipeline(loop);
     ser.childPipeline(new HTTPPipelineFactory()).heartbeatTimeOut(30)
-        .group(new EventLoopGroup)
+//         .group(new EventLoopGroup)
         .bind(8080);
         
     version (SSL) 

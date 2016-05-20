@@ -211,6 +211,7 @@ private:
 
 import std.functional;
 import collie.utils.timingwheel;
+import collie.utils.memory;
 
 final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 {
@@ -288,9 +289,7 @@ protected:
     void remove(ServerConnection!PipeLine conn)
     {
         _list.remove(conn);
-        conn.destroy;
-        import core.memory;
-        GC.free(cast(void *)conn);
+        gcFree(conn);
     }
 
     void acceptCallBack(Socket soct)
@@ -336,10 +335,7 @@ protected:
     {
         auto pipe = _pipeFactory.newPipeline(sock);
         if (!pipe) {
-            sock.destroy;
-            import core.memory;
-            GC.free(cast(void *) sock);
-//            delete sock;
+            gcFree(sock);
             return;
         }
         pipe.finalize();
@@ -372,9 +368,7 @@ final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
     }
     ~this()
     {
-       _pipe.destroy;
-       import core.memory;
-       GC.free(cast(void *)_pipe);
+        gcFree(_pipe);
     }
 
     pragma(inline,true)

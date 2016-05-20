@@ -98,13 +98,11 @@ class TCPSocket : AsyncTransport, EventCallInterface
             if (!isAlive || !_writeQueue.enQueue(buffer))
             {
                 buffer.doCallBack();
-                import core.memory;
-
-                GC.free(cast(void*) buffer);
+                import collie.utils.memory;
+                gcFree(buffer);
             }
             onWrite();
-        });
-        //bind!(void delegate(WriteSite))(&doWrite, /*new */WriteSite(data, cback))); //利用eventloop的post处理跨线程问题
+        }); //利用eventloop的post处理跨线程问题
     }
 
     mixin TCPSocketOption;
@@ -159,9 +157,8 @@ protected:
                     {
                         auto buf = _writeQueue.deQueue();
                         buf.doCallBack();
-                        import core.memory;
-
-                        GC.free(cast(void*) buf);
+                        import collie.utils.memory;
+                        gcFree(buf);
                     }
                 }
                 else if (errno == EWOULDBLOCK || errno == EAGAIN)
@@ -202,9 +199,8 @@ protected:
         {
             auto buf = _writeQueue.deQueue();
             buf.doCallBack();
-            import core.memory;
-
-            GC.free(cast(void*) buf);
+            import collie.utils.memory;
+             try{gcFree(buf);} catch{}
         }
         try
         {
