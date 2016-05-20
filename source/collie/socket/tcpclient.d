@@ -20,6 +20,7 @@ final class TCPClient : TCPSocket
         return super.isAlive() && _isConnect;
     }
 
+    pragma(inline)
     bool connect(Address addr)
     {
         if (isAlive())
@@ -29,7 +30,8 @@ final class TCPClient : TCPSocket
         _socket.connect(addr);
         return true;
     }
-
+    
+    pragma(inline)
     void setConnectCallBack(ConnectCallBack cback)
     {
         _connectBack = cback;
@@ -43,7 +45,10 @@ protected:
             try
             {
                 _connectBack(false);
-            } catch {}
+            }
+            catch
+            {
+            }
             return;
         }
         super.onClose();
@@ -57,7 +62,10 @@ protected:
             try
             {
                 _connectBack(true);
-            } catch {}
+            }
+            catch
+            {
+            }
             _isConnect = true;
         }
 
@@ -73,6 +81,6 @@ class ConnectedException : Exception
 {
     this(string msg, string file = __FILE__, size_t line = __LINE__)
     {
-        super(msg,file,line);
+        super(msg, file, line);
     }
 }

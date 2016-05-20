@@ -23,8 +23,6 @@ import std.experimental.logger;
 
 import collie.socket.common;
 
-enum EVENT_POLL_SIZE = 128;
-
 /** 系统I/O事件处理类，epoll操作的封装
  @authors  Putao‘s Collie Team
  @date      2016.1
@@ -39,7 +37,7 @@ final class EpollLoop
         {
             errnoEnforce("epoll_create1 failed");
         }
-        _events = new epoll_event[EVENT_POLL_SIZE];
+
         _event = new EventChannel();
         addEvent(_event._event);
     }
@@ -64,7 +62,7 @@ final class EpollLoop
             return false;
 
         mixin(mixinModEvent());
-        GC.setAttr(event,GC.BlkAttr.NO_MOVE);
+        GC.setAttr(event, GC.BlkAttr.NO_MOVE);
         if ((epoll_ctl(_efd, EPOLL_CTL_ADD, event.fd,  & ev)) != 0)
         {
             if (errno != EEXIST)
@@ -108,7 +106,7 @@ final class EpollLoop
             }
             return false;
         }
-        GC.clrAttr(event,GC.BlkAttr.NO_MOVE);
+        GC.clrAttr(event, GC.BlkAttr.NO_MOVE);
         event.isActive = false;
         return true;
     }
@@ -124,27 +122,23 @@ final class EpollLoop
     {
         try
         {
-            int length = epoll_wait(_efd, _events.ptr, EVENT_POLL_SIZE, timeout);
-            EventCallInterface[EVENT_POLL_SIZE] objs;
-            foreach(i;0..length)
-            {
-                objs[i] = (cast(AsyncEvent * )(_events[i].data.ptr)).obj;
-                assert(objs[i]);
-            }
-            for (int i = 0; i < length; ++i)
-            {
-                if (isErro(_events[i].events))
-                {
-                    objs[i].onClose();
-                    return;
-                }
+            epoll_event event;
+            if (epoll_wait(_efd,  & event, 1, timeout) < 1)
+                return;
 
-                if (isWrite(_events[i].events))
-                   objs[i].onWrite();
+            EventCallInterface obj = (cast(AsyncEvent * )(event.data.ptr)).obj;
 
-                if (isRead(_events[i].events))
-                    objs[i].onRead();
+            if (isErro(event.events))
+            {
+                obj.onClose();
+                return;
             }
+
+            if (isWrite(event.events))
+                obj.onWrite();
+
+            if (isRead(event.events))
+                obj.onRead();
 
         }
         catch (ErrnoException e)
@@ -162,27 +156,26 @@ final class EpollLoop
         _event.doWrite();
     }
 
-
 protected : 
-    pragma(inline, true);
+    pragma(inline,true)
     bool isErro(uint events)
     {
         return (events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) != 0;
     }
-    pragma(inline, true);
+    pragma(inline,true)
     bool isRead(uint events)
     {
         return (events & EPOLLIN) != 0;
     }
-    pragma(inline, true);
+    pragma(inline,true)
     bool isWrite(uint events)
     {
         return (events & EPOLLOUT) != 0;
     }
 
-private : /** 存储 epoll的fd */
+private :  
+/** 存储 epoll的fd */
     int _efd;
-    epoll_event[] _events;
     EventChannel _event;
 }
 
@@ -243,10 +236,7 @@ string mixinModEvent()
     return str;
 }
 
-extern (C) : 
-@system : 
-nothrow : 
-enum
+extern (C) : @system : nothrow : enum
 {
     EFD_SEMAPHORE = 0x1,
     EFD_CLOEXEC = 0x80000,

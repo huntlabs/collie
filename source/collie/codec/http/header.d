@@ -1,12 +1,13 @@
-﻿module collie.codec.http.header;
+module collie.codec.http.header;
 
 import std.conv;
 import std.uri;
 import std.string;
-import std.container.array;
+import std.experimental.allocator.gc_allocator;
 
 public import collie.codec.http.parsertype;
 import collie.codec.http.config;
+import collie.utils.vector;
 
 enum HTTPHeaderType
 {
@@ -21,8 +22,10 @@ enum HTTPVersion
     HTTP2 //暂时不支持
 }
 
-class HTTPHeader
+final class HTTPHeader
 {
+    alias CookieVector = Vector!(string, false, GCAllocator);
+
     this(HTTPHeaderType type)
     {
         _type = type;
@@ -34,60 +37,74 @@ class HTTPHeader
         _header = null;
     }
 
+    pragma(inline,true)
     @property HTTPHeaderType type() const
     {
         return _type;
     }
 
+    pragma(inline)
     @property void type(HTTPHeaderType type)
     {
         _type = type;
     }
     // REQUEST
+    pragma(inline,true)
     @property HTTPMethod method() const
     {
         return _method;
     }
 
+    pragma(inline)
     @property void method(HTTPMethod met)
     {
         _method = met;
     }
 
+    pragma(inline,true)
     @property string methodString() const
     {
         return method_strings[_method];
     }
 
+    pragma(inline,true)
     @property bool upgrade() const
     {
         return _upgrade;
     }
 
+    pragma(inline,true)
     @property int statusCode() const
     {
         return _statuCode;
-    } // RESPONSE only
+    }
+
+    // RESPONSE only
+    pragma(inline)
     @property void statusCode(int code)
     {
         _statuCode = code;
     }
 
+    pragma(inline,true)
     @property httpVersion() const
     {
         return _hversion;
     }
 
+    pragma(inline)
     @property httpVersion(HTTPVersion ver)
     {
         _hversion = ver;
     }
 
+    pragma(inline,true)
     @property requestString() const
     {
         return _queryString;
     }
 
+    pragma(inline)
     @property requestString(string str)
     {
         _queryString = str;
@@ -110,6 +127,7 @@ class HTTPHeader
             return "";
     }
 
+    pragma(inline,true)
     @property path() const
     {
         return decode(_queryString[0 .. _fileStart]);
@@ -122,22 +140,25 @@ class HTTPHeader
         return parseKeyValues(queryString);
     }
 
+    pragma(inline,true)
     @property const(string[string]) headerMap() const
     {
         return _header;
     }
 
+    pragma(inline,true)
     @property host() const
     {
-        return _header["Host"];
+        return _header["host"];
     }
 
+    pragma(inline)
     void setHeaderValue(T)(string key, T value)
     {
         key = toLower(key.strip); //capitalizeHeader(strip(key));//
-        if(key == "set-cookie")
+        if (key == "set-cookie")
         {
-              setCookieString(to!string(value));
+            setCookieString(to!string(value));
         }
         else
         {
@@ -145,33 +166,41 @@ class HTTPHeader
         }
     }
 
+    pragma(inline)
     void setCookieString(string value)
     {
         _setCookies.insertBack(value);
     }
 
-    Array!string getSetedCookieString()
+    pragma(inline,true)
+    CookieVector getSetedCookieString()
     {
         return _setCookies;
     }
 
-    void swapSetedCookieString(ref Array!string array)
+    pragma(inline)
+    void swapSetedCookieString(ref CookieVector array)
     {
-          import std.algorithm : swap;
-          swap(_setCookies, array);
+        import std.algorithm : swap;
+
+        swap(_setCookies, array);
     }
 
+    pragma(inline)
     string getHeaderValue(string key) const
     {
         key = toLower(key.strip); //capitalizeHeader(strip(key));//
         return _header.get(key, "");
     }
+
+    pragma(inline)
     void removeHeaderKey(string key)
     {
         key = toLower(key.strip); //capitalizeHeader(key);//
         _header.remove(key);
     }
 
+    pragma(inline)
     string contentType(bool toLow = false)() const
     {
         string type = getHeaderValue("Content-Type");
@@ -187,21 +216,31 @@ class HTTPHeader
         return type;
     }
 
+    pragma(inline,true)
     bool isInVaild() const
     {
         return (_method == HTTPMethod.HTTP_INVAILD && _statuCode == -1);
     } // 无效的
 package:
+    pragma(inline,true)
     void clear()
     {
         _statuCode = -1;
         _method = HTTPMethod.HTTP_INVAILD;
         _queryString = "";
         _fileStart = 0;
-        _header.clear();
+        version (DigitalMars)
+        {
+            _header.clear();
+        }
+        else
+        {
+            _header = null;
+        }
         _setCookies.clear();
     }
 
+    pragma(inline)
     @property void upgrade(bool up)
     {
         _upgrade = up;
@@ -213,7 +252,7 @@ private:
     HTTPHeaderType _type;
     HTTPVersion _hversion;
     string[string] _header;
-    Array!string _setCookies;
+    CookieVector _setCookies;
     string _queryString;
     bool _upgrade = false;
     uint _fileStart;

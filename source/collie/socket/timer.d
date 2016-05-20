@@ -21,7 +21,8 @@ final class Timer : EventCallInterface
     {
 
         import core.sys.posix.unistd;
-        if(_event.isActive)
+
+        if (_event.isActive)
         {
             _loop.delEvent(_event);
             close(_event.fd);
@@ -29,11 +30,13 @@ final class Timer : EventCallInterface
         AsyncEvent.free(_event);
     }
 
+    pragma(inline,true)
     @property bool isActive()
     {
         return _event.isActive;
     }
 
+    pragma(inline)
     void setCallBack(CallBack cback)
     {
         _callBack = cback;
@@ -61,6 +64,7 @@ final class Timer : EventCallInterface
         if (err == -1)
         {
             import core.sys.posix.unistd;
+
             close(_event.fd);
             return false;
         }
@@ -69,11 +73,12 @@ final class Timer : EventCallInterface
         return true;
     }
 
+    pragma(inline)
     void stop()
     {
         if (isActive())
         {
-            _loop.post(bind(&onClose));
+            _loop.post(&onClose);
         }
     }
 
@@ -130,7 +135,7 @@ unittest
 
     int cout = -1;
     ulong time;
-    
+
     void timeout()
     {
         writeln("time  : ", Clock.currTime().toSimpleString());

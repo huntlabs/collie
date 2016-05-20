@@ -45,7 +45,7 @@ interface InboundHandlerContext(In)
 interface OutboundHandlerContext(Out)
 {
     alias OutboundTheCallBack = void delegate(Out, uint);
-    
+
     void fireWrite(Out msg, OutboundTheCallBack cback = null);
     void fireClose();
 
@@ -67,11 +67,13 @@ class ContextImplBase(H, Context) : PipelineContext
     {
     }
 
+    pragma(inline,true)
     final @property auto handler()
     {
         return _handler;
     }
 
+    pragma(inline,true)
     final void initialize(PipelineBase pipeline, H handler)
     {
         _pipeline = pipeline;
@@ -79,6 +81,7 @@ class ContextImplBase(H, Context) : PipelineContext
     }
 
     // PipelineContext overrides
+
     final override void attachPipeline()
     {
         if (!_attached)
@@ -131,6 +134,7 @@ class ContextImplBase(H, Context) : PipelineContext
         }
     }
 
+    pragma(inline)
     final override HandlerDir getDirection()
     {
         return H.dir;
@@ -145,14 +149,14 @@ protected:
 
 private:
     bool _attached = false;
-};
+}
 
 mixin template CommonContextImpl()
 {
-    alias H.rin Rin;
-    alias H.rout Rout;
-    alias H.win Win;
-    alias H.wout Wout;
+    alias Rin = H.rin;
+    alias Rout = H.rout;
+    alias Win = H.win;
+    alias Wout = H.wout;
 
     this(PipelineBase pipeline, H handler)
     {
@@ -166,11 +170,13 @@ mixin template CommonContextImpl()
         _impl = this;
     }
 
+    pragma(inline)
     final override @property AsyncTransport transport()
     {
         return pipeline.transport();
     }
 
+    pragma(inline)
     final override @property PipelineBase pipeline()
     {
         return _pipeline;
@@ -180,7 +186,6 @@ mixin template CommonContextImpl()
 mixin template ReadContextImpl()
 {
 
-    // HandlerContext overrides
     override void fireRead(Rout msg)
     {
         if (this._nextIn)
@@ -193,6 +198,7 @@ mixin template ReadContextImpl()
         }
     }
 
+    pragma(inline)
     override void fireTimeOut()
     {
         if (this._nextIn)
@@ -201,6 +207,7 @@ mixin template ReadContextImpl()
         }
     }
 
+    pragma(inline)
     override void fireTransportActive()
     {
         if (this._nextIn)
@@ -209,6 +216,7 @@ mixin template ReadContextImpl()
         }
     }
 
+    pragma(inline)
     override void fireTransportInactive()
     {
         if (this._nextIn)
@@ -218,21 +226,25 @@ mixin template ReadContextImpl()
     }
 
     // InboundLink overrides
+    pragma(inline)
     override void read(Rin msg)
     {
         _handler.read(this, forward!(msg));
     }
 
+    pragma(inline)
     override void timeOut()
     {
         this._handler.timeOut(this);
     }
 
+    pragma(inline)
     override void transportActive()
     {
         this._handler.transportActive(this);
     }
 
+    pragma(inline)
     override void transportInactive()
     {
         _handler.transportInactive(this);
@@ -243,6 +255,7 @@ mixin template WriteContextImpl()
 {
     alias NextCallBack = void delegate(Wout, uint);
 
+    pragma(inline)
     override void fireWrite(Wout msg, NextCallBack cback = null)
     {
         if (_nextOut)
@@ -255,6 +268,7 @@ mixin template WriteContextImpl()
         }
     }
 
+    pragma(inline)
     override void fireClose()
     {
         if (_nextOut)
@@ -266,14 +280,16 @@ mixin template WriteContextImpl()
             info("close reached end of pipeline");
         }
     }
-    
+
     // OutboundLink overrides
     alias ThisCallBack = void delegate(Win, uint);
+    pragma(inline)
     override void write(Win msg, ThisCallBack cback = null)
     {
         _handler.write(this, forward!(msg, cback));
     }
 
+    pragma(inline)
     override void close()
     {
         _handler.close(this);
@@ -281,19 +297,19 @@ mixin template WriteContextImpl()
 
 }
 
-final class ContextImpl(H) : ContextImplBase!(H, HandlerContext!(H.rout, H.wout)),
-    HandlerContext!(H.rout, H.wout), InboundLink!(H.rin), OutboundLink!(H.win)
+final class ContextImpl(H) : ContextImplBase!(H, HandlerContext!(H.rout,
+    H.wout)), HandlerContext!(H.rout, H.wout), InboundLink!(H.rin), OutboundLink!(H.win)
 {
 
     static enum dir = HandlerDir.BOTH;
 
     mixin CommonContextImpl;
-    
+
     mixin WriteContextImpl;
 
     mixin ReadContextImpl;
 
-};
+}
 
 final class InboundContextImpl(H) : ContextImplBase!(H,
     InboundHandlerContext!(H.rout)), InboundHandlerContext!(H.rout), InboundLink!(H.rin)
@@ -308,7 +324,7 @@ final class InboundContextImpl(H) : ContextImplBase!(H,
 
 final class OutboundContextImpl(H) : ContextImplBase!(H,
     OutboundHandlerContext!(H.wout)), OutboundHandlerContext!(H.wout), OutboundLink!(H.win)
- {
+{
 
     static enum dir = HandlerDir.OUT;
 

@@ -18,11 +18,15 @@ class HttpServer : HTTPHandler
 {
     override void requestHandle(HTTPRequest req, HTTPResponse rep)
     {
-       // writeln("req path : ", req.header.path());
+//         writeln("req path : ", req.Header.path());
+// 
+//         auto headMap = req.Header.headerMap;
+//         foreach(key,value;headMap)
+//         {
+//               writeln("header key = ", key, "\t value = ",value);
+//         }
+       
         rep.Header.setHeaderValue("content-type","text/html;charset=UTF-8");
-
-        rep.Header.setHeaderValue("set-cookie","token=qwqeqwe");
-        rep.Header.setHeaderValue("set-cookie","uid=4545544");
         rep.Body.write(cast(ubyte[])"hello wrold!");
         rep.done();
     }
@@ -51,13 +55,13 @@ void main()
     writeln("Edit source/app.d to start your project.");
     globalLogLevel(LogLevel.warning);
     
-    HTTPConfig.HeaderStectionSize = 256;
-    HTTPConfig.ResponseBodyStectionSize = 256;
-    HTTPConfig.RequestBodyStectionSize = 256;
+    httpConfig.headerStectionSize = 256;
+    httpConfig.responseBodyStectionSize = 256;
+    httpConfig.requestBodyStectionSize = 256;
     EventLoop loop = new EventLoop();
     auto ser = new ServerBootstrap!HTTPPipeline(loop);
     ser.childPipeline(new HTTPPipelineFactory()).heartbeatTimeOut(30)
-        .group(new EventLoopGroup)
+//         .group(new EventLoopGroup)
         .bind(8080);
         
     version (SSL) 

@@ -2,7 +2,7 @@ module collie.codec.http.response;
 
 import core.stdc.string : memcpy;
 
-import std.string;cokkies
+import std.string;
 import std.array;
 import std.conv;
 
@@ -51,11 +51,12 @@ alias ResponseSend = void delegate(HTTPResponse, string, ulong begin);
 
 class HTTPResponse
 {
-    this()
+    this(HTTPConfig config = httpConfig)
     {
+        _config = config;
         _header = new HTTPHeader(HTTPHeaderType.HTTP_RESPONSE);
         _header.statusCode = 200;
-        _body = new SectionBuffer(HTTPConfig.ResponseBodyStectionSize, httpAllocator);
+        _body = new SectionBuffer(_config.responseBodyStectionSize, httpAllocator);
     }
 
     ~this()
@@ -65,12 +66,13 @@ class HTTPResponse
         _header.destroy;
         _header = null;
     }
-
+    pragma(inline,true)
     final @property Header()
     {
         return _header;
     }
 
+    pragma(inline,true)
     final @property Body()
     {
         return _body;
@@ -84,11 +86,13 @@ class HTTPResponse
         return true;
     }
 
+    pragma(inline)
     final bool done()
     {
         return done(null, 0);
     }
 
+    pragma(inline)
     final bool done(string file)
     {
         return done(file, 0);
@@ -105,6 +109,7 @@ class HTTPResponse
         return false;
     }
 
+    pragma(inline)
     final void close()
     {
         if (!_done && _resClose)
@@ -112,11 +117,13 @@ class HTTPResponse
         _done = true;
     }
 
+    pragma(inline)
     final @property sentCall(ResponseSend cback)
     {
         _resDone = cback;
     }
 
+    pragma(inline)
     final @property closeCall(CallBackResponse cback)
     {
         _resClose = cback;
@@ -148,19 +155,22 @@ class HTTPResponse
             buffer.write(cast(ubyte[]) "\r\n");
         }
         import std.container.array;
-        Array!string cookies;
+
+        HTTPHeader.CookieVector cookies;
         resp._header.swapSetedCookieString(cookies);
-        foreach (value; cookies)
+        foreach (i; 0 .. cookies.length)
         {
-             buffer.write(cast(ubyte[]) "set-cookie: ");
-             buffer.write(cast(ubyte[]) value);
-             buffer.write(cast(ubyte[]) "\r\n");
+            auto value = cookies.at(i);
+            buffer.write(cast(ubyte[]) "set-cookie: ");
+            buffer.write(cast(ubyte[]) value);
+            buffer.write(cast(ubyte[]) "\r\n");
         }
 
         buffer.write(cast(ubyte[]) "\r\n");
     }
 
 package:
+    pragma(inline,true)
     final void clear()
     {
         _header.clear();
@@ -174,6 +184,7 @@ private:
     SectionBuffer _body;
     ResponseSend _resDone;
     CallBackResponse _resClose;
+    HTTPConfig _config;
 }
 
 private string statusText(int code)

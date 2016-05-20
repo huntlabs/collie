@@ -37,11 +37,11 @@ final class Acceptor : AsyncTransport, EventCallInterface
         }
         else
         {
-            _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
-                false);
+            _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, false);
             version (Posix)
-                _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR,
+                _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
                     false);
+
         }
     }
 
@@ -66,6 +66,7 @@ final class Acceptor : AsyncTransport, EventCallInterface
             return false;
         _event = new AsyncEvent(AsynType.ACCEPT, this, _socket.handle, true, false,
             false);
+        //  _event.etMode = false;
         _loop.addEvent(_event);
         return true;
     }
@@ -190,7 +191,7 @@ else static if (IOMode == IO_MODE.kqueue)
 
 unittest
 {
-/*
+    /*
     import std.datetime;
     import std.stdio;
     import std.functional;

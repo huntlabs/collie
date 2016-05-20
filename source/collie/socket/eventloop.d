@@ -104,8 +104,6 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
         }
     }
 
-
-
     bool addEvent(AsyncEvent* event) nothrow
     {
         if (event == null)
@@ -168,7 +166,7 @@ private:
     Queue!(CallBack, true, false, GCAllocator) _callbackList;
     bool _run;
     ThreadID _thID;
-};
+}
 
 enum IO_MODE
 {

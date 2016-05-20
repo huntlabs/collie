@@ -8,15 +8,14 @@ import collie.channel.handlercontext;
 
 import std.stdio;
 
-
 abstract class HandlerBase(Context)
 {
 
     ~this()
     {
-    //    writeln("HandlerBase(Context) ~this");
+        //    writeln("HandlerBase(Context) ~this");
     }
-    
+
     void attachPipeline(Context /*ctx*/ )
     {
     }
@@ -48,12 +47,12 @@ abstract class Handler(Rin, Rout = Rin, Win = Rout, Wout = Rin) : HandlerBase!(
     HandlerContext!(Rout, Wout))
 {
     alias TheCallBack = void delegate(Win, uint);
-    alias HandlerContext!(Rout, Wout) Context;
+    alias Context = HandlerContext!(Rout, Wout);
 
-    alias Rin rin;
-    alias Rout rout;
-    alias Win win;
-    alias Wout wout;
+    alias rin = Rin;
+    alias rout = Rout;
+    alias win = Win;
+    alias wout = Wout;
 
     static enum dir = HandlerDir.BOTH;
 
@@ -89,11 +88,11 @@ abstract class InboundHandler(Rin, Rout = Rin) : HandlerBase!(InboundHandlerCont
 public:
     static enum dir = HandlerDir.IN;
 
-    alias InboundHandlerContext!Rout Context;
-    alias Rin rin;
-    alias Rout rout;
-    alias uint win;
-    alias uint wout;
+    alias Context = InboundHandlerContext!Rout;
+    alias rin = Rin;
+    alias rout = Rout;
+    alias win = uint;
+    alias wout = uint;
 
     void read(Context ctx, Rin msg);
 
@@ -114,7 +113,6 @@ public:
 
 }
 
-
 /// Win : the Handle will Write type
 /// Wout : Next Handle will write type
 abstract class OutboundHandler(Win, Wout = Win) : HandlerBase!(OutboundHandlerContext!Wout)
@@ -122,13 +120,13 @@ abstract class OutboundHandler(Win, Wout = Win) : HandlerBase!(OutboundHandlerCo
 public:
     static enum dir = HandlerDir.OUT;
 
-    alias OutboundHandlerContext!Wout Context;
+    alias Context = OutboundHandlerContext!Wout;
     alias OutboundHandlerCallBack = void delegate(Win, uint);
 
-    alias uint rin;
-    alias uint rout;
-    alias Win win;
-    alias Wout wout;
+    alias rin = uint;
+    alias rout = uint;
+    alias win = Win;
+    alias wout = Wout;
 
     void write(Context ctx, Win msg, OutboundHandlerCallBack cback = null);
 
@@ -140,8 +138,8 @@ public:
 
 class HandlerAdapter(R, W = R) : Handler!(R, R, W, W)
 {
-    alias Handler!(R, R, W, W).Context Context;
-    alias Handler!(R, R, W, W).TheCallBack TheCallBack;
+    alias Context = Handler!(R, R, W, W).Context;
+    alias TheCallBack = Handler!(R, R, W, W).TheCallBack;
 
     override void read(Context ctx, R msg)
     {
@@ -157,15 +155,16 @@ class HandlerAdapter(R, W = R) : Handler!(R, R, W, W)
 abstract class PipelineContext
 {
 public:
-    ~this()
+     ~this()
     {
-     //   writeln("PipelineContext ~ this");
+        //   writeln("PipelineContext ~ this");
     }
-    
+
     void attachPipeline();
     void detachPipeline();
 
-    void attachContext(H, HandlerContext)(H handler, HandlerContext ctx)
+    pragma(inline)
+    final void attachContext(H, HandlerContext)(H handler, HandlerContext ctx)
     {
         if (++handler._attachCount == 1)
         {
@@ -198,4 +197,4 @@ interface OutboundLink(Out)
     alias OutboundLinkCallBack = void delegate(Out, uint);
     void write(Out msg, OutboundLinkCallBack cback = null);
     void close();
-};
+}

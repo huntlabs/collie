@@ -4,7 +4,7 @@ import collie.socket;
 import collie.channel.handler;
 import collie.channel.handlercontext;
 
-class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
+final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
     //alias TheCallBack = void delegate(ubyte[],uint);
     //alias HandleContext!(UniqueBuffer, ubyte[]) Context;
@@ -13,7 +13,7 @@ class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
     {
         _socket = sock;
     }
-    
+
     ~this()
     {
     }
@@ -27,20 +27,21 @@ class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 
     override void transportInactive(Context ctx)
     {
-        if(_socket)
+        if (_socket)
             _socket.close();
     }
 
     override void write(Context ctx, ubyte[] msg, TheCallBack cback)
     {
-        if(context.pipeline.pipelineManager)
+        if (context.pipeline.pipelineManager)
             context.pipeline.pipelineManager.refreshTimeout();
-       if(_socket) _socket.write(msg, cback);
+        if (_socket)
+            _socket.write(msg, cback);
     }
 
     override void close(Context ctx)
     {
-        if(_socket)
+        if (_socket)
             _socket.close();
     }
 
@@ -55,10 +56,10 @@ protected:
     void closeCallBack()
     {
         context.fireTransportInactive();
-        context.pipeline.deletePipeline();
         context.pipeline.transport(null);
         _socket = null;
-        
+        context.pipeline.deletePipeline();
+
     }
 
     void readCallBack(ubyte[] buf)
