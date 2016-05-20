@@ -112,7 +112,7 @@ private:
 
 private:
 
-class GroupMember
+final class GroupMember
 {
     this(EventLoop loop)
     {
