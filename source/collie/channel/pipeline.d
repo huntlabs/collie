@@ -152,25 +152,6 @@ abstract class PipelineBase
         return null;
     }
 
-    // If one of the handlers owns the pipeline itself, use setOwner to ensure
-    // that the pipeline doesn't try to detach the handler during destruction,
-    // lest destruction ordering issues occur.
-    // See thrift/lib/cpp2/async/Cpp2Channel.cpp for an example
-    final bool setOwner(H)(H handler)
-    {
-        foreach (i; 0 .. _ctxs.length)
-        {
-            auto ctx = _ctxs.at(i);
-            auto ctxImpl = cast(ContextType!H)(ctx);
-            if (ctxImpl && ctxImpl.getHandler() == handler)
-            {
-                owner_ = ctx;
-                return true;
-            }
-        }
-        return false;
-    }
-
     void finalize();
 
     final void detachHandlers()
@@ -178,10 +159,7 @@ abstract class PipelineBase
         foreach (i; 0 .. _ctxs.length)
         {
             auto ctx = _ctxs.at(i);
-            if (ctx != _owner)
-            {
-                ctx.detachPipeline();
-            }
+            ctx.detachPipeline();
         }
     }
 
@@ -195,7 +173,6 @@ private:
     PipelineManager _manager = null;
     AsyncTransport _transport;
     //	AsynTransportInfo _transportInfo;
-    PipelineContext _owner;
 
     final PipelineBase addHelper(Context)(Context ctx, bool front)
     {

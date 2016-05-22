@@ -88,7 +88,8 @@ final class Timer : EventCallInterface
     {
         if (isActive())
         {
-            _loop.post(&onClose);
+            //_loop.post(&onClose);
+            onClose();
         }
     }
 

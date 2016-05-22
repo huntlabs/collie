@@ -106,6 +106,7 @@ class ContextImplBase(H, Context) : PipelineContext
     {
         _handler.detachPipeline(_impl);
         _attached = false;
+        _pipeline = null;
     }
 
     final override void setNextIn(PipelineContext ctx)
@@ -183,7 +184,7 @@ mixin template CommonContextImpl()
     pragma(inline)
     final override @property AsyncTransport transport()
     {
-        return pipeline.transport();
+        return _pipeline is null ? null : pipeline.transport();
     }
 
     pragma(inline)

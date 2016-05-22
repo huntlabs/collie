@@ -22,6 +22,7 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
     this(TCPSocket sock)
     {
         _socket = sock;
+        _loop = sock.eventLoop();
     }
 
     ~this()
@@ -43,16 +44,25 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 
     override void write(Context ctx, ubyte[] msg, TheCallBack cback)
     {
-        if (context.pipeline.pipelineManager)
-            context.pipeline.pipelineManager.refreshTimeout();
-        if (_socket)
+        _loop.post(delegate(){
+            if(_socket is null)
+            {
+                cback(msg,0);
+                return;
+            }
+            if (context.pipeline.pipelineManager)
+                        context.pipeline.pipelineManager.refreshTimeout();
             _socket.write(msg, cback);
+        });
+
     }
 
     override void close(Context ctx)
     {
-        if (_socket)
-            _socket.close();
+        _loop.post(delegate(){
+            if (_socket)
+                _socket.close();
+        });
     }
 
 protected:
@@ -79,4 +89,5 @@ protected:
 
 private:
     TCPSocket _socket;
+    EventLoop _loop;
 }

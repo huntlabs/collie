@@ -132,20 +132,30 @@ final class EpollLoop
             epoll_event event;
             if (epoll_wait(_efd,  & event, 1, timeout) < 1)
                 return;
+            AsyncEvent * asevent = cast(AsyncEvent * )(event.data.ptr);
+            scope(success)
+            {
+               // import std.stdio;
+                if(asevent.deleteOnClosed && (!asevent.isActive))
+                {
+                    import collie.utils.memory;
+                    gcFree(asevent.obj);
 
-            EventCallInterface obj = (cast(AsyncEvent * )(event.data.ptr)).obj;
+                   // writeln("delete the socket");
+                }
+            }
 
             if (isErro(event.events))
             {
-                obj.onClose();
+                asevent.obj.onClose();
                 return;
             }
 
             if (isWrite(event.events))
-                obj.onWrite();
+                asevent.obj.onWrite();
 
             if (isRead(event.events))
-                obj.onRead();
+                asevent.obj.onRead();
 
         }
         catch (ErrnoException e)

@@ -17,11 +17,22 @@ import collie.bootstrap.server;
 import collie.bootstrap.serversslconfig;
 import collie.socket;
 
+import std.concurrency;
+import std.parallelism;
+
 debug { 
         extern(C) __gshared string[] rt_options = [ "gcopt=profile:1"];// maxPoolSize:50" ];
 }
 
+__gshared TaskPool pool;
+shared static this()
+{
+    pool = new TaskPool(4);
+    pool.isDaemon(true);
+}
+
 alias Pipeline!(ubyte[], HTTPResponse) HTTPPipeline;
+
 
 class HttpServer : HTTPHandler
 {
@@ -34,15 +45,22 @@ class HttpServer : HTTPHandler
 //         {
 //               writeln("header key = ", key, "\t value = ",value);
 //         }
+       pool.put(task!(doH)(rep));
 
-        rep.Header.setHeaderValue("content-type","text/html;charset=UTF-8");
-        rep.Body.write(cast(ubyte[])"hello wrold!");
-        rep.done();
     }
+
 
     override WebSocket newWebSocket(const HTTPHeader header)
     {
         return new EchoWebSocket();
+    }
+
+
+    static void doH(HTTPResponse rep)
+    {
+        rep.Header.setHeaderValue("content-type","text/html;charset=UTF-8");
+                    rep.Body.write(cast(ubyte[])"hello wrold!");
+                    rep.done();
     }
 }
 
@@ -70,7 +88,7 @@ void main()
     EventLoop loop = new EventLoop();
     auto ser = new ServerBootstrap!HTTPPipeline(loop);
     ser.childPipeline(new HTTPPipelineFactory()).heartbeatTimeOut(30)
-         .group(new EventLoopGroup)
+//         .group(new EventLoopGroup)
         .bind(8080);
         
     version (SSL) 
