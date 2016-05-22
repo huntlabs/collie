@@ -80,7 +80,8 @@ class TCPSocket : AsyncTransport, EventCallInterface
         trace("Close the socket!");
         if (alive)
         {
-            eventLoop.post(&onClose);
+            //eventLoop.post(&onClose);
+            onClose();
         }
         else if (_socket.isAlive())
         {
@@ -103,7 +104,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
             cback(data, 0);
             return;
         }
-        eventLoop.post(delegate() {
+        //eventLoop.post(delegate() {
             auto buffer = new WriteSite(data, cback);
             if (!isAlive || !_writeQueue.enQueue(buffer))
             {
@@ -112,7 +113,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
                 gcFree(buffer);
             }
             onWrite();
-        }); //利用eventloop的post处理跨线程问题
+       // });
     }
 
     mixin TCPSocketOption;

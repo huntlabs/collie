@@ -113,7 +113,6 @@ protected:
 
             trace("requestDone");
             import collie.socket.tcpsocket;
-
             TCPSocket sock = cast(TCPSocket) context.transport;
             _req.clientAddress = sock.remoteAddress();
             if (req.Header.httpVersion == HTTPVersion.HTTP1_0)
@@ -136,7 +135,7 @@ protected:
     final void responseSent(HTTPResponse resp, string file, ulong begin)
     {
         trace("responseSent");
-        if (!context.transport.isAlive())
+        if (context.transport is null || !context.transport.isAlive())
             return;
         if (file is null)
         {

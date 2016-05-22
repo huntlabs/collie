@@ -85,7 +85,8 @@ final class Acceptor : AsyncTransport, EventCallInterface
     {
         if (isAlive)
         {
-            eventLoop.post(fun.bind(&onClose));
+          //  eventLoop.post(fun.bind(&onClose));
+          onClose();
         }
         else if (_socket.isAlive())
         {
