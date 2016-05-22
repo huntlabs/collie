@@ -81,11 +81,13 @@ struct AsyncEvent
         this.oneShot = oneShot;
     }
 
+    pragma(inline,true)
     @property obj()
     {
         return _obj;
     }
 
+    pragma(inline,true)
     @property type()
     {
         return _type;
@@ -93,11 +95,13 @@ struct AsyncEvent
 
     socket_t fd;
 
-    bool enRead;
-    bool enWrite;
-    bool etMode;
-    bool oneShot;
+    bool enRead = true;
+    bool enWrite = false;
+    bool etMode = false;
+    bool oneShot = false;
+    bool deleteOnClosed = false;
 
+    pragma(inline)
     static AsyncEvent* create(AsynType type, EventCallInterface obj,
         socket_t fd = socket_t.init, bool enread = true, bool enwrite = false,
         bool etMode = false, bool oneShot = false)
@@ -109,6 +113,7 @@ struct AsyncEvent
     {
     }
 
+    pragma(inline,true)
     @property isActive()
     {
         return _isActive;

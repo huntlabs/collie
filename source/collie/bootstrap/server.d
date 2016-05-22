@@ -16,8 +16,6 @@ import collie.bootstrap.serversslconfig;
 
 import std.stdio;
 
-
-//TODO: Need Test the ssl
 final class ServerBootstrap(PipeLine)
 {
     this()
@@ -349,6 +347,7 @@ protected:
             return;
         }
         pipe.finalize();
+        sock.deleteOnClosed(true);
         auto con = new ServerConnection!PipeLine(pipe);
         con.serverAceptor = this;
         _list[con] = 0;

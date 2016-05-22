@@ -118,7 +118,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
 
     mixin TCPSocketOption;
 
-    pragma(inline)
+    pragma(inline,true)
     void setKeepAlive(int time, int interval) @trusted
     {
         return _socket.setKeepAlive(forward!(time, interval));
@@ -140,6 +140,18 @@ class TCPSocket : AsyncTransport, EventCallInterface
     final void setCloseCallBack(CallBack cback)
     {
         _unActive = cback;
+    }
+
+    pragma(inline,true)
+    final @property  deleteOnClosed()
+    {
+        return _event.deleteOnClosed;
+    }
+
+    pragma(inline)
+    final @property  deleteOnClosed(bool closed)
+    {
+        _event.deleteOnClosed = closed;
     }
 
 protected:
