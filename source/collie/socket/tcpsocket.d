@@ -54,6 +54,8 @@ class TCPSocket : AsyncTransport, EventCallInterface
             _readBuffer = null;
         }
         _socket.destroy;
+        import core.memory;
+        GC.free(_readBuffer.ptr);
         if (_event.isActive)
         {
             eventLoop.delEvent(_event);
