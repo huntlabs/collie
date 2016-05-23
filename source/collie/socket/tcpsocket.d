@@ -54,12 +54,12 @@ class TCPSocket : AsyncTransport, EventCallInterface
             _readBuffer = null;
         }
         _socket.destroy;
-        import core.memory;
-        GC.free(_readBuffer.ptr);
         if (_event.isActive)
         {
             eventLoop.delEvent(_event);
         }
+        import core.memory;
+        GC.free(_readBuffer.ptr);
     }
 
     final override @property int fd()
@@ -106,16 +106,14 @@ class TCPSocket : AsyncTransport, EventCallInterface
             cback(data, 0);
             return;
         }
-        //eventLoop.post(delegate() {
-            auto buffer = new WriteSite(data, cback);
-            if (!isAlive || !_writeQueue.enQueue(buffer))
-            {
-                buffer.doCallBack();
-                import collie.utils.memory;
-                gcFree(buffer);
-            }
-            onWrite();
-       // });
+        auto buffer = new WriteSite(data, cback);
+        if (!isAlive || !_writeQueue.enQueue(buffer))
+        {
+            buffer.doCallBack();
+            import collie.utils.memory;
+            gcFree(buffer);
+        }
+        onWrite();
     }
 
     mixin TCPSocketOption;
@@ -166,11 +164,7 @@ protected:
 
     override void onWrite() nothrow
     {
-        if (_writeQueue.empty || !alive)
-        {
-            return;
-        }
-        while (!_writeQueue.empty)
+        while (alive && !_writeQueue.empty)
         {
             try
             {
@@ -185,20 +179,24 @@ protected:
                         import collie.utils.memory;
                         gcFree(buf);
                     }
-                }
-                else if (errno == EWOULDBLOCK || errno == EAGAIN)
-                {
-                    break;
-                }
-                else if (errno == 4)
-                {
                     continue;
                 }
-                else
+                else 
                 {
-                    trace(" write Erro Do Close erro = ", _socket.ERROR);
-                    onClose();
-                    return;
+                    if (errno == EAGAIN || errno == EWOULDBLOCK)
+                    {
+                        return;
+                    }
+                    else if (errno == 4)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        error(" write Erro Do Close erro = ", errno);
+                        onClose();
+                        return;
+                    }
                 }
             }
             catch (Exception e)
@@ -252,11 +250,7 @@ protected:
 
     override void onRead() nothrow
     {
-        if (!alive)
-        {
-            return;
-        }
-        while (true)
+        while (alive)
         {
             try
             {
@@ -264,20 +258,24 @@ protected:
                 if (len > 0)
                 {
                     _readCallBack(_readBuffer[0 .. len]);
-                }
-                else if (errno == EWOULDBLOCK || errno == EAGAIN)
-                {
-                    break;
-                }
-                else if (errno == 4)
-                {
                     continue;
                 }
                 else
                 {
-                    trace("read Erro Do Close the erro : ", _socket.ERROR);
-                    onClose();
-                    return;
+                    if (errno == EAGAIN || errno == EWOULDBLOCK)
+                    {
+                        return;
+                    }
+                    else if (errno == 4)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        error("read Erro Do Close the erro : ", errno, " the socket fd : ",fd);
+                        onClose();
+                        return;
+                    }
                 }
             }
             catch (Exception e)
@@ -290,6 +288,7 @@ protected:
                 {
                 }
                 onClose();
+                return;
             }
         }
     }

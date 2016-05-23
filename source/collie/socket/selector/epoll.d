@@ -53,10 +53,8 @@ final class EpollLoop
 	 */
     ~this()
     {
-        delEvent(_event._event);
         .close(_efd);
-        //delete _events;
-        _event = null;
+        _event.destroy;
     }
 
     /** 添加一个Channel对象到事件队列中。
@@ -69,7 +67,6 @@ final class EpollLoop
             return false;
 
         mixin(mixinModEvent());
-        GC.setAttr(event, GC.BlkAttr.NO_MOVE);
         if ((epoll_ctl(_efd, EPOLL_CTL_ADD, event.fd,  & ev)) != 0)
         {
             if (errno != EEXIST)
@@ -113,7 +110,6 @@ final class EpollLoop
             }
             return false;
         }
-        GC.clrAttr(event, GC.BlkAttr.NO_MOVE);
         event.isActive = false;
         return true;
     }
@@ -213,14 +209,12 @@ final class EventChannel : EventCallInterface
     this()
     {
         _fd = cast(socket_t) eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-        _event = new AsyncEvent(AsynType.EVENT, this, _fd, true, false, false);
-        GC.setAttr(_event, GC.BlkAttr.NO_MOVE);
-
+        _event = AsyncEvent.create(AsynType.EVENT, this, _fd, true, false, false);
     }
     ~this()
     {
+        AsyncEvent.free(_event);
         .close(_fd);
-        delete _event;
     }
 
     void doWrite() nothrow

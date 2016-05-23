@@ -106,11 +106,17 @@ struct AsyncEvent
         socket_t fd = socket_t.init, bool enread = true, bool enwrite = false,
         bool etMode = false, bool oneShot = false)
     {
-        return new AsyncEvent(type, obj, fd, enread, enwrite, etMode, oneShot);
+        import core.memory;
+        AsyncEvent * pevent = new AsyncEvent(type, obj, fd, enread, enwrite, etMode, oneShot);
+        GC.setAttr(pevent,GC.BlkAttr.NO_MOVE);
+        return pevent;
     }
 
+    pragma(inline)
     static void free(AsyncEvent* event)
     {
+        import core.memory;
+        GC.free(event);
     }
 
     pragma(inline,true)
@@ -120,6 +126,7 @@ struct AsyncEvent
     }
 
 package:
+    pragma(inline)
     @property isActive(bool active)
     {
         _isActive = active;

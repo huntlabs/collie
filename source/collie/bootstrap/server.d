@@ -97,7 +97,7 @@ final class ServerBootstrap(PipeLine)
             accept.stop();
         }
         _mainAccept.stop();
-        join();
+        _group.stop();
         _loop.stop();
         _runing = false;
     }

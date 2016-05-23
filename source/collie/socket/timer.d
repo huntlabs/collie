@@ -29,7 +29,6 @@ final class Timer : EventCallInterface
 
     ~this()
     {
-
         import core.sys.posix.unistd;
 
         if (_event.isActive)
