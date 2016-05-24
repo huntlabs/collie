@@ -131,6 +131,11 @@ package:
     {
         _isActive = active;
     }
+    
+static if(IOMode == IOMode.kqueue)
+{
+    long timeOut;
+}
 
 private:
     EventCallInterface _obj;

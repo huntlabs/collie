@@ -53,33 +53,36 @@ final class Timer : EventCallInterface
 
     bool start(ulong msesc)
     {
-        import collie.socket.selector.epoll;
-
-        //  _timeout = msesc;
-        if (isActive() || msesc < 2)
-            return false;
-
-        _event.fd = cast(socket_t) timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
-
-        itimerspec its;
-        ulong sec, nsec;
-        sec = msesc / 1000;
-        nsec = (msesc % 1000) * 1_000_000;
-        its.it_value.tv_sec = cast(typeof(its.it_value.tv_sec)) sec;
-        its.it_value.tv_nsec = cast(typeof(its.it_value.tv_nsec)) nsec;
-        its.it_interval.tv_sec = its.it_value.tv_sec;
-        its.it_interval.tv_nsec = its.it_value.tv_nsec;
-        int err = timerfd_settime(_event.fd, 0, &its, null);
-        if (err == -1)
+        if (isActive() || msesc <= 0)
+                return false;
+        static if(IOMode == IOMode.kqueue)
         {
-            import core.sys.posix.unistd;
+            _event.timeOut = cast(long)msesc;
+        } 
+        else static if(IOMode == IOMode.epoll)
+        {
+            import collie.socket.selector.epoll;
+            //  _timeout = msesc;
+            _event.fd = cast(socket_t) timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
 
-            close(_event.fd);
-            return false;
+            itimerspec its;
+            ulong sec, nsec;
+            sec = msesc / 1000;
+            nsec = (msesc % 1000) * 1_000_000;
+            its.it_value.tv_sec = cast(typeof(its.it_value.tv_sec)) sec;
+            its.it_value.tv_nsec = cast(typeof(its.it_value.tv_nsec)) nsec;
+            its.it_interval.tv_sec = its.it_value.tv_sec;
+            its.it_interval.tv_nsec = its.it_value.tv_nsec;
+            int err = timerfd_settime(_event.fd, 0, &its, null);
+            if (err == -1)
+            {
+                import core.sys.posix.unistd;
+
+                close(_event.fd);
+                return false;
+            }
         }
-
-        _loop.addEvent(_event);
-        return true;
+        return _loop.addEvent(_event);
     }
 
     pragma(inline)
@@ -91,7 +94,6 @@ final class Timer : EventCallInterface
             onClose();
         }
     }
-
 protected:
     override void onRead() nothrow
     {

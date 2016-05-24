@@ -36,37 +36,41 @@ class LengthFieldBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[]
 
     final override void write(Context ctx, ubyte[] msg, TheCallBack cback = null)
     {
-        msg = doCompress(_compressType, msg);
+        ubyte ctype = _compressType;
+        auto tmsg = doCompress(ctype, msg);
 
-        uint size = cast(uint) msg.length;
+        uint size = cast(uint) tmsg.length;
         ubyte[] data = new ubyte[size + 5];
         static if (littleEndian)
         {
-            ubyte[4] length = nativeToLittleEndian(size); // nativeToLittleEndian
+            ubyte[4] length = nativeToLittleEndian(size); 
         }
         else
         {
-            ubyte[4] length = nativeToBigEndian(size); // nativeToLittleEndian
+            ubyte[4] length = nativeToBigEndian(size); 
         }
         data[0 .. 4] = length[];
-        data[5] = _compressType;
-        data[5 .. $] = msg[];
-        ctx.fireWrite(data);
+        data[4] = ctype;
+        data[5 .. $] = tmsg[];
+        ctx.fireWrite(data,&callBack);
         if (cback)
             cback(msg, size);
     }
 
 protected:
-    ubyte[] doCompress(in byte type, ubyte[] data)
+    ubyte[] doCompress(ref ubyte type, ubyte[] data)
     {
         return data;
     }
 
-    ubyte[] unCompress(in byte type, ubyte[] data)
+    ubyte[] unCompress(in ubyte type, ubyte[] data)
     {
         return data;
     }
 
+    void callBack(ubyte[] data,uint size)
+    {}
+    
 protected:
     final void readPack(ubyte[] data, Context ctx)
     {

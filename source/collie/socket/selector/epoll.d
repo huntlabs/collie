@@ -10,7 +10,8 @@
  */
 module collie.socket.selector.epoll;
 
-version (linux)  : import core.time;
+version (linux)  : 
+import core.time;
 import core.stdc.errno;
 import core.memory;
 
@@ -131,13 +132,10 @@ final class EpollLoop
             AsyncEvent * asevent = cast(AsyncEvent * )(event.data.ptr);
             scope(success)
             {
-               // import std.stdio;
                 if(asevent.deleteOnClosed && (!asevent.isActive))
                 {
                     import collie.utils.memory;
                     gcFree(asevent.obj);
-
-                   // writeln("delete the socket");
                 }
             }
 
@@ -202,7 +200,7 @@ static this()
 enum EPOLL_EVENT : short
 {
     init =  - 5
-};
+}
 
 final class EventChannel : EventCallInterface
 {
@@ -238,7 +236,7 @@ final class EventChannel : EventCallInterface
 
     socket_t _fd;
     AsyncEvent * _event;
-};
+}
 
 string mixinModEvent()
 {
