@@ -161,6 +161,18 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
     }
 
     pragma(inline)
+    @property T[] data(bool rest = true)
+    {
+        auto list =  _data[0 .. length];
+        if(rest)
+        {
+            _data = null;
+            length = 0;
+        }
+        return list;
+    }
+    
+    pragma(inline)
     inout ref inout(T) opIndex(size_t i)
     {
         assert(i < _len);
@@ -192,7 +204,7 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
         _data[] = T.init;
         _len = 0;
     }
-
+    
 private:
     bool full()
     {
