@@ -161,7 +161,7 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
     }
 
     pragma(inline)
-    @property T[] data(bool rest = true)
+    T[] data(bool rest = true)
     {
         auto list =  _data[0 .. length];
         if(rest)
