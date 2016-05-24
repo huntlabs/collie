@@ -167,7 +167,7 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
         if(rest)
         {
             _data = null;
-            length = 0;
+            _len = 0;
         }
         return list;
     }
