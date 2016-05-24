@@ -123,6 +123,10 @@ protected:
                 _res.sentCall(&responseSent);
                 _res.closeCall(&responseClose);
             }
+            else
+            {
+                _res.clear();
+            }
             requestHandle(_req, _res);
         }
         catch (Exception e)
@@ -180,10 +184,10 @@ protected:
 
     final void lastWrited(ubyte[] data, uint len)
     {
+        clear();
         httpAllocator.deallocate(data);
         if (_shouldClose)
             close(context);
-        clear();
     }
 
     final bool writeSection(SectionBuffer buffer, bool isLast, bool isFile = false)
@@ -239,6 +243,7 @@ protected: //WebSocket
         {
             if (_file.eof())
             {
+                clear();
                 httpAllocator.deallocate(data);
                 _file.close();
                 delete _file;
