@@ -11,7 +11,6 @@
 module collie.codec.http.parser;
 
 public import collie.codec.http.parsertype;
-import collie.codec.http.config;
 
 /** ubyte[] 为传过去字段里的位置引用，没有数据拷贝，自己使用的时候注意拷贝数据， 
  bool 此段数据是否完结，可能只是数据的一部分。
