@@ -209,7 +209,6 @@ mixin template ReadContextImpl()
         }
     }
 
-    pragma(inline)
     override void fireTimeOut()
     {
         if (this._nextIn)
@@ -218,7 +217,6 @@ mixin template ReadContextImpl()
         }
     }
 
-    pragma(inline)
     override void fireTransportActive()
     {
         if (this._nextIn)
@@ -227,7 +225,6 @@ mixin template ReadContextImpl()
         }
     }
 
-    pragma(inline)
     override void fireTransportInactive()
     {
         if (this._nextIn)
@@ -237,25 +234,21 @@ mixin template ReadContextImpl()
     }
 
     // InboundLink overrides
-    pragma(inline)
     override void read(Rin msg)
     {
         _handler.read(this, forward!(msg));
     }
 
-    pragma(inline)
     override void timeOut()
     {
         this._handler.timeOut(this);
     }
 
-    pragma(inline)
     override void transportActive()
     {
         this._handler.transportActive(this);
     }
 
-    pragma(inline)
     override void transportInactive()
     {
         _handler.transportInactive(this);

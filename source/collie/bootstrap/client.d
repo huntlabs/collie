@@ -79,8 +79,10 @@ protected:
     
     void connectCallBack(bool isconnect)
     {
+        trace("connectCallBack ",isconnect);
         if(!isconnect)
         {
+            trace("how!");
              _pipe.transportInactive();
              return;
         }

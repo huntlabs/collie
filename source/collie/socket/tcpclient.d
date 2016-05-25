@@ -37,6 +37,7 @@ final class TCPClient : TCPSocket
             throw new ConnectedException("This Socket is Connected! Please close before connect!");
         if (!start())
             return false;
+        _isFrist = true;
         _socket.connect(addr);
         return true;
     }
@@ -50,8 +51,9 @@ final class TCPClient : TCPSocket
 protected:
     override void onClose()
     {
-        if (!_isConnect && _connectBack)
+        if (_isFrist && !_isConnect && _connectBack)
         {
+            _isFrist = false;
             try
             {
                 _connectBack(false);
@@ -67,8 +69,9 @@ protected:
 
     override void onWrite()
     {
-        if (!_isConnect && _connectBack)
+        if (_isFrist && !_isConnect && _connectBack)
         {
+            _isFrist = false;
             try
             {
                 _connectBack(true);
@@ -84,6 +87,7 @@ protected:
 
 private:
     bool _isConnect = false;
+    bool _isFrist = true;;
     ConnectCallBack _connectBack;
 }
 

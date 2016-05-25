@@ -38,8 +38,10 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 
     override void transportInactive(Context ctx)
     {
-        if (_socket)
+        if (_isAttch && _socket) {
             _socket.close();
+        }
+        ctx.fireTransportInactive();
     }
 
     override void write(Context ctx, ubyte[] msg, TheCallBack cback)
@@ -68,6 +70,7 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 protected:
     void attachReadCallback()
     {
+        _isAttch = true;
         _socket.setReadCallBack(&readCallBack);
         _socket.setCloseCallBack(&closeCallBack);
         context.pipeline.transport(_socket);
@@ -75,8 +78,11 @@ protected:
 
     void closeCallBack()
     {
+        _isAttch = false;
         context.fireTransportInactive();
         context.pipeline.transport(null);
+        _socket.setReadCallBack(null);
+        _socket.setCloseCallBack(null);
         _socket = null;
         context.pipeline.deletePipeline();
 
@@ -88,6 +94,7 @@ protected:
     }
 
 private:
+    bool _isAttch = false;
     TCPSocket _socket;
     EventLoop _loop;
 }

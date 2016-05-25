@@ -303,7 +303,7 @@ final class Pipeline(R, W = void) : PipelineBase
         {
             if (_front)
             {
-                _front.transportActive();
+                _front.transportInactive();
             }
         }
     }
