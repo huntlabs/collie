@@ -11,6 +11,7 @@
 module collie.codec.lengthfieldbasedframe;
 
 import std.bitmanip;
+import std.experimental.logger;
 
 import collie.channel;
 import collie.channel.handler;
@@ -36,6 +37,7 @@ class LengthFieldBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[]
 
     final override void write(Context ctx, ubyte[] msg, TheCallBack cback = null)
     {
+        trace("writeln data!");
         try 
         {
             ubyte ctype = _compressType;
@@ -57,8 +59,9 @@ class LengthFieldBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[]
             if (cback)
                 cback(msg, size);
         }
-        catch
+        catch (Exception e)
         {
+            error("write erro: ",e.msg);
             if (cback)
                 cback(msg, 0);
         }

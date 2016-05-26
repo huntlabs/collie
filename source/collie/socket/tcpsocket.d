@@ -101,14 +101,16 @@ class TCPSocket : AsyncTransport, EventCallInterface
     pragma(inline)
     void write(ubyte[] data, TCPWriteCallBack cback)
     {
-        if (!isAlive)
+        if (!alive)
         {
+            info("tcp socket write on close!");
             cback(data, 0);
             return;
         }
         auto buffer = new WriteSite(data, cback);
-        if (!isAlive || !_writeQueue.enQueue(buffer))
+        if (!alive || !_writeQueue.enQueue(buffer))
         {
+            info("tcp socket write on _writeQueue close!");
             buffer.doCallBack();
             import collie.utils.memory;
             gcFree(buffer);

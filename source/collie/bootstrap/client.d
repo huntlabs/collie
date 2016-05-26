@@ -24,6 +24,12 @@ final class ClientBootstrap(PipeLine)
         _loop = loop;
     }
 
+    ~this()
+    {
+        if(_timer) _timer.destroy;
+        _socket.destroy;
+    }
+    
     auto setPipelineFactory(shared PipelineFactory!PipeLine  pipeFactory)
     {
         _pipelineFactory = pipeFactory;
