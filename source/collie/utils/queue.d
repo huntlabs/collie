@@ -9,25 +9,35 @@
  *
  */
 module collie.utils.queue;
-/** 自定义自己的queue的类,非线程安全
- *  @authors : Putao‘s Collie Team
- @date : 2016.1
- */
+
 import core.memory;
 import std.experimental.allocator.common;
 import std.experimental.allocator.mallocator : AlignedMallocator;
+import std.experimental.allocator.gc_allocator;
 import std.traits;
+
+/**
+    Queue Struct Template.
+    params:
+        T         = the element type;
+        autoExten = if the Queue is full, will or not auto expand;
+        addToGC   = if use other Allocator, will or not add to GC scan.
+        Allocator = which type Allocator will used
+*/
 
 struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
     Allocator = AlignedMallocator)
 {
-
+    alias TSize = stateSize!T;
+    /**
+        
+    */
     this(uint size)
     {
         assert(size > 3);
         _size = size;
-        _data = cast(T[]) _alloc.allocate(T.sizeof * size);
-        static if (addToGC)
+        _data = cast(T[]) _alloc.allocate(TSize * size);
+        static if (addToGC && !is(Allocator == GCAllocator))
         {
             GC.addRange(_data.ptr, len);
         }
@@ -44,7 +54,7 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
     ~this()
     {
         //clear();
-        static if (addToGC)
+        static if (addToGC && !is(Allocator == GCAllocator))
         {
             GC.removeRange(_data.ptr);
         }
@@ -139,9 +149,9 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
         {
             //	writeln("queue auto exten");
             auto size = _size > 128 ? _size + ((_size / 3) * 2) : _size * 2;
-            auto len = T.sizeof * size;
-            auto data = cast(T[]) _alloc.allocate(T.sizeof * size);
-            static if (addToGC)
+            auto len = TSize * size;
+            auto data = cast(T[]) _alloc.allocate(TSize * size);
+            static if (addToGC && !is(Allocator == GCAllocator))
             {
                 GC.addRange(data.ptr, len);
             }
@@ -155,7 +165,7 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
             _size = size;
             _front = 0;
             _rear = i;
-            static if (addToGC)
+            static if (addToGC && !is(Allocator == GCAllocator))
             {
                 GC.removeRange(_data.ptr);
             }

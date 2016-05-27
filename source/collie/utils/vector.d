@@ -17,9 +17,11 @@ import std.traits;
 
 struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator)
 {
+    alias TSize = stateSize!T;
+
     this(size_t size)
     {
-        auto len = T.sizeof * size;
+        auto len = TSize * size;
         _data = cast(T[]) _alloc.allocate(len);
         static if (addToGC)
         {
@@ -219,8 +221,8 @@ private:
         else
             size = 32;
         size += len;
-        len = T.sizeof * size;
-        auto data = cast(T[]) _alloc.allocate(T.sizeof * size);
+        len = TSize * size;
+        auto data = cast(T[]) _alloc.allocate(TSize * size);
         if (!empty)
         {
             data[0 .. length] = _data[0 .. length];
