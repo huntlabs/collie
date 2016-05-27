@@ -285,11 +285,7 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
             con.close();
             con.stop();
         }
-        version(DigitalMars){
-            _list.clear();
-        } else {
-            _list = null;
-        }
+        _list.clear();
         _acceptor.eventLoop.stop();
     }
 protected:

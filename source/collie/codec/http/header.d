@@ -239,14 +239,7 @@ package:
         _method = HTTPMethod.HTTP_INVAILD;
         _queryString = "";
         _fileStart = 0;
-        version (DigitalMars)
-        {
-            _header.clear();
-        }
-        else
-        {
-            _header = null;
-        }
+        _header.clear();
         _setCookies.clear();
     }
 
