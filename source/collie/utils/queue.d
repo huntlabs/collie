@@ -18,7 +18,7 @@ import std.traits;
 
 /**
     Queue Struct Template.
-    params:
+    Params:
         T         = the element type;
         autoExten = if the Queue is full, will or not auto expand;
         addToGC   = if use other Allocator, will or not add to GC scan.
@@ -30,7 +30,8 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
 {
     alias TSize = stateSize!T;
     /**
-        
+        Params:
+            size        =  the queue init size. 
     */
     this(uint size)
     {

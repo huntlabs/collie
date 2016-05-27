@@ -87,8 +87,10 @@ class TCPSocket : AsyncTransport, EventCallInterface
         }
         else if (_socket.isAlive())
         {
-            //Linger optLinger;
-            //_socket.setOption(SocketOptionLevel.SOCKET,SocketOption.LINGER,
+            Linger optLinger;
+            optLinger.on = 1;
+            optLinger.time = 0;
+            _socket.setOption(SocketOptionLevel.SOCKET,SocketOption.LINGER,optLinger);
             _socket.close();
         }
     }
