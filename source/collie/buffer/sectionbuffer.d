@@ -12,8 +12,8 @@ module collie.buffer.sectionbuffer;
 
 //import core.stdc.string;
 import core.memory;
+import core.stdc.string;
 
-import std.string;
 import std.algorithm : swap;
 import std.experimental.allocator;
 import std.experimental.allocator.gc_allocator;
@@ -253,7 +253,9 @@ final class SectionBuffer : Buffer
             {
                 byptr = by[rsite .. $];
             }
-            auto site = indexOf(cast(string) byptr, '\n');
+            auto tptr = cast(ubyte *)memchr(byptr.ptr, '\n', byptr.length);
+            auto site = tptr -  byptr.ptr;
+           // auto site = indexOf(cast(string) byptr, '\n');
             if (site == -1)
             {
                 if (rbyte.length > 0)
@@ -385,7 +387,9 @@ final class SectionBuffer : Buffer
             {
                 byptr = by[rsite .. $];
             }
-            auto site = indexOf(cast(string) byptr, ch);
+            //auto site = indexOf(cast(string) byptr, ch);
+            auto tptr = cast(ubyte *)memchr(byptr.ptr, ch, byptr.length);
+            auto site = tptr -  byptr.ptr;
             if (site == -1)
             {
                 cback(byptr);

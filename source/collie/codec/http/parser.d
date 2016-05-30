@@ -1405,9 +1405,11 @@ public:
                                 size_t limit = maxP - p;
 
                                 limit = (limit < _maxHeaderSize ? limit : _maxHeaderSize); //MIN(limit, TTPConfig.instance.MaxHeaderSize);
-                                string str = cast(string) data[p .. maxP];
-                                auto p_cr = str.indexOf(CR); // memchr(p, CR, limit);
-                                auto p_lf = str.indexOf(LF); // memchr(p, LF, limit);
+                                auto str =  data[p .. maxP];
+                                auto tptr = cast(ubyte *)memchr(str.ptr, CR, str.length);
+                                auto p_cr = tptr - str.ptr;//str.indexOf(CR); // memchr(p, CR, limit);
+                                tptr = cast(ubyte *)memchr(str.ptr, LF, str.length);
+                                auto p_lf = tptr - str.ptr ;//str.indexOf(LF); // memchr(p, LF, limit);
                                 ++p_cr;
                                 ++p_lf;
                                 if (p_cr > 0)

@@ -14,8 +14,16 @@ import std.container.array;
 
 import std.stdio;
 
+/**
+    Timing Wheel manger Class
+*/
 final class TimingWheel
 {
+    /**
+        constructor
+        Params:
+            wheelSize =  the Wheel's element router.
+    */
     this(uint wheelSize)
     {
         if (wheelSize == 0)
@@ -27,6 +35,11 @@ final class TimingWheel
         }
     }
 
+    /**
+        add a Timer into the Wheel
+        Params:
+            tm  = the timer.
+    */
     pragma(inline)
     void addNewTimer(WheelTimer tm) nothrow
     {
@@ -39,6 +52,13 @@ final class TimingWheel
         tm._manger = this;
     }
 
+    /**
+        The Wheel  go forward
+        Params:
+            size  = forward's element size;
+        Notes:
+            all forward's element will timeout.
+    */
     void prevWheel(uint size = 1) nothrow
     {
         if (size == 0)
@@ -51,6 +71,7 @@ final class TimingWheel
     }
 
 protected:
+    /// get the index whitch is farthest with current index.
     size_t getPrev() const nothrow
     {
         if (_now == 0)
@@ -58,7 +79,7 @@ protected:
         else
             return (_now - 1);
     }
-
+    /// go forward a element,and return the element.
     pragma(inline)
     NullWheelTimer doNext() nothrow
     {
@@ -67,14 +88,14 @@ protected:
             _now = 0;
         return _list[_now];
     }
-
+    /// rest a timer.
     pragma(inline)
     void rest(WheelTimer tm) nothrow
     {
         remove(tm);
         addNewTimer(tm);
     }
-
+    /// remove the timer.
     pragma(inline)
     void remove(WheelTimer tm) nothrow
     {
@@ -91,10 +112,18 @@ private:
     size_t _now;
 }
 
+
+/**
+    The timer parent's class.
+*/
 abstract class WheelTimer
 {
+    /**
+        the function will be called when the timer timeout.
+    */
     void onTimeOut() nothrow;
 
+    /// rest the timer.
     pragma(inline)
     final void rest() nothrow
     {
@@ -104,6 +133,7 @@ abstract class WheelTimer
         }
     }
 
+    /// stop the time, it will remove from Wheel.
     pragma(inline)
     final void stop() nothrow
     {
@@ -113,18 +143,20 @@ abstract class WheelTimer
         }
     }
 
+    /// the time is active.
     pragma(inline,true)
     final bool isActive() const nothrow
     {
         return _manger !is null;
     }
-
+    
+    /// get the timer only run once.
     pragma(inline,true)
     final @property oneShop()
     {
         return _oneShop;
     }
-
+    /// set the timer only run once.
     pragma(inline)
     final @property oneShop(bool one)
     {
@@ -140,6 +172,7 @@ private:
 
 private:
 
+/// the Header Timer in the wheel.
 class NullWheelTimer : WheelTimer
 {
     override void onTimeOut() nothrow
