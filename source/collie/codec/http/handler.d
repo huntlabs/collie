@@ -64,7 +64,8 @@ public:
 
         writeSection(buffer, nullBody);
         trace("header write over, Go write body! ");
-        writeSection(resp.Body(), true);
+        if(!nullBody)
+            writeSection(resp.Body(), true);
     }
 
     final override void timeOut(Context ctx)
@@ -173,7 +174,6 @@ protected:
 
     final void responseClose(HTTPResponse red)
     {
-        clear();
         close(context());
     }
 
@@ -184,10 +184,11 @@ protected:
 
     final void lastWrited(ubyte[] data, uint len)
     {
-        clear();
         httpAllocator.deallocate(data);
         if (_shouldClose)
             close(context);
+        else
+           clear();
     }
 
     final bool writeSection(SectionBuffer buffer, bool isLast, bool isFile = false)

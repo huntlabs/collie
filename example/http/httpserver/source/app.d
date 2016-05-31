@@ -61,9 +61,11 @@ public:
 
 void main()
 {
+    
     writeln("Edit source/app.d to start your project.");
     globalLogLevel(LogLevel.warning);
     
+ //   httpAllocator = a
     httpConfig.headerStectionSize = 256;
     httpConfig.responseBodyStectionSize = 256;
     httpConfig.requestBodyStectionSize = 256;
