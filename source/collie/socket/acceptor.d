@@ -18,8 +18,8 @@ import std.functional;
 
 import collie.socket.common;
 import collie.socket.eventloop;
+import collie.socket.transport;
 import collie.utils.queue;
-import fun = collie.utils.functional;
 import collie.socket.tcpsocket;
 
 alias AcceptCallBack = void delegate(Socket sock);
@@ -84,13 +84,10 @@ final class Acceptor : AsyncTransport, EventCallInterface
     {
         if (isAlive)
         {
-          //  eventLoop.post(fun.bind(&onClose));
           onClose();
         }
         else if (_socket.isAlive())
         {
-            //Linger optLinger;
-            //_socket.setOption(SocketOptionLevel.SOCKET,SocketOption.LINGER,
             _socket.close();
         }
     }

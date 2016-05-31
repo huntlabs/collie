@@ -175,60 +175,22 @@ private:
     ThreadID _thID;
 }
 
-enum IO_MODE
-{
-    epoll,
-    kqueue,
-    iocp,
-    select,
-    poll,
-    none
-}
-
-version (FreeBSD)
+static if(IOMode == IO_MODE.kqueue)
 {
     import collie.socket.selector.kqueue;
 
     alias EventLoop = EventLoopImpl!(KqueueLoop);
-    enum IO_MODE IOMode = IO_MODE.kqueue;
 }
-else version (OpenBSD)
-{
-    import collie.socket.selector.kqueue;
-
-    alias EventLoop = EventLoopImpl!(KqueueLoop);
-    enum IO_MODE IOMode = IO_MODE.kqueue;
-}
-else version (NetBSD)
-{
-    import collie.socket.selector.kqueue;
-
-    alias EventLoop = EventLoopImpl!(KqueueLoop);
-    enum IO_MODE IOMode = IO_MODE.kqueue;
-}
-else version (OSX)
-{
-    import collie.socket.selector.kqueue;
-
-    alias EventLoop = EventLoopImpl!(KqueueLoop);
-    enum IO_MODE IOMode = IO_MODE.kqueue;
-}
-else version (Solaris)
-{
-    public import collie.socket.selector.port;
-}
-else version (linux)
+else static if(IOMode == IO_MODE.epoll)
 {
     import collie.socket.selector.epoll;
 
     alias EventLoop = EventLoopImpl!(EpollLoop);
-    enum IO_MODE IOMode = IO_MODE.epoll;
-}
-else version (Posix)
-{
-    import collie.socket.selector.poll;
-}
+} 
 else
 {
     import collie.socket.selector.select;
+
+    alias EventLoop = EventLoopImpl!(SelectLoop);
 }
+

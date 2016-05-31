@@ -16,6 +16,7 @@ import std.socket;
 
 import collie.socket.common;
 import collie.socket.eventloop;
+import collie.socket.transport;
 import collie.utils.queue;
 import collie.utils.functional;
 

@@ -15,36 +15,59 @@ module collie.socket.common;
 public import std.experimental.logger;
 import std.experimental.allocator;
 
-import collie.socket.eventloop;
+//import collie.socket.eventloop;
 
 enum TCP_READ_BUFFER_SIZE = 4096;
+
+enum IO_MODE
+{
+    epoll,
+    kqueue,
+    iocp,
+    select,
+    poll,
+    port,
+    none
+}
+
+version (FreeBSD)
+{
+    enum IO_MODE IOMode = IO_MODE.kqueue;
+}
+else version (OpenBSD)
+{
+    enum IO_MODE IOMode = IO_MODE.kqueue;
+}
+else version (NetBSD)
+{
+    enum IO_MODE IOMode = IO_MODE.kqueue;
+}
+else version (OSX)
+{
+    enum IO_MODE IOMode = IO_MODE.kqueue;
+}
+else version (Solaris)
+{
+    enum IO_MODE IOMode = IO_MODE.port;
+}
+else version (linux)
+{
+    enum IO_MODE IOMode = IO_MODE.epoll;
+}
+else version (Posix)
+{
+    enum IO_MODE IOMode = IO_MODE.poll;
+}
+else
+{
+    enum IO_MODE IOMode = IO_MODE.select;
+}
 
 enum TransportType : short
 {
     ACCEPT,
     TCP,
     UDP
-}
-
-abstract class AsyncTransport
-{
-    this(EventLoop loop)
-    {
-        _loop = loop;
-    }
-
-    void close();
-    bool start();
-    @property bool isAlive() @trusted;
-    @property int fd();
-
-    final @property eventLoop()
-    {
-        return _loop;
-    }
-
-protected:
-    EventLoop _loop;
 }
 
 alias CallBack = void delegate();
@@ -142,3 +165,4 @@ private:
     AsynType _type;
     bool _isActive = false;
 }
+

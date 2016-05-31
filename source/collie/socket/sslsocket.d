@@ -17,6 +17,7 @@ import std.socket;
 
 import collie.socket.eventloop;
 import collie.socket.common;
+import collie.socket.transport;
 import collie.socket.tcpsocket;
 
 import deimos.openssl.ssl;
