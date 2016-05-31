@@ -15,9 +15,6 @@ module collie.socket.common;
 public import std.experimental.logger;
 import std.experimental.allocator;
 
-//import collie.socket.eventloop;
-
-enum TCP_READ_BUFFER_SIZE = 4096;
 
 enum IO_MODE
 {
@@ -61,13 +58,6 @@ else version (Posix)
 else
 {
     enum IO_MODE IOMode = IO_MODE.select;
-}
-
-enum TransportType : short
-{
-    ACCEPT,
-    TCP,
-    UDP
 }
 
 alias CallBack = void delegate();
