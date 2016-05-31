@@ -63,7 +63,7 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
                 doHandleList();
             }
         }
-        _thID = 0;
+        _thID = ThreadID.init;
         _run = false;
     }
 

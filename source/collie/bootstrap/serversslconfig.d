@@ -125,14 +125,15 @@ private :
 
         
 extern(C) :
+pragma(inline,true)
 ulong id_function()
 {
-    return Thread.getThis.id;
+    return cast(ulong)(Thread.getThis.id);
 }
 
 void threadid_function(CRYPTO_THREADID* id)
 {
-    CRYPTO_THREADID_set_numeric(id, Thread.getThis.id);
+    CRYPTO_THREADID_set_numeric(id, id_function());
 }
 
 void ssl_lock_callback(int mode, int type, const(char) * file, int line) 

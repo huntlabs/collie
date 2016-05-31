@@ -124,41 +124,30 @@ final class EpollLoop
 
     void wait(int timeout)
     {
-        try
+        epoll_event event;
+        if (epoll_wait(_efd,  & event, 1, timeout) < 1)
+            return;
+        AsyncEvent * asevent = cast(AsyncEvent * )(event.data.ptr);
+        scope(success)
         {
-            epoll_event event;
-            if (epoll_wait(_efd,  & event, 1, timeout) < 1)
-                return;
-            AsyncEvent * asevent = cast(AsyncEvent * )(event.data.ptr);
-            scope(success)
+            if(asevent.deleteOnClosed && (!asevent.isActive))
             {
-                if(asevent.deleteOnClosed && (!asevent.isActive))
-                {
-                    import collie.utils.memory;
-                    gcFree(asevent.obj);
-                }
-            }
-
-            if (isErro(event.events))
-            {
-                asevent.obj.onClose();
-                return;
-            }
-
-            if (isWrite(event.events))
-                asevent.obj.onWrite();
-
-            if (isRead(event.events))
-                asevent.obj.onRead();
-
-        }
-        catch (ErrnoException e)
-        {
-            if (e.errno != EINTR && e.errno != EAGAIN && e.errno != 4)
-            {
-                throw e;
+                import collie.utils.memory;
+                gcFree(asevent.obj);
             }
         }
+
+        if (isErro(event.events))
+        {
+            asevent.obj.onClose();
+            return;
+        }
+
+        if (isWrite(event.events))
+            asevent.obj.onWrite();
+
+        if (isRead(event.events))
+            asevent.obj.onRead();
         return;
     }
 
@@ -245,7 +234,11 @@ string mixinModEvent()
     return str;
 }
 
-extern (C) : @system : nothrow : enum
+extern (C) : 
+@system : 
+nothrow :
+
+enum
 {
     EFD_SEMAPHORE = 0x1,
     EFD_CLOEXEC = 0x80000,

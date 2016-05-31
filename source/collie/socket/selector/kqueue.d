@@ -29,14 +29,14 @@ else version (OSX)
 }
 
 version(KQUEUE):
+import core.stdc.errno;
+import core.sys.posix.sys.types; // for ssize_t, size_t
+import core.sys.posix.netinet.tcp;
+import core.sys.posix.netinet.in_;
+import core.sys.posix.time ;
+import core.sys.posix.unistd;
 
-public import core.sys.posix.sys.types; // for ssize_t, size_t
-public import core.sys.posix.netinet.tcp;
-public import core.sys.posix.netinet.in_;
-public import core.stdc.stdint;    // intptr_t, uintptr_t
-public import core.sys.posix.time; // timespec
-public import core.sys.posix.config;
-
+import std.exception;
 import std.socket;
 
 import collie.socket.common;
@@ -73,9 +73,9 @@ class KqueueLoop
         if(event.type() == AsynType.TIMER)
         {
             kevent_t ev;
-            event.timeout = event.timeout < 20 ? 20 : event.timeout;
+            event.timeOut = event.timeOut < 20 ? 20 : event.timeOut;
             event.fd = getTimerfd();
-            EV_SET(&ev, event.fd, EVFILT_TIMER, EV_ADD | EV_ENABLE | EV_CLEAR, 0, event.timeout, event);//单位毫秒
+            EV_SET(&ev, event.fd, EVFILT_TIMER, EV_ADD | EV_ENABLE | EV_CLEAR, 0, event.timeOut, event);//单位毫秒
             err = kevent(_efd, &ev, 1, null, 0, null);
         }
         else if(event.enRead && event.enWrite)
@@ -140,22 +140,22 @@ class KqueueLoop
         }   
         if(event.enRead)
         {
-            EV_SET(&ev, event.fd, EVFILT_READ, read, 0, 0, event);
+            EV_SET(&ev[0], event.fd, EVFILT_READ, read, 0, 0, event);
         }
         else
         {
-            EV_SET(&ev, event.fd, EVFILT_READ, EV_DELETE, 0, 0, event);
+            EV_SET(&ev[0], event.fd, EVFILT_READ, EV_DELETE, 0, 0, event);
         }
         
         if(event.enWrite)
         {
-            EV_SET(&ev, event.fd, EVFILT_WRITE, write, 0, 0, event);
+            EV_SET(&ev[1], event.fd, EVFILT_WRITE, write, 0, 0, event);
         }
         else
         {
-            EV_SET(&ev, event.fd, EVFILT_WRITE, EV_DELETE, 0, 0, event);
+            EV_SET(&ev[1], event.fd, EVFILT_WRITE, EV_DELETE, 0, 0, event);
         }
-        kevent(_efd, &(ev[0]), 2, null, 0, null);
+        kevent(_efd, ev.ptr, 2, null, 0, null);
         event.isActive = true;
         return true;
     }
@@ -171,7 +171,7 @@ class KqueueLoop
         {
             kevent_t ev;
             EV_SET(&ev, event.fd, EVFILT_TIMER, EV_DELETE, 0, 0, event);
-            err = kevent(_efd, &event, 1, null, 0, null);
+            err = kevent(_efd, &ev, 1, null, 0, null);
         }
         else if(event.enRead && event.enWrite)
         {
@@ -213,51 +213,40 @@ class KqueueLoop
 
     void wait(int timeout)
     {
-        try
+        auto tm = timeout % 1000;
+        auto tspec = timespec(timeout / 1000 , tm * 1000 * 1000);
+        kevent_t event;
+        auto num = kevent(_efd, null, 0, &event, 1, &tspec);
+        if(num <= 0) return;
+        auto ev = cast(AsyncEvent *)event.udata;
+        scope(success)
         {
-            auto tm = timeout % 1000;
-            auto tspec = timespec(timeout / 1000 , tm * 1000 * 1000);
-            kevent_t event;
-            auto num = kevent(_efd, null, 0, &event, 1, &tspec);
-            if(num <= 0) return;
-            auto ev = cast(AsyncEvent *)event.udata;
-            scope(success)
+            if(ev.deleteOnClosed && (!ev.isActive))
             {
-                if(asevent.deleteOnClosed && (!asevent.isActive))
-                {
-                    import collie.utils.memory;
-                    gcFree(asevent.obj);
-                }
+                import collie.utils.memory;
+                gcFree(ev.obj);
             }
-            
-            if((event.flags & EV_EOF) || (event.flags &EV_ERROR))
-            {
-                ev.obj.onClose();
-                return;
-            }
-                        
-            if(event.type() == AsynType.TIMER)
-            {
-                ev.obj.onRead();
-                return;
-            }
-       
-            if(event.filter & EVFILT_WRITE )
-            {
-                ev.obj.onWrite();
-            }
-            if(event.filter & EVFILT_READ) 
-            {
-                ev.obj.onRead();
-            }
-
         }
-        catch (ErrnoException e)
+        
+        if((event.flags & EV_EOF) || (event.flags &EV_ERROR))
         {
-            if (e.errno != EINTR && e.errno != EAGAIN && e.errno != 4)
-            {
-                throw e;
-            }
+            ev.obj.onClose();
+            return;
+        }
+                    
+        if(ev.type() == AsynType.TIMER)
+        {
+            ev.obj.onRead();
+            return;
+        }
+    
+        if(event.filter & EVFILT_WRITE )
+        {
+            ev.obj.onWrite();
+        }
+        if(event.filter & EVFILT_READ) 
+        {
+            ev.obj.onRead();
         }
     }
 
@@ -292,7 +281,6 @@ private final class EventChannel : EventCallInterface
     ~this()
     {
         AsyncEvent.free(_event);
-        .close(_fd);
     }
 
     void doWrite() nothrow
@@ -326,21 +314,18 @@ private final class EventChannel : EventCallInterface
 }
 
 
-int getTimerfd()
+auto getTimerfd()
 {
-    shared  int i = 6553;
-    --i;
-    if(i < 100) i = 6552;
-    return i;
+    import core.atomic;
+    static shared  int i = int.max;
+    atomicOp!"-="(i, 1);
+    if(i < 655350) i = int.max;
+    return cast(socket_t)i;
 }
 
 extern (C):
 @nogc:
-struct timespec
-{
-        time_t  tv_sec;
-        c_long  tv_nsec;
-}
+nothrow :
 
 enum : short
 {

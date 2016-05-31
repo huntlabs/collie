@@ -10,8 +10,8 @@ It's like facebook/Wangle smooshed together, but written in D programing languag
 ## TODO
 - _timer and  Timing Wheel_ (__Complete__)
 - _add TCP Client support_ (__Complete__)
-- _SSL suport_(Now Only Server)
-- add codec (processing )
-- MAC and BSD suport (kqueue)(processing )
+- _SSL suport_(__Now Only Server__)
+- _add codec (__Complete,but Maybe need more__)
+- _MAC and BSD suport (kqueue)(__Complete__)
 - UDP
 - Test Add Windows suport (select)
