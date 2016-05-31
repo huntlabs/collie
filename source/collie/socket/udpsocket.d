@@ -96,7 +96,7 @@ class UDPSocket : AsyncTransport, EventCallInterface
     pragma(inline)
     @safe ptrdiff_t sendTo(const(void)[] buf, Address to)
     {
-        return _socket.sendTo(forward!(buf, to));
+        return _socket.sendTo(buf, to);
     }
 
     pragma(inline)
@@ -104,7 +104,7 @@ class UDPSocket : AsyncTransport, EventCallInterface
     {
         ptrdiff_t len  = -1;
         if(_connecto)
-            len = _socket.sendTo(forward!(buf), _readAddr);
+            len = _socket.sendTo(buf, _connecto);
         return len;
     }
     
@@ -178,4 +178,49 @@ private:
     AsyncEvent* _event;
     ubyte[] _readBuffer;
     UDPReadCallBack _readCallBack;
+}
+
+unittest
+{
+    EventLoop loop = new EventLoop();
+    
+    UDPSocket server = new UDPSocket(loop);
+    UDPSocket client = new UDPSocket(loop);
+    
+    server.bind(new InternetAddress("127.0.0.1", 9008));
+    Address adr = new InternetAddress("127.0.0.1", 9008);
+    client.connect(adr);
+    
+    int i = 0;
+    
+    void serverHandle(ubyte[] data, Address adr2)
+    {
+        string tstr = cast(string)data;
+        writeln("Server revec data : ", tstr);
+        string str = "hello " ~ i.to!string();
+        server.sendTo(data,adr2);
+        assert(str == tstr);
+        if(i > 10)
+            loop.stop();
+    }
+    
+    void clientHandle(ubyte[] data, Address adr23)
+    {
+        writeln("Client revec data : ", cast(string)data);
+        ++i;
+        string str = "hello " ~ i.to!string();
+        client.sendTo(str);
+    }
+    client.setReadCallBack(&clientHandle);
+    server.setReadCallBack(&serverHandle);
+    
+    client.start();
+    server.start();
+    
+    string str = "hello " ~ i.to!string();
+    client.sendTo(cast(ubyte[])str);
+    writeln("Edit source/app.d to start your project.");
+    loop.run();
+    server.close();
+    client.close();
 }
