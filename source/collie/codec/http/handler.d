@@ -55,10 +55,6 @@ public:
     {
         auto buffer = scoped!SectionBuffer(config.headerStectionSize, httpAllocator);
         const bool nullBody = (resp.Body.length == 0);
-        if (nullBody)
-        {
-            resp.Header.statusCode = 404;
-        }
         resp.Header.setHeaderValue("Content-Length", resp.Body.length);
         HTTPResponse.generateHeader(resp, buffer);
 
