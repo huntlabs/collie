@@ -90,6 +90,7 @@ protected:
         if (_size == 0)
         {
             uint rang = readPackSize(data);
+            trace("readPackSize return : ", rang, "   the _size is : ", _size);
             if (rang > 0)
             {
                 if (rang < cast(uint) data.length)
@@ -97,7 +98,7 @@ protected:
                     data = data[rang .. $];
                     if (_size == 0)
                     {
-                        ctx.fireRead(_packData); // the size is 0;
+                        ctx.fireRead(null); // the size is 0;
                         clear();
                         readPack(data, ctx);
                         return;
@@ -119,8 +120,8 @@ protected:
         if (size >= tsize)
         {
             _packData[_readSize .. $] = data[0 .. tsize];
-            _packData = unCompress(_packSize[4], _packData);
-            ctx.fireRead(_packData);
+            auto datatmp = unCompress(_packSize[4], _packData);
+            ctx.fireRead(datatmp);
             clear();
             data = data[tsize .. $];
             readPack(data, ctx);
@@ -146,6 +147,7 @@ protected:
         {
             ubyte[4] len;
             len[] = _packSize[0 .. 4];
+            trace("size data read all :  ", len);
             static if (littleEndian)
             {
                 _size = littleEndianToNative!uint(len); //littleEndianToNative
@@ -161,6 +163,7 @@ protected:
             }
             if (_size > _max)
             {
+                trace("size is than max :  ", _size, "  max :", _max);
                 return 0;
             }
             _packData = new ubyte[_size];
