@@ -28,6 +28,7 @@ class LengthFieldBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[]
     {
         _max = max;
         _compressType = compressType;
+    //    clear();
     }
 
     final override void read(Context ctx, ubyte[] msg)
@@ -96,11 +97,8 @@ protected:
                     data = data[rang .. $];
                     if (_size == 0)
                     {
-                        _readSize = 0;
-                        _pSize = 0x00;
-                        _size = 0;
-                        _packData = null;
                         ctx.fireRead(_packData); // the size is 0;
+                        clear();
                         readPack(data, ctx);
                         return;
                     }
@@ -123,13 +121,7 @@ protected:
             _packData[_readSize .. $] = data[0 .. tsize];
             _packData = unCompress(_packSize[4], _packData);
             ctx.fireRead(_packData);
-            _readSize = 0;
-            _pSize = 0x00;
-            _size = 0;
-            _packData = null;
-            if (size == tsize)
-                return;
-            size = 0;
+            clear();
             data = data[tsize .. $];
             readPack(data, ctx);
         }
@@ -180,6 +172,13 @@ protected:
         }
     }
 
+    final void clear()
+    {
+        _readSize = 0;
+        _pSize = 0x00;
+        _size = 0;
+        _packData = null;
+    }
 private:
     ubyte[] _packData;
     ubyte[5] _packSize;
