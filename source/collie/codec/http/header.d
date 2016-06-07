@@ -11,6 +11,7 @@
 module collie.codec.http.header;
 
 import std.conv;
+import std.uri;
 import std.string;
 import std.experimental.allocator.gc_allocator;
 
@@ -116,24 +117,15 @@ final class HTTPHeader
     pragma(inline)
     @property requestString(string str)
     {
-        if(str.length > 0)
+        _queryString = str;
+        auto idx = _queryString.indexOf('?');
+        if (idx != -1)
         {
-	  import std.uri;
-	  _queryString = decode(str);
-	  auto idx = _queryString.indexOf('?');
-	  if (idx != -1)
-	  {
-	      _fileStart = cast(uint) idx;
-	  }
-	  else
-	  {
-	      _fileStart = cast(uint) _queryString.length;
-	  }
-        } 
+            _fileStart = cast(uint) idx;
+        }
         else
         {
-	   _fileStart = 0;
-	   _queryString = str;
+            _fileStart = cast(uint) _queryString.length;
         }
     }
 
@@ -148,7 +140,7 @@ final class HTTPHeader
     pragma(inline,true)
     @property path() const
     {
-        return _queryString[0 .. _fileStart];
+        return decode(_queryString[0 .. _fileStart]);
     }
 
     @property string[string] queryMap() const
@@ -283,13 +275,13 @@ string[string] parseKeyValues(string raw, string split1 = "&", string spilt2 = "
         // Accept formats a=b/a=b=c=d/a
         if (parts.length == 1)
         {
-            string key = parts[0];
+            string key = decode(parts[0]);
             map[key] = "";
         }
         else if (parts.length > 1)
         {
-            string key = parts[0];
-            string value = pair[parts[0].length + 1 .. $];
+            string key = decode(parts[0]);
+            string value = decodeComponent(pair[parts[0].length + 1 .. $]);
             map[key] = value;
         }
     }
