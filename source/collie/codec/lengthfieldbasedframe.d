@@ -195,6 +195,7 @@ private:
 unittest
 {
     import collie.socket.common;
+    import collie.socket.transport;
     import std.stdio;
 
     ubyte[] gloaData;

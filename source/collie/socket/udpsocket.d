@@ -20,8 +20,6 @@ import collie.socket.eventloop;
 import collie.socket.transport;
 import collie.utils.queue;
 
-import std.stdio;
-
 alias UDPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
 alias UDPReadCallBack = void delegate(ubyte[] buffer, Address adr);
 
@@ -182,6 +180,8 @@ private:
 
 unittest
 {
+  import std.conv;
+  import std.stdio;
     EventLoop loop = new EventLoop();
     
     UDPSocket server = new UDPSocket(loop);
