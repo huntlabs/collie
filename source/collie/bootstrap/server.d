@@ -113,9 +113,9 @@ final class ServerBootstrap(PipeLine)
     void waitForStop()
     {
         if (_runing)
-            return;
+	  throw new Exception("server is runing!");
         if (_address is null || _childPipelineFactory is null)
-            return;
+          throw new Exception("the address or childPipelineFactory is null!");
         _runing = true;
         uint wheel, time;
         bool beat = getTimeWheelConfig(wheel, time);
