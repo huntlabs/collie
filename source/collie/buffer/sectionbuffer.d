@@ -253,8 +253,9 @@ final class SectionBuffer : Buffer
             {
                 byptr = by[rsite .. $];
             }
-            auto tptr = cast(ubyte *)memchr(byptr.ptr, '\n', byptr.length);
-            auto site = tptr -  byptr.ptr;
+            auto tptr = memchr(byptr.ptr, '\n', byptr.length);
+            ptrdiff_t site = -1;
+            if(tptr) site = cast(ubyte *)tptr -  byptr.ptr;
            // auto site = indexOf(cast(string) byptr, '\n');
             if (site == -1)
             {
@@ -388,8 +389,9 @@ final class SectionBuffer : Buffer
                 byptr = by[rsite .. $];
             }
             //auto site = indexOf(cast(string) byptr, ch);
-            auto tptr = cast(ubyte *)memchr(byptr.ptr, ch, byptr.length);
-            auto site = tptr -  byptr.ptr;
+            auto tptr = memchr(byptr.ptr, ch, byptr.length);
+            ptrdiff_t site = -1;
+            if(tptr) site = cast(ubyte *)tptr -  byptr.ptr;
             if (site == -1)
             {
                 cback(byptr);
