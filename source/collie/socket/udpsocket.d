@@ -180,8 +180,8 @@ private:
 
 unittest
 {
-  import std.conv;
-  import std.stdio;
+    import std.conv;
+    import std.stdio;
     EventLoop loop = new EventLoop();
     
     UDPSocket server = new UDPSocket(loop);
@@ -197,7 +197,7 @@ unittest
     {
         string tstr = cast(string)data;
         writeln("Server revec data : ", tstr);
-        string str = "hello " ~ i.to!string();
+        string str = "hello " ~ to!string(i);
         server.sendTo(data,adr2);
         assert(str == tstr);
         if(i > 10)
@@ -208,7 +208,7 @@ unittest
     {
         writeln("Client revec data : ", cast(string)data);
         ++i;
-        string str = "hello " ~ i.to!string();
+        string str = "hello " ~ to!string(i);
         client.sendTo(str);
     }
     client.setReadCallBack(&clientHandle);
@@ -217,7 +217,7 @@ unittest
     client.start();
     server.start();
     
-    string str = "hello " ~ i.to!string();
+    string str = "hello " ~ to!string(i);
     client.sendTo(cast(ubyte[])str);
     writeln("Edit source/app.d to start your project.");
     loop.run();
