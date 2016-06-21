@@ -1,7 +1,5 @@
 # Collie
 An asynchronous event-driven network framework written in [dlang](http://dlang.org/).
-Collie is a library that makes it easy to build protocols, application clients, and application servers.
-It's like [wangle](https://github.com/facebook/wangle/) and [netty](http://netty.io/), but written in D programing language.
 
 ## Require
 - System : Linux (kernel >= 3.10) , FreeBSD, MacOS
