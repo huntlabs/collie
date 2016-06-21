@@ -36,24 +36,12 @@ final class Acceptor : AsyncTransport, EventCallInterface
         super(loop,TransportType.ACCEPT);
     }
 
-    @property reusePort(bool use)
-    {
-        if (use)
-        {
-            _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, true);
-            version (Posix)
-                _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
-                    true);
-        }
-        else
-        {
-            _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, false);
-            version (Posix)
-                _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
-                    false);
-
-        }
-    }
+	@property reusePort(bool use)
+	{
+		_socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, use);
+		version (Posix)
+			_socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,use);
+	}
 
     void bind(Address addr) @trusted
     {

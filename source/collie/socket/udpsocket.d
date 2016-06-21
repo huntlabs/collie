@@ -56,21 +56,9 @@ class UDPSocket : AsyncTransport, EventCallInterface
     
     @property reusePort(bool use)
     {
-        if (use)
-        {
-            _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, true);
-            version (Posix)
-                _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
-                    true);
-        }
-        else
-        {
-            _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, false);
-            version (Posix)
-                _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
-                    false);
-
-        }
+		_socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, use);
+        version (Posix)
+            _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,use);
     }
     
     pragma(inline)
