@@ -231,6 +231,7 @@ protected:
         }
         try
         {
+			_socket.shutdown(SocketShutdown.BOTH);
             _socket.close();
             scope (exit)
             {
