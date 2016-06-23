@@ -34,17 +34,23 @@ final class Acceptor : AsyncTransport, EventCallInterface
             _socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
         _socket.blocking = false;
         super(loop,TransportType.ACCEPT);
+        static if (IOMode == IO_MODE.iocp)
+            _buffer = new ubyte[2048];
     }
 
-	@property reusePort(bool use)
-	{
-		_socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, use);
-		version (Posix)
-			_socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,use);
-	}
+    @property reusePort(bool use)
+    {
+            _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, use);
+            version (Posix)
+                    _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,use);
+    }
 
     void bind(Address addr) @trusted
     {
+        static if (IO_MODE.iocp == IOMode)
+        {
+            _addreslen = addr.nameLen();
+        }
         _socket.bind(forward!addr);
     }
 
@@ -61,11 +67,21 @@ final class Acceptor : AsyncTransport, EventCallInterface
     override bool start()
     {
         if (_event != null || !_socket.isAlive() || !_callBack)
+        {
+            warning("accept start erro!");
             return false;
+        }
         _event = AsyncEvent.create(AsynType.ACCEPT, this, _socket.handle, true, false,
             false);
-        _loop.addEvent(_event);
-        return true;
+        static if(IOMode ==IO_MODE.iocp)
+        {
+            _loop.addEvent(_event);
+            return doAccept();
+        }
+        else
+        {
+            return _loop.addEvent(_event);
+        }
     }
 
     override void close()
@@ -102,15 +118,12 @@ final class Acceptor : AsyncTransport, EventCallInterface
 protected:
     override void onRead() nothrow
     {
-        while (true)
+        static if(IO_MODE.iocp == IOMode)
         {
-            socket_t fd = cast(socket_t)(.accept(_socket.handle, null, null));
-            if (fd == socket_t.init)
-                return;
             try
             {
-                Socket sock = new Socket(fd, _socket.addressFamily);
-                _callBack(sock);
+                trace("new connect ,the fd is : ",_inSocket.handle());
+                _callBack(_inSocket);
             }
             catch (Exception e)
             {
@@ -120,6 +133,33 @@ protected:
                 }
                 catch
                 {
+                }
+            }
+            _inSocket = null;
+            doAccept();
+        }
+        else
+        {
+            while (true)
+            {
+                socket_t fd = cast(socket_t)(.accept(_socket.handle, null, null));
+                if (fd == socket_t.init)
+                    return;
+                try
+                {
+                    trace("new connect ,the fd is : ",_inSocket.handle());
+                    Socket sock = new Socket(fd, _socket.addressFamily);
+                    _callBack(sock);
+                }
+                catch (Exception e)
+                {
+                    try
+                    {
+                        error("\n\n----accept Exception! erro : ", e.msg, "\n\n");
+                    }
+                    catch
+                    {
+                    }
                 }
             }
         }
@@ -138,12 +178,62 @@ protected:
         _event = null;
         _socket.close();
     }
+    
+    static if(IOMode ==IO_MODE.iocp)
+    {
+        bool doAccept() nothrow
+        {
+            try{
+                
+                _iocp.event = _event;
+                _iocp.operationType = IOCP_OP_TYPE.accept;
+                if(_inSocket)
+                {
+                    _inSocket = new Socket(_socket.addressFamily, SocketType.STREAM, ProtocolType.TCP);
+                }
+                
+                DWORD dwBytesReceived = 0;
+                int nRet = AcceptEx(cast(SOCKET)_socket.handle,cast(SOCKET)_inSocket.handle,_buffer.ptr,0,
+                                    _addreslen+16, _addreslen+16, &dwBytesReceived, &_iocp.ol);//BUG：异常！
+                trace("do AcceptEx : the return is : ", nRet);
+                if( nRet == 0 ){
+                    DWORD dwLastError = GetLastError();
+                    if( ERROR_IO_PENDING != dwLastError )
+                    {
+                        try{
+                        error("AcceptEx failed with error: ", dwLastError );
+                        }catch{}
+                        onClose();
+                        return false;
+                    }
+                }
+            }catch(Exception e)
+            {
+                try{
+                error("AcceptEx failed with error : ", e.msg);
+                } catch{}
+            }
+            return true;
+        }
+    }
 
 private:
     Socket _socket;
     AsyncEvent* _event = null;
 
     AcceptCallBack _callBack;
+    
+    static if (IO_MODE.iocp == IOMode)
+    {
+        IOCP_DATA _iocp;
+        WSABUF _iocpWBuf;
+        
+        Socket _inSocket;
+        
+        ubyte[] _buffer;
+        
+        uint _addreslen;
+    }
 }
 
 unittest

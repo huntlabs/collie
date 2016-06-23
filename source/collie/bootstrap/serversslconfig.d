@@ -14,6 +14,14 @@ module collie.bootstrap.serversslconfig;
 import std.string;
 import std.experimental.logger;
 
+version(Windows)
+{
+    alias SSL_CTX = int;
+    class ServerSSLConfig
+    {}
+}
+else
+{
 
 public import deimos.openssl.ssl;
 
@@ -133,7 +141,14 @@ ulong id_function()
 
 void threadid_function(CRYPTO_THREADID* id)
 {
-    CRYPTO_THREADID_set_numeric(id, id_function());
+	version(Windows)
+	{
+		CRYPTO_THREADID_set_numeric(id, cast(uint)id_function());
+	}
+	else
+	{
+		CRYPTO_THREADID_set_numeric(id, id_function());
+	}
 }
 
 void ssl_lock_callback(int mode, int type, const(char) * file, int line) 
@@ -143,4 +158,5 @@ void ssl_lock_callback(int mode, int type, const(char) * file, int line)
     } else {
             sslmutex[type].unlock();
     }
+}
 }

@@ -29,12 +29,16 @@ final class Timer : EventCallInterface
 
     ~this()
     {
-        import core.sys.posix.unistd;
+        
 
         if (_event.isActive)
         {
             _loop.delEvent(_event);
-            close(_event.fd);
+            static if(IOMode == IO_MODE.epoll)
+            {
+                import core.sys.posix.unistd;
+                close(_event.fd);
+            }
         }
         AsyncEvent.free(_event);
     }
@@ -90,17 +94,18 @@ final class Timer : EventCallInterface
     {
         if (isActive())
         {
-            //_loop.post(&onClose);
             onClose();
         }
     }
 protected:
     override void onRead() nothrow
     {
-        import core.sys.posix.unistd;
-
-        ulong value;
-        read(_event.fd, &value, 8);
+		static if(IOMode == IO_MODE.epoll)
+		{
+	        import core.sys.posix.unistd;
+	        ulong value;
+	        read(_event.fd, &value, 8);
+		}
         if (_callBack)
         {
             try
@@ -123,10 +128,13 @@ protected:
 
     override void onClose() nothrow
     {
-        import core.sys.posix.unistd;
+        static if(IOMode == IO_MODE.epoll)
+        {
+            import core.sys.posix.unistd;
 
-        _loop.delEvent(_event);
-        close(_event.fd);
+            _loop.delEvent(_event);
+            close(_event.fd);
+        }
     }
 
 private:

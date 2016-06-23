@@ -43,17 +43,21 @@ else version (OSX)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
 }
-else version (Solaris)
+/*else version (Solaris)
 {
     enum IO_MODE IOMode = IO_MODE.port;
-}
+}*/
 else version (linux)
 {
     enum IO_MODE IOMode = IO_MODE.epoll;
 }
-else version (Posix)
+/*else version (Posix)
 {
     enum IO_MODE IOMode = IO_MODE.poll;
+}*/
+else version(Windows)
+{
+	enum IO_MODE IOMode = IO_MODE.iocp;
 }
 else
 {
@@ -148,6 +152,11 @@ package:
 static if(IOMode == IOMode.kqueue)
 {
     long timeOut;
+}
+static if(IOMode == IOMode.iocp)
+{
+    uint readLen;
+    uint writeLen;
 }
 
 private:

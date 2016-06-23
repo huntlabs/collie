@@ -21,6 +21,7 @@ import collie.socket.transport;
 import collie.utils.queue;
 
 import std.stdio;
+static import windows.winsock2;
 
 alias TCPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
 alias TCPReadCallBack = void delegate(ubyte[] buffer);
@@ -45,6 +46,15 @@ class TCPSocket : AsyncTransport, EventCallInterface
         _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
         _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true,
             true, true);
+        static if (IO_MODE.iocp == IOMode)
+        {
+            _iocpBuffer.len = TCP_READ_BUFFER_SIZE;
+            _iocpBuffer.buf = cast(char *)_readBuffer.ptr;
+            _iocpread.event = _event;
+            _iocpwrite.event = _event;
+            _iocpwrite.operationType = IOCP_OP_TYPE.write;
+            _iocpread.operationType = IOCP_OP_TYPE.read;
+        }
     }
 
     ~this()
@@ -73,8 +83,16 @@ class TCPSocket : AsyncTransport, EventCallInterface
         if (_event.isActive || !_socket.isAlive() || !_readCallBack)
             return false;
         _event.fd = _socket.handle();
-        _loop.addEvent(_event);
-        return true;
+        
+        static if(IOMode ==IO_MODE.iocp)
+        {
+            _loop.addEvent(_event);
+            return doRead();
+        }
+        else
+        {
+            return _loop.addEvent(_event);
+        }
     }
 
     final override void close()
@@ -110,14 +128,31 @@ class TCPSocket : AsyncTransport, EventCallInterface
             return;
         }
         auto buffer = new WriteSite(data, cback);
-        if (!alive || !_writeQueue.enQueue(buffer))
+        
+        static if(IOMode == IO_MODE.iocp)
+        {
+            bool dowrite = _writeQueue.empty;
+        }
+        
+        if (!_writeQueue.enQueue(buffer))
         {
             info("tcp socket write on _writeQueue close!");
             buffer.doCallBack();
             import collie.utils.memory;
             gcFree(buffer);
         }
-        onWrite();
+        static if(IOMode == IO_MODE.iocp)
+        {
+            if(dowrite)
+            {
+                _event.writeLen = 0;
+                onWrite();
+            }
+        }
+        else
+        {
+            onWrite();
+        }
     }
 
     mixin TransportSocketOption;
@@ -162,57 +197,105 @@ protected:
     pragma(inline,true)
     final @property bool alive() @trusted nothrow
     {
-
         return _event.isActive && _socket.handle() != socket_t.init;
     }
 
     override void onWrite() nothrow
     {
-        while (alive && !_writeQueue.empty)
+        static if(IOMode == IO_MODE.iocp)
         {
-            try
+	try{
+            if(!alive || _writeQueue.empty)
+                return;
+            auto buffer = _writeQueue.front;
+            if(_event.writeLen > 0)
             {
-                auto buffer = _writeQueue.front;
-                auto len = _socket.send(buffer.data);
-                if (len > 0)
+                trace("writed data length is : ", _event.writeLen);
+                if (buffer.add(_event.writeLen))
                 {
-                    if (buffer.add(len))
-                    {
-                        auto buf = _writeQueue.deQueue();
-                        buf.doCallBack();
-                        import collie.utils.memory;
-                        gcFree(buf);
-                    }
-                    continue;
+                    auto buf = _writeQueue.deQueue();
+                    buf.doCallBack();
+                    import collie.utils.memory;
+                    gcFree(buf);
                 }
-                else 
+                if(!_writeQueue.empty)
+                    buffer = _writeQueue.front;
+                else
+                    return;
+            } 
+            _event.writeLen = 0;
+            auto data  = buffer.data;
+            _iocpWBuf.len = data.length;
+            _iocpWBuf.buf = cast(char *)data.ptr;
+            DWORD dwFlags = 0;
+            DWORD dwSent = 0;
+            _iocpwrite.event = _event;
+            _iocpwrite.operationType = IOCP_OP_TYPE.write;
+            int nRet = WSASend( cast(SOCKET)_socket.handle(), &_iocpWBuf, 1,&dwSent,
+                                dwFlags, &_iocpwrite.ol, cast(windows.winsock2.LPWSAOVERLAPPED_COMPLETION_ROUTINE)null );
+            trace("do WSASend , return : ", nRet);
+            if( nRet == windows.winsock2.SOCKET_ERROR ) 
+            {
+                DWORD dwLastError = GetLastError();
+                if( dwLastError != ERROR_IO_PENDING )
                 {
-                    if (errno == EAGAIN || errno == EWOULDBLOCK)
-                    {
-                        return;
-                    }
-                    else if (errno == 4)
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        error(" write Erro Do Close erro = ", errno);
-                        onClose();
-                        return;
-                    }
+                    try{
+                    error("WSASend failed with error: ", dwLastError);
+                    }catch{}
+                    onClose();
                 }
             }
-            catch (Exception e)
+        }catch
+        {}
+        }
+        else
+        {
+            while (alive && !_writeQueue.empty)
             {
                 try
                 {
-                    error("\n\n----tcp on Write erro do Close! erro : ", e.msg, "\n\n");
+                    auto buffer = _writeQueue.front;
+                    auto len = _socket.send(buffer.data);
+                    if (len > 0)
+                    {
+                        if (buffer.add(len))
+                        {
+                            auto buf = _writeQueue.deQueue();
+                            buf.doCallBack();
+                            import collie.utils.memory;
+                            gcFree(buf);
+                        }
+                        continue;
+                    }
+                    else 
+                    {
+                        if (errno == EAGAIN || errno == EWOULDBLOCK)
+                        {
+                            return;
+                        }
+                        else if (errno == 4)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            error(" write Erro Do Close erro = ", errno);
+                            onClose();
+                            return;
+                        }
+                    }
                 }
-                catch
+                catch (Exception e)
                 {
+                    try
+                    {
+                        error("\n\n----tcp on Write erro do Close! erro : ", e.msg, "\n\n");
+                    }
+                    catch
+                    {
+                    }
+                    onClose();
                 }
-                onClose();
             }
         }
     }
@@ -231,7 +314,7 @@ protected:
         }
         try
         {
-			_socket.shutdown(SocketShutdown.BOTH);
+            _socket.shutdown(SocketShutdown.BOTH);
             _socket.close();
             scope (exit)
             {
@@ -255,46 +338,92 @@ protected:
 
     override void onRead() nothrow
     {
-        while (alive)
+        static if(IOMode ==IO_MODE.iocp)
         {
-            try
+	try{
+            trace ("read data : data.length: ", _event.readLen);
+            if(_event.readLen > 0 )
+		_readCallBack(_readBuffer[0 .. _event.readLen]);
+	}catch{}
+            if(alive)
+                doRead();
+            _event.readLen = 0;
+        }
+        else
+        {
+            while (alive)
             {
-                auto len = _socket.receive(_readBuffer);
-                if (len > 0)
+                try
                 {
-                    _readCallBack(_readBuffer[0 .. len]);
-                    continue;
-                }
-                else
-                {
-                    if (errno == EAGAIN || errno == EWOULDBLOCK)
+                    auto len = _socket.receive(_readBuffer);
+                    if (len > 0)
                     {
-                        return;
-                    }
-                    else if (errno == 4)
-                    {
+                        _readCallBack(_readBuffer[0 .. len]);
                         continue;
                     }
                     else
                     {
-                        error("read Erro Do Close the erro : ", errno, " the socket fd : ",fd);
-                        onClose();
-                        return;
+                        if (errno == EAGAIN || errno == EWOULDBLOCK)
+                        {
+                            return;
+                        }
+                        else if (errno == 4)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            error("read Erro Do Close the erro : ", errno, " the socket fd : ",fd);
+                            onClose();
+                            return;
+                        }
                     }
                 }
+                catch (Exception e)
+                {
+                    try
+                    {
+                        error("\n\n----tcp on read erro do Close! erro : ", e.msg, "\n\n");
+                    }
+                    catch
+                    {
+                    }
+                    onClose();
+                    return;
+                }
             }
-            catch (Exception e)
+        }
+    }
+    
+    static if(IOMode ==IO_MODE.iocp)
+    {
+        bool doRead() nothrow
+        {
+            try
             {
-                try
-                {
-                    error("\n\n----tcp on read erro do Close! erro : ", e.msg, "\n\n");
+                _iocpBuffer.len = TCP_READ_BUFFER_SIZE;
+                _iocpBuffer.buf = cast(char *)_readBuffer.ptr;
+                _iocpread.event = _event;
+                _iocpread.operationType = IOCP_OP_TYPE.read;
+                
+                DWORD dwReceived = 0;
+                DWORD dwFlags = 0;
+                
+                int nRet = WSARecv( cast(SOCKET)_socket.handle, &_iocpBuffer, cast(uint)1, &dwReceived, &dwFlags, &_iocpread.ol,cast(windows.winsock2.LPWSAOVERLAPPED_COMPLETION_ROUTINE)null);
+                trace("do WSARecv : the return is : ", nRet);
+                if( nRet == windows.winsock2.SOCKET_ERROR ){
+
+                    DWORD dwLastError = GetLastError();
+                    if( ERROR_IO_PENDING != dwLastError )
+                    {
+                        error("WSARecv failed with error: ", dwLastError );
+                        onClose();
+                        return false;
+                    }
                 }
-                catch
-                {
-                }
-                onClose();
-                return;
-            }
+            } catch
+            {}
+            return true;
         }
     }
 
@@ -308,6 +437,14 @@ protected:
 
     CallBack _unActive;
     TCPReadCallBack _readCallBack;
+    
+    static if (IO_MODE.iocp == IOMode)
+    {
+            IOCP_DATA _iocpread;
+            IOCP_DATA _iocpwrite;
+            WSABUF _iocpBuffer;
+            WSABUF _iocpWBuf;
+    }
 }
 
 package:

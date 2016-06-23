@@ -186,7 +186,13 @@ else static if(IOMode == IO_MODE.epoll)
     import collie.socket.selector.epoll;
 
     alias EventLoop = EventLoopImpl!(EpollLoop);
-} 
+}
+else static if(IOMode == IO_MODE.iocp)
+{
+    public import collie.socket.selector.iocp;
+
+    alias EventLoop = EventLoopImpl!(IOCPLoop);
+}
 else
 {
     import collie.socket.selector.select;

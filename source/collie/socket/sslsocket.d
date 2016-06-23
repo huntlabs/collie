@@ -19,6 +19,10 @@ import collie.socket.eventloop;
 import collie.socket.common;
 import collie.socket.transport;
 import collie.socket.tcpsocket;
+version(Windows)
+{}
+else
+{
 
 import deimos.openssl.ssl;
 
@@ -232,4 +236,5 @@ protected:
 private:
     SSL* _ssl;
     CallBack _handshakeCback;
+}
 }

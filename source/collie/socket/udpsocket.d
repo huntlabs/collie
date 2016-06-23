@@ -20,6 +20,9 @@ import collie.socket.eventloop;
 import collie.socket.transport;
 import collie.utils.queue;
 
+static if(IOMode !=IO_MODE.iocp)
+{
+
 alias UDPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
 alias UDPReadCallBack = void delegate(ubyte[] buffer, Address adr);
 
@@ -56,7 +59,7 @@ class UDPSocket : AsyncTransport, EventCallInterface
     
     @property reusePort(bool use)
     {
-		_socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, use);
+	_socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, use);
         version (Posix)
             _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,use);
     }
@@ -104,8 +107,15 @@ class UDPSocket : AsyncTransport, EventCallInterface
         if (_event.isActive || !_socket.isAlive() || !_readCallBack)
             return false;
         _event.fd = _socket.handle();
-        _loop.addEvent(_event);
-        return true;
+        static if(IOMode ==IO_MODE.iocp)
+        {
+            _loop.addEvent(_event);
+            return doRead();
+        }
+        else
+        {
+            return _loop.addEvent(_event);
+        }
     }
     
     override void close()
@@ -211,4 +221,6 @@ unittest
     loop.run();
     server.close();
     client.close();
+}
+
 }
