@@ -30,15 +30,14 @@ final class TCPClient : TCPSocket
         return super.isAlive() && _isConnect;
     }
 
-    pragma(inline)
-    bool connect(Address addr)
+    pragma(inline) bool connect(Address addr)
     {
         if (isAlive())
             throw new ConnectedException("This Socket is Connected! Please close before connect!");
-        static if(IOMode ==IO_MODE.iocp)
+        static if (IOMode == IO_MODE.iocp)
         {
             Address bindddr;
-            if(addr.addressFamily() == AddressFamily.INET)
+            if (addr.addressFamily() == AddressFamily.INET)
             {
                 bindddr = new InternetAddress(InternetAddress.PORT_ANY);
             }
@@ -52,13 +51,16 @@ final class TCPClient : TCPSocket
             _loop.addEvent(_event);
             _iocpread.event = _event;
             _iocpread.operationType = IOCP_OP_TYPE.connect;
-            int b = ConnectEx( cast(SOCKET)_socket.handle, cast(windows.winsock2.SOCKADDR *)addr.name(), addr.nameLen(),null, 0, null, &_iocpread.ol );
-            if( b == 0 )
+            int b = ConnectEx(cast(SOCKET) _socket.handle,
+                cast(windows.winsock2.SOCKADDR*) addr.name(), addr.nameLen(),
+                null, 0, null, &_iocpread.ol);
+            if (b == 0)
             {
                 DWORD dwLastError = GetLastError();
-                if( dwLastError != ERROR_IO_PENDING ){
-                        error("ConnectEx failed with error: ", dwLastError);
-                        return false;
+                if (dwLastError != ERROR_IO_PENDING)
+                {
+                    error("ConnectEx failed with error: ", dwLastError);
+                    return false;
                 }
             }
             return true;
@@ -72,9 +74,8 @@ final class TCPClient : TCPSocket
             return true;
         }
     }
-    
-    pragma(inline)
-    void setConnectCallBack(ConnectCallBack cback)
+
+    pragma(inline) void setConnectCallBack(ConnectCallBack cback)
     {
         _connectBack = cback;
     }
@@ -118,7 +119,7 @@ protected:
 
 private:
     bool _isConnect = false;
-    bool _isFrist = true;;
+    bool _isFrist = true;
     ConnectCallBack _connectBack;
 }
 

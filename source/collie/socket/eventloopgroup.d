@@ -21,7 +21,7 @@ final class EventLoopGroup
 {
     this(uint size = (totalCPUs - 1), int waitTime = 2000)
     {
-        size = size > 0 ?  size : 1;
+        size = size > 0 ? size : 1;
         foreach (i; 0 .. size)
         {
             auto loop = new GroupMember(new EventLoop);

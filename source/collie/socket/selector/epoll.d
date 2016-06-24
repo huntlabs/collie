@@ -10,8 +10,7 @@
  */
 module collie.socket.selector.epoll;
 
-version (linux)  : 
-import core.time;
+version (linux)  : import core.time;
 import core.stdc.errno;
 import core.memory;
 
@@ -148,25 +147,20 @@ final class EpollLoop
         _event.doWrite();
     }
 
-protected : 
-    pragma(inline,true)
-    bool isErro(uint events)
+    protected : pragma(inline, true) bool isErro(uint events)
     {
         return (events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) != 0;
     }
-    pragma(inline,true)
-    bool isRead(uint events)
+    pragma(inline, true) bool isRead(uint events)
     {
         return (events & EPOLLIN) != 0;
     }
-    pragma(inline,true)
-    bool isWrite(uint events)
+    pragma(inline, true) bool isWrite(uint events)
     {
         return (events & EPOLLOUT) != 0;
     }
 
-private :  
-/** 存储 epoll的fd */
+    private : /** 存储 epoll的fd */
     int _efd;
     EventChannel _event;
 }
@@ -226,11 +220,7 @@ string mixinModEvent()
     return str;
 }
 
-extern (C) : 
-@system : 
-nothrow :
-
-enum
+extern (C) : @system : nothrow : enum
 {
     EFD_SEMAPHORE = 0x1,
     EFD_CLOEXEC = 0x80000,

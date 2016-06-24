@@ -15,7 +15,6 @@ module collie.socket.common;
 public import std.experimental.logger;
 import std.experimental.allocator;
 
-
 enum IO_MODE
 {
     epoll,
@@ -27,8 +26,8 @@ enum IO_MODE
     none
 }
 
-enum CustomTimerTimeOut   = 50;// 50ms 精确
-enum CustomTimerWheelSize = 20;// 轮子数量
+enum CustomTimerTimeOut = 50; // 50ms 精确
+enum CustomTimerWheelSize = 20; // 轮子数量
 
 version (FreeBSD)
 {
@@ -63,7 +62,7 @@ else version (linux)
 {
     enum IO_MODE IOMode = IO_MODE.poll;
 }*/
-else version(Windows)
+else version (Windows)
 {
     enum IO_MODE IOMode = IO_MODE.iocp;
     enum CustomTimer = true;
@@ -108,14 +107,12 @@ struct AsyncEvent
         this.oneShot = oneShot;
     }
 
-    pragma(inline,true)
-    @property obj()
+    pragma(inline, true) @property obj()
     {
         return _obj;
     }
 
-    pragma(inline,true)
-    @property type()
+    pragma(inline, true) @property type()
     {
         return _type;
     }
@@ -127,51 +124,51 @@ struct AsyncEvent
     bool etMode = false;
     bool oneShot = false;
 
-    pragma(inline)
-    static AsyncEvent* create(AsynType type, EventCallInterface obj,
-        socket_t fd = socket_t.init, bool enread = true, bool enwrite = false,
-        bool etMode = false, bool oneShot = false)
+    pragma(inline) static AsyncEvent* create(AsynType type,
+        EventCallInterface obj, socket_t fd = socket_t.init, bool enread = true,
+        bool enwrite = false, bool etMode = false, bool oneShot = false)
     {
         import core.memory;
-        AsyncEvent * pevent = new AsyncEvent(type, obj, fd, enread, enwrite, etMode, oneShot);
-        GC.setAttr(pevent,GC.BlkAttr.NO_MOVE);
+
+        AsyncEvent* pevent = new AsyncEvent(type, obj, fd, enread, enwrite, etMode,
+            oneShot);
+        GC.setAttr(pevent, GC.BlkAttr.NO_MOVE);
         return pevent;
     }
 
-    pragma(inline)
-    static void free(AsyncEvent* event)
+    pragma(inline) static void free(AsyncEvent* event)
     {
         import core.memory;
+
         GC.free(event);
     }
 
-    pragma(inline,true)
-    @property isActive()
+    pragma(inline, true) @property isActive()
     {
         return _isActive;
     }
 
 package:
-    pragma(inline)
-    @property isActive(bool active)
+    pragma(inline) @property isActive(bool active)
     {
         _isActive = active;
     }
-    
-static if(IOMode == IOMode.kqueue || CustomTimer)
-{
-    long timeOut;
-}
-static if(IOMode == IOMode.iocp)
-{
-    uint readLen;
-    uint writeLen;
-}
-static if(CustomTimer)
-{
-    import collie.utils.timingwheel;
-    WheelTimer timer;
-}
+
+    static if (IOMode == IOMode.kqueue || CustomTimer)
+    {
+        long timeOut;
+    }
+    static if (IOMode == IOMode.iocp)
+    {
+        uint readLen;
+        uint writeLen;
+    }
+    static if (CustomTimer)
+    {
+        import collie.utils.timingwheel;
+
+        WheelTimer timer;
+    }
 
 private:
     EventCallInterface _obj;
@@ -179,8 +176,7 @@ private:
     bool _isActive = false;
 }
 
-static if(CustomTimer)
+static if (CustomTimer)
 {
     enum CustomTimer_Next_TimeOut = cast(long)(CustomTimerTimeOut * (2.0 / 3.0));
 }
-

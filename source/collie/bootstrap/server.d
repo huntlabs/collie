@@ -34,9 +34,9 @@ final class ServerBootstrap(PipeLine)
         return this;
     }
 
-    auto setSSLConfig(ServerSSLConfig config) 
+    auto setSSLConfig(ServerSSLConfig config)
     {
-        version(Windows)
+        version (Windows)
         {
             throw new Exception("Now is not support ssl in windows!");
         }
@@ -45,7 +45,7 @@ final class ServerBootstrap(PipeLine)
             _sslConfig = config;
             return this;
         }
-    } 
+    }
 
     auto childPipeline(shared PipelineFactory!PipeLine factory)
     {
@@ -120,10 +120,10 @@ final class ServerBootstrap(PipeLine)
     void waitForStop()
     {
         if (_runing)
-	  throw new Exception("server is runing!");
+            throw new Exception("server is runing!");
         if (_address is null || _childPipelineFactory is null)
-          throw new Exception("the address or childPipelineFactory is null!");
-        
+            throw new Exception("the address or childPipelineFactory is null!");
+
         _runing = true;
         uint wheel, time;
         bool beat = getTimeWheelConfig(wheel, time);
@@ -163,20 +163,23 @@ protected:
             pipe = _acceptorPipelineFactory.newPipeline(acceptor);
         else
             pipe = AcceptPipeline.create();
-      
-        SSL_CTX * ctx = null;
-        version(Windows)
-        {}
+
+        SSL_CTX* ctx = null;
+        version (Windows)
+        {
+        }
         else
         {
-            if(_sslConfig)
+            if (_sslConfig)
             {
                 ctx = _sslConfig.generateSSLCtx();
-                if(!ctx) throw new Exception("Can not gengrate SSL_CTX");
+                if (!ctx)
+                    throw new Exception("Can not gengrate SSL_CTX");
             }
         }
 
-        return new ServerAcceptor!(PipeLine)(acceptor, pipe, _childPipelineFactory,ctx);
+        return new ServerAcceptor!(PipeLine)(acceptor, pipe, _childPipelineFactory,
+            ctx);
     }
 
     bool getTimeWheelConfig(out uint whileSize, out uint time)
@@ -237,7 +240,8 @@ import collie.utils.memory;
 
 final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 {
-    this(Acceptor acceptor, AcceptPipeline pipe,shared PipelineFactory!PipeLine clientPipeFactory, SSL_CTX * ctx = null)
+    this(Acceptor acceptor, AcceptPipeline pipe,
+        shared PipelineFactory!PipeLine clientPipeFactory, SSL_CTX* ctx = null)
     {
         _acceptor = acceptor;
         _pipeFactory = clientPipeFactory;
@@ -249,14 +253,12 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
         _sslctx = ctx;
     }
 
-    pragma(inline,true)
-    void initialize()
+    pragma(inline, true) void initialize()
     {
         _pipe.transportActive();
     }
 
-    pragma(inline,true)
-    void stop()
+    pragma(inline, true) void stop()
     {
         _pipe.transportInactive();
     }
@@ -264,27 +266,29 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
     override void read(Context ctx, Socket msg)
     {
 
-        if (_sslctx) 
+        if (_sslctx)
         {
-        version(Windows)
-        {}
-        else
-        {
-            auto ssl = SSL_new (_sslctx);
-            if(SSL_set_fd(ssl, msg.handle()) < 0) {
-                error("SSL_set_fd error: fd = ",msg.handle());
-                SSL_shutdown (ssl);
-                SSL_free(ssl);
-                return ;
+            version (Windows)
+            {
             }
-            SSL_set_accept_state(ssl);
-            auto asynssl = new SSLSocket(_acceptor.eventLoop,msg,ssl);
-            auto shark = new SSLHandShark(asynssl,&doHandShark);
-            _sharkList[shark] = 0;
-            asynssl.start();
+            else
+            {
+                auto ssl = SSL_new(_sslctx);
+                if (SSL_set_fd(ssl, msg.handle()) < 0)
+                {
+                    error("SSL_set_fd error: fd = ", msg.handle());
+                    SSL_shutdown(ssl);
+                    SSL_free(ssl);
+                    return;
+                }
+                SSL_set_accept_state(ssl);
+                auto asynssl = new SSLSocket(_acceptor.eventLoop, msg, ssl);
+                auto shark = new SSLHandShark(asynssl, &doHandShark);
+                _sharkList[shark] = 0;
+                asynssl.start();
+            }
         }
-        } 
-        else     
+        else
         {
             auto asyntcp = new TCPSocket(_acceptor.eventLoop, msg);
             startSocket(asyntcp);
@@ -294,7 +298,8 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
     override void transportActive(Context ctx)
     {
         trace("acept transportActive");
-        if(!_acceptor.start()){
+        if (!_acceptor.start())
+        {
             error("acceptor start error!");
         }
     }
@@ -310,9 +315,9 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
         _list.clear();
         _acceptor.eventLoop.stop();
     }
+
 protected:
-    pragma(inline)
-    void remove(ServerConnection!PipeLine conn)
+    pragma(inline) void remove(ServerConnection!PipeLine conn)
     {
         _list.remove(conn);
         gcFree(conn);
@@ -323,8 +328,7 @@ protected:
         _pipe.read(soct);
     }
 
-    pragma(inline,true)
-    @property acceptor()
+    pragma(inline, true) @property acceptor()
     {
         return _acceptor;
     }
@@ -339,33 +343,35 @@ protected:
         _timer.start(time);
     }
 
-
     void doWheel()
     {
         if (_wheel)
             _wheel.prevWheel();
     }
 
-version(Windows)
-{}
-else
-{
-    void doHandShark(SSLHandShark shark, SSLSocket sock)
+    version (Windows)
     {
-        _sharkList.remove(shark);
-        scope(exit) delete shark;
-        if(sock)
+    }
+    else
+    {
+        void doHandShark(SSLHandShark shark, SSLSocket sock)
         {
-            sock.setHandshakeCallBack(null);
-            startSocket(sock);
+            _sharkList.remove(shark);
+            scope (exit)
+                delete shark;
+            if (sock)
+            {
+                sock.setHandshakeCallBack(null);
+                startSocket(sock);
+            }
         }
     }
-}
 
     void startSocket(TCPSocket sock)
     {
         auto pipe = _pipeFactory.newPipeline(sock);
-        if (!pipe) {
+        if (!pipe)
+        {
             gcFree(sock);
             return;
         }
@@ -377,22 +383,24 @@ else
         if (_wheel)
             _wheel.addNewTimer(con);
     }
+
 private:
     int[ServerConnection!PipeLine] _list;
-version(Windows)
-{}
-else
-{
-    int[SSLHandShark]  _sharkList;
-}
-    
+    version (Windows)
+    {
+    }
+    else
+    {
+        int[SSLHandShark] _sharkList;
+    }
+
     Acceptor _acceptor;
     Timer _timer;
     TimingWheel _wheel;
     AcceptPipeline _pipe;
     shared PipelineFactory!PipeLine _pipeFactory;
-    
-    SSL_CTX * _sslctx = null;
+
+    SSL_CTX* _sslctx = null;
 }
 
 final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
@@ -402,31 +410,28 @@ final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
         _pipe = pipe;
         _pipe.pipelineManager = this;
     }
+
     ~this()
     {
         gcFree(_pipe);
     }
 
-    pragma(inline,true)
-    void initialize()
+    pragma(inline, true) void initialize()
     {
         _pipe.transportActive();
     }
 
-    pragma(inline,true)
-    void close()
+    pragma(inline, true) void close()
     {
         _pipe.transportInactive();
     }
 
-    pragma(inline,true)
-    @property serverAceptor()
+    pragma(inline, true) @property serverAceptor()
     {
         return _manger;
     }
 
-    pragma(inline,true)
-    @property serverAceptor(ServerAcceptor!PipeLine manger)
+    pragma(inline, true) @property serverAceptor(ServerAcceptor!PipeLine manger)
     {
         _manger = manger;
     }
@@ -460,46 +465,51 @@ private:
     PipeLine _pipe;
 }
 
-version(Windows)
-{}
+version (Windows)
+{
+}
 else
 {
-final class SSLHandShark
-{
-    alias SSLHandSharkCallBack = void delegate(SSLHandShark shark, SSLSocket sock);
-    this(SSLSocket sock, SSLHandSharkCallBack cback)
+    final class SSLHandShark
     {
-        _socket = sock;
-        _cback = cback;
-        _socket.setCloseCallBack(&onClose);
-        _socket.setReadCallBack(&readCallBack);
-        _socket.setHandshakeCallBack(&handSharkCallBack);
+        alias SSLHandSharkCallBack = void delegate(SSLHandShark shark, SSLSocket sock);
+        this(SSLSocket sock, SSLHandSharkCallBack cback)
+        {
+            _socket = sock;
+            _cback = cback;
+            _socket.setCloseCallBack(&onClose);
+            _socket.setReadCallBack(&readCallBack);
+            _socket.setHandshakeCallBack(&handSharkCallBack);
+        }
+
+        ~this()
+        {
+        }
+
+    protected:
+        void handSharkCallBack()
+        {
+            trace("the ssl handshark over");
+            _cback(this, _socket);
+            _socket = null;
+        }
+
+        void readCallBack(ubyte[] buffer)
+        {
+        }
+
+        void onClose()
+        {
+            trace("the ssl handshark fail");
+            _socket.setCloseCallBack(null);
+            _socket.setReadCallBack(null);
+            _socket.setHandshakeCallBack(null);
+            _socket = null;
+            _cback(this, _socket);
+        }
+
+    private:
+        SSLSocket _socket;
+        SSLHandSharkCallBack _cback;
     }
-    
-    ~this()
-    {
-    }
-protected:
-    void handSharkCallBack()
-    {
-        trace("the ssl handshark over");
-        _cback(this,_socket);
-        _socket = null;
-    }
-    
-    void readCallBack(ubyte[] buffer){}
-    
-    void onClose()
-    {
-        trace("the ssl handshark fail");
-        _socket.setCloseCallBack(null);
-        _socket.setReadCallBack(null);
-        _socket.setHandshakeCallBack(null);
-        _socket = null;
-        _cback(this,_socket);
-    }
-private:
-    SSLSocket _socket;
-    SSLHandSharkCallBack _cback;
-}
 }

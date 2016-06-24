@@ -32,23 +32,22 @@ final class Timer : EventCallInterface
         if (_event.isActive)
         {
             _loop.delEvent(_event);
-            static if(IOMode == IO_MODE.epoll)
+            static if (IOMode == IO_MODE.epoll)
             {
                 import core.sys.posix.unistd;
+
                 close(_event.fd);
             }
         }
         AsyncEvent.free(_event);
     }
 
-    pragma(inline,true)
-    @property bool isActive()
+    pragma(inline, true) @property bool isActive()
     {
         return _event.isActive;
     }
 
-    pragma(inline)
-    void setCallBack(CallBack cback)
+    pragma(inline) void setCallBack(CallBack cback)
     {
         _callBack = cback;
     }
@@ -56,14 +55,15 @@ final class Timer : EventCallInterface
     bool start(ulong msesc)
     {
         if (isActive() || msesc <= 0)
-                return false;
-        static if(IOMode == IOMode.kqueue || CustomTimer)
+            return false;
+        static if (IOMode == IOMode.kqueue || CustomTimer)
         {
-            _event.timeOut = cast(long)msesc;
-        } 
-        else static if(IOMode == IOMode.epoll)
+            _event.timeOut = cast(long) msesc;
+        }
+        else static if (IOMode == IOMode.epoll)
         {
             import collie.socket.selector.epoll;
+
             //  _timeout = msesc;
             _event.fd = cast(socket_t) timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
 
@@ -77,7 +77,7 @@ final class Timer : EventCallInterface
             its.it_interval.tv_nsec = its.it_value.tv_nsec;
             int err = timerfd_settime(_event.fd, 0, &its, null);
             if (err == -1)
-            
+
             {
                 import core.sys.posix.unistd;
 
@@ -88,26 +88,27 @@ final class Timer : EventCallInterface
         return _loop.addEvent(_event);
     }
 
-    pragma(inline)
-    void stop()
+    pragma(inline) void stop()
     {
         if (isActive())
         {
             onClose();
         }
     }
+
 protected:
     override void onRead() nothrow
     {
-        static if(IOMode == IO_MODE.epoll)
+        static if (IOMode == IO_MODE.epoll)
         {
             import core.sys.posix.unistd;
+
             ulong value;
             read(_event.fd, &value, 8);
         }
-      //  try{
-       // trace("time out !!!!");
-       // } catch{}
+        //  try{
+        // trace("time out !!!!");
+        // } catch{}
         if (_callBack)
         {
             try
@@ -130,7 +131,7 @@ protected:
 
     override void onClose() nothrow
     {
-        static if(IOMode == IO_MODE.epoll)
+        static if (IOMode == IO_MODE.epoll)
         {
             import core.sys.posix.unistd;
 

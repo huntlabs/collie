@@ -21,6 +21,7 @@ import collie.socket.transport;
 import collie.utils.queue;
 
 import std.stdio;
+
 static import windows.winsock2;
 
 alias TCPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
@@ -39,17 +40,17 @@ class TCPSocket : AsyncTransport, EventCallInterface
 
     this(EventLoop loop, Socket sock)
     {
-        super(loop,TransportType.TCP);
+        super(loop, TransportType.TCP);
         _socket = sock;
         _socket.blocking = false;
         _writeQueue = Queue!(WriteSite, true, false, GCAllocator)(32);
         _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
-        _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true,
-            true, true);
+        _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true, true,
+            true);
         static if (IO_MODE.iocp == IOMode)
         {
             _iocpBuffer.len = TCP_READ_BUFFER_SIZE;
-            _iocpBuffer.buf = cast(char *)_readBuffer.ptr;
+            _iocpBuffer.buf = cast(char*) _readBuffer.ptr;
             _iocpread.event = _event;
             _iocpwrite.event = _event;
             _iocpwrite.operationType = IOCP_OP_TYPE.write;
@@ -70,6 +71,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
             eventLoop.delEvent(_event);
         }
         import core.memory;
+
         GC.free(_readBuffer.ptr);
     }
 
@@ -83,8 +85,8 @@ class TCPSocket : AsyncTransport, EventCallInterface
         if (_event.isActive || !_socket.isAlive() || !_readCallBack)
             return false;
         _event.fd = _socket.handle();
-        
-        static if(IOMode ==IO_MODE.iocp)
+
+        static if (IOMode == IO_MODE.iocp)
         {
             _loop.addEvent(_event);
             return doRead();
@@ -108,7 +110,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
             Linger optLinger;
             optLinger.on = 1;
             optLinger.time = 0;
-            _socket.setOption(SocketOptionLevel.SOCKET,SocketOption.LINGER,optLinger);
+            _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.LINGER, optLinger);
             _socket.close();
         }
     }
@@ -118,8 +120,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         return alive();
     }
 
-    pragma(inline)
-    void write(ubyte[] data, TCPWriteCallBack cback)
+    pragma(inline) void write(ubyte[] data, TCPWriteCallBack cback)
     {
         if (!alive)
         {
@@ -128,23 +129,24 @@ class TCPSocket : AsyncTransport, EventCallInterface
             return;
         }
         auto buffer = new WriteSite(data, cback);
-        
-        static if(IOMode == IO_MODE.iocp)
+
+        static if (IOMode == IO_MODE.iocp)
         {
             bool dowrite = _writeQueue.empty;
         }
-        
+
         if (!_writeQueue.enQueue(buffer))
         {
             warning("tcp socket write on _writeQueue close!");
             buffer.doCallBack();
             import collie.utils.memory;
+
             gcFree(buffer);
         }
-        static if(IOMode == IO_MODE.iocp)
+        static if (IOMode == IO_MODE.iocp)
         {
             trace("do write: ", dowrite);
-            if(dowrite)
+            if (dowrite)
             {
                 _event.writeLen = 0;
                 onWrite();
@@ -158,85 +160,89 @@ class TCPSocket : AsyncTransport, EventCallInterface
 
     mixin TransportSocketOption;
 
-    pragma(inline,true)
-    void setKeepAlive(int time, int interval) @trusted
+    pragma(inline, true) void setKeepAlive(int time, int interval) @trusted
     {
         return _socket.setKeepAlive(forward!(time, interval));
     }
 
-    pragma(inline,true)
-    final @property @trusted Address remoteAddress()
+    pragma(inline, true) final @property @trusted Address remoteAddress()
     {
         return _socket.remoteAddress();
     }
 
-    pragma(inline)
-    final void setReadCallBack(TCPReadCallBack cback)
+    pragma(inline) final void setReadCallBack(TCPReadCallBack cback)
     {
         _readCallBack = cback;
     }
 
-    pragma(inline)
-    final void setCloseCallBack(CallBack cback)
+    pragma(inline) final void setCloseCallBack(CallBack cback)
     {
         _unActive = cback;
     }
 
 protected:
-    pragma(inline,true)
-    final @property bool alive() @trusted nothrow
+    pragma(inline, true) final @property bool alive() @trusted nothrow
     {
         return _event.isActive && _socket.handle() != socket_t.init;
     }
 
     override void onWrite() nothrow
     {
-        static if(IOMode == IO_MODE.iocp)
+        static if (IOMode == IO_MODE.iocp)
         {
-	try{
-            trace("write !");
-            if(!alive || _writeQueue.empty)
-                return;
-            auto buffer = _writeQueue.front;
-            if(_event.writeLen > 0)
+            try
             {
-                trace("writed data length is : ", _event.writeLen);
-                if (buffer.add(_event.writeLen))
-                {
-                    auto buf = _writeQueue.deQueue();
-                    buf.doCallBack();
-                    import collie.utils.memory;
-                    gcFree(buf);
-                }
-                if(!_writeQueue.empty)
-                    buffer = _writeQueue.front;
-                else
+                trace("write !");
+                if (!alive || _writeQueue.empty)
                     return;
-            } 
-            _event.writeLen = 0;
-            auto data  = buffer.data;
-            _iocpWBuf.len = data.length;
-            _iocpWBuf.buf = cast(char *)data.ptr;
-            DWORD dwFlags = 0;
-            DWORD dwSent = 0;
-            _iocpwrite.event = _event;
-            _iocpwrite.operationType = IOCP_OP_TYPE.write;
-            int nRet = WSASend( cast(SOCKET)_socket.handle(), &_iocpWBuf, 1,&dwSent,
-                                dwFlags, &_iocpwrite.ol, cast(windows.winsock2.LPWSAOVERLAPPED_COMPLETION_ROUTINE)null );
-            trace("do WSASend , return : ", nRet);
-            if( nRet == windows.winsock2.SOCKET_ERROR ) 
-            {
-                DWORD dwLastError = GetLastError();
-                if( dwLastError != ERROR_IO_PENDING )
+                auto buffer = _writeQueue.front;
+                if (_event.writeLen > 0)
                 {
-                    try{
-                    error("WSASend failed with error: ", dwLastError);
-                    }catch{}
-                    onClose();
+                    trace("writed data length is : ", _event.writeLen);
+                    if (buffer.add(_event.writeLen))
+                    {
+                        auto buf = _writeQueue.deQueue();
+                        buf.doCallBack();
+                        import collie.utils.memory;
+
+                        gcFree(buf);
+                    }
+                    if (!_writeQueue.empty)
+                        buffer = _writeQueue.front;
+                    else
+                        return;
+                }
+                _event.writeLen = 0;
+                auto data = buffer.data;
+                _iocpWBuf.len = data.length;
+                _iocpWBuf.buf = cast(char*) data.ptr;
+                DWORD dwFlags = 0;
+                DWORD dwSent = 0;
+                _iocpwrite.event = _event;
+                _iocpwrite.operationType = IOCP_OP_TYPE.write;
+                int nRet = WSASend(cast(SOCKET) _socket.handle(), &_iocpWBuf,
+                    1, &dwSent, dwFlags, &_iocpwrite.ol,
+                    cast(windows.winsock2.LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
+                trace("do WSASend , return : ", nRet);
+                if (nRet == windows.winsock2.SOCKET_ERROR)
+                {
+                    DWORD dwLastError = GetLastError();
+                    if (dwLastError != ERROR_IO_PENDING)
+                    {
+                        try
+                        {
+                            error("WSASend failed with error: ", dwLastError);
+                        }
+                        catch
+                        {
+                        }
+                        onClose();
+                    }
                 }
             }
-        }catch
-        {}
+            catch
+            {
+            }
         }
         else
         {
@@ -253,11 +259,12 @@ protected:
                             auto buf = _writeQueue.deQueue();
                             buf.doCallBack();
                             import collie.utils.memory;
+
                             gcFree(buf);
                         }
                         continue;
                     }
-                    else 
+                    else
                     {
                         if (errno == EAGAIN || errno == EWOULDBLOCK)
                         {
@@ -279,7 +286,8 @@ protected:
                 {
                     try
                     {
-                        error("\n\n----tcp on Write erro do Close! erro : ", e.msg, "\n\n");
+                        error("\n\n----tcp on Write erro do Close! erro : ", e.msg,
+                            "\n\n");
                     }
                     catch
                     {
@@ -300,7 +308,14 @@ protected:
             auto buf = _writeQueue.deQueue();
             buf.doCallBack();
             import collie.utils.memory;
-             try{gcFree(buf);} catch{}
+
+            try
+            {
+                gcFree(buf);
+            }
+            catch
+            {
+            }
         }
         try
         {
@@ -328,14 +343,18 @@ protected:
 
     override void onRead() nothrow
     {
-        static if(IOMode ==IO_MODE.iocp)
+        static if (IOMode == IO_MODE.iocp)
         {
-	try{
-            trace ("read data : data.length: ", _event.readLen);
-            if(_event.readLen > 0 )
-		_readCallBack(_readBuffer[0 .. _event.readLen]);
-	}catch{}
-            if(alive)
+            try
+            {
+                trace("read data : data.length: ", _event.readLen);
+                if (_event.readLen > 0)
+                    _readCallBack(_readBuffer[0 .. _event.readLen]);
+            }
+            catch
+            {
+            }
+            if (alive)
                 doRead();
             _event.readLen = 0;
         }
@@ -363,7 +382,8 @@ protected:
                         }
                         else
                         {
-                            error("read Erro Do Close the erro : ", errno, " the socket fd : ",fd);
+                            error("read Erro Do Close the erro : ", errno,
+                                " the socket fd : ", fd);
                             onClose();
                             return;
                         }
@@ -373,7 +393,8 @@ protected:
                 {
                     try
                     {
-                        error("\n\n----tcp on read erro do Close! erro : ", e.msg, "\n\n");
+                        error("\n\n----tcp on read erro do Close! erro : ", e.msg,
+                            "\n\n");
                     }
                     catch
                     {
@@ -384,34 +405,39 @@ protected:
             }
         }
     }
-    
-    static if(IOMode ==IO_MODE.iocp)
+
+    static if (IOMode == IO_MODE.iocp)
     {
         bool doRead() nothrow
         {
             try
             {
                 _iocpBuffer.len = TCP_READ_BUFFER_SIZE;
-                _iocpBuffer.buf = cast(char *)_readBuffer.ptr;
+                _iocpBuffer.buf = cast(char*) _readBuffer.ptr;
                 _iocpread.event = _event;
                 _iocpread.operationType = IOCP_OP_TYPE.read;
-                
+
                 DWORD dwReceived = 0;
                 DWORD dwFlags = 0;
-                
-                int nRet = WSARecv( cast(SOCKET)_socket.handle, &_iocpBuffer, cast(uint)1, &dwReceived, &dwFlags, &_iocpread.ol,cast(windows.winsock2.LPWSAOVERLAPPED_COMPLETION_ROUTINE)null);
+
+                int nRet = WSARecv(cast(SOCKET) _socket.handle, &_iocpBuffer,
+                    cast(uint) 1, &dwReceived, &dwFlags, &_iocpread.ol,
+                    cast(windows.winsock2.LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
                 trace("do WSARecv : the return is : ", nRet);
-                if( nRet == windows.winsock2.SOCKET_ERROR ){
+                if (nRet == windows.winsock2.SOCKET_ERROR)
+                {
                     DWORD dwLastError = GetLastError();
-                    if( ERROR_IO_PENDING != dwLastError )
+                    if (ERROR_IO_PENDING != dwLastError)
                     {
-                        error("WSARecv failed with error: ", dwLastError );
+                        error("WSARecv failed with error: ", dwLastError);
                         onClose();
                         return false;
                     }
                 }
-            } catch
-            {}
+            }
+            catch
+            {
+            }
             return true;
         }
     }
@@ -425,13 +451,13 @@ protected:
 
     CallBack _unActive;
     TCPReadCallBack _readCallBack;
-    
+
     static if (IO_MODE.iocp == IOMode)
     {
-            IOCP_DATA _iocpread;
-            IOCP_DATA _iocpwrite;
-            WSABUF _iocpBuffer;
-            WSABUF _iocpWBuf;
+        IOCP_DATA _iocpread;
+        IOCP_DATA _iocpwrite;
+        WSABUF _iocpBuffer;
+        WSABUF _iocpWBuf;
 
     }
 }
@@ -446,8 +472,7 @@ final class WriteSite
         _cback = cback;
     }
 
-    pragma(inline)
-    bool add(size_t size) //如果写完了就返回true。
+    pragma(inline) bool add(size_t size) //如果写完了就返回true。
     {
         _site += size;
         if (_site >= _data.length)
@@ -456,20 +481,17 @@ final class WriteSite
             return false;
     }
 
-    pragma(inline,true)
-    @property size_t length() const
+    pragma(inline, true) @property size_t length() const
     {
         return (_data.length - _site);
     }
 
-    pragma(inline,true)
-    @property data()
+    pragma(inline, true) @property data()
     {
         return _data[_site .. $];
     }
 
-    pragma(inline)
-    void doCallBack() nothrow
+    pragma(inline) void doCallBack() nothrow
     {
 
         if (_cback)

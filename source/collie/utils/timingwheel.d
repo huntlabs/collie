@@ -36,11 +36,10 @@ final class TimingWheel
         Params:
             tm  = the timer.
     */
-    pragma(inline)
-    void addNewTimer(WheelTimer tm, size_t wheel = 0) nothrow
+    pragma(inline) void addNewTimer(WheelTimer tm, size_t wheel = 0) nothrow
     {
         size_t index;
-        if(wheel > 0)
+        if (wheel > 0)
             index = nextWheel(wheel);
         else
             index = getPrev();
@@ -73,10 +72,9 @@ final class TimingWheel
 
 protected:
     /// get next wheel times 's Wheel
-    pragma(inline)
-    size_t nextWheel(size_t wheel) nothrow
+    pragma(inline) size_t nextWheel(size_t wheel) nothrow
     {
-        auto next =  wheel % _list.length;
+        auto next = wheel % _list.length;
         return (_now + next) % _list.length;
     }
 
@@ -89,8 +87,7 @@ protected:
             return (_now - 1);
     }
     /// go forward a element,and return the element.
-    pragma(inline)
-    NullWheelTimer doNext() nothrow
+    pragma(inline) NullWheelTimer doNext() nothrow
     {
         ++_now;
         if (_now == _list.length)
@@ -98,15 +95,13 @@ protected:
         return _list[_now];
     }
     /// rest a timer.
-    pragma(inline)
-    void rest(WheelTimer tm,size_t next) nothrow
+    pragma(inline) void rest(WheelTimer tm, size_t next) nothrow
     {
         remove(tm);
-        addNewTimer(tm,next);
+        addNewTimer(tm, next);
     }
     /// remove the timer.
-    pragma(inline)
-    void remove(WheelTimer tm) nothrow
+    pragma(inline) void remove(WheelTimer tm) nothrow
     {
         tm._prev._next = tm._next;
         if (tm._next)
@@ -121,7 +116,6 @@ private:
     size_t _now;
 }
 
-
 /**
     The timer parent's class.
 */
@@ -133,41 +127,36 @@ abstract class WheelTimer
     void onTimeOut() nothrow;
 
     /// rest the timer.
-    pragma(inline)
-    final void rest(size_t next = 0) nothrow
+    pragma(inline) final void rest(size_t next = 0) nothrow
     {
-        if (_manger) 
+        if (_manger)
         {
-            _manger.rest(this,next);
+            _manger.rest(this, next);
         }
     }
 
     /// stop the time, it will remove from Wheel.
-    pragma(inline)
-    final void stop() nothrow
+    pragma(inline) final void stop() nothrow
     {
-        if (_manger) 
+        if (_manger)
         {
             _manger.remove(this);
         }
     }
 
     /// the time is active.
-    pragma(inline,true)
-    final bool isActive() const nothrow
+    pragma(inline, true) final bool isActive() const nothrow
     {
         return _manger !is null;
     }
-    
+
     /// get the timer only run once.
-    pragma(inline,true)
-    final @property oneShop()
+    pragma(inline, true) final @property oneShop()
     {
         return _oneShop;
     }
     /// set the timer only run once.
-    pragma(inline)
-    final @property oneShop(bool one)
+    pragma(inline) final @property oneShop(bool one)
     {
         _oneShop = one;
     }

@@ -26,86 +26,99 @@ final class ClientBootstrap(PipeLine)
 
     ~this()
     {
-        if(_timer) _timer.destroy;
+        if (_timer)
+            _timer.destroy;
         _socket.destroy;
     }
-    
-    auto setPipelineFactory(shared PipelineFactory!PipeLine  pipeFactory)
+
+    auto setPipelineFactory(shared PipelineFactory!PipeLine pipeFactory)
     {
         _pipelineFactory = pipeFactory;
         return this;
     }
-    
+
     /// time is s
     auto heartbeatTimeOut(uint second)
     {
         _timeOut = second * 1000;
         return this;
     }
-    
+
     void connect(string ip, ushort port)
     {
-        connect(new InternetAddress(ip,port));
+        connect(new InternetAddress(ip, port));
     }
-    
+
     void connect(Address to)
     {
-        
-        if(_pipelineFactory is null) throw new NeedPipeFactoryException("Pipeline must be not null! Please set Pipeline frist!");
-        if(_socket is null) _socket = new TCPClient(_loop,(to.addressFamily() == AddressFamily.INET6));
-         if (_socket.isAlive())
+
+        if (_pipelineFactory is null)
+            throw new NeedPipeFactoryException(
+                "Pipeline must be not null! Please set Pipeline frist!");
+        if (_socket is null)
+            _socket = new TCPClient(_loop, (to.addressFamily() == AddressFamily.INET6));
+        if (_socket.isAlive())
             throw new ConnectedException("This Socket is Connected! Please close before connect!");
-        if(_pipe is null) 
+        if (_pipe is null)
         {
             _pipe = _pipelineFactory.newPipeline(_socket);
             _pipe.finalize();
         }
-        
+
         _socket.setCloseCallBack(&closeCallBack);
         _socket.setConnectCallBack(&connectCallBack);
         _socket.setReadCallBack(&readCallBack);
         _socket.connect(to);
     }
-    
+
     void close()
     {
-        if (_socket is null) return;
-            _socket.close();
+        if (_socket is null)
+            return;
+        _socket.close();
     }
-    
-    @property EventLoop eventLoop(){return _loop;}
-    @property pipeLine() {return _pipe;}
-    
+
+    @property EventLoop eventLoop()
+    {
+        return _loop;
+    }
+
+    @property pipeLine()
+    {
+        return _pipe;
+    }
+
 protected:
     void closeCallBack()
     {
-        if(_timer) _timer.stop();
+        if (_timer)
+            _timer.stop();
         _pipe.transportInactive();
     }
-    
+
     void connectCallBack(bool isconnect)
     {
-        trace("connectCallBack ",isconnect);
-        if(!isconnect)
+        trace("connectCallBack ", isconnect);
+        if (!isconnect)
         {
             trace("how!");
-             _pipe.transportInactive();
-             return;
+            _pipe.transportInactive();
+            return;
         }
-        
+
         _pipe.transportActive();
-        if(_timeOut > 0) 
+        if (_timeOut > 0)
         {
-            if(_timer is null)
-            { 
+            if (_timer is null)
+            {
                 _timer = new Timer(_loop);
                 _timer.setCallBack(&timeOut);
             }
             _timer.start(_timeOut);
         }
-        
+
     }
-    
+
     void readCallBack(ubyte[] buffer)
     {
         _pipe.read(buffer);
@@ -115,21 +128,20 @@ protected:
     {
         _pipe.timeOut();
     }
-    
+
 private:
     EventLoop _loop;
     PipeLine _pipe;
-    shared  PipelineFactory!PipeLine _pipelineFactory;
+    shared PipelineFactory!PipeLine _pipelineFactory;
     TCPClient _socket;
     Timer _timer;
     uint _timeOut = 0;
 }
 
-
 class NeedPipeFactoryException : Exception
 {
     this(string msg, string file = __FILE__, size_t line = __LINE__)
     {
-        super(msg,file,line);
+        super(msg, file, line);
     }
 }

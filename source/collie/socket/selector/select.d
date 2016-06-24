@@ -20,6 +20,7 @@ import std.socket;
 import std.experimental.logger;
 
 import collie.socket.common;
+
 //select 的定时器怎么实现？还要和socket 结合起来？
 class SelectLoop
 {
@@ -40,12 +41,12 @@ class SelectLoop
 
     void weakUp()
     {
-        
+
     }
-    
+
     void wait(int timeout)
     {
- /*       softUnittest({
+        /*       softUnittest({
         enum PAIRS = 768;
         version(Posix)
         () @trusted
@@ -117,9 +118,9 @@ class SelectLoop
         }
     }); */
     }
-    
+
 private:
-    AsyncEvent* [socket_t] _socketList;
+    AsyncEvent*[socket_t] _socketList;
 }
 
 private final class EventChannel : EventCallInterface
@@ -129,8 +130,10 @@ private final class EventChannel : EventCallInterface
         _pair = socketPair();
         _pair[0].blocking = false;
         _pair[1].blocking = false;
-        _event = AsyncEvent.create(AsynType.EVENT, this,_pair[1].handle() , true, false, false);
+        _event = AsyncEvent.create(AsynType.EVENT, this, _pair[1].handle(), true, false,
+            false);
     }
+
     ~this()
     {
         AsyncEvent.free(_event);
@@ -138,19 +141,28 @@ private final class EventChannel : EventCallInterface
 
     void doWrite() nothrow
     {
-        try{
-        _pair[0].send("wekup");
-        } catch{}
+        try
+        {
+            _pair[0].send("wekup");
+        }
+        catch
+        {
+        }
     }
+
     override void onRead() nothrow
     {
         ubyte[128] data;
-        while(true)
+        while (true)
         {
-            try{
-                if(_pair[1].receive(data) <= 0)
+            try
+            {
+                if (_pair[1].receive(data) <= 0)
                     return;
-            } catch{}
+            }
+            catch
+            {
+            }
         }
     }
 
@@ -163,5 +175,5 @@ private final class EventChannel : EventCallInterface
     }
 
     Socket[2] _pair;
-    AsyncEvent * _event;
+    AsyncEvent* _event;
 }

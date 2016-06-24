@@ -63,8 +63,7 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
             _alloc.deallocate(_data);
     }
 
-    pragma(inline)
-    void insertBack(T value)
+    pragma(inline) void insertBack(T value)
     {
         if (full)
             exten(1);
@@ -72,8 +71,7 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
         ++_len;
     }
 
-    pragma(inline)
-    void insertBack(T[] value)
+    pragma(inline) void insertBack(T[] value)
     {
         if (_data.length < (_len + value.length))
             exten(value.length);
@@ -154,59 +152,52 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator
         }
     }
 
-    pragma(inline)
-    @property T[] dup()
+    pragma(inline) @property T[] dup()
     {
         auto list = new T[length];
         list[0 .. length] = _data[0 .. length];
         return list;
     }
 
-    pragma(inline)
-    T[] data(bool rest = true)
+    pragma(inline) T[] data(bool rest = true)
     {
-        auto list =  _data[0 .. length];
-        if(rest)
+        auto list = _data[0 .. length];
+        if (rest)
         {
             _data = null;
             _len = 0;
         }
         return list;
     }
-    
-    pragma(inline)
-    inout ref inout(T) opIndex(size_t i)
+
+    pragma(inline) inout ref inout(T) opIndex(size_t i)
     {
         assert(i < _len);
         return _data[i];
     }
 
-    pragma(inline,true)
-    T at(size_t i)
+    pragma(inline, true) T at(size_t i)
     {
         assert(i < _len);
         return _data[i];
     }
 
-    pragma(inline,true)
-    const @property bool empty()
+    pragma(inline, true) const @property bool empty()
     {
         return (_len == 0);
     }
 
-    pragma(inline,true)
-    const @property size_t length()
+    pragma(inline, true) const @property size_t length()
     {
         return _len;
     }
 
-    pragma(inline,true)
-    void clear()
+    pragma(inline, true) void clear()
     {
         _data[] = T.init;
         _len = 0;
     }
-    
+
 private:
     bool full()
     {

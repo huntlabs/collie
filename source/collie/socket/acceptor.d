@@ -32,23 +32,24 @@ final class Acceptor : AsyncTransport, EventCallInterface
     {
         if (isIpV6)
         {
-                        _socket = new Socket(AddressFamily.INET6, SocketType.STREAM, ProtocolType.TCP);
+            _socket = new Socket(AddressFamily.INET6, SocketType.STREAM, ProtocolType.TCP);
         }
         else
         {
-                        _socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
+            _socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
         }
         _socket.blocking = false;
-        super(loop,TransportType.ACCEPT);
+        super(loop, TransportType.ACCEPT);
         static if (IOMode == IO_MODE.iocp)
             _buffer = new ubyte[2048];
     }
 
     @property reusePort(bool use)
     {
-            _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, use);
-            version (Posix)
-                    _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,use);
+        _socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, use);
+        version (Posix)
+            _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
+                use);
     }
 
     void bind(Address addr) @trusted
@@ -79,7 +80,7 @@ final class Acceptor : AsyncTransport, EventCallInterface
         }
         _event = AsyncEvent.create(AsynType.ACCEPT, this, _socket.handle, true, false,
             false);
-        static if(IOMode ==IO_MODE.iocp)
+        static if (IOMode == IO_MODE.iocp)
         {
             trace("start accept : , the fd is ", _socket.handle());
             _loop.addEvent(_event);
@@ -95,7 +96,7 @@ final class Acceptor : AsyncTransport, EventCallInterface
     {
         if (isAlive)
         {
-          onClose();
+            onClose();
         }
         else if (_socket.isAlive())
         {
@@ -125,14 +126,15 @@ final class Acceptor : AsyncTransport, EventCallInterface
 protected:
     override void onRead() nothrow
     {
-        static if(IO_MODE.iocp == IOMode)
+        static if (IO_MODE.iocp == IOMode)
         {
             try
             {
-                trace("new connect ,the fd is : ",_inSocket.handle());
-                SOCKET slisten = cast(SOCKET)_socket.handle;
-                SOCKET slink = cast(SOCKET)_inSocket.handle;
-                windows.winsock2.setsockopt(slink,  windows.winsock2.SOL_SOCKET, 0x700B, cast(const char *)&slisten, slisten.sizeof);
+                trace("new connect ,the fd is : ", _inSocket.handle());
+                SOCKET slisten = cast(SOCKET) _socket.handle;
+                SOCKET slink = cast(SOCKET) _inSocket.handle;
+                windows.winsock2.setsockopt(slink, windows.winsock2.SOL_SOCKET,
+                    0x700B, cast(const char*)&slisten, slisten.sizeof);
                 _callBack(_inSocket);
             }
             catch (Exception e)
@@ -157,7 +159,7 @@ protected:
                     return;
                 try
                 {
-                    trace("new connect ,the fd is : ",_inSocket.handle());
+                    trace("new connect ,the fd is : ", _inSocket.handle());
                     Socket sock = new Socket(fd, _socket.addressFamily);
                     _callBack(sock);
                 }
@@ -188,40 +190,54 @@ protected:
         _event = null;
         _socket.close();
     }
-    
-    static if(IOMode ==IO_MODE.iocp)
+
+    static if (IOMode == IO_MODE.iocp)
     {
         bool doAccept() nothrow
         {
-            try{
+            try
+            {
                 _iocp.event = _event;
                 _iocp.operationType = IOCP_OP_TYPE.accept;
-                if(_inSocket is null)
+                if (_inSocket is null)
                 {
-		_inSocket = new Socket(_socket.addressFamily , SocketType.STREAM, ProtocolType.TCP);
+                    _inSocket = new Socket(_socket.addressFamily,
+                        SocketType.STREAM, ProtocolType.TCP);
                 }
-                
+
                 DWORD dwBytesReceived = 0;
-				trace("AcceptEx is :  ", AcceptEx);
-                int nRet = AcceptEx(cast(SOCKET)_socket.handle,cast(SOCKET)_inSocket.handle,_buffer.ptr,0,
-                                    sockaddr_in.sizeof+16, sockaddr_in.sizeof+16, &dwBytesReceived, &_iocp.ol);
+                trace("AcceptEx is :  ", AcceptEx);
+                int nRet = AcceptEx(cast(SOCKET) _socket.handle,
+                    cast(SOCKET) _inSocket.handle, _buffer.ptr, 0,
+                    sockaddr_in.sizeof + 16, sockaddr_in.sizeof + 16,
+                    &dwBytesReceived, &_iocp.ol);
                 trace("do AcceptEx : the return is : ", nRet);
-                if( nRet == 0 ){
+                if (nRet == 0)
+                {
                     DWORD dwLastError = GetLastError();
-                    if( ERROR_IO_PENDING != dwLastError )
+                    if (ERROR_IO_PENDING != dwLastError)
                     {
-                        try{
-                        error("AcceptEx failed with error: ", dwLastError );
-                        }catch{}
+                        try
+                        {
+                            error("AcceptEx failed with error: ", dwLastError);
+                        }
+                        catch
+                        {
+                        }
                         onClose();
                         return false;
                     }
                 }
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
-                try{
-                error("AcceptEx failed with error : ", e.msg);
-                } catch{}
+                try
+                {
+                    error("AcceptEx failed with error : ", e.msg);
+                }
+                catch
+                {
+                }
             }
             return true;
         }
@@ -232,16 +248,16 @@ private:
     AsyncEvent* _event = null;
 
     AcceptCallBack _callBack;
-    
+
     static if (IO_MODE.iocp == IOMode)
     {
         IOCP_DATA _iocp;
         WSABUF _iocpWBuf;
-        
+
         Socket _inSocket;
-        
+
         ubyte[] _buffer;
-        
+
         uint _addreslen;
     }
 }

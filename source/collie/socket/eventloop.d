@@ -26,7 +26,8 @@ import std.experimental.allocator.gc_allocator;
 import collie.socket.common;
 import collie.utils.queue;
 
-static if(CustomTimer) import collie.utils.timingwheel;
+static if (CustomTimer)
+    import collie.utils.timingwheel;
 
 /** 网络I/O处理的事件循环类
  @authors  Putao‘s Collie Team
@@ -41,7 +42,7 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
         _callbackList = Queue!(CallBack, true, false, GCAllocator)(32);
         _mutex = new Mutex();
         _run = false;
-        static if(CustomTimer)
+        static if (CustomTimer)
             _timeWheel = new TimingWheel(CustomTimerWheelSize);
     }
 
@@ -58,11 +59,11 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
     {
         _thID = Thread.getThis.id();
         _run = true;
-        static if(CustomTimer)
+        static if (CustomTimer)
             _nextTime = (Clock.currStdTime() / 10000) + CustomTimerTimeOut;
         while (_run)
         {
-            static if(CustomTimer)
+            static if (CustomTimer)
                 timeout = doWheel();
             _poll.wait(timeout);
             if (!_callbackList.empty)
@@ -122,19 +123,26 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
     {
         if (event == null)
             return false;
-        static if(CustomTimer)
+        static if (CustomTimer)
         {
-            if(event.type() == AsynType.TIMER)
+            if (event.type() == AsynType.TIMER)
             {
-                try{
+                try
+                {
                     CWheelTimer timer = new CWheelTimer(event);
-                    _timeWheel.addNewTimer(timer,timer.wheelSize());
+                    _timeWheel.addNewTimer(timer, timer.wheelSize());
                     event.timer = timer;
                     event.isActive(true);
-                }catch{
-                    try{
-                    error("new CWheelTimer error!!!"); 
-                    } catch{}
+                }
+                catch
+                {
+                    try
+                    {
+                        error("new CWheelTimer error!!!");
+                    }
+                    catch
+                    {
+                    }
                     return false;
                 }
                 return true;
@@ -147,9 +155,9 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
     {
         if (event == null)
             return false;
-        static if(CustomTimer)
+        static if (CustomTimer)
         {
-            if(event.type() == AsynType.TIMER)
+            if (event.type() == AsynType.TIMER)
                 return false;
         }
         return _poll.modEvent(event);
@@ -159,13 +167,18 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
     {
         if (event == null)
             return false;
-        if(event.type() == AsynType.TIMER)
+        if (event.type() == AsynType.TIMER)
         {
             event.timer.stop();
-            try{
+            try
+            {
                 import collie.utils.memory;
+
                 gcFree(event.timer);
-            }catch{}
+            }
+            catch
+            {
+            }
             event.timer = null;
             event.isActive(false);
             return true;
@@ -214,39 +227,39 @@ private:
     Queue!(CallBack, true, false, GCAllocator) _callbackList;
     bool _run;
     ThreadID _thID;
-static if(CustomTimer)
-{
-    TimingWheel _timeWheel;
-    long _nextTime; 
-    
-    int doWheel()
+    static if (CustomTimer)
     {
-        auto nowTime = (Clock.currStdTime() / 10000);
-        while(nowTime >= _nextTime)
+        TimingWheel _timeWheel;
+        long _nextTime;
+
+        int doWheel()
         {
-            _timeWheel.prevWheel();
-            _nextTime += CustomTimerTimeOut;
-            nowTime = (Clock.currStdTime() / 10000);
+            auto nowTime = (Clock.currStdTime() / 10000);
+            while (nowTime >= _nextTime)
+            {
+                _timeWheel.prevWheel();
+                _nextTime += CustomTimerTimeOut;
+                nowTime = (Clock.currStdTime() / 10000);
+            }
+            nowTime = _nextTime - nowTime;
+            return cast(int) nowTime;
         }
-        nowTime = _nextTime - nowTime;
-        return cast(int)nowTime;
     }
 }
-}
 
-static if(IOMode == IO_MODE.kqueue)
+static if (IOMode == IO_MODE.kqueue)
 {
     import collie.socket.selector.kqueue;
 
     alias EventLoop = EventLoopImpl!(KqueueLoop);
 }
-else static if(IOMode == IO_MODE.epoll)
+else static if (IOMode == IO_MODE.epoll)
 {
     import collie.socket.selector.epoll;
 
     alias EventLoop = EventLoopImpl!(EpollLoop);
 }
-else static if(IOMode == IO_MODE.iocp)
+else static if (IOMode == IO_MODE.iocp)
 {
     public import collie.socket.selector.iocp;
 
@@ -259,45 +272,44 @@ else
     alias EventLoop = EventLoopImpl!(SelectLoop);
 }
 
-
-static if(CustomTimer)
+static if (CustomTimer)
 {
-pragma(msg, "use CustomTimer!!!!");
+    pragma(msg, "use CustomTimer!!!!");
 private:
-    final class CWheelTimer :  WheelTimer
+    final class CWheelTimer : WheelTimer
     {
         this(AsyncEvent* event)
         {
             _event = event;
             auto size = event.timeOut / CustomTimerTimeOut;
             auto superfluous = event.timeOut % CustomTimerTimeOut;
-            size += superfluous > CustomTimer_Next_TimeOut ? 1  : 0;
+            size += superfluous > CustomTimer_Next_TimeOut ? 1 : 0;
             size = size > 0 ? size : 1;
-            _wheelSize = cast(uint)size;
+            _wheelSize = cast(uint) size;
             _circle = _wheelSize / CustomTimerWheelSize;
             trace("_wheelSize = ", _wheelSize, " event.timeOut = ", event.timeOut);
         }
-        
+
         override void onTimeOut() nothrow
         {
-            _now ++;
-            if(_now >= _circle)
+            _now++;
+            if (_now >= _circle)
             {
                 _now = 0;
                 rest(_wheelSize);
                 _event.obj().onRead();
             }
         }
-        
-        pragma(inline , true)
-        @property wheelSize()
+
+        pragma(inline, true) @property wheelSize()
         {
             return _wheelSize;
         }
+
     private:
         uint _wheelSize;
         uint _circle;
         uint _now = 0;
         AsyncEvent* _event;
     }
-} 
+}
