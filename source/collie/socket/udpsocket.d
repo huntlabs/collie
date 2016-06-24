@@ -20,7 +20,9 @@ import collie.socket.eventloop;
 import collie.socket.transport;
 import collie.utils.queue;
 
-static if(IOMode !=IO_MODE.iocp)
+version(Windows)
+{}
+else
 {
 
 alias UDPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);

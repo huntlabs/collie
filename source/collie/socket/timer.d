@@ -77,6 +77,7 @@ final class Timer : EventCallInterface
             its.it_interval.tv_nsec = its.it_value.tv_nsec;
             int err = timerfd_settime(_event.fd, 0, &its, null);
             if (err == -1)
+            
             {
                 import core.sys.posix.unistd;
 
@@ -104,9 +105,9 @@ protected:
             ulong value;
             read(_event.fd, &value, 8);
         }
-        try{
-        trace("time out !!!!");
-        } catch{}
+      //  try{
+       // trace("time out !!!!");
+       // } catch{}
         if (_callBack)
         {
             try

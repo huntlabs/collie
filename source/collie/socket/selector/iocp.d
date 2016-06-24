@@ -96,7 +96,8 @@ final class IOCPLoop
                     if(ev && ev.event)
                     {
                         error("has event , the fd is : ",ev.event.fd);
-                        ev.event.obj.onClose();
+                        if(ev.event.obj)
+                            ev.event.obj.onClose();
                     }
                     return;
                     

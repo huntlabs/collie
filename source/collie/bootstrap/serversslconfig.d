@@ -17,13 +17,11 @@ import std.experimental.logger;
 version(Windows)
 {
     alias SSL_CTX = int;
-    class ServerSSLConfig
-    {}
 }
 else
 {
-
 public import deimos.openssl.ssl;
+}
 
 enum SSLMode
 {
@@ -44,6 +42,10 @@ class ServerSSLConfig
     SSL_CTX * generateSSLCtx()
     {
         SSL_CTX * ctx = null;
+version(Windows)
+{}
+else
+{
         final switch (_mode)
         {
             case SSLMode.SSLv2v3 :
@@ -77,7 +79,7 @@ class ServerSSLConfig
                 SSL_CTX_free(ctx);
                 return null;
         }
-        
+}
         return ctx;
     }
     
@@ -98,7 +100,10 @@ private:
     string _cipherList;
     SSLMode _mode;
 }
-
+version(Windows)
+{}
+else
+{
 import core.sync.mutex;
 import core.thread;
 

@@ -24,3 +24,7 @@ __test__library__
 core
 /build
 .idea
+*.lib
+*.suo
+*.exe
+*.dll
