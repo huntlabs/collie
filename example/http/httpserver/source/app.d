@@ -74,7 +74,7 @@ void main()
     auto ser = new ServerBootstrap!HTTPPipeline(loop);
     ser.childPipeline(new HTTPPipelineFactory()).heartbeatTimeOut(30)
 //         .group(new EventLoopGroup(1))
-        .bind(8081);
+        .bind("127.0.0.1",8081);
         
     version (SSL) 
     {

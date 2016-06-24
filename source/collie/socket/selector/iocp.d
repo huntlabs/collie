@@ -89,7 +89,6 @@ final class IOCPLoop
                     auto erro = GetLastError();
                     if(erro == WAIT_TIMEOUT) return;
                     auto ev = cast(IOCP_DATA *)overlapped;
-                    error("GetQueuedCompletionStatus erro, erro is : ", erro, " the fd is :", ev.event.fd);
                     if(ev.event)
                         ev.event.obj.onClose();
                     return;
@@ -97,7 +96,6 @@ final class IOCPLoop
 		}
 		if(overlapped is null) return;
 		auto ev = cast(IOCP_DATA *)overlapped;
-		trace("ev.operationType is :", ev.operationType, "  the fd is :",ev.event.fd);
 		final switch (ev.operationType)
 		{
                     case IOCP_OP_TYPE.accept:
@@ -138,9 +136,9 @@ final class IOCPLoop
 	
 	void weakUp() nothrow
 	{
-	   try{
-                PostQueuedCompletionStatus(_iocp,0,0,cast(LPOVERLAPPED)(&_event));
-            }catch{}
+		try{
+            PostQueuedCompletionStatus(_iocp,0,0,cast(LPOVERLAPPED)(&_event));
+		}catch{}
 	}
 private:
     HANDLE        _iocp;
@@ -184,7 +182,7 @@ shared static this()
     {
         errnoEnforce("iocp init error!");
     }
-    SOCKET ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP );
+    SOCKET ListenSocket = WSASocket(AF_INET,SOCK_STREAM,IPPROTO_TCP, null,0, WSA_FLAG_OVERLAPPED);//socket(AF_INET, SOCK_STREAM, IPPROTO_TCP );
 	GUID guid ;
      mixin(GET_FUNC_POINTER("WSAID_ACCEPTEX", "AcceptEx"));
      mixin(GET_FUNC_POINTER("WSAID_CONNECTEX", "ConnectEx"));
@@ -193,8 +191,6 @@ shared static this()
      mixin(GET_FUNC_POINTER("WSAID_TRANSMITFILE", "TransmitFile"));
      mixin(GET_FUNC_POINTER("WSAID_TRANSMITPACKETS", "TransmitPackets"));
      mixin(GET_FUNC_POINTER("WSAID_WSARECVMSG", "WSARecvMsg"));*/
-     import std.stdio;
-     writeln("static this() is over! AcceptEx is :" ,AcceptEx, "   ConnectEx is :", ConnectEx);
 }
 
 shared static ~this()

@@ -22,6 +22,8 @@ import collie.socket.transport;
 import collie.utils.queue;
 import collie.socket.tcpsocket;
 
+static import windows.winsock2;
+
 alias AcceptCallBack = void delegate(Socket sock);
 
 final class Acceptor : AsyncTransport, EventCallInterface
@@ -29,9 +31,29 @@ final class Acceptor : AsyncTransport, EventCallInterface
     this(EventLoop loop, bool isIpV6 = false)
     {
         if (isIpV6)
-            _socket = new Socket(AddressFamily.INET6, SocketType.STREAM, ProtocolType.TCP);
+		{
+			static if (IOMode == IO_MODE.iocp)
+			{
+				auto sc = WSASocket(windows.winsock2.AF_INET6,windows.winsock2.SOCK_STREAM, windows.winsock2.IPPROTO_TCP, null,0, WSA_FLAG_OVERLAPPED);
+				_socket = new Socket(cast(socket_t)sc,AddressFamily.INET6);
+			}
+			else
+			{
+				_socket = new Socket(AddressFamily.INET6, SocketType.STREAM, ProtocolType.TCP);
+			}
+		}
         else
-            _socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
+		{
+			static if (IOMode == IO_MODE.iocp)
+			{
+				auto sc = WSASocket(windows.winsock2.AF_INET,windows.winsock2.SOCK_STREAM, windows.winsock2.IPPROTO_TCP, null,0, WSA_FLAG_OVERLAPPED);
+				_socket = new Socket(cast(socket_t)sc,AddressFamily.INET);
+			}
+			else
+			{
+				_socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
+			}
+		}
         _socket.blocking = false;
         super(loop,TransportType.ACCEPT);
         static if (IOMode == IO_MODE.iocp)
@@ -184,17 +206,26 @@ protected:
         bool doAccept() nothrow
         {
             try{
-                
                 _iocp.event = _event;
                 _iocp.operationType = IOCP_OP_TYPE.accept;
-                if(_inSocket)
+                if(_inSocket is null)
                 {
-                    _inSocket = new Socket(_socket.addressFamily, SocketType.STREAM, ProtocolType.TCP);
+					if(_socket.addressFamily == AddressFamily.INET)
+					{
+						auto sc = WSASocket(windows.winsock2.AF_INET,windows.winsock2.SOCK_STREAM, windows.winsock2.IPPROTO_TCP, null,0, WSA_FLAG_OVERLAPPED);
+						_inSocket = new Socket(cast(socket_t)sc,AddressFamily.INET);
+					}
+					else
+					{
+						auto sc = WSASocket(windows.winsock2.AF_INET6,windows.winsock2.SOCK_STREAM, windows.winsock2.IPPROTO_TCP, null,0, WSA_FLAG_OVERLAPPED);
+						_inSocket = new Socket(cast(socket_t)sc,AddressFamily.INET6);
+					}
                 }
                 
                 DWORD dwBytesReceived = 0;
+				trace("AcceptEx is :  ", AcceptEx);
                 int nRet = AcceptEx(cast(SOCKET)_socket.handle,cast(SOCKET)_inSocket.handle,_buffer.ptr,0,
-                                    _addreslen+16, _addreslen+16, &dwBytesReceived, &_iocp.ol);//BUG：异常！
+                                    sockaddr_in.sizeof+16, sockaddr_in.sizeof+16, &dwBytesReceived, &_iocp.ol);//BUG：异常！
                 trace("do AcceptEx : the return is : ", nRet);
                 if( nRet == 0 ){
                     DWORD dwLastError = GetLastError();
