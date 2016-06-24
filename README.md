@@ -13,4 +13,4 @@ An asynchronous event-driven network framework written in [dlang](http://dlang.o
 - _add codec_ (__Complete,but Maybe need more__)
 - _MAC and BSD suport (kqueue)_ (__Complete__)
 - _UDP_ (__Complete,but No use the pipeline__)
-- _Test Add Windows suport (slect)_ (__Complete, use IOCP,not select. only tcp,not udp and ssl__)
+- _Test Add Windows suport (select)_ (__Complete, use IOCP,not select. only tcp,not udp and ssl__)
