@@ -187,7 +187,7 @@ protected:
                 
                 _iocp.event = _event;
                 _iocp.operationType = IOCP_OP_TYPE.accept;
-                if(_inSocket)
+                if(_inSocket is null)
                 {
                     _inSocket = new Socket(_socket.addressFamily, SocketType.STREAM, ProtocolType.TCP);
                 }

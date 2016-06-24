@@ -185,6 +185,7 @@ shared static this()
         errnoEnforce("iocp init error!");
     }
     SOCKET ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP );
+	scope(exit)closesocket(ListenSocket);
 	GUID guid ;
      mixin(GET_FUNC_POINTER("WSAID_ACCEPTEX", "AcceptEx"));
      mixin(GET_FUNC_POINTER("WSAID_CONNECTEX", "ConnectEx"));
