@@ -10,10 +10,6 @@
  */
 module collie.utils.timingwheel;
 
-import std.container.array;
-
-import std.stdio;
-
 /**
     Timing Wheel manger Class
 */
@@ -41,9 +37,14 @@ final class TimingWheel
             tm  = the timer.
     */
     pragma(inline)
-    void addNewTimer(WheelTimer tm) nothrow
+    void addNewTimer(WheelTimer tm, size_t wheel = 0) nothrow
     {
-        NullWheelTimer timer = _list[getPrev()];
+        size_t index;
+        if(wheel > 0)
+            index = nextWheel(wheel);
+        else
+            index = getPrev();
+        NullWheelTimer timer = _list[index];
         tm._next = timer._next;
         tm._prev = timer;
         if (timer._next)
@@ -71,6 +72,14 @@ final class TimingWheel
     }
 
 protected:
+    /// get next wheel times 's Wheel
+    pragma(inline)
+    size_t nextWheel(size_t wheel) nothrow
+    {
+        auto next =  wheel % _list.length;
+        return (_now + next) % _list.length;
+    }
+
     /// get the index whitch is farthest with current index.
     size_t getPrev() const nothrow
     {
@@ -90,10 +99,10 @@ protected:
     }
     /// rest a timer.
     pragma(inline)
-    void rest(WheelTimer tm) nothrow
+    void rest(WheelTimer tm,size_t next) nothrow
     {
         remove(tm);
-        addNewTimer(tm);
+        addNewTimer(tm,next);
     }
     /// remove the timer.
     pragma(inline)
@@ -125,11 +134,11 @@ abstract class WheelTimer
 
     /// rest the timer.
     pragma(inline)
-    final void rest() nothrow
+    final void rest(size_t next = 0) nothrow
     {
         if (_manger) 
         {
-            _manger.rest(this);
+            _manger.rest(this,next);
         }
     }
 

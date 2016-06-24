@@ -123,7 +123,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
     {
         if (!alive)
         {
-            info("tcp socket write on close!");
+            warning("tcp socket write on close!");
             cback(data, 0);
             return;
         }
@@ -136,13 +136,14 @@ class TCPSocket : AsyncTransport, EventCallInterface
         
         if (!_writeQueue.enQueue(buffer))
         {
-            info("tcp socket write on _writeQueue close!");
+            warning("tcp socket write on _writeQueue close!");
             buffer.doCallBack();
             import collie.utils.memory;
             gcFree(buffer);
         }
         static if(IOMode == IO_MODE.iocp)
         {
+            trace("do write: ", dowrite);
             if(dowrite)
             {
                 _event.writeLen = 0;
@@ -181,18 +182,6 @@ class TCPSocket : AsyncTransport, EventCallInterface
         _unActive = cback;
     }
 
-    pragma(inline,true)
-    final @property  deleteOnClosed()
-    {
-        return _event.deleteOnClosed;
-    }
-
-    pragma(inline)
-    final @property  deleteOnClosed(bool closed)
-    {
-        _event.deleteOnClosed = closed;
-    }
-
 protected:
     pragma(inline,true)
     final @property bool alive() @trusted nothrow
@@ -205,6 +194,7 @@ protected:
         static if(IOMode == IO_MODE.iocp)
         {
 	try{
+            trace("write !");
             if(!alive || _writeQueue.empty)
                 return;
             auto buffer = _writeQueue.front;
@@ -412,7 +402,6 @@ protected:
                 int nRet = WSARecv( cast(SOCKET)_socket.handle, &_iocpBuffer, cast(uint)1, &dwReceived, &dwFlags, &_iocpread.ol,cast(windows.winsock2.LPWSAOVERLAPPED_COMPLETION_ROUTINE)null);
                 trace("do WSARecv : the return is : ", nRet);
                 if( nRet == windows.winsock2.SOCKET_ERROR ){
-
                     DWORD dwLastError = GetLastError();
                     if( ERROR_IO_PENDING != dwLastError )
                     {
@@ -426,7 +415,6 @@ protected:
             return true;
         }
     }
-
 protected:
     import std.experimental.allocator.gc_allocator;
 
@@ -444,6 +432,7 @@ protected:
             IOCP_DATA _iocpwrite;
             WSABUF _iocpBuffer;
             WSABUF _iocpWBuf;
+
     }
 }
 

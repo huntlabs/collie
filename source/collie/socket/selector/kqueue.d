@@ -202,14 +202,6 @@ static if(IOMode == IO_MODE.kqueue)
             auto num = kevent(_efd, null, 0, &event, 1, &tspec);
             if(num <= 0) return;
             auto ev = cast(AsyncEvent *)event.udata;
-            scope(success)
-            {
-                if(ev.deleteOnClosed && (!ev.isActive))
-                {
-                    import collie.utils.memory;
-                    gcFree(ev.obj);
-                }
-            }
             
             if((event.flags & EV_EOF) || (event.flags &EV_ERROR))
             {

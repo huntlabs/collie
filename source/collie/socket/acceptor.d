@@ -31,13 +31,13 @@ final class Acceptor : AsyncTransport, EventCallInterface
     this(EventLoop loop, bool isIpV6 = false)
     {
         if (isIpV6)
-		{
-				_socket = new Socket(AddressFamily.INET6, SocketType.STREAM, ProtocolType.TCP);
-		}
+        {
+                        _socket = new Socket(AddressFamily.INET6, SocketType.STREAM, ProtocolType.TCP);
+        }
         else
-		{
-				_socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
-		}
+        {
+                        _socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
+        }
         _socket.blocking = false;
         super(loop,TransportType.ACCEPT);
         static if (IOMode == IO_MODE.iocp)
@@ -81,6 +81,7 @@ final class Acceptor : AsyncTransport, EventCallInterface
             false);
         static if(IOMode ==IO_MODE.iocp)
         {
+            trace("start accept : , the fd is ", _socket.handle());
             _loop.addEvent(_event);
             return doAccept();
         }
@@ -129,6 +130,9 @@ protected:
             try
             {
                 trace("new connect ,the fd is : ",_inSocket.handle());
+                SOCKET slisten = cast(SOCKET)_socket.handle;
+                SOCKET slink = cast(SOCKET)_inSocket.handle;
+                windows.winsock2.setsockopt(slink,  windows.winsock2.SOL_SOCKET, 0x700B, cast(const char *)&slisten, slisten.sizeof);
                 _callBack(_inSocket);
             }
             catch (Exception e)
@@ -200,7 +204,7 @@ protected:
                 DWORD dwBytesReceived = 0;
 				trace("AcceptEx is :  ", AcceptEx);
                 int nRet = AcceptEx(cast(SOCKET)_socket.handle,cast(SOCKET)_inSocket.handle,_buffer.ptr,0,
-                                    sockaddr_in.sizeof+16, sockaddr_in.sizeof+16, &dwBytesReceived, &_iocp.ol);//BUG：异常！
+                                    sockaddr_in.sizeof+16, sockaddr_in.sizeof+16, &dwBytesReceived, &_iocp.ol);
                 trace("do AcceptEx : the return is : ", nRet);
                 if( nRet == 0 ){
                     DWORD dwLastError = GetLastError();

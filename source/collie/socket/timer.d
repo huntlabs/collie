@@ -29,8 +29,6 @@ final class Timer : EventCallInterface
 
     ~this()
     {
-        
-
         if (_event.isActive)
         {
             _loop.delEvent(_event);
@@ -59,7 +57,7 @@ final class Timer : EventCallInterface
     {
         if (isActive() || msesc <= 0)
                 return false;
-        static if(IOMode == IOMode.kqueue)
+        static if(IOMode == IOMode.kqueue || CustomTimer)
         {
             _event.timeOut = cast(long)msesc;
         } 
@@ -100,12 +98,15 @@ final class Timer : EventCallInterface
 protected:
     override void onRead() nothrow
     {
-		static if(IOMode == IO_MODE.epoll)
-		{
-	        import core.sys.posix.unistd;
-	        ulong value;
-	        read(_event.fd, &value, 8);
-		}
+        static if(IOMode == IO_MODE.epoll)
+        {
+            import core.sys.posix.unistd;
+            ulong value;
+            read(_event.fd, &value, 8);
+        }
+        try{
+        trace("time out !!!!");
+        } catch{}
         if (_callBack)
         {
             try

@@ -137,7 +137,10 @@ protected:
     {
         trace("responseSent");
         if (context.transport is null || !context.transport.isAlive())
+        {
+            trace("socket is closed when http response!");
             return;
+        }
         if (file is null)
         {
             trace("write(context(),resp);");

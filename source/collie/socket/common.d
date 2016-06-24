@@ -27,21 +27,28 @@ enum IO_MODE
     none
 }
 
+enum CustomTimerTimeOut   = 50;// 50ms 精确
+enum CustomTimerWheelSize = 20;// 轮子数量
+
 version (FreeBSD)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
+    enum CustomTimer = false;
 }
 else version (OpenBSD)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
+    enum CustomTimer = false;
 }
 else version (NetBSD)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
+    enum CustomTimer = false;
 }
 else version (OSX)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
+    enum CustomTimer = false;
 }
 /*else version (Solaris)
 {
@@ -50,6 +57,7 @@ else version (OSX)
 else version (linux)
 {
     enum IO_MODE IOMode = IO_MODE.epoll;
+    enum CustomTimer = false;
 }
 /*else version (Posix)
 {
@@ -57,11 +65,13 @@ else version (linux)
 }*/
 else version(Windows)
 {
-	enum IO_MODE IOMode = IO_MODE.iocp;
+    enum IO_MODE IOMode = IO_MODE.iocp;
+    enum CustomTimer = true;
 }
 else
 {
     enum IO_MODE IOMode = IO_MODE.select;
+    enum CustomTimer = true;
 }
 
 alias CallBack = void delegate();
@@ -116,7 +126,6 @@ struct AsyncEvent
     bool enWrite = false;
     bool etMode = false;
     bool oneShot = false;
-    bool deleteOnClosed = false;
 
     pragma(inline)
     static AsyncEvent* create(AsynType type, EventCallInterface obj,
@@ -149,7 +158,7 @@ package:
         _isActive = active;
     }
     
-static if(IOMode == IOMode.kqueue)
+static if(IOMode == IOMode.kqueue || CustomTimer)
 {
     long timeOut;
 }
@@ -158,10 +167,20 @@ static if(IOMode == IOMode.iocp)
     uint readLen;
     uint writeLen;
 }
+static if(CustomTimer)
+{
+    import collie.utils.timingwheel;
+    WheelTimer timer;
+}
 
 private:
     EventCallInterface _obj;
     AsynType _type;
     bool _isActive = false;
+}
+
+static if(CustomTimer)
+{
+    enum CustomTimer_Next_TimeOut = cast(long)(CustomTimerTimeOut * (2.0 / 3.0));
 }
 

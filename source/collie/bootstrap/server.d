@@ -370,7 +370,6 @@ else
             return;
         }
         pipe.finalize();
-        sock.deleteOnClosed(true);
         auto con = new ServerConnection!PipeLine(pipe);
         con.serverAceptor = this;
         _list[con] = 0;

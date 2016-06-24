@@ -44,6 +44,7 @@ final class IOCPLoop
 			errnoEnforce("CreateIoCompletionPort failed");
 		}
 		_event.operationType = IOCP_OP_TYPE.event;
+		_event.event = null;
 	}
 
 	~this()
@@ -60,6 +61,7 @@ final class IOCPLoop
 		{
 			try{
 			auto v = CreateIoCompletionPort(cast(HANDLE)event.fd,_iocp,cast(ULONG_PTR)event,1);
+			event.isActive(true);
 			if(!v) return false;
 			}catch{}
 		}
@@ -73,6 +75,7 @@ final class IOCPLoop
 
 	bool delEvent(AsyncEvent * event) nothrow
 	{
+                event.isActive(false);
 		return true;
 	}
 
@@ -88,9 +91,13 @@ final class IOCPLoop
 			return;
                     auto erro = GetLastError();
                     if(erro == WAIT_TIMEOUT) return;
+                    error("GetQueuedCompletionStatus erro!");
                     auto ev = cast(IOCP_DATA *)overlapped;
-                    if(ev.event)
+                    if(ev && ev.event)
+                    {
+                        error("has event , the fd is : ",ev.event.fd);
                         ev.event.obj.onClose();
+                    }
                     return;
                     
 		}
@@ -136,9 +143,9 @@ final class IOCPLoop
 	
 	void weakUp() nothrow
 	{
-		try{
-            PostQueuedCompletionStatus(_iocp,0,0,cast(LPOVERLAPPED)(&_event));
-		}catch{}
+            try{
+                PostQueuedCompletionStatus(_iocp,0,0,cast(LPOVERLAPPED)(&_event));
+            }catch{}
 	}
 private:
     HANDLE        _iocp;
@@ -151,20 +158,7 @@ struct IOCP_DATA
         IOCP_OP_TYPE operationType;
         AsyncEvent * event = null;
 }
-/*
-struct __WSABUF
-{ 
-    ulong len;
-    char  *buf;
-} 
 
-alias WSABUF = __WSABUF;
-alias LPWSABUF = __WSABUF *;
-
-int WSASend(SOCKET,LPWSABUF,DWORD,LPDWORD,DWORD,OVERLAPPED *,LPWSAOVERLAPPED_COMPLETION_ROUTINE);
-int WSARecv(SOCKET,LPWSABUF ,DWORD ,LPDWORD ,LPINT ,OVERLAPPED * ,LPWSAOVERLAPPED_COMPLETION_ROUTINE );
-
-}*/
 __gshared static LPFN_ACCEPTEX AcceptEx;
 __gshared static LPFN_CONNECTEX ConnectEx;
 /*__gshared LPFN_DISCONNECTEX DisconnectEx;

@@ -128,14 +128,6 @@ final class EpollLoop
         if (epoll_wait(_efd,  & event, 1, timeout) < 1)
             return;
         AsyncEvent * asevent = cast(AsyncEvent * )(event.data.ptr);
-        scope(success)
-        {
-            if(asevent.deleteOnClosed && (!asevent.isActive))
-            {
-                import collie.utils.memory;
-                gcFree(asevent.obj);
-            }
-        }
 
         if (isErro(event.events))
         {
