@@ -32,27 +32,11 @@ final class Acceptor : AsyncTransport, EventCallInterface
     {
         if (isIpV6)
 		{
-			static if (IOMode == IO_MODE.iocp)
-			{
-				auto sc = WSASocket(windows.winsock2.AF_INET6,windows.winsock2.SOCK_STREAM, windows.winsock2.IPPROTO_TCP, null,0, WSA_FLAG_OVERLAPPED);
-				_socket = new Socket(cast(socket_t)sc,AddressFamily.INET6);
-			}
-			else
-			{
 				_socket = new Socket(AddressFamily.INET6, SocketType.STREAM, ProtocolType.TCP);
-			}
 		}
         else
 		{
-			static if (IOMode == IO_MODE.iocp)
-			{
-				auto sc = WSASocket(windows.winsock2.AF_INET,windows.winsock2.SOCK_STREAM, windows.winsock2.IPPROTO_TCP, null,0, WSA_FLAG_OVERLAPPED);
-				_socket = new Socket(cast(socket_t)sc,AddressFamily.INET);
-			}
-			else
-			{
 				_socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
-			}
 		}
         _socket.blocking = false;
         super(loop,TransportType.ACCEPT);
@@ -210,16 +194,7 @@ protected:
                 _iocp.operationType = IOCP_OP_TYPE.accept;
                 if(_inSocket is null)
                 {
-					if(_socket.addressFamily == AddressFamily.INET)
-					{
-						auto sc = WSASocket(windows.winsock2.AF_INET,windows.winsock2.SOCK_STREAM, windows.winsock2.IPPROTO_TCP, null,0, WSA_FLAG_OVERLAPPED);
-						_inSocket = new Socket(cast(socket_t)sc,AddressFamily.INET);
-					}
-					else
-					{
-						auto sc = WSASocket(windows.winsock2.AF_INET6,windows.winsock2.SOCK_STREAM, windows.winsock2.IPPROTO_TCP, null,0, WSA_FLAG_OVERLAPPED);
-						_inSocket = new Socket(cast(socket_t)sc,AddressFamily.INET6);
-					}
+		_inSocket = new Socket(_socket.addressFamily , SocketType.STREAM, ProtocolType.TCP);
                 }
                 
                 DWORD dwBytesReceived = 0;
