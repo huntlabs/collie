@@ -159,7 +159,6 @@ protected:
                     return;
                 try
                 {
-                    trace("new connect ,the fd is : ", _inSocket.handle());
                     Socket sock = new Socket(fd, _socket.addressFamily);
                     _callBack(sock);
                 }

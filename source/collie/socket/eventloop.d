@@ -167,6 +167,8 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
     {
         if (event == null)
             return false;
+  static if (CustomTimer)
+  {
         if (event.type() == AsynType.TIMER)
         {
             event.timer.stop();
@@ -183,6 +185,7 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
             event.isActive(false);
             return true;
         }
+}
         return _poll.delEvent(event);
     }
 
