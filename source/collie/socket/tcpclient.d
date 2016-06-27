@@ -52,7 +52,7 @@ final class TCPClient : TCPSocket
             _iocpread.event = _event;
             _iocpread.operationType = IOCP_OP_TYPE.connect;
             int b = ConnectEx(cast(SOCKET) _socket.handle,
-                cast(windows.winsock2.SOCKADDR*) addr.name(), addr.nameLen(),
+                cast(SOCKADDR*) addr.name(), addr.nameLen(),
                 null, 0, null, &_iocpread.ol);
             if (b == 0)
             {

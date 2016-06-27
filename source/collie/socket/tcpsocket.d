@@ -22,7 +22,8 @@ import collie.utils.queue;
 
 import std.stdio;
 
-static import windows.winsock2;
+//static import windows.winsock2;
+//import windows.winsock2 = core.sys.windows.winsock2;
 
 alias TCPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
 alias TCPReadCallBack = void delegate(ubyte[] buffer);
@@ -222,9 +223,9 @@ protected:
                 _iocpwrite.operationType = IOCP_OP_TYPE.write;
                 int nRet = WSASend(cast(SOCKET) _socket.handle(), &_iocpWBuf,
                     1, &dwSent, dwFlags, &_iocpwrite.ol,
-                    cast(windows.winsock2.LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
+                    cast(/*windows.winsock2.*/LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
                 trace("do WSASend , return : ", nRet);
-                if (nRet == windows.winsock2.SOCKET_ERROR)
+                if (nRet == /*windows.winsock2.*/SOCKET_ERROR)
                 {
                     DWORD dwLastError = GetLastError();
                     if (dwLastError != ERROR_IO_PENDING)
@@ -422,9 +423,9 @@ protected:
 
                 int nRet = WSARecv(cast(SOCKET) _socket.handle, &_iocpBuffer,
                     cast(uint) 1, &dwReceived, &dwFlags, &_iocpread.ol,
-                    cast(windows.winsock2.LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
+                    cast(/*windows.winsock2.*/LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
                 trace("do WSARecv : the return is : ", nRet);
-                if (nRet == windows.winsock2.SOCKET_ERROR)
+                if (nRet == /*windows.winsock2.*/SOCKET_ERROR)
                 {
                     DWORD dwLastError = GetLastError();
                     if (ERROR_IO_PENDING != dwLastError)

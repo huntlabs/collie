@@ -22,7 +22,7 @@ import collie.socket.transport;
 import collie.utils.queue;
 import collie.socket.tcpsocket;
 
-static import windows.winsock2;
+//import windows.winsock2 = core.sys.windows.winsock2;
 
 alias AcceptCallBack = void delegate(Socket sock);
 
@@ -133,7 +133,8 @@ protected:
                 trace("new connect ,the fd is : ", _inSocket.handle());
                 SOCKET slisten = cast(SOCKET) _socket.handle;
                 SOCKET slink = cast(SOCKET) _inSocket.handle;
-                windows.winsock2.setsockopt(slink, windows.winsock2.SOL_SOCKET,
+              //  windows.winsock2.
+                setsockopt(slink, SOL_SOCKET,//windows.winsock2.SOL_SOCKET,
                     0x700B, cast(const char*)&slisten, slisten.sizeof);
                 _callBack(_inSocket);
             }
