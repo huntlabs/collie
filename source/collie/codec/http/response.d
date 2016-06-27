@@ -149,7 +149,15 @@ class HTTPResponse
 
         resp._header.removeHeaderKey("Transfer-Encoding");
         //resp._header.setHeaderValue("Content-Length",length);
-        resp._header.setHeaderValue("X-Powered-By", XPoweredBy);
+        string tp = resp._header.getHeaderValue("X-Powered-By");
+        if(tp.length > 0)
+        {
+            tp ~= ";";
+            tp ~= XPoweredBy;
+            resp._header.setHeaderValue("X-Powered-By", tp);
+        }
+        else
+            resp._header.setHeaderValue("X-Powered-By", XPoweredBy);
 
         buffer.write(cast(ubyte[]) "HTTP/1.1 ");
         buffer.write(cast(ubyte[])(to!string(resp._header.statusCode)));
