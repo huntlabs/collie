@@ -6,11 +6,10 @@ An asynchronous event-driven network framework written in [dlang](http://dlang.o
 - D : Compiler Version >= 2.071
 - libssl and libcrypto
 
-## TODO
-- _timer and  Timing Wheel_ (__Complete__)
-- _add TCP Client support_ (__Complete__)
-- _SSL suport_ (__Now Only Server__)
-- _add codec_ (__Complete,but Maybe need more__)
-- _MAC and BSD suport (kqueue)_ (__Complete__)
-- _UDP_ (__Complete,but No use the pipeline__)
-- _Test Add Windows suport (select)_ (__Complete, use IOCP,not select. only tcp,not udp and ssl__)
+##  Support
+
+|| || __epoll__ || __kqueue__ || __iocp__ || __select__ ||
+|| __TCP__ || Y || Y || Y || Y ||
+|| __UDP__ || Y || N || N || N ||
+|| __Timer__ || Y || Y || Y || Y ||
+        Note: PipeLine is Only support TCP.
