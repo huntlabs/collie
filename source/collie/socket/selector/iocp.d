@@ -12,7 +12,8 @@ module collie.socket.selector.iocp;
 
 import collie.socket.common;
 
-version (Windows)  : pragma(lib, "Ws2_32");
+version (Windows)  : 
+pragma(lib, "Ws2_32");
 
 import core.time;
 import core.memory;
