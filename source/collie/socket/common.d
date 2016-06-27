@@ -34,45 +34,70 @@ version (FreeBSD)
     enum IO_MODE IOMode = IO_MODE.kqueue;
     enum CustomTimer = false;
     version(USE_SSL)
+    {
+        pragma(msg, "Use openssl to support ssl.");
         enum USEDSSL = true;
+    }
     else
+    {
         enum USEDSSL = false;
+    }
 }
 else version (OpenBSD)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
     enum CustomTimer = false;
-        version(USE_SSL)
+    version(USE_SSL)
+    {
+        pragma(msg, "Use openssl to support ssl.");
         enum USEDSSL = true;
+    }
     else
+    {
         enum USEDSSL = false;
+    }
 }
 else version (NetBSD)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
     enum CustomTimer = false;
-        version(USE_SSL)
+    version(USE_SSL)
+    {
+        pragma(msg, "Use openssl to support ssl.");
         enum USEDSSL = true;
+    }
     else
+    {
         enum USEDSSL = false;
+    }
 }
 else version (OSX)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
     enum CustomTimer = false;
-        version(USE_SSL)
+    version(USE_SSL)
+    {
+        pragma(msg, "Use openssl to support ssl.");
         enum USEDSSL = true;
+    }
     else
+    {
         enum USEDSSL = false;
+    }
 }
 else version (linux)
 {
     enum IO_MODE IOMode = IO_MODE.epoll;
     enum CustomTimer = false;
-        version(USE_SSL)
+    version(USE_SSL)
+    {
+        pragma(msg, "Use openssl to support ssl.");
         enum USEDSSL = true;
+    }
     else
+    {
         enum USEDSSL = false;
+    }
 }
 else version (Windows)
 {
