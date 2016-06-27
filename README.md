@@ -12,6 +12,6 @@ An asynchronous event-driven network framework written in [dlang](http://dlang.o
 --------|-----------|------------|-----------|------------ 
 TCP     |     Y     |     Y      |     Y     |     Y
 SSL     |     Y     |     Y      |     N     |     N
-UDP     |     Y     |     N      |     N     |     N
+UDP     |     Y     |     Y      |     N     |     N
 Timer   |     Y     |     Y      |     Y     |     Y
         Note: PipeLine is Only support TCP.
