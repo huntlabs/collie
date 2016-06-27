@@ -11,6 +11,8 @@
 
 module collie.socket.selector.select;
 
+import core.time;
+
 import std.algorithm;
 import std.array;
 import std.conv;
@@ -21,106 +23,98 @@ import std.experimental.logger;
 
 import collie.socket.common;
 
-//select 的定时器怎么实现？还要和socket 结合起来？
+static if(IOMode == IO_MODE.select)
+{
+//TODO: Need Test
 class SelectLoop
 {
+    this()
+    {
+        _event = new EventChannel();
+        addEvent(_event._event);
+        _readSet = new SocketSet();
+        _writeSet = new SocketSet();
+        _errorSet = new SocketSet();
+    }
+    
+    ~this()
+    {
+        _event.destroy;
+    }
+    
     bool addEvent(AsyncEvent* event) nothrow
     {
-        return false;
+        try
+        {
+        _socketList[event.fd] = event;
+        } catch{return false;}
+        return true;
     }
 
     bool modEvent(AsyncEvent* event) nothrow
     {
-        return false;
+        return true;
     }
 
     bool delEvent(AsyncEvent* event) nothrow
     {
-        return false;
+        try{
+            _socketList.remove(event.fd);
+        } catch{
+            return false;
+        }
+        return true;
     }
 
     void weakUp()
     {
-
+        _event.doWrite();
     }
 
     void wait(int timeout)
     {
-        /*       softUnittest({
-        enum PAIRS = 768;
-        version(Posix)
-        () @trusted
+         _readSet.reset();
+         _writeSet.reset();
+         _errorSet.reset();
+        foreach(key,value; _socketList)
         {
-            enum LIMIT = 2048;
-            static assert(LIMIT > PAIRS*2);
-            import core.sys.posix.sys.resource;
-            rlimit fileLimit;
-            getrlimit(RLIMIT_NOFILE, &fileLimit);
-            assert(fileLimit.rlim_max > LIMIT, "Open file hard limit too low");
-            fileLimit.rlim_cur = LIMIT;
-            setrlimit(RLIMIT_NOFILE, &fileLimit);
-        } ();
-
-        Socket[2][PAIRS] pairs;
-        foreach (ref pair; pairs)
-            pair = socketPair();
-        scope(exit)
-        {
-            foreach (pair; pairs)
-            {
-                pair[0].close();
-                pair[1].close();
-            }
+            _errorSet.add(key);
+            if(value.enRead)
+                _readSet.add(key);
+            if(value.enWrite)
+                _writeSet.add(key);
         }
-
-        import std.random;
-        auto rng = Xorshift(42);
-        pairs[].randomShuffle(rng);
-
-        auto readSet = new SocketSet();
-        auto writeSet = new SocketSet();
-        auto errorSet = new SocketSet();
-
-        foreach (testPair; pairs)
+        int n = Socket.select(_readSet,_writeSet,_errorSet, dur!("msecs")(timeout));
+        if(n <= 0) return;
+        foreach(key,value; _socketList)
         {
-            void fillSets()
+            if(_errorSet.isSet(key) > 0)
             {
-                readSet.reset();
-                writeSet.reset();
-                errorSet.reset();
-                foreach (ref pair; pairs)
-                    foreach (s; pair[])
-                    {
-                        readSet.add(s);
-                        writeSet.add(s);
-                        errorSet.add(s);
-                    }
+                value.obj.onClose();
+                continue;
             }
-
-            fillSets();
-            auto n = Socket.select(readSet, writeSet, errorSet);
-            assert(n == PAIRS*2); // All in writeSet
-            assert(writeSet.isSet(testPair[0]));
-            assert(writeSet.isSet(testPair[1]));
-            assert(!readSet.isSet(testPair[0]));
-            assert(!readSet.isSet(testPair[1]));
-            assert(!errorSet.isSet(testPair[0]));
-            assert(!errorSet.isSet(testPair[1]));
-
-            ubyte[1] b;
-            testPair[0].send(b[]);
-            fillSets();
-            n = Socket.select(readSet, null, null);
-            assert(n == 1); // testPair[1]
-            assert(readSet.isSet(testPair[1]));
-            assert(!readSet.isSet(testPair[0]));
-            testPair[1].receive(b[]);
+            if(_writeSet.isSet(key) > 0)
+                value.obj.onWrite();
+            if(_readSet.isSet(key) > 0)
+                value.obj.onRead();
         }
-    }); */
     }
 
 private:
     AsyncEvent*[socket_t] _socketList;
+    
+    SocketSet _writeSet;
+    SocketSet _readSet;
+    SocketSet _errorSet;
+    
+    EventChannel _event;
+}
+
+static this()
+{
+    import core.sys.posix.signal;
+
+    signal(SIGPIPE, SIG_IGN);
 }
 
 private final class EventChannel : EventCallInterface
@@ -176,4 +170,6 @@ private final class EventChannel : EventCallInterface
 
     Socket[2] _pair;
     AsyncEvent* _event;
+}
+
 }

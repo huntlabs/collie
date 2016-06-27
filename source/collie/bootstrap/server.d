@@ -262,30 +262,30 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 
     override void read(Context ctx, Socket msg)
     {
-
-        if (_sslctx)
+        static if(USEDSSL)
         {
-            version (Windows)
+            if (_sslctx)
             {
+                    auto ssl = SSL_new(_sslctx);
+                    if (SSL_set_fd(ssl, msg.handle()) < 0)
+                    {
+                        error("SSL_set_fd error: fd = ", msg.handle());
+                        SSL_shutdown(ssl);
+                        SSL_free(ssl);
+                        return;
+                    }
+                    SSL_set_accept_state(ssl);
+                    auto asynssl = new SSLSocket(_acceptor.eventLoop, msg, ssl);
+                    auto shark = new SSLHandShark(asynssl, &doHandShark);
+                    _sharkList[shark] = 0;
+                    asynssl.start();
             }
             else
             {
-                auto ssl = SSL_new(_sslctx);
-                if (SSL_set_fd(ssl, msg.handle()) < 0)
-                {
-                    error("SSL_set_fd error: fd = ", msg.handle());
-                    SSL_shutdown(ssl);
-                    SSL_free(ssl);
-                    return;
-                }
-                SSL_set_accept_state(ssl);
-                auto asynssl = new SSLSocket(_acceptor.eventLoop, msg, ssl);
-                auto shark = new SSLHandShark(asynssl, &doHandShark);
-                _sharkList[shark] = 0;
-                asynssl.start();
+                auto asyntcp = new TCPSocket(_acceptor.eventLoop, msg);
+                startSocket(asyntcp);
             }
-        }
-        else
+        } else
         {
             auto asyntcp = new TCPSocket(_acceptor.eventLoop, msg);
             startSocket(asyntcp);
