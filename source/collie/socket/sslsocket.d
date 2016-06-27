@@ -20,10 +20,7 @@ import collie.socket.common;
 import collie.socket.transport;
 import collie.socket.tcpsocket;
 
-version (Windows)
-{
-}
-else
+static if(USEDSSL)
 {
 
     import deimos.openssl.ssl;

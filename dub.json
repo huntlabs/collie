@@ -11,10 +11,19 @@
         "release"   : {
             "buildOptions" :  ["releaseMode",   "inline",       "optimize"]
         }
+    },    
+    "configurations": [
+    {
+        "name" : "default",
     },
-    "dependencies": {
-	"openssl": {
-	 "version" : "~>1.1.4+1.0.1g",
-	}
-    }
+    {
+        "name" : "ssl",
+        "vsersions" : ["USE_SSL"],
+        "dependencies": {
+            "openssl": {
+                "version" : "~>1.1.4+1.0.1g",
+            }
+        }, 
+    },
+],
 } 

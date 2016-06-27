@@ -165,10 +165,7 @@ protected:
             pipe = AcceptPipeline.create();
 
         SSL_CTX* ctx = null;
-        version (Windows)
-        {
-        }
-        else
+        static if(USEDSSL)
         {
             if (_sslConfig)
             {
@@ -349,10 +346,7 @@ protected:
             _wheel.prevWheel();
     }
 
-    version (Windows)
-    {
-    }
-    else
+    static if(USEDSSL)
     {
         void doHandShark(SSLHandShark shark, SSLSocket sock)
         {
@@ -386,10 +380,8 @@ protected:
 
 private:
     int[ServerConnection!PipeLine] _list;
-    version (Windows)
-    {
-    }
-    else
+    
+    static if(USEDSSL)
     {
         int[SSLHandShark] _sharkList;
     }
@@ -465,10 +457,7 @@ private:
     PipeLine _pipe;
 }
 
-version (Windows)
-{
-}
-else
+static if(USEDSSL)
 {
     final class SSLHandShark
     {

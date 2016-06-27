@@ -33,44 +33,62 @@ version (FreeBSD)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
     enum CustomTimer = false;
+    version(USE_SSL)
+        enum USEDSSL = true;
+    else
+        enum USEDSSL = false;
 }
 else version (OpenBSD)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
     enum CustomTimer = false;
+        version(USE_SSL)
+        enum USEDSSL = true;
+    else
+        enum USEDSSL = false;
 }
 else version (NetBSD)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
     enum CustomTimer = false;
+        version(USE_SSL)
+        enum USEDSSL = true;
+    else
+        enum USEDSSL = false;
 }
 else version (OSX)
 {
     enum IO_MODE IOMode = IO_MODE.kqueue;
     enum CustomTimer = false;
+        version(USE_SSL)
+        enum USEDSSL = true;
+    else
+        enum USEDSSL = false;
 }
-/*else version (Solaris)
-{
-    enum IO_MODE IOMode = IO_MODE.port;
-}*/
 else version (linux)
 {
     enum IO_MODE IOMode = IO_MODE.epoll;
     enum CustomTimer = false;
+        version(USE_SSL)
+        enum USEDSSL = true;
+    else
+        enum USEDSSL = false;
 }
-/*else version (Posix)
-{
-    enum IO_MODE IOMode = IO_MODE.poll;
-}*/
 else version (Windows)
 {
     enum IO_MODE IOMode = IO_MODE.iocp;
     enum CustomTimer = true;
+    version(USE_SSL)
+        pragma(msg, "SSL not support windows in  current version !");
+    enum USEDSSL = false;
 }
 else
 {
     enum IO_MODE IOMode = IO_MODE.select;
     enum CustomTimer = true;
+    version(USE_SSL)
+        pragma(msg, "SSL not support when used select in  current version !");
+    enum USEDSSL = false;
 }
 
 alias CallBack = void delegate();

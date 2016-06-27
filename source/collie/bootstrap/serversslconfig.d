@@ -12,14 +12,15 @@ module collie.bootstrap.serversslconfig;
 
 import std.string;
 import std.experimental.logger;
+import collie.socket.common;
 
-version (Windows)
+static if(USEDSSL)
 {
-    alias SSL_CTX = int;
+    public import deimos.openssl.ssl;
 }
 else
 {
-    public import deimos.openssl.ssl;
+    alias SSL_CTX = int;
 }
 
 enum SSLMode
@@ -40,10 +41,7 @@ class ServerSSLConfig
     SSL_CTX* generateSSLCtx()
     {
         SSL_CTX* ctx = null;
-        version (Windows)
-        {
-        }
-        else
+        static if(USEDSSL)
         {
             final switch (_mode)
             {
@@ -126,10 +124,7 @@ private:
     SSLMode _mode;
 }
 
-version (Windows)
-{
-}
-else
+static if(USEDSSL)
 {
     import core.sync.mutex;
     import core.thread;
