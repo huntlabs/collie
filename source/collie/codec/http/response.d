@@ -20,41 +20,10 @@ import collie.codec.http.header;
 import collie.codec.http.request;
 import collie.codec.http.config;
 import collie.buffer.sectionbuffer;
+import collie.versions;
 
-enum XPoweredBy = "collied ( " ~ getComplierName() ~ " )  http://collied.org/";
-
-string getComplierName()
-{
-    import compiler = std.compiler;
-
-    string name;
-    final switch (compiler.vendor)
-    {
-    case compiler.Vendor.unknown:
-        name = "UnKnow";
-        break;
-    case compiler.Vendor.digitalMars:
-        name = "DMD";
-        break;
-    case compiler.Vendor.gnu:
-        name = "GDC";
-        break;
-    case compiler.Vendor.llvm:
-        name = "LDC";
-        break;
-    case compiler.Vendor.dotNET:
-        name = "D.NET";
-        break;
-    case compiler.Vendor.sdc:
-        name = "SDC";
-        break;
-    }
-    name = name ~ " / " ~ to!string(compiler.version_major) ~ "." ~ to!string(
-        compiler.version_minor);
-    name ~= ".";
-    name ~= to!string(compiler.D_major);
-    return name;
-}
+//enum XPoweredBy = "collie ( " ~ getComplierName() ~ " )";//http://collied.org/";
+enum XPoweredBy = "collie " ~ COLLIE_VERSION;
 
 alias CallBackResponse = void delegate(HTTPResponse);
 alias ResponseSend = void delegate(HTTPResponse, string, ulong begin);
@@ -333,3 +302,37 @@ private string statusText(int code)
         return "  ";
     }
 }
+
+string getComplierName()
+{
+    import compiler = std.compiler;
+
+    string name;
+    final switch (compiler.vendor)
+    {
+    case compiler.Vendor.unknown:
+        name = "UnKnow";
+        break;
+    case compiler.Vendor.digitalMars:
+        name = "DMD";
+        break;
+    case compiler.Vendor.gnu:
+        name = "GDC";
+        break;
+    case compiler.Vendor.llvm:
+        name = "LDC";
+        break;
+    case compiler.Vendor.dotNET:
+        name = "D.NET";
+        break;
+    case compiler.Vendor.sdc:
+        name = "SDC";
+        break;
+    }
+    name = name ~ " / " ~ to!string(compiler.version_major) ~ "." ~ to!string(
+        compiler.version_minor);
+    name ~= ".";
+    name ~= to!string(compiler.D_major);
+    return name;
+}
+
