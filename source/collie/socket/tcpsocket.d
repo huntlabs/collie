@@ -20,11 +20,6 @@ import collie.socket.eventloop;
 import collie.socket.transport;
 import collie.utils.queue;
 
-import std.stdio;
-
-//static import windows.winsock2;
-//import windows.winsock2 = core.sys.windows.winsock2;
-
 alias TCPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
 alias TCPReadCallBack = void delegate(ubyte[] buffer);
 
@@ -191,13 +186,12 @@ protected:
     {
         static if (IOMode == IO_MODE.iocp)
         {
-            try
+            if (!alive || _writeQueue.empty)
+                return;
+            auto buffer = _writeQueue.front;
+            if (_event.writeLen > 0)
             {
-                trace("write !");
-                if (!alive || _writeQueue.empty)
-                    return;
-                auto buffer = _writeQueue.front;
-                if (_event.writeLen > 0)
+                try
                 {
                     trace("writed data length is : ", _event.writeLen);
                     if (buffer.add(_event.writeLen))
@@ -213,36 +207,41 @@ protected:
                     else
                         return;
                 }
-                _event.writeLen = 0;
-                auto data = buffer.data;
-                _iocpWBuf.len = data.length;
-                _iocpWBuf.buf = cast(char*) data.ptr;
-                DWORD dwFlags = 0;
-                DWORD dwSent = 0;
-                _iocpwrite.event = _event;
-                _iocpwrite.operationType = IOCP_OP_TYPE.write;
-                int nRet = WSASend(cast(SOCKET) _socket.handle(), &_iocpWBuf,
-                    1, &dwSent, dwFlags, &_iocpwrite.ol,
-                    cast(/*windows.winsock2.*/LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
-                trace("do WSASend , return : ", nRet);
-                if (nRet == /*windows.winsock2.*/SOCKET_ERROR)
+                catch
                 {
-                    DWORD dwLastError = GetLastError();
-                    if (dwLastError != ERROR_IO_PENDING)
-                    {
-                        try
-                        {
-                            error("WSASend failed with error: ", dwLastError);
-                        }
-                        catch
-                        {
-                        }
-                        onClose();
-                    }
                 }
+            }
+            _event.writeLen = 0;
+            auto data = buffer.data;
+            _iocpWBuf.len = data.length;
+            _iocpWBuf.buf = cast(char*) data.ptr;
+            DWORD dwFlags = 0;
+            DWORD dwSent = 0;
+            _iocpwrite.event = _event;
+            _iocpwrite.operationType = IOCP_OP_TYPE.write;
+            int nRet = WSASend(cast(SOCKET) _socket.handle(), &_iocpWBuf, 1,
+                &dwSent, dwFlags, &_iocpwrite.ol, cast(LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
+            try
+            {
+                trace("do WSASend , return : ", nRet);
             }
             catch
             {
+            }
+            if (nRet == SOCKET_ERROR)
+            {
+                DWORD dwLastError = GetLastError();
+                if (dwLastError != ERROR_IO_PENDING)
+                {
+                    try
+                    {
+                        error("WSASend failed with error: ", dwLastError);
+                    }
+                    catch
+                    {
+                    }
+                    onClose();
+                }
             }
         }
         else
@@ -411,33 +410,40 @@ protected:
     {
         bool doRead() nothrow
         {
+
+            _iocpBuffer.len = TCP_READ_BUFFER_SIZE;
+            _iocpBuffer.buf = cast(char*) _readBuffer.ptr;
+            _iocpread.event = _event;
+            _iocpread.operationType = IOCP_OP_TYPE.read;
+
+            DWORD dwReceived = 0;
+            DWORD dwFlags = 0;
+
+            int nRet = WSARecv(cast(SOCKET) _socket.handle, &_iocpBuffer,
+                cast(uint) 1, &dwReceived, &dwFlags, &_iocpread.ol,
+                cast(LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
             try
             {
-                _iocpBuffer.len = TCP_READ_BUFFER_SIZE;
-                _iocpBuffer.buf = cast(char*) _readBuffer.ptr;
-                _iocpread.event = _event;
-                _iocpread.operationType = IOCP_OP_TYPE.read;
-
-                DWORD dwReceived = 0;
-                DWORD dwFlags = 0;
-
-                int nRet = WSARecv(cast(SOCKET) _socket.handle, &_iocpBuffer,
-                    cast(uint) 1, &dwReceived, &dwFlags, &_iocpread.ol,
-                    cast(/*windows.winsock2.*/LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
                 trace("do WSARecv : the return is : ", nRet);
-                if (nRet == /*windows.winsock2.*/SOCKET_ERROR)
-                {
-                    DWORD dwLastError = GetLastError();
-                    if (ERROR_IO_PENDING != dwLastError)
-                    {
-                        error("WSARecv failed with error: ", dwLastError);
-                        onClose();
-                        return false;
-                    }
-                }
             }
             catch
             {
+            }
+            if (nRet == SOCKET_ERROR)
+            {
+                DWORD dwLastError = GetLastError();
+                if (ERROR_IO_PENDING != dwLastError)
+                {
+                    try
+                    {
+                        error("WSARecv failed with error: ", dwLastError);
+                    }
+                    catch
+                    {
+                    }
+                    onClose();
+                    return false;
+                }
             }
             return true;
         }

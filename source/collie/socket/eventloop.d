@@ -167,25 +167,25 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
     {
         if (event == null)
             return false;
-  static if (CustomTimer)
-  {
-        if (event.type() == AsynType.TIMER)
+        static if (CustomTimer)
         {
-            event.timer.stop();
-            try
+            if (event.type() == AsynType.TIMER)
             {
-                import collie.utils.memory;
+                event.timer.stop();
+                try
+                {
+                    import collie.utils.memory;
 
-                gcFree(event.timer);
+                    gcFree(event.timer);
+                }
+                catch
+                {
+                }
+                event.timer = null;
+                event.isActive(false);
+                return true;
             }
-            catch
-            {
-            }
-            event.timer = null;
-            event.isActive(false);
-            return true;
         }
-}
         return _poll.delEvent(event);
     }
 

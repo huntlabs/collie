@@ -18,9 +18,6 @@ pragma(lib, "Ws2_32");
 import core.time;
 import core.memory;
 
-//public import windows.windows;
-//public import windows.winsock2;
-//public import windows.mswsock;
 public import core.sys.windows.windows;
 public import core.sys.windows.winsock2;
 public import core.sys.windows.mswsock;
