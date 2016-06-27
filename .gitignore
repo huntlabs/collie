@@ -28,3 +28,4 @@ core
 *.suo
 *.exe
 *.dll
+__test__*__
