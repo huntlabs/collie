@@ -12,10 +12,10 @@ module collie.utils.vector;
 
 import core.memory;
 import std.experimental.allocator.common;
-import std.experimental.allocator.mallocator : AlignedMallocator;
+import std.experimental.allocator.mallocator : Mallocator;
 import std.traits;
 
-struct Vector(T, bool addToGC = hasIndirections!T, Allocator = AlignedMallocator)
+struct Vector(T, bool addToGC = hasIndirections!T, Allocator = Mallocator)
 {
     alias TSize = stateSize!T;
 

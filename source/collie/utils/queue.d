@@ -12,7 +12,7 @@ module collie.utils.queue;
 
 import core.memory;
 import std.experimental.allocator.common;
-import std.experimental.allocator.mallocator : AlignedMallocator;
+import std.experimental.allocator.mallocator : Mallocator;
 import std.experimental.allocator.gc_allocator;
 import std.traits;
 
@@ -26,7 +26,7 @@ import std.traits;
 */
 
 struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
-    Allocator = AlignedMallocator)
+    Allocator = Mallocator)
 {
     alias TSize = stateSize!T;
     /**
