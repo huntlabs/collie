@@ -185,7 +185,7 @@ else
 
     unittest
     {
-        import std.conv;
+    /*    import std.conv;
         import std.stdio;
 
         EventLoop loop = new EventLoop();
@@ -230,6 +230,7 @@ else
         loop.run();
         server.close();
         client.close();
+        */
     }
-
+    
 }

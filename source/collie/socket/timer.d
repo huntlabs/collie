@@ -174,6 +174,7 @@ unittest
 
         if (cout > 5)
         {
+            writeln("loop stop!!!");
             tm.stop();
             loop.stop();
         }

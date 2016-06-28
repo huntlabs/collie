@@ -54,13 +54,12 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = Mallocator)
 
     ~this()
     {
-
-        static if (addToGC)
-        {
-            GC.removeRange(_data.ptr);
-        }
         if (_data.ptr)
+        {
+            static if (addToGC)
+                GC.removeRange(_data.ptr);
             _alloc.deallocate(_data);
+        }
     }
 
     pragma(inline) void insertBack(T value)
@@ -199,9 +198,10 @@ struct Vector(T, bool addToGC = hasIndirections!T, Allocator = Mallocator)
     }
 
 private:
+    pragma(inline, true) 
     bool full()
     {
-        return length == _data.length;
+        return length >= _data.length;
     }
 
     void exten(size_t len)
@@ -213,11 +213,9 @@ private:
             size = 32;
         size += len;
         len = TSize * size;
-        auto data = cast(T[]) _alloc.allocate(TSize * size);
-        if (!empty)
-        {
+        auto data = cast(T[]) _alloc.allocate(len);
+        if(!empty)
             data[0 .. length] = _data[0 .. length];
-        }
         static if (addToGC)
         {
             GC.addRange(data.ptr, len);
@@ -276,4 +274,11 @@ unittest
 
     vec.removeAny(2);
     assert(vec.dup == [15, 3, 4, 0, 1, 2, 3, 4, 5, 6, 7]);
+    
+    Vector!(ubyte[]) vec2;
+    vec2.insertBack(cast(ubyte[])"hahaha");
+    vec2.insertBack(cast(ubyte[])"huhuhu");
+    assert(vec2.length == 2);
+    assert(cast(string)vec2[0] == "hahaha");
+    assert(cast(string)vec2[1] == "huhuhu");
 }
