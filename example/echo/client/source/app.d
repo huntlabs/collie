@@ -44,6 +44,11 @@ public:
         string data = Clock.currTime().toSimpleString();
         write(ctx, cast(ubyte[])data , &callBack);
     }
+    
+    override void transportInactive(Context ctx)
+    {
+        loop.stop();
+    }
 }
 
 class EchoPipelineFactory : PipelineFactory!EchoPipeline

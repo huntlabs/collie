@@ -17,7 +17,7 @@ import collie.channel;
 
 //TODO: timer closed
 
-final class ClientBootstrap(PipeLine)
+final class ClientBootstrap(PipeLine) : PipelineManager
 {
     this(EventLoop loop)
     {
@@ -105,7 +105,7 @@ protected:
             _pipe.transportInactive();
             return;
         }
-
+		_pipe.pipelineManager(this);
         _pipe.transportActive();
         if (_timeOut > 0)
         {
@@ -114,7 +114,8 @@ protected:
                 _timer = new Timer(_loop);
                 _timer.setCallBack(&timeOut);
             }
-            _timer.start(_timeOut);
+			if(!_timer.isActive())
+				_timer.start(_timeOut);
         }
 
     }
@@ -123,11 +124,23 @@ protected:
     {
         _pipe.read(buffer);
     }
-
+	/// Client Time out is not refresh!
     void timeOut()
     {
         _pipe.timeOut();
     }
+
+	override void deletePipeline(PipelineBase pipeline)
+	{
+		if (_timer)
+			_timer.stop();
+		pipeline.pipelineManager(null);
+	}
+
+	override void refreshTimeout()
+	{
+
+	}
 
 private:
     EventLoop _loop;
