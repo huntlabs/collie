@@ -151,6 +151,9 @@ final class ServerBootstrap(PipeLine)
         _loop.run();
     }
 
+	EventLoopGroup group(){return _group;}
+
+	@property EventLoop eventLoop(){return _loop;}
 protected:
     auto creatorAcceptor(EventLoop loop)
     {
