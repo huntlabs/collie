@@ -76,6 +76,8 @@ public:
 
     override void transportInactive(Context ctx)
     {
+        if(_websocket)
+            _websocket.onClose();
     }
 
     void requestHandle(HTTPRequest req, HTTPResponse res);
