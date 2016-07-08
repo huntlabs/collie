@@ -96,6 +96,8 @@ final class SectionBuffer : Buffer
             _alloc.deallocate(_buffer[i]);
             _buffer[i] = null;
         }
+        _buffer.clear();
+        
         _rSize = 0;
         _wSize = 0;
     }

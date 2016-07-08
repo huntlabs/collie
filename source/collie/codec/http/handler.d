@@ -62,6 +62,7 @@ public:
         trace("header write over, Go write body! ");
         if(!nullBody)
             writeSection(resp.Body(), true);
+        clear();
     }
 
     final override void timeOut(Context ctx)
@@ -161,6 +162,7 @@ protected:
                 resp.Header.setHeaderValue("Content-Length", 0);
                 HTTPResponse.generateHeader(resp, buffer);
                 writeSection(buffer, true);
+                
             }
             else
             {
@@ -170,6 +172,7 @@ protected:
                 HTTPResponse.generateHeader(resp, buffer);
                 writeSection(buffer, false, true);
             }
+            clear();
         }
     }
 
@@ -181,15 +184,6 @@ protected:
     final void freeBuffer(ubyte[] data, uint length)
     {
         httpAllocator.deallocate(data);
-    }
-
-    final void lastWrited(ubyte[] data, uint len)
-    {
-        httpAllocator.deallocate(data);
-        if (_shouldClose)
-            close(context);
-        else
-           clear();
     }
 
     final bool writeSection(SectionBuffer buffer, bool isLast, bool isFile = false)
@@ -214,8 +208,7 @@ protected:
         if (isFile)
             context.fireWrite(data, &sendFile);
         else
-            isLast ? context.fireWrite(data, &lastWrited) : context.fireWrite(data,
-                &freeBuffer);
+            context.fireWrite(data,&freeBuffer);
 
         return true;
     }
@@ -245,7 +238,6 @@ protected: //WebSocket
         {
             if (_file.eof())
             {
-                clear();
                 httpAllocator.deallocate(data);
                 _file.close();
                 delete _file;

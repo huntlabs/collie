@@ -63,7 +63,7 @@ void main()
 {
     
     writeln("Edit source/app.d to start your project.");
-    //globalLogLevel(LogLevel.warning);
+    globalLogLevel(LogLevel.warning);
     
  //   httpAllocator = a
     trace("log!!");
