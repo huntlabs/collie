@@ -17,6 +17,7 @@ import core.stdc.string;
 import std.algorithm : swap;
 import std.experimental.allocator;
 import std.experimental.allocator.gc_allocator;
+import std.experimental.logger;
 
 import collie.buffer.buffer;
 import collie.utils.vector;
@@ -89,8 +90,6 @@ final class SectionBuffer : Buffer
     
     @property void clear()
     {
-        if (isEof())
-            return;
         for (size_t i = 0; i < _buffer.length; ++i)
         {
             _alloc.deallocate(_buffer[i]);
@@ -100,6 +99,8 @@ final class SectionBuffer : Buffer
         
         _rSize = 0;
         _wSize = 0;
+
+		//trace("\n\tclear()!!! \n");
     }
 
     pragma(inline)

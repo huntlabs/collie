@@ -31,6 +31,7 @@ public:
 
     final override void read(Context ctx, ubyte[] msg)
     {
+		//trace("\n\t http read()!!! \n");
         if (_websocket)
         {
             _frame.readFrame(msg, &doFrame);
@@ -216,6 +217,7 @@ protected:
     pragma(inline)
     final void clear()
     {
+		//trace("\n\t http clear()!!! \n");
         if (_req)
         {
             _req.clear();

@@ -72,10 +72,7 @@ struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
 
     pragma(inline, true) @property bool empty() const nothrow
     {
-        if (_rear == _front)
-            return true; //队空条件
-        else
-            return false;
+		return (_rear == _front);
     }
 
     pragma(inline) @property bool full() const
@@ -216,3 +213,4 @@ unittest
     writeln("size  = ", myq.length);
     writeln("front is = ", myq.front());
 }
+
