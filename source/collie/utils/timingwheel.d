@@ -178,12 +178,12 @@ class NullWheelTimer : WheelTimer
         WheelTimer tm = _next;
         while (tm)
         {
-            tm.onTimeOut();
             auto timer = tm._next;
             if (tm.oneShop())
             {
-                tm.stop();
+                    tm.stop();
             }
+            tm.onTimeOut();
             tm = timer;
         }
     }
