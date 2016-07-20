@@ -121,6 +121,10 @@ private:
 */
 abstract class WheelTimer
 {
+	~this()
+	{
+            stop();
+	}
     /**
         the function will be called when the timer timeout.
     */
