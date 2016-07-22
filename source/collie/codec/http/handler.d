@@ -118,6 +118,8 @@ protected:
             _req.clientAddress = sock.remoteAddress();
             if (req.Header.httpVersion == HTTPVersion.HTTP1_0)
                 _shouldClose = true;
+			else
+				_shouldClose = false;
             if (_res is null)
             {
                 _res = new HTTPResponse(config);
@@ -230,7 +232,7 @@ protected:
         {
             _frame.clear();
         }
-        _shouldClose = false;
+//        _shouldClose = false;
     }
 
 protected: //WebSocket
