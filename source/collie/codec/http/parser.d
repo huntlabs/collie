@@ -111,6 +111,12 @@ final class HTTPParser
     {
         return _skipBody = skip;
     }
+    
+    pragma(inline,true)
+    @property keepalive()
+    {
+	return _keepAlive;
+    }
 
     /** 回调函数指定 */
     pragma(inline)
@@ -1329,6 +1335,7 @@ public:
                         if (c == 'k')
                         {
                             header_state = HTTPParserHeaderstates.h_matching_connection_keep_alive;
+                            _keepAlive = true;
                             /* looking for 'Connection: close' */
                         }
                         else if (c == 'c')
@@ -2074,6 +2081,8 @@ private:
 
     bool _isHandle = false;
 
+    bool _skipBody = false;
+    
     bool _skipBody = false;
 
     uint _maxHeaderSize = 1024;
