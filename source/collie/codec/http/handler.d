@@ -116,10 +116,15 @@ protected:
             import collie.socket.tcpsocket;
             TCPSocket sock = cast(TCPSocket) context.transport;
             _req.clientAddress = sock.remoteAddress();
-            if (req.Header.httpVersion == HTTPVersion.HTTP1_0)
-                _shouldClose = true;
-			else
-				_shouldClose = false;
+            //if (req.Header.httpVersion == HTTPVersion.HTTP1_0)
+            //   _shouldClose = true;
+	    //	else
+	    //	_shouldClose = false;
+	    if(req.keepalive())
+		_shouldClose = false;
+	    else
+		_shouldClose = true;
+		
             if (_res is null)
             {
                 _res = new HTTPResponse(config);
