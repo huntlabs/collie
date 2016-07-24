@@ -115,7 +115,7 @@ final class HTTPParser
     pragma(inline,true)
     @property keepalive()
     {
-	return _keepAlive;
+		return _keepAlive;
     }
 
     /** 回调函数指定 */
@@ -2082,8 +2082,8 @@ private:
     bool _isHandle = false;
 
     bool _skipBody = false;
-    
-    bool _skipBody = false;
+
+	bool _keepAlive = false;
 
     uint _maxHeaderSize = 1024;
 
