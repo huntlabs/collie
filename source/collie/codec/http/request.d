@@ -130,6 +130,12 @@ package:
     {
         return _parser.handleIng;
     }
+    
+    pragma(inline,true)
+	@property keepalive()
+	{
+		return _parser.keepalive();
+	}
 
 protected:
     final void onMessageBegin(HTTPParser)
