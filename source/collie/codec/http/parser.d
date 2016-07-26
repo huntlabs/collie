@@ -189,6 +189,9 @@ final class HTTPParser
             : HTTPParserState.s_start_req_or_res));
         http_errno = HTTPParserErrno.HPE_OK;
         flags = HTTPParserFlags.F_ZERO;
+		_isHandle = false;
+		_skipBody = false;
+		_keepAlive = 0x00;
     }
 
 protected:
@@ -1335,20 +1338,23 @@ public:
                         if (c == 'k')
                         {
                             header_state = HTTPParserHeaderstates.h_matching_connection_keep_alive;
-                            _keepAlive = true;
+                            _keepAlive = 0x01;
                             /* looking for 'Connection: close' */
                         }
                         else if (c == 'c')
                         {
                             header_state = HTTPParserHeaderstates.h_matching_connection_close;
+							_keepAlive = 0x02;
                         }
                         else if (c == 'u')
                         {
                             header_state = HTTPParserHeaderstates.h_matching_connection_upgrade;
+							_keepAlive = 0x03;
                         }
                         else
                         {
                             header_state = HTTPParserHeaderstates.h_matching_connection_token;
+							_keepAlive = 0x04;
                         }
                         break;
 
@@ -2083,7 +2089,7 @@ private:
 
     bool _skipBody = false;
 
-	bool _keepAlive = false;
+	ubyte _keepAlive = 0x00;
 
     uint _maxHeaderSize = 1024;
 

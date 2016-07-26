@@ -116,15 +116,17 @@ protected:
             import collie.socket.tcpsocket;
             TCPSocket sock = cast(TCPSocket) context.transport;
             _req.clientAddress = sock.remoteAddress();
-            //if (req.Header.httpVersion == HTTPVersion.HTTP1_0)
-            //   _shouldClose = true;
-			//	else
-			//	_shouldClose = false;
-			if(req.keepalive())
+			if(req.keepalive() == 0x01) {
 				_shouldClose = false;
-			else
+			} else if(req.keepalive() == 0x02){
 				_shouldClose = true;
-		
+			}else {
+				if(req.Header.httpVersion == HTTPVersion.HTTP1_0)
+					_shouldClose = true;
+				else
+					_shouldClose = false;
+			}
+			//trace("_shouldClose is : ", _shouldClose, "  req.keepalive() is:", req.keepalive(), "  req.Header.httpVersion = ", req.Header.httpVersion);
             if (_res is null)
             {
                 _res = new HTTPResponse(config);
@@ -194,9 +196,16 @@ protected:
         httpAllocator.deallocate(data);
     }
 
+	final void lastWrited(ubyte[] data, uint len)
+	{
+		httpAllocator.deallocate(data);
+		if (_shouldClose)
+			close(context);
+	}
+
     final bool writeSection(SectionBuffer buffer, bool isLast, bool isFile = false)
     {
-        trace("writeSection ,isLast = ", isLast, " the buffer length = ", buffer.length);
+       // trace("writeSection ,isLast = ", isLast, " the buffer length = ", buffer.length);
 
         if (buffer.length == 0)
         {
@@ -216,7 +225,8 @@ protected:
         if (isFile)
             context.fireWrite(data, &sendFile);
         else
-            context.fireWrite(data,&freeBuffer);
+			isLast ? context.fireWrite(data, &lastWrited) : context.fireWrite(data,&freeBuffer);
+
 
         return true;
     }
