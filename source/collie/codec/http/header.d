@@ -140,7 +140,8 @@ final class HTTPHeader
     pragma(inline,true)
     @property path() const
     {
-        return decode(_queryString[0 .. _fileStart]);
+        import std.path;
+        return buildNormalizedPath(decode(_queryString[0 .. _fileStart]));
     }
 
     @property string[string] queryMap() const
@@ -231,7 +232,7 @@ final class HTTPHeader
     {
         return (_method == HTTPMethod.HTTP_INVAILD && _statuCode == -1);
     } // 无效的
-package:
+//package:
     pragma(inline,true)
     void clear()
     {
