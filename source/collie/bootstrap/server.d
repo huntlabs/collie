@@ -36,8 +36,15 @@ final class ServerBootstrap(PipeLine)
 
     auto setSSLConfig(ServerSSLConfig config)
     {
-        _sslConfig = config;
-        return this;
+		version (Windows)
+		{
+		       throw new Exception("Now is not support ssl in windows!");
+		}
+		else
+		{
+		       _sslConfig = config;
+		       return this;
+		}
     }
 
     auto childPipeline(shared PipelineFactory!PipeLine factory)
