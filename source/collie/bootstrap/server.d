@@ -154,6 +154,8 @@ final class ServerBootstrap(PipeLine)
 	EventLoopGroup group(){return _group;}
 
 	@property EventLoop eventLoop(){return _loop;}
+
+	@property Address bindAddress(){return _address;}
 protected:
     auto creatorAcceptor(EventLoop loop)
     {
