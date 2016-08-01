@@ -155,7 +155,8 @@ final class ServerBootstrap(PipeLine)
 
 	@property EventLoop eventLoop(){return _loop;}
 
-	@property Address bindAddress(){return _address;}
+	@property Address address(){return _address;}
+	
 protected:
     auto creatorAcceptor(EventLoop loop)
     {
