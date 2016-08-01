@@ -16,7 +16,7 @@ void main()
     
     server.bind(new InternetAddress("127.0.0.1", 9008));
     Address adr = new InternetAddress("127.0.0.1", 9008);
-    client.connect(adr);
+  
     
     int i = 0;
     
@@ -44,6 +44,7 @@ void main()
     client.start();
     server.start();
     
+    client.connect(adr);
     string str = "hello " ~ i.to!string();
     client.sendTo(cast(ubyte[])str);
     writeln("Edit source/app.d to start your project.");

@@ -122,7 +122,8 @@ final class IOCPLoop
         case IOCP_OP_TYPE.connect : ev.event.writeLen = 0;
             ev.event.obj.onWrite();
             break;
-        case IOCP_OP_TYPE.read : if (bytes > 0)
+        case IOCP_OP_TYPE.read : 
+			if (bytes > 0)
             {
                 ev.event.readLen = bytes;
                 ev.event.obj.onRead();

@@ -422,13 +422,6 @@ protected:
             int nRet = WSARecv(cast(SOCKET) _socket.handle, &_iocpBuffer,
                 cast(uint) 1, &dwReceived, &dwFlags, &_iocpread.ol,
                 cast(LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
-            try
-            {
-                trace("do WSARecv : the return is : ", nRet);
-            }
-            catch
-            {
-            }
             if (nRet == SOCKET_ERROR)
             {
                 DWORD dwLastError = GetLastError();
