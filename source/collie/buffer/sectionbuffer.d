@@ -13,6 +13,7 @@ module collie.buffer.sectionbuffer;
 //import core.stdc.string;
 import core.memory;
 import core.stdc.string;
+import std.array;
 
 import std.algorithm : swap;
 import std.experimental.allocator;
@@ -228,9 +229,10 @@ final class SectionBuffer : Buffer
     pragma(inline)
     ubyte[] readLine(bool hasRN = false)() //返回的数据有copy
     {
-        ubyte[] rbyte;
-        auto len = readLine!(hasRN)(delegate(in ubyte[] data) { rbyte ~= data; });
-        return rbyte;
+      //  ubyte[] rbyte;
+		auto rbyte = appender!(ubyte[])();
+		auto len = readLine!(hasRN)(delegate(in ubyte[] data) { rbyte.put(data);/*rbyte ~= data;*/ });
+        return rbyte.data;
     }
 
     size_t readLine(bool hasRN = false)(void delegate(in ubyte[]) cback) //回调模式，数据不copy
@@ -256,10 +258,7 @@ final class SectionBuffer : Buffer
             {
                 byptr = by[rsite .. $];
             }
-            auto tptr = memchr(byptr.ptr, '\n', byptr.length);
-            ptrdiff_t site = -1;
-            if(tptr) site = cast(ubyte *)tptr -  byptr.ptr;
-           // auto site = indexOf(cast(string) byptr, '\n');
+			ptrdiff_t site = findUbyte(byptr,cast(ubyte)('\n'));
             if (site == -1)
             {
                 if (rbyte.length > 0)
@@ -364,8 +363,9 @@ final class SectionBuffer : Buffer
     pragma(inline)
     ubyte[] readAll() //返回的数据有copy
     {
-        ubyte[] rbyte;
-        auto len = readAll(delegate(in ubyte[] data) { rbyte ~= data; });
+		size_t maxlen = _wSize - _rSize;
+		ubyte[] rbyte = new ubyte[maxlen];
+		read(rbyte);
         return rbyte;
     }
 
@@ -374,14 +374,15 @@ final class SectionBuffer : Buffer
         if (data.length == 0 || isEof() || data.length >= _sectionSize)
             return 0;
         auto ch = data[0];
-        size_t rcount = readCount();
-        size_t rsite = readSite();
+        
         size_t size = _rSize;
         size_t wsite = writeSite();
         size_t wcount = writeCount();
         ubyte[] byptr, by;
-        while (rcount <= wcount && !isEof())
+        while (!isEof())
         {
+			size_t rcount = readCount();
+			size_t rsite = readSite();
             by = _buffer[rcount];
             if (rcount == wcount)
             {
@@ -391,10 +392,7 @@ final class SectionBuffer : Buffer
             {
                 byptr = by[rsite .. $];
             }
-            //auto site = indexOf(cast(string) byptr, ch);
-            auto tptr = memchr(byptr.ptr, ch, byptr.length);
-            ptrdiff_t site = -1;
-            if(tptr) site = cast(ubyte *)tptr -  byptr.ptr;
+			ptrdiff_t site = findUbyte(byptr,ch);
             if (site == -1)
             {
                 cback(byptr);
@@ -410,23 +408,8 @@ final class SectionBuffer : Buffer
                 {
                     if (data[i] != this[tsize])
                     {
-                        size_t count = tsize / _sectionSize;
-                        if (count > rcount)
-                        {
-                            cback(byptr);
-                            _rSize += byptr.length;
-                            rcount = count;
-                            by = _buffer[rcount];
-                            rsite = tsize - _rSize;
-                            cback(by[0 .. rsite]);
-                            _rSize = tsize;
-                        }
-                        else
-                        {
-                            rsite = tsize - _rSize;
-                            cback(byptr[0 .. rsite]);
-                            _rSize = tsize;
-                        }
+						cback(byptr[0..(site + i)]); //前面查找确认不是的数据就回调过去
+						_rSize = tsize;
                         goto next; //没找对，进行下次查找
                     }
                     else
@@ -453,6 +436,24 @@ final class SectionBuffer : Buffer
         size_t site = i % _sectionSize;
         return _buffer[count][site];
     }
+
+	ubyte[] opSlice(size_t i, size_t j)
+	{
+		j = j > _wSize ? _wSize : j;
+		auto tsize = _rSize;
+		auto len = j - i;
+		if(len <= 0) return (ubyte[]).init;
+		ubyte[] data = new ubyte[len];
+		read(data);
+		_rSize = tsize;
+		return data;
+	}
+
+	pragma(inline)
+	ubyte[] opSlice()
+	{
+		return readAll();
+	}
 
     pragma(inline,true)
     @property readSize() const
@@ -483,6 +484,27 @@ final class SectionBuffer : Buffer
     {
         return _wSize % _sectionSize;
     }
+
+	ptrdiff_t findUbyte(in ref ubyte[] data, ubyte ch)
+	{
+		ptrdiff_t index = -1;
+		for(size_t id = 0; id < data.length; ++id)
+		{
+			if(ch == data[id]){
+				index = cast(ptrdiff_t)id;
+				break;
+			}
+		}
+		return index;
+	}
+
+/*	ptrdiff_t findUbyteArray(in ref ubyte[] data, ref in ubyte[] ch)
+	{
+		assert(data.length >= ch.length);
+		auto begin = findUbyte(data,ch[0]);
+		if(begin < 0) return -1;
+
+	}*/
 
 private:
     pragma(inline,true)
