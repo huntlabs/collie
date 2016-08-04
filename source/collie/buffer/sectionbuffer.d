@@ -408,7 +408,17 @@ final class SectionBuffer : Buffer
                 {
                     if (data[i] != this[tsize])
                     {
-						cback(byptr[0..(site + i)]); //前面查找确认不是的数据就回调过去
+						auto len = site + i;
+						//前面查找确认不是的数据就回调过去
+						if(byptr.length >= len) {
+							cback(byptr[0..len]); 
+						} else {
+							auto tlen = len - byptr.length;
+							cback(byptr);
+							rcount ++ ;
+							byptr = _buffer[rcount];
+							cback(byptr[0..tlen]);
+						}
 						_rSize = tsize;
                         goto next; //没找对，进行下次查找
                     }
