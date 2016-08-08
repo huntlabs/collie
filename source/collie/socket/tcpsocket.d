@@ -27,12 +27,16 @@ class TCPSocket : AsyncTransport, EventCallInterface
 {
     this(EventLoop loop, bool isIpV6 = false)
     {
-        if (isIpV6)
-            _socket = new Socket(AddressFamily.INET6, SocketType.STREAM, ProtocolType.TCP);
-        else
-            _socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
+		auto family = isIpV6 ? AddressFamily.INET6 : AddressFamily.INET;
+		_socket = new Socket(family, SocketType.STREAM, ProtocolType.TCP);
         this(loop, _socket);
     }
+
+	this(EventLoop loop, AddressFamily family)
+	{
+		_socket = new Socket(family, SocketType.STREAM, ProtocolType.TCP);
+		this(loop, _socket);
+	}
 
     this(EventLoop loop, Socket sock)
     {
@@ -165,6 +169,11 @@ class TCPSocket : AsyncTransport, EventCallInterface
     {
         return _socket.remoteAddress();
     }
+
+	pragma(inline, true) final @property localAddress()
+	{
+		return _socket.localAddress();
+	}
 
     pragma(inline) final void setReadCallBack(TCPReadCallBack cback)
     {

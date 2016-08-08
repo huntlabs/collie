@@ -28,19 +28,18 @@ final class Acceptor : AsyncTransport, EventCallInterface
 {
     this(EventLoop loop, bool isIpV6 = false)
     {
-        if (isIpV6)
-        {
-            _socket = new Socket(AddressFamily.INET6, SocketType.STREAM, ProtocolType.TCP);
-        }
-        else
-        {
-            _socket = new Socket(AddressFamily.INET, SocketType.STREAM, ProtocolType.TCP);
-        }
-        _socket.blocking = false;
-        super(loop, TransportType.ACCEPT);
-        static if (IOMode == IO_MODE.iocp)
-            _buffer = new ubyte[2048];
+		auto family = isIpV6 ? AddressFamily.INET6 : AddressFamily.INET;
+		this(loop,family);
     }
+
+	this(EventLoop loop, AddressFamily family)
+	{
+		_socket = new Socket(family, SocketType.STREAM, ProtocolType.TCP);
+		_socket.blocking = false;
+		super(loop, TransportType.ACCEPT);
+		static if (IOMode == IO_MODE.iocp)
+			_buffer = new ubyte[2048];
+	}
 
     @property reusePort(bool use)
     {
@@ -69,6 +68,7 @@ final class Acceptor : AsyncTransport, EventCallInterface
         return cast(int) _socket.handle();
     }
 
+	pragma(inline, true)
 	@property localAddress(){return _socket.localAddress();}
 
     override bool start()

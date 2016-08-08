@@ -44,7 +44,6 @@ abstract class AsyncTransport
     {
         return _loop;
     }
-
 protected:
     EventLoop _loop;
     TransportType _type;

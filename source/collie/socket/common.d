@@ -191,6 +191,31 @@ struct AsyncEvent
         return _isActive;
     }
 
+//	static Address createAddress(AddressFamily family) //pure nothrow
+//	{
+//		Address result;
+//		switch(family)
+//		{
+//			static if (is(sockaddr_un))
+//			{
+//				case AddressFamily.UNIX:
+//				result = new UnixAddress();
+//				break;
+//			}
+//			
+//			case AddressFamily.INET:
+//				result = new InternetAddress();
+//				break;
+//				
+//			case AddressFamily.INET6:
+//				result = new Internet6Address();
+//				break;
+//				
+//			default:
+//				result = new UnknownAddress();
+//		}
+//		return result;
+//	}
 package:
     pragma(inline) @property isActive(bool active)
     {

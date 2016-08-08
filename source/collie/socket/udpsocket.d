@@ -27,27 +27,35 @@ class UDPSocket : AsyncTransport, EventCallInterface
 {
     this(EventLoop loop, bool isIpV6 = false)
     {
-        super(loop, TransportType.UDP);
-        if (isIpV6)
-            _socket = new UdpSocket(AddressFamily.INET6);
-        else
-            _socket = new UdpSocket(AddressFamily.INET);
-        _socket.blocking = true;
-        _readBuffer = new ubyte[UDP_READ_BUFFER_SIZE];
-        _event = AsyncEvent.create(AsynType.UDP, this, _socket.handle, true, false,
-            false);
-	static if(IO_MODE.iocp == IOMode)
-	{
-		_iocpBuffer.len = TCP_READ_BUFFER_SIZE;
-		_iocpBuffer.buf = cast(char*) _readBuffer.ptr;
-		_iocpread.event = _event;
-		_iocpread.operationType = IOCP_OP_TYPE.read;
-		if (isIpV6)
-			_bindddr = new Internet6Address(Internet6Address.PORT_ANY);
-		else 
-			_bindddr = new InternetAddress(InternetAddress.PORT_ANY);
-	}
+		auto family = isIpV6 ? AddressFamily.INET6 : AddressFamily.INET;
+		this(loop,family);
     }
+
+	this(EventLoop loop, AddressFamily family)
+	{
+		super(loop, TransportType.UDP);
+
+		_socket = new UdpSocket(family);
+
+		_socket.blocking = true;
+		_readBuffer = new ubyte[UDP_READ_BUFFER_SIZE];
+		_event = AsyncEvent.create(AsynType.UDP, this, _socket.handle, true, false,
+			false);
+		static if(IO_MODE.iocp == IOMode)
+		{
+			_iocpBuffer.len = TCP_READ_BUFFER_SIZE;
+			_iocpBuffer.buf = cast(char*) _readBuffer.ptr;
+			_iocpread.event = _event;
+			_iocpread.operationType = IOCP_OP_TYPE.read;
+
+			if(family == AddressFamily.INET)
+				_bindddr = new InternetAddress(InternetAddress.PORT_ANY);
+			else if(family == AddressFamily.INET6)
+				_bindddr = new Internet6Address(Internet6Address.PORT_ANY);
+			else
+				_bindddr = new UnknownAddress();
+		}
+	}
 
     ~this()
     {
@@ -111,10 +119,15 @@ class UDPSocket : AsyncTransport, EventCallInterface
         return len;
     }
 
-    override @property int fd()
+	final override @property int fd()
     {
         return cast(int) _socket.handle();
     }
+
+	pragma(inline, true) final @property localAddress()
+	{
+		return _socket.localAddress();
+	}
 
     override bool start()
     {
