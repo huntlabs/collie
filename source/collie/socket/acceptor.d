@@ -69,6 +69,8 @@ final class Acceptor : AsyncTransport, EventCallInterface
         return cast(int) _socket.handle();
     }
 
+	@property localAddress(){return _socket.localAddress();}
+
     override bool start()
     {
         if (_event != null || !_socket.isAlive() || !_callBack)

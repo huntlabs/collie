@@ -36,6 +36,7 @@ class HttpServer : HTTPHandler
 //         {
 //               writeln("header key = ", key, "\t value = ",value);
 //         }
+	writeln("http version is : ", req.Header.httpVersion);
         writeln("-------------------do handle ---------------------");
         WebForm form  =  new WebForm(req);
         writeln("-------------------form end!!!!!! ---------------------");
