@@ -6,7 +6,7 @@
     "license"     : "Apache-2.0",
     "buildTypes"  : {
         "debug"   : {
-            "buildOptions" :  ["debugMode",     "debugInfo",    "profile" ]
+            "buildOptions" :  ["debugMode",     "debugInfo"]
         } ,
         "release"   : {
             "buildOptions" :  ["releaseMode",   "inline",       "optimize"]
