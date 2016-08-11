@@ -23,3 +23,5 @@ public import collie.socket.tcpclient;
 public import collie.socket.udpsocket;
 
 public import collie.socket.sslsocket;
+
+public import collie.socket.exception;

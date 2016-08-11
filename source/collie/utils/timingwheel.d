@@ -13,7 +13,7 @@ module collie.utils.timingwheel;
 /**
     Timing Wheel manger Class
 */
-final class TimingWheel
+@safe final class TimingWheel
 {
     /**
         constructor
@@ -119,7 +119,7 @@ private:
 /**
     The timer parent's class.
 */
-abstract class WheelTimer
+@trusted abstract class WheelTimer
 {
 	~this()
 	{
@@ -175,7 +175,7 @@ private:
 private:
 
 /// the Header Timer in the wheel.
-class NullWheelTimer : WheelTimer
+@safe class NullWheelTimer : WheelTimer
 {
     override void onTimeOut() nothrow
     {

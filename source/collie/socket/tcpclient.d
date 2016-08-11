@@ -16,6 +16,8 @@ import collie.socket.eventloop;
 import collie.socket.common;
 import collie.socket.tcpsocket;
 
+import collie.socket.exception;
+
 alias ConnectCallBack = void delegate(bool connect);
 
 final class TCPClient : TCPSocket
@@ -122,10 +124,4 @@ private:
     ConnectCallBack _connectBack;
 }
 
-class ConnectedException : Exception
-{
-    this(string msg, string file = __FILE__, size_t line = __LINE__)
-    {
-        super(msg, file, line);
-    }
-}
+

@@ -18,6 +18,7 @@ import std.experimental.allocator.gc_allocator;
 import collie.utils.vector;
 import collie.channel.handler;
 import collie.channel.handlercontext;
+import collie.channel.exception;
 import collie.socket;
 
 interface PipelineManager
@@ -101,7 +102,7 @@ abstract class PipelineBase
     {
         if (_ctxs.empty())
         {
-            throw new Exception("No handlers in pipeline");
+			throw new PipelineEmptyException("No handlers in pipeline");
         }
         removeAt(0);
         return this;
@@ -112,7 +113,7 @@ abstract class PipelineBase
     {
         if (_ctxs.empty())
         {
-            throw new Exception("No handlers in pipeline");
+			throw new PipelineEmptyException("No handlers in pipeline");
         }
         removeAt(_ctxs.length - 1);
         return this;
@@ -206,7 +207,7 @@ private:
         }
         if (!removed)
         {
-            throw new Exception("No such handler in pipeline");
+			throw new HandlerNotInPipelineException("No such handler in pipeline");
         }
 
         return *this;
@@ -268,7 +269,7 @@ final class Pipeline(R, W = void) : PipelineBase
             if (_front)
                 _front.read(forward!(msg));
             else
-                throw new Exception("read(): no outbound handler in Pipeline");
+				throw new NotHasInBoundException("read(): not have inbound handler in Pipeline");
         }
     }
 
@@ -280,7 +281,7 @@ final class Pipeline(R, W = void) : PipelineBase
             if (_front)
                 _front.timeOut();
             else
-                throw new Exception("timeOut(): no outbound handler in Pipeline");
+				throw new NotHasInBoundException("timeOut(): not have inbound handler in Pipeline");
         }
     }
 
@@ -318,7 +319,7 @@ final class Pipeline(R, W = void) : PipelineBase
             if (_back)
                 _back.write(forward!(msg, cback));
             else
-                throw new Exception("close(): no outbound handler in Pipeline");
+				throw new NotHasOutBoundException("close(): no outbound handler in Pipeline");
         }
     }
 
@@ -330,7 +331,7 @@ final class Pipeline(R, W = void) : PipelineBase
             if (_back)
                 _back.close();
             else
-                throw new Exception("close(): no outbound handler in Pipeline");
+				throw new NotHasOutBoundException("close(): no outbound handler in Pipeline");
         }
     }
 
@@ -373,7 +374,7 @@ final class Pipeline(R, W = void) : PipelineBase
         }
 
         if (_front is null && _back is null)
-            throw new Exception("No Handler in the Pipeline");
+			throw new PipelineEmptyException("No Handler in the Pipeline");
 
         _isFinalize = true;
     }

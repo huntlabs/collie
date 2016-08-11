@@ -15,7 +15,9 @@ import std.functional;
 
 import collie.channel.pipeline;
 import collie.channel.handler;
+import collie.channel.exception;
 import collie.socket;
+
 
 import std.stdio;
 
@@ -123,7 +125,7 @@ class ContextImplBase(H, Context) : PipelineContext
         }
         else
         {
-            throw new Exception("inbound type mismatch after ");
+			throw new InBoundTypeException("inbound type mismatch after ");
         }
     }
 
@@ -141,7 +143,7 @@ class ContextImplBase(H, Context) : PipelineContext
         }
         else
         {
-            throw new Exception("outbound type mismatch after ");
+			throw new OutBoundTypeException("outbound type mismatch after ");
         }
     }
 

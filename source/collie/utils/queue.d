@@ -25,7 +25,7 @@ import std.traits;
         Allocator = which type Allocator will used
 */
 
-struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
+@trusted struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
     Allocator = Mallocator)
 {
     alias TSize = stateSize!T;

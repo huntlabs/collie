@@ -15,11 +15,11 @@ import std.experimental.allocator.common;
 import std.experimental.allocator.mallocator : Mallocator;
 import std.traits;
 
-struct Vector(T, bool addToGC = hasIndirections!T, Allocator = Mallocator)
+@trusted struct Vector(T, bool addToGC = hasIndirections!T, Allocator = Mallocator)
 {
     alias TSize = stateSize!T;
 
-    this(size_t size)
+    this(size_t size) 
     {
         auto len = TSize * size;
         _data = cast(T[]) _alloc.allocate(len);

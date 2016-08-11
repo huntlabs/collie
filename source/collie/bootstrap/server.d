@@ -13,6 +13,7 @@ module collie.bootstrap.server;
 import collie.socket;
 import collie.channel;
 import collie.bootstrap.serversslconfig;
+public import collie.bootstrap.exception;
 
 import std.stdio;
 
@@ -38,7 +39,7 @@ final class ServerBootstrap(PipeLine)
     {
 		version (Windows)
 		{
-		       throw new Exception("Now is not support ssl in windows!");
+			throw new SSLException("Now is not support ssl in windows!");
 		}
 		else
 		{
@@ -120,9 +121,9 @@ final class ServerBootstrap(PipeLine)
     void waitForStop()
     {
         if (_runing)
-            throw new Exception("server is runing!");
+			throw new ServerIsRuningException("server is runing!");
         if (_address is null || _childPipelineFactory is null)
-            throw new Exception("the address or childPipelineFactory is null!");
+			throw new ServerStartException("the address or childPipelineFactory is null!");
 
         _runing = true;
         uint wheel, time;
@@ -177,7 +178,7 @@ protected:
             {
                 ctx = _sslConfig.generateSSLCtx();
                 if (!ctx)
-                    throw new Exception("Can not gengrate SSL_CTX");
+					throw new SSLException("Can not gengrate SSL_CTX");
             }
         }
 
@@ -401,7 +402,7 @@ private:
     SSL_CTX* _sslctx = null;
 }
 
-final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
+@trusted final class ServerConnection(PipeLine) : WheelTimer, PipelineManager
 {
     this(PipeLine pipe)
     {
