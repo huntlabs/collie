@@ -141,7 +141,7 @@ protected:
         }
         catch (Exception e)
         {
-            error("handle erro! close the Socket, the erro : ", e.msg);
+            error("handle erro! close the Socket, the erro : ", e.toString());
             close(context());
         }
     }

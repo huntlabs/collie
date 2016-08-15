@@ -402,7 +402,7 @@ protected:
                 {
                     try
                     {
-                        error("\n\n----tcp on read erro do Close! erro : ", e.msg,
+                        error("\n\n----tcp on read erro do Close! erro : ", e.toString(),
                             "\n\n");
                     }
                     catch
