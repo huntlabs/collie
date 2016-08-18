@@ -27,6 +27,11 @@ final class TCPClient : TCPSocket
         super(loop, isIpV6);
     }
 
+	this(EventLoop loop, AddressFamily family)
+	{
+		super(loop,family);
+	}
+
     override @property bool isAlive() @trusted nothrow
     {
         return super.isAlive() && _isConnect;

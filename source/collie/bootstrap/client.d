@@ -56,7 +56,7 @@ final class ClientBootstrap(PipeLine) : PipelineManager
             throw new NeedPipeFactoryException(
                 "Pipeline must be not null! Please set Pipeline frist!");
         if (_socket is null)
-            _socket = new TCPClient(_loop, (to.addressFamily() == AddressFamily.INET6));
+            _socket = new TCPClient(_loop, to.addressFamily());
         if (_socket.isAlive())
             throw new ConnectedException("This Socket is Connected! Please close before connect!");
         if (_pipe is null)
