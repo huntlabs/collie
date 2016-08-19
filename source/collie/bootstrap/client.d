@@ -15,8 +15,6 @@ import std.socket;
 import collie.socket;
 import collie.channel;
 
-//TODO: timer closed
-
 final class ClientBootstrap(PipeLine) : PipelineManager
 {
     this(EventLoop loop)
