@@ -42,10 +42,8 @@ class LengthBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[])
 		}
 
 		size_t len = msg.length;
-		trace("------------read , msg length is : ", len,   "  -pos is : ", _pos);
 		for(size_t i = 0; i < len; ++i)
 		{
-			trace("i is : ", i,   "  -pos is : ", _pos);
 			ubyte ch = msg[i];
 			final switch(_pos)
 			{
@@ -70,12 +68,10 @@ class LengthBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[])
 					_pos = ReadPOS.Body;
 					_readLen = 0;
 					_msgLen = bigEndianToNative!(uint)(_lenByte);
-					trace("length is  : ", _lenByte, "   ", _msgLen);
 					if(_msgLen == 0) {
 						doFireRead();
 						continue;
 					} else if(_msgLen > _max){
-						trace("length is  : ", _lenByte);
 						throw new MsgLengthTooBig("the max is : " ~ to!string(_max) ~ " the length is :" ~ to!string(_msgLen));
 					}
 					_data = new ubyte[_msgLen];
