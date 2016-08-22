@@ -58,11 +58,6 @@ final class ClientBootstrap(PipeLine) : PipelineManager
             _socket = new TCPClient(_loop, to.addressFamily());
         if (_socket.isAlive())
             throw new ConnectedException("This Socket is Connected! Please close before connect!");
-        if (_pipe is null)
-        {
-            _pipe = _pipelineFactory.newPipeline(_socket);
-            _pipe.finalize();
-        }
 
         _socket.setCloseCallBack(&closeCallBack);
         _socket.setConnectCallBack(&connectCallBack);
@@ -104,6 +99,8 @@ protected:
             _pipe.transportInactive();
             return;
         }
+		_pipe = _pipelineFactory.newPipeline(_socket);
+		_pipe.finalize();
 		_pipe.pipelineManager(this);
         _pipe.transportActive();
         if (_timeOut > 0)
