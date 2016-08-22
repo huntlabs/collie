@@ -200,7 +200,7 @@ unittest
     import std.conv;
     import core.thread;
 
-    class TestWheelTimer : WheelTimer
+    @trusted class TestWheelTimer : WheelTimer
     {
         this()
         {
