@@ -33,3 +33,11 @@ class ServerStartException : CollieBoostException
 		super(msg, file, line);
 	}
 }
+
+class NeedPipeFactoryException : CollieBoostException
+{
+	this(string msg, string file = __FILE__, size_t line = __LINE__)
+	{
+		super(msg, file, line);
+	}
+}

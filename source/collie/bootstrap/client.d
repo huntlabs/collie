@@ -14,6 +14,7 @@ import std.socket;
 
 import collie.socket;
 import collie.channel;
+import collie.bootstrap.exception;
 
 final class ClientBootstrap(PipeLine) : PipelineManager
 {
@@ -147,12 +148,4 @@ private:
     TCPClient _socket;
     Timer _timer;
     uint _timeOut = 0;
-}
-
-class NeedPipeFactoryException : Exception
-{
-    this(string msg, string file = __FILE__, size_t line = __LINE__)
-    {
-        super(msg, file, line);
-    }
 }
