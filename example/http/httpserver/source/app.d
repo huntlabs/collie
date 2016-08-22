@@ -82,10 +82,17 @@ void main()
     httpConfig.responseBodyStectionSize = 256;
     httpConfig.requestBodyStectionSize = 256;
     EventLoop loop = new EventLoop();
+    EventLoopGroup group = new EventLoopGroup();
     auto ser = new ServerBootstrap!HTTPPipeline(loop);
     ser.childPipeline(new HTTPPipelineFactory()).heartbeatTimeOut(30)
-         .group(new EventLoopGroup())
+         .group(group)
         .bind(8081);
+        
+    auto ser2 = new ServerBootstrap!HTTPPipeline(loop);
+    ser2.childPipeline(new HTTPPipelineFactory()).heartbeatTimeOut(30)
+         .group(group)
+        .bind(8082);
+    
         
     version (SSL) 
     {
@@ -93,6 +100,7 @@ void main()
         ssl.certificateFile("server.pem");
         ssl.privateKeyFile("server.pem");
         ser.setSSLConfig(ssl);
+        ser2.setSSLConfig(ssl);
     }
     
     debug {
@@ -106,7 +114,7 @@ void main()
             });
             tm.start(120 * 1000);
         }
-        
+    ser2.start();
     ser.waitForStop();
 }
 

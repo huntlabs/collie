@@ -105,9 +105,12 @@ final class ServerBootstrap(PipeLine)
             accept.stop();
         }
         _mainAccept.stop();
-        _group.stop();
-        _loop.stop();
+		if(_isLoopWait) {
+	        _group.stop();
+	        _loop.stop();
+		}
         _runing = false;
+		_isLoopWait = false;
     }
 
     void join()
@@ -120,37 +123,40 @@ final class ServerBootstrap(PipeLine)
 
     void waitForStop()
     {
-        if (_runing)
+		start();
+		_isLoopWait = true;
+		if(_group)
+			_group.start();
+		_loop.run();
+    }
+
+	void start()
+	{
+		if (_runing)
 			throw new ServerIsRuningException("server is runing!");
-        if (_address is null || _childPipelineFactory is null)
+		if (_address is null || _childPipelineFactory is null)
 			throw new ServerStartException("the address or childPipelineFactory is null!");
 
-        _runing = true;
-        uint wheel, time;
-        bool beat = getTimeWheelConfig(wheel, time);
-        _mainAccept = creatorAcceptor(_loop);
-        _mainAccept.initialize();
-        if (beat)
-        {
-            _mainAccept.startTimingWhile(wheel, time);
-        }
-        if (_group)
-        {
-            foreach (loop; _group)
-            {
-                auto acceptor = creatorAcceptor(loop);
-                acceptor.initialize();
-                _serverlist ~= acceptor;
-                if (beat)
-                {
-                    acceptor.startTimingWhile(wheel, time);
-                }
-            }
-            _group.start();
-        }
-        trace("server run!");
-        _loop.run();
-    }
+		_runing = true;
+		uint wheel, time;
+		bool beat = getTimeWheelConfig(wheel, time);
+		_mainAccept = creatorAcceptor(_loop);
+		_mainAccept.initialize();
+		if (beat)
+			_mainAccept.startTimingWhile(wheel, time);
+		if (_group)
+		{
+			foreach (loop; _group)
+			{
+				auto acceptor = creatorAcceptor(loop);
+				acceptor.initialize();
+				_serverlist ~= acceptor;
+				if (beat)
+					acceptor.startTimingWhile(wheel, time);
+			}
+		}
+		trace("server run!");
+	}
 
 	EventLoopGroup group(){return _group;}
 
@@ -230,6 +236,7 @@ private:
 
     bool _runing = false;
     bool _rusePort = true;
+	bool _isLoopWait = false;
     uint _timeOut = 0;
     Address _address;
 
