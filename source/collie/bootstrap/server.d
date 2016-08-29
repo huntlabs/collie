@@ -198,7 +198,7 @@ protected:
             return false;
         if (_timeOut <= 40)
         {
-            whileSize = 40;
+            whileSize = 50;
             time = _timeOut * 1000 / 50;
         }
         else if (_timeOut <= 120)
