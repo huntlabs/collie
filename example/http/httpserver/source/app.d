@@ -36,16 +36,16 @@ class HttpServer : HTTPHandler
 //         {
 //               writeln("header key = ", key, "\t value = ",value);
 //         }
-	writeln("http version is : ", req.Header.httpVersion);
-        writeln("-------------------do handle ---------------------");
-        WebForm form  =  new WebForm(req);
-        writeln("-------------------form end!!!!!! ---------------------");
-        auto map = form.formMap();
-        foreach(key,value;map)
-        {
-            writeln("\tform key = ", key, "\n\t value = ",value);
-        }
-        writeln("-------------------show end!!!!!! ---------------------");
+// 	writeln("http version is : ", req.Header.httpVersion);
+//         writeln("-------------------do handle ---------------------");
+//         WebForm form  =  new WebForm(req);
+//         writeln("-------------------form end!!!!!! ---------------------");
+//         auto map = form.formMap();
+//         foreach(key,value;map)
+//         {
+//             writeln("\tform key = ", key, "\n\t value = ",value);
+//         }
+//         writeln("-------------------show end!!!!!! ---------------------");
         rep.Header.setHeaderValue("content-type","text/html;charset=UTF-8");
         rep.Body.write(cast(ubyte[])"hello wrold!");
         rep.done();
@@ -74,7 +74,7 @@ void main()
 {
     
     writeln("Edit source/app.d to start your project.");
-  //  globalLogLevel(LogLevel.warning);
+    globalLogLevel(LogLevel.warning);
     
  //   httpAllocator = a
     trace("log!!");

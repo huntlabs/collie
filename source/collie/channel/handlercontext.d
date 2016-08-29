@@ -271,6 +271,8 @@ mixin template WriteContextImpl()
         else
         {
             info("write reached end of pipeline");
+			if(cback !is null)
+				cback(msg,0);
         }
     }
 
