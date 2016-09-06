@@ -279,7 +279,7 @@ static if (CustomTimer)
 {
     pragma(msg, "use CustomTimer!!!!");
 private:
-    final class CWheelTimer : WheelTimer
+	@trusted final class CWheelTimer : WheelTimer
     {
         this(AsyncEvent* event)
         {
