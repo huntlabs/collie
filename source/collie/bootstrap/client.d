@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Collie - An asynchronous event-driven network framework using Dlang development
  *
  * Copyright (C) 2015-2016  Shanghai Putao Technology Co., Ltd 
@@ -10,139 +10,166 @@
  */
 module collie.bootstrap.client;
 
-import std.socket;
-
-import collie.socket;
 import collie.channel;
+import collie.socket;
+import collie.utils.memory;
+
 import collie.bootstrap.exception;
+import collie.bootstrap.clientmanger : LinkInfo;
 
-final class ClientBootstrap(PipeLine) : PipelineManager
+class ClientBootstrap(PipeLine) : PipelineManager
 {
-    this(EventLoop loop)
-    {
-        _loop = loop;
-    }
+	this(EventLoop loop)
+	{
+		_loop = loop;
+	}
+	
+	~this()
+	{
+		if (_timer)
+			_timer.destroy;
+		if(_info.client)
+			_info.client.destroy;
+	}
+	
+	auto pipelineFactory(shared PipelineFactory!PipeLine pipeFactory)
+	{
+		_pipelineFactory = pipeFactory;
+		return this;
+	}
+	
+	/// time is s
+	auto heartbeatTimeOut(uint second)
+	{
+		_timeOut = second * 1000;
+		return this;
+	}
 
-    ~this()
-    {
-        if (_timer)
-            _timer.destroy;
-        _socket.destroy;
-    }
+	void connect(Address to, CallBack cback = null)
+	{
+		if (_pipelineFactory is null)
+			throw new NeedPipeFactoryException(
+				"Pipeline must be not null! Please set Pipeline frist!");
+		if (_info.client)
+			throw new ConnectedException("This Socket is Connected! Please close before connect!");
+		_info.addr = to;
+		_info.tryCount = 0;
+		_info.cback = cback;
+		connect();
+	}
+	
+	void close()
+	{
+		if (_info.client is null)
+			return;
+		_info.client.close();
+	}
+	
+	@property EventLoop eventLoop()
+	{
+		return _loop;
+	}
+	
+	@property pipeLine()
+	{
+		if(_info.client is null)
+			return null;
+		return _pipe;
+	}
 
-    auto setPipelineFactory(shared PipelineFactory!PipeLine pipeFactory)
-    {
-        _pipelineFactory = pipeFactory;
-        return this;
-    }
-
-    /// time is s
-    auto heartbeatTimeOut(uint second)
-    {
-        _timeOut = second * 1000;
-        return this;
-    }
-
-    void connect(string ip, ushort port)
-    {
-        connect(new InternetAddress(ip, port));
-    }
-
-    void connect(Address to)
-    {
-
-        if (_pipelineFactory is null)
-            throw new NeedPipeFactoryException(
-                "Pipeline must be not null! Please set Pipeline frist!");
-        if (_socket is null)
-            _socket = new TCPClient(_loop, to.addressFamily());
-        if (_socket.isAlive())
-            throw new ConnectedException("This Socket is Connected! Please close before connect!");
-
-        _socket.setCloseCallBack(&closeCallBack);
-        _socket.setConnectCallBack(&connectCallBack);
-        _socket.setReadCallBack(&readCallBack);
-        _socket.connect(to);
-    }
-
-    void close()
-    {
-        if (_socket is null)
-            return;
-        _socket.close();
-    }
-
-    @property EventLoop eventLoop()
-    {
-        return _loop;
-    }
-
-    @property pipeLine()
-    {
-        return _pipe;
-    }
+	@property tryCount(){return _tryCount;}
+	@property tryCount(uint count){_tryCount = count;}
 
 protected:
-    void closeCallBack()
-    {
-        if (_timer)
-            _timer.stop();
-        _pipe.transportInactive();
-    }
+	void connect()
+	{
+		_info.client = new TCPClient(_loop,_info.addr.addressFamily);
+		_info.client.setCloseCallBack(&closeCallBack);
+		_info.client.setConnectCallBack(&connectCallBack);
+		_info.client.setReadCallBack(&readCallBack);
+		_info.client.connect(_info.addr);
+	}
 
-    void connectCallBack(bool isconnect)
-    {
-        trace("connectCallBack ", isconnect);
-        if (!isconnect)
-        {
-            trace("how!");
-            _pipe.transportInactive();
-            return;
-        }
-		_pipe = _pipelineFactory.newPipeline(_socket);
-		_pipe.finalize();
-		_pipe.pipelineManager(this);
-        _pipe.transportActive();
-        if (_timeOut > 0)
-        {
-            if (_timer is null)
-            {
-                _timer = new Timer(_loop);
-                _timer.setCallBack(&timeOut);
-            }
-			if(!_timer.isActive())
-				_timer.start(_timeOut);
-        }
+	void closeCallBack()
+	{
+		if (_timer)
+			_timer.stop();
+		if(_pipe)
+			_pipe.transportInactive();
+		else if(_info.cback)
+			_info.cback();
 
-    }
+	}
+	
+	void connectCallBack(bool isconnect)
+	{
+		if (isconnect)
+		{
+			if (_timeOut > 0)
+			{
+				if (_timer is null)
+				{
+					trace("new timer!");
+					_timer = new Timer(_loop);
+					_timer.setCallBack(&onTimeOut);
+				}
+				if(!_timer.isActive()) {
 
-    void readCallBack(ubyte[] buffer)
-    {
-        _pipe.read(buffer);
-    }
+					bool rv = _timer.start(_timeOut);
+					trace("start timer!   : ", rv);
+				}
+			}
+			_info.tryCount = 0;
+			_pipe = _pipelineFactory.newPipeline(_info.client);
+			_pipe.finalize();
+			_pipe.pipelineManager(this);
+			_pipe.transportActive();
+		}else if(_info.tryCount < _tryCount){
+			gcFree(_info.client);
+			_info.client = null;
+			_info.tryCount ++;
+			connect();
+		} else {
+			if(_info.cback)
+				_info.cback();
+			gcFree(_info.client);
+			_info.client = null;
+			_info.cback = null;
+			_info.addr = null;
+		}
+	}
+	
+	void readCallBack(ubyte[] buffer)
+	{
+		_pipe.read(buffer);
+	}
 	/// Client Time out is not refresh!
-    void timeOut()
-    {
-        _pipe.timeOut();
-    }
-
+	void onTimeOut()
+	{
+		_pipe.timeOut();
+	}
+	
 	override void deletePipeline(PipelineBase pipeline)
 	{
 		if (_timer)
 			_timer.stop();
+		gcFree(_info.client);
+		_info.client = null;
 		pipeline.pipelineManager(null);
+		_pipe = null;
 	}
-
+	
 	override void refreshTimeout()
 	{
-
 	}
-
+	
 private:
-    EventLoop _loop;
-    PipeLine _pipe;
-    shared PipelineFactory!PipeLine _pipelineFactory;
-    TCPClient _socket;
-    Timer _timer;
-    uint _timeOut = 0;
+	EventLoop _loop;
+	PipeLine _pipe;
+	shared PipelineFactory!PipeLine _pipelineFactory;
+	Timer _timer = null;
+	uint _timeOut = 0;
+	uint _tryCount;
+
+	LinkInfo _info;
 }
