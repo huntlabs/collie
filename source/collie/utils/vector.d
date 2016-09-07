@@ -141,27 +141,19 @@ import std.traits;
 
 	void removeAny(T value)
 	{
-		size_t len = _len;
-		void removeAt(size_t site)
+		auto len = _len;
+		size_t rm = 0;
+		size_t site  = 0;
+		for (size_t j = site; j < len; ++j)
 		{
-			size_t rm = 1;
-			for (size_t j = site + 1; j < len; ++j)
-			{
-				if(_data[j] != value) {
-					_data[site] = _data[j];
-					site ++;
-				} else {
-					rm ++;
-				}
+			if(_data[j] != value) {
+				_data[site] = _data[j];
+				site ++;
+			} else {
+				rm ++;
 			}
-			len -= rm;
 		}
-		
-		for (size_t i = 0; i < len; ++i)
-		{
-			if (_data[i] == value)
-				removeAt(i);
-		}
+		len -= rm;
 		_data[len.._len] = T.init;
 	}
 
