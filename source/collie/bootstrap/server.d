@@ -171,6 +171,12 @@ protected:
         acceptor.reusePort = _rusePort;
         acceptor.bind(_address);
         acceptor.listen(1024);
+		{
+			Linger optLinger;
+			optLinger.on = 1;
+			optLinger.time = 0;
+			acceptor.setOption(SocketOptionLevel.SOCKET, SocketOption.LINGER, optLinger);
+		}
         AcceptPipeline pipe;
         if (_acceptorPipelineFactory)
             pipe = _acceptorPipelineFactory.newPipeline(acceptor);
