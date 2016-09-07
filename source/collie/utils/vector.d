@@ -139,17 +139,31 @@ import std.traits;
         }
     }
 
-    void removeAny(T value)
-    {
-        for (size_t i = 0; i < _len; ++i)
-        {
-            if (_data[i] == value)
-            {
-                removeSite(i);
-                return;
-            }
-        }
-    }
+	void removeAny(T value)
+	{
+		size_t len = _len;
+		void removeAt(size_t site)
+		{
+			size_t rm = 1;
+			for (size_t j = site + 1; j < len; ++j)
+			{
+				if(_data[j] != value) {
+					_data[site] = _data[j];
+					site ++;
+				} else {
+					rm ++;
+				}
+			}
+			len -= rm;
+		}
+		
+		for (size_t i = 0; i < len; ++i)
+		{
+			if (_data[i] == value)
+				removeAt(i);
+		}
+		_data[len.._len] = T.init;
+	}
 
     pragma(inline) @property T[] dup()
     {
