@@ -139,23 +139,24 @@ import std.traits;
         }
     }
 
-	void removeAny(T value)
-	{
-		auto len = _len;
-		size_t rm = 0;
-		size_t site  = 0;
-		for (size_t j = site; j < len; ++j)
-		{
-			if(_data[j] != value) {
-				_data[site] = _data[j];
-				site ++;
-			} else {
-				rm ++;
-			}
-		}
-		len -= rm;
-		_data[len.._len] = T.init;
-	}
+    void removeAny(T value)
+    {
+            auto len = _len;
+            size_t rm = 0;
+            size_t site  = 0;
+            for (size_t j = site; j < len; ++j)
+            {
+                    if(_data[j] != value) {
+                            _data[site] = _data[j];
+                            site ++;
+                    } else {
+                            rm ++;
+                    }
+            }
+            len -= rm;
+            _data[len.._len] = T.init;
+            _len = len;
+    }
 
     pragma(inline) @property T[] dup()
     {
@@ -279,7 +280,7 @@ unittest
     assert(vec.dup == [15, 2, 3, 4, 0, 1, 2, 3, 4, 5, 6, 7]);
 
     vec.removeAny(2);
-    assert(vec.dup == [15, 3, 4, 0, 1, 2, 3, 4, 5, 6, 7]);
+    assert(vec.dup == [15, 3, 4, 0, 1, 3, 4, 5, 6, 7]);
     
     Vector!(ubyte[]) vec2;
     vec2.insertBack(cast(ubyte[])"hahaha");
