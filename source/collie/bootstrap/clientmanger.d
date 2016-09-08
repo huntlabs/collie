@@ -228,6 +228,7 @@ protected:
 		_manger = manger;
 		_pipe = pipe;
 		_pipe.finalize();
+		_pipe.pipelineManager(this);
 	}
 
 private:

@@ -136,6 +136,7 @@ protected:
 			_info.client = null;
 			_info.cback = null;
 			_info.addr = null;
+			_pipe = null;
 		}
 	}
 	
@@ -146,7 +147,8 @@ protected:
 	/// Client Time out is not refresh!
 	void onTimeOut()
 	{
-		_pipe.timeOut();
+		if(_pipe)
+			_pipe.timeOut();
 	}
 	
 	override void deletePipeline(PipelineBase pipeline)
