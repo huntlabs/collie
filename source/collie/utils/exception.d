@@ -1,21 +1,10 @@
 ﻿module collie.utils.exception;
 
-mixin template ExceptionCtors()
-{
-	@nogc @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
-	{
-		super(msg, file, line, next);
-	}
-	
-	@nogc @safe pure nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line, next);
-	}
-}
+public import std.exception : basicExceptionCtors;
 
 mixin template ExceptionBuild(string name, string parent = "")
 {
-	enum buildStr = "class " ~ name ~ "Exception : " ~ parent ~ "Exception { \n\t" ~ "mixin ExceptionCtors;\n }";
+	enum buildStr = "class " ~ name ~ "Exception : " ~ parent ~ "Exception { \n\t" ~ "mixin basicExceptionCtors;\n }";
 	mixin(buildStr);
 }
 
