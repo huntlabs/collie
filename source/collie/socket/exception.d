@@ -1,19 +1,10 @@
 ﻿module collie.socket.exception;
 
 public import collie.exception;
+import collie.utils.exception;
 
-class CollieSocketException : CollieException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+/// CollieSocketException : CollieExceotion
+mixin ExceptionBuild!("CollieSocket", "Collie");
 
-class ConnectedException : CollieSocketException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+/// ConnectedException : CollieSocketExceotion
+mixin ExceptionBuild!("Connected", "CollieSocket");

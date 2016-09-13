@@ -2,60 +2,25 @@
 
 public import collie.exception;
 
-class CollieChannelException : CollieException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+import collie.utils.exception;
 
-class InBoundTypeException : CollieChannelException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+/// CollieChannelException : CollieExceotion
+mixin ExceptionBuild!("CollieChannel", "Collie");
 
-class OutBoundTypeException : CollieChannelException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+/// InBoundTypeException : CollieChannelExceotion
+mixin ExceptionBuild!("InBoundType", "CollieChannel");
 
+/// OutBoundTypeException : CollieChannelExceotion
+mixin ExceptionBuild!("OutBoundType", "CollieChannel");
 
-class PipelineEmptyException : CollieChannelException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+/// PipelineEmptyException : CollieChannelExceotion
+mixin ExceptionBuild!("PipelineEmpty", "CollieChannel");
 
-class HandlerNotInPipelineException : CollieChannelException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-} 
+/// HandlerNotInPipelineException : CollieChannelExceotion
+mixin ExceptionBuild!("HandlerNotInPipeline", "CollieChannel");
 
+/// NotHasInBoundException : CollieChannelExceotion
+mixin ExceptionBuild!("NotHasInBound", "CollieChannel");
 
-class NotHasInBoundException : CollieChannelException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
-
-class NotHasOutBoundException : CollieChannelException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+/// NotHasOutBoundException : CollieChannelExceotion
+mixin ExceptionBuild!("NotHasOutBound", "CollieChannel");

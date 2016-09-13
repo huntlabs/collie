@@ -2,42 +2,19 @@
 
 public import collie.exception;
 
-class CollieBoostException : CollieException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+import collie.utils.exception;
 
-class SSLException : CollieBoostException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+/// CollieBoostException : CollieExceotion
+mixin ExceptionBuild!("CollieBoost", "Collie");
 
-class ServerIsRuningException : CollieBoostException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+/// SSLException : CollieBoostExceotion
+mixin ExceptionBuild!("SSL", "CollieBoost");
 
-class ServerStartException : CollieBoostException
-{
-	pure nothrow @nogc @safe this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+/// ServerIsRuningException : CollieBoostExceotion
+mixin ExceptionBuild!("ServerIsRuning", "CollieBoost");
 
-class NeedPipeFactoryException : CollieBoostException
-{
-	this(string msg, string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, file, line);
-	}
-}
+/// ServerStartException : CollieBoostExceotion
+mixin ExceptionBuild!("ServerStart", "CollieBoost");
+
+/// NeedPipeFactoryException : CollieBoostExceotion
+mixin ExceptionBuild!("NeedPipeFactory", "CollieBoost");
