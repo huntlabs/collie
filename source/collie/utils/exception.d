@@ -9,7 +9,7 @@ mixin template ExceptionBuild(string name, string parent = "")
 }
 
 pragma(inline, true)
-void throwExceptionBuild(string name = "", string file = __FILE__, size_t line = __LINE__ )(string msg)
+void throwExceptionBuild(string name = "", string file = __FILE__, size_t line = __LINE__ )(string msg = "")
 {
 	mixin("throw new " ~ name ~ "Exception(msg,\"" ~ file ~ "\"," ~ line.stringof ~ ");");
 }
@@ -37,4 +37,5 @@ unittest
 	{
 		writeln(e.msg);
 	}
+
 }
