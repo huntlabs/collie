@@ -127,6 +127,12 @@ final class HTTPHeader
         {
             _fileStart = cast(uint) _queryString.length;
         }
+		import std.path;
+		_path = buildNormalizedPath(decode(_queryString[0 .. _fileStart]));
+		version (Windows){
+			import std.array;
+			_path = replace(_path,"\\", "/");
+		}
     }
 
     @property queryString() const
@@ -140,8 +146,7 @@ final class HTTPHeader
     pragma(inline,true)
     @property path() const
     {
-        import std.path;
-        return buildNormalizedPath(decode(_queryString[0 .. _fileStart]));
+		return _path;
     }
 
     @property string[string] queryMap() const
@@ -258,6 +263,7 @@ private:
     string[string] _header;
     CookieVector _setCookies;
     string _queryString;
+	string _path;
     bool _upgrade = false;
     uint _fileStart;
 }
