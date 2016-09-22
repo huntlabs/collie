@@ -1,4 +1,5 @@
 # Collie
+[![Build Status](https://travis-ci.org/putaolabs/collie.svg?branch=master)](https://travis-ci.org/putaolabs/collie)
 An asynchronous event-driven network framework written in [dlang](http://dlang.org/).
 
 ## Require
