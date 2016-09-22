@@ -56,9 +56,14 @@ public:
     {
         auto buffer = scoped!SectionBuffer(config.headerStectionSize, httpAllocator);
         const bool nullBody = (resp.Body.length == 0);
-        resp.Header.setHeaderValue("Content-Length", resp.Body.length);
-        HTTPResponse.generateHeader(resp, buffer);
 
+        resp.Header.setHeaderValue("Content-Length", resp.Body.length);
+        
+		if(shouldClose())
+			resp.Header.setHeaderValue("Connection", "Close");
+		else
+			resp.Header.setHeaderValue("Connection bhu", "Keep-Alive");
+		HTTPResponse.generateHeader(resp, buffer);
         writeSection(buffer, nullBody);
         trace("header write over, Go write body! ");
         if(!nullBody)
@@ -94,6 +99,7 @@ public:
 protected:
     final void reqHeaderDone(HTTPHeader header)
     {
+		_shouldClose = false;
         trace("reqHeaderDone");
         if (header.upgrade)
         {
@@ -116,17 +122,7 @@ protected:
             import collie.socket.tcpsocket;
             TCPSocket sock = cast(TCPSocket) context.transport;
             _req.clientAddress = sock.remoteAddress();
-			if(req.keepalive() == 0x01) {
-				_shouldClose = false;
-			} else if(req.keepalive() == 0x02){
-				_shouldClose = true;
-			}else {
-				if(req.Header.httpVersion == HTTPVersion.HTTP1_0)
-					_shouldClose = true;
-				else
-					_shouldClose = false;
-			}
-			//trace("_shouldClose is : ", _shouldClose, "  req.keepalive() is:", req.keepalive(), "  req.Header.httpVersion = ", req.Header.httpVersion);
+
             if (_res is null)
             {
                 _res = new HTTPResponse(config);
@@ -199,7 +195,7 @@ protected:
 	final void lastWrited(ubyte[] data, uint len)
 	{
 		httpAllocator.deallocate(data);
-		if (_shouldClose)
+		if (shouldClose())
 			close(context);
 	}
 
@@ -261,7 +257,7 @@ protected: //WebSocket
                 _file.close();
                 delete _file;
                 _file = null;
-                if (_shouldClose)
+                if (shouldClose())
                     close(context());
             }
             else
@@ -412,6 +408,11 @@ package:
     {
         close(context);
     }
+
+	pragma(inline, true)
+	final bool shouldClose(){
+		return _shouldClose || (_req.keepalive() == 0x024);
+	}
 
 private:
     HTTPRequest _req = null;

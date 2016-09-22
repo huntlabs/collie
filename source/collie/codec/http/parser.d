@@ -1748,6 +1748,11 @@ public:
                         if (_on_headers_complete != null)
                         {
                             _on_headers_complete(this);
+							if(_keepAlive == 0x00 && http_minor > 0 && http_major == 1){
+								_keepAlive = 0x02;
+							}else {
+								_keepAlive = 0x01;
+							}
                             //error("_on_headers_complete " , errorString);
                             //error("handleIng  " , handleIng);
                             //error("handleIng  " , skipBody);
