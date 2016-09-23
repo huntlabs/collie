@@ -32,7 +32,7 @@ enum HTTPVersion
     HTTP2 //暂时不支持
 }
 
-final class HTTPHeader
+struct HTTPHeader
 {
     alias CookieVector = Vector!(string, false, GCAllocator);
 
@@ -43,8 +43,7 @@ final class HTTPHeader
 
     ~this()
     {
-        //	destroy(_header);
-        _header = null;
+		_header = null;
     }
 
     pragma(inline,true)
@@ -58,6 +57,7 @@ final class HTTPHeader
     {
         _type = type;
     }
+
     // REQUEST
     pragma(inline,true)
     @property HTTPMethod method() const
@@ -237,13 +237,14 @@ final class HTTPHeader
     {
         return (_method == HTTPMethod.HTTP_INVAILD && _statuCode == -1);
     } // 无效的
-//package:
+
+
     pragma(inline,true)
     void clear()
     {
         _statuCode = -1;
         _method = HTTPMethod.HTTP_INVAILD;
-        _queryString = "";
+        _queryString = null;
         _fileStart = 0;
         _header.clear();
         _setCookies.clear();
@@ -254,6 +255,8 @@ final class HTTPHeader
     {
         _upgrade = up;
     }
+
+
 
 private:
     HTTPMethod _method = HTTPMethod.HTTP_INVAILD;

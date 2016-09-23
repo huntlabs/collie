@@ -2435,13 +2435,13 @@ unittest
 
     writeln("\n\n\n");
 
-    void on_message_begin(HTTPParser)
+    void on_message_begin(ref HTTPParser)
     {
         writeln("_onMessageBegin");
         writeln(" ");
     }
 
-    void on_url(HTTPParser par, ubyte[] data, bool adv)
+	void on_url(ref HTTPParser par, ubyte[] data, bool adv)
     {
         writeln("_onUrl, is NOADVANCE = ", adv);
         writeln("\" ", cast(string) data, " \"");
@@ -2449,14 +2449,14 @@ unittest
         writeln(" ");
     }
 
-    void on_status(HTTPParser par, ubyte[] data, bool adv)
+	void on_status(ref HTTPParser par, ubyte[] data, bool adv)
     {
         writeln("_onStatus, is NOADVANCE = ", adv);
         writeln("\" ", cast(string) data, " \"");
         writeln(" ");
     }
 
-    void on_header_field(HTTPParser par, ubyte[] data, bool adv)
+	void on_header_field(ref HTTPParser par, ubyte[] data, bool adv)
     {
         static bool frist = true;
         writeln("_onHeaderField, is NOADVANCE = ", adv);
@@ -2471,46 +2471,46 @@ unittest
         writeln(" ");
     }
 
-    void on_header_value(HTTPParser par, ubyte[] data, bool adv)
+	void on_header_value(ref HTTPParser par, ubyte[] data, bool adv)
     {
         writeln("_onHeaderValue, is NOADVANCE = ", adv);
         writeln("\" ", cast(string) data, " \"");
         writeln(" ");
     }
 
-    void on_headers_complete(HTTPParser par)
+	void on_headers_complete(ref HTTPParser par)
     {
         writeln("_onHeadersComplete");
         writeln(" ");
     }
 
-    void on_body(HTTPParser par, ubyte[] data, bool adv)
+	void on_body(ref HTTPParser par, ubyte[] data, bool adv)
     {
         writeln("_onBody, is NOADVANCE = ", adv);
         writeln("\" ", cast(string) data, " \"");
         writeln(" ");
     }
 
-    void on_message_complete(HTTPParser par)
+	void on_message_complete(ref HTTPParser par)
     {
         writeln("_onMessageComplete");
         writeln(" ");
     }
 
-    void on_chunk_header(HTTPParser par)
+	void on_chunk_header(ref HTTPParser par)
     {
         writeln("_onChunkHeader");
         writeln(" ");
     }
 
-    void on_chunk_complete(HTTPParser par)
+	void on_chunk_complete(ref HTTPParser par)
     {
         writeln("_onChunkComplete");
         writeln(" ");
     }
 
     string data = "GET /test HTTP/1.1\r\nUser-Agent: curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1\r\nHost:0.0.0.0=5000\r\nAccept: */*\r\n\r\n";
-    HTTPParser par = new HTTPParser();
+    HTTPParser par = HTTPParser();
     par.onMessageBegin = toDelegate(&on_message_begin);
     par.onMessageComplete = toDelegate(&on_message_complete);
     par.onUrl = toDelegate(&on_url);
