@@ -29,16 +29,6 @@ class HTTPRequest
     {
         _config = config;
         _header = new HTTPHeader(HTTPHeaderType.HTTP_REQUEST);
-        _parser = new HTTPParser(HTTPParserType.HTTP_REQUEST, _config.maxHeaderSize);
-        _parser.onMessageBegin = &onMessageBegin;
-        _parser.onMessageComplete = &onMssageComplete;
-        _parser.onUrl = &onURI;
-        _parser.onHeaderField = &onHeaderKey;
-        _parser.onHeaderValue = &onHeaderValue;
-        _parser.onHeaderComplete = &onHeadersComplete;
-        _parser.onChunkHeader = &onChunkHeader;
-        _parser.onBody = &onBody;
-        _parser.onChunkComplete = &onChunkComplete;
         _body = new SectionBuffer(_config.requestBodyStectionSize, httpAllocator);
         _addr = null;
     }
@@ -49,8 +39,6 @@ class HTTPRequest
         _body = null;
         _header.destroy;
         _header = null;
-        _parser.destroy;
-        _parser = null;
     }
 
     pragma(inline,true)

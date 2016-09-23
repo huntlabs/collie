@@ -9,7 +9,7 @@ import std.base64;
 
 import collie.channel;
 import collie.buffer;
-import collie.codec.http;
+import collie.codec.http.parser;
 
 
 class RequestHandler : Handler!(ubyte[], HTTPRequest, HTTPResponse, ubyte[])
@@ -18,5 +18,7 @@ class RequestHandler : Handler!(ubyte[], HTTPRequest, HTTPResponse, ubyte[])
 	{
 		// Constructor code
 	}
+private:
+	HTTPParser _parser = void;
 }
 

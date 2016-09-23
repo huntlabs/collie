@@ -1742,14 +1742,14 @@ public:
                         HTTPParserFlags.F_UPGRADE | HTTPParserFlags.F_CONNECTION_UPGRADE)
                         || _method == HTTPMethod.HTTP_CONNECT);
                     {
+						_onHeadersComplete(this);
+						if(_keepAlive == 0x00 && _httpMinor == 0 && _httpMajor == 1){
+							_keepAlive = 0x02;
+						}else {
+							_keepAlive = 0x01;
+						}
                         if (_onHeadersComplete !is null)
                         {
-                            _onHeadersComplete(this);
-							if(_keepAlive == 0x00 && _httpMinor > 0 && _httpMajor == 1){
-								_keepAlive = 0x02;
-							}else {
-								_keepAlive = 0x01;
-							}
                             //error("_onHeadersComplete " , errorString);
                             //error("handleIng  " , handleIng);
                             //error("handleIng  " , skipBody);
