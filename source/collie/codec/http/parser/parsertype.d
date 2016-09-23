@@ -8,7 +8,7 @@
  * Licensed under the Apache-2.0 License.
  *
  */
-module collie.codec.http.parsertype;
+module collie.codec.http.parser.parsertype;
 
 enum HTTPParserType
 {
@@ -68,16 +68,16 @@ enum HTTPParserErrno
     HPE_OK = 0, //"success")                                                  \
 
     /* Callback-related errors */
-    HPE_CB_message_begin = 1, //"the on_message_begin callback failed")       \
-    HPE_CB_url = 2, // "the on_url callback failed")                           \
-    HPE_CB_header_field = 3, //"the on_header_field callback failed")         \
-    HPE_CB_header_value = 4, //"the on_header_value callback failed")         \
-    HPE_CB_headers_complete = 5, //"the on_headers_complete callback failed") \
-    HPE_CB_body = 6, //"the on_body callback failed")                         \
-    HPE_CB_message_complete = 7, // "the on_message_complete callback failed") \
-    HPE_CB_status = 8, // "the on_status callback failed")                     \
-    HPE_CB_chunk_header = 9, //"the on_chunk_header callback failed")         \
-    HPE_CB_chunk_complete = 10, //"the on_chunk_complete callback failed")     \
+    HPE_CB_MessageBegin = 1, //"the on_message_begin callback failed")       \
+    HPE_CB_Url = 2, // "the on_url callback failed")                           \
+    HPE_CB_HeaderField = 3, //"the on_header_field callback failed")         \
+    HPE_CB_HeaderValue = 4, //"the on_header_value callback failed")         \
+    HPE_CB_HeadersComplete = 5, //"the on_headers_complete callback failed") \
+    HPE_CB_Body = 6, //"the on_body callback failed")                         \
+    HPE_CB_MessageComplete = 7, // "the on_message_complete callback failed") \
+    HPE_CB_Status = 8, // "the on_status callback failed")                     \
+    HPE_CB_ChunkHeader = 9, //"the on_chunk_header callback failed")         \
+    HPE_CB_ChunkComplete = 10, //"the on_chunk_complete callback failed")     \
 
     /* Parsing-related errors */
     HPE_INVALID_EOF_STATE = 11, // "stream ended at an unexpected time")        \
