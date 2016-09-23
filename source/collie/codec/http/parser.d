@@ -10,6 +10,7 @@
  */
 module collie.codec.http.parser;
 
+import std.experimental.logger;
 public import collie.codec.http.parsertype;
 
 /** ubyte[] 为传过去字段里的位置引用，没有数据拷贝，自己使用的时候注意拷贝数据， 
@@ -1748,7 +1749,8 @@ public:
                         if (_on_headers_complete != null)
                         {
                             _on_headers_complete(this);
-							if(_keepAlive == 0x00 && http_minor > 0 && http_major == 1){
+							trace("-----------_keepAlive = ", _keepAlive, "  http_minor = ", http_minor, "   http_major = ", http_major);
+							if(_keepAlive == 0x00 && http_minor == 0 && http_major == 1){
 								_keepAlive = 0x02;
 							}else {
 								_keepAlive = 0x01;

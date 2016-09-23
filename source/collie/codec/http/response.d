@@ -15,6 +15,7 @@ import core.stdc.string : memcpy;
 import std.string;
 import std.array;
 import std.conv;
+import std.experimental.logger;
 
 import collie.codec.http.header;
 import collie.codec.http.request;
@@ -134,8 +135,9 @@ class HTTPResponse
         buffer.write(cast(ubyte[])(statusText(resp._header.statusCode)));
         buffer.write(cast(ubyte[]) "\r\n");
 
-        foreach (name, value; resp._header.headerMap)
+        foreach (ref name, ref value; resp._header.headerMap)
         {
+			trace("key = ", name, "    value = " , value);
             buffer.write(cast(ubyte[]) name);
             buffer.write(cast(ubyte[]) ": ");
             buffer.write(cast(ubyte[]) value);
