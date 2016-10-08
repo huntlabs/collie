@@ -106,9 +106,6 @@ protected:
             ulong value;
             read(_event.fd, &value, 8);
         }
-        //  try{
-        // trace("time out !!!!");
-        // } catch{}
         if (_callBack)
         {
             try

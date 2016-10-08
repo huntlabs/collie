@@ -20,8 +20,10 @@ enum TransportType : short
     UDP
 }
 
-enum TCP_READ_BUFFER_SIZE = 4096;
-enum UDP_READ_BUFFER_SIZE = 4096;
+__gshared size_t TCP_READ_BUFFER_SIZE = 16 * 1024;
+__gshared size_t  UDP_READ_BUFFER_SIZE = 16 * 1024;
+
+
 
 abstract class AsyncTransport
 {

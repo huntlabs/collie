@@ -199,6 +199,7 @@ unittest
     import std.stdio;
     import std.conv;
     import core.thread;
+	import std.exception;
 
     @trusted class TestWheelTimer : WheelTimer
     {
@@ -209,15 +210,8 @@ unittest
 
         override void onTimeOut() nothrow
         {
-            try
-            {
-                writeln("\nname is ", name, " \tcutterTime is : ",
-                    Clock.currTime().toSimpleString(), "\t new time is : ", time.toSimpleString());
-            }
-            catch
-            {
-            }
-            //       assert();
+			collectException(writeln("\nname is ", name, " \tcutterTime is : ",
+                Clock.currTime().toSimpleString(), "\t new time is : ", time.toSimpleString()));
         }
 
         string name;

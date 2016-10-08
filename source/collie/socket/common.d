@@ -175,7 +175,7 @@ struct AsyncEvent
 
         AsyncEvent* pevent = new AsyncEvent(type, obj, fd, enread, enwrite, etMode,
             oneShot);
-        GC.setAttr(pevent, GC.BlkAttr.NO_MOVE);
+       // GC.setAttr(pevent, GC.BlkAttr.NO_MOVE);
         return pevent;
     }
 

@@ -15,7 +15,7 @@ import core.sync.mutex;
 import core.memory;
 import core.sync.mutex;
 
-//public import std.concurrency;
+import std.exception;
 import std.datetime;
 import std.variant;
 import std.algorithm.mutation;
@@ -136,13 +136,7 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
                 }
                 catch
                 {
-                    try
-                    {
-                        error("new CWheelTimer error!!!");
-                    }
-                    catch
-                    {
-                    }
+                    collectException(error("new CWheelTimer error!!!"));
                     return false;
                 }
                 return true;
@@ -213,13 +207,7 @@ protected:
             }
             catch (Exception e)
             {
-                try
-                {
-                    error("\n\n----doHandleList erro ! erro : ", e.msg, "\n\n");
-                }
-                catch
-                {
-                }
+				collectException(error("\n\n----doHandleList erro ! erro : ", e.msg, "\n\n"));
             }
         }
     }
