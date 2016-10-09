@@ -1,9 +1,7 @@
 # Collie
-===========
 [![Build Status](https://travis-ci.org/putaolabs/collie.svg?branch=master)](https://travis-ci.org/putaolabs/collie)
 -----------
-An asynchronous event-driven network framework written in [dlang](http://dlang.org/).
-
+An asynchronous event-driven network framework written in [dlang](http://dlang.org/), like [netty](http://netty.io/) framework in D.
 ## Require
 - System : Linux (kernel >= 3.10) , FreeBSD, MacOS, Windows
 - D : Compiler Version >= 2.071
