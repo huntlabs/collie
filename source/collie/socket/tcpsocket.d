@@ -14,6 +14,7 @@ import core.stdc.errno;
 
 import std.socket;
 import std.functional;
+import std.exception;
 
 import collie.socket.common;
 import collie.socket.eventloop;
@@ -230,25 +231,13 @@ protected:
             _iocpwrite.operationType = IOCP_OP_TYPE.write;
             int nRet = WSASend(cast(SOCKET) _socket.handle(), &_iocpWBuf, 1,
                 &dwSent, dwFlags, &_iocpwrite.ol, cast(LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
-            try
-            {
-                trace("do WSASend , return : ", nRet);
-            }
-            catch
-            {
-            }
+			//collectException(trace("do WSASend , return : ", nRet));
             if (nRet == SOCKET_ERROR)
             {
                 DWORD dwLastError = GetLastError();
                 if (dwLastError != ERROR_IO_PENDING)
                 {
-                    try
-                    {
-                        error("WSASend failed with error: ", dwLastError);
-                    }
-                    catch
-                    {
-                    }
+					collectException(error("WSASend failed with error: ", dwLastError));
                     onClose();
                 }
             }
@@ -293,14 +282,8 @@ protected:
                 }
                 catch (Exception e)
                 {
-                    try
-                    {
-                        error("\n\n----tcp on Write erro do Close! erro : ", e.msg,
-                            "\n\n");
-                    }
-                    catch
-                    {
-                    }
+					collectException(error("\n\n----tcp on Write erro do Close! erro : ", e.msg,
+                        "\n\n"));
                     onClose();
                 }
             }
@@ -317,14 +300,7 @@ protected:
             auto buf = _writeQueue.deQueue();
             buf.doCallBack();
             import collie.utils.memory;
-
-            try
-            {
-                gcFree(buf);
-            }
-            catch
-            {
-            }
+			collectException(gcFree(buf));
         }
         try
         {
@@ -340,13 +316,7 @@ protected:
         }
         catch (Exception e)
         {
-            try
-            {
-                error("\n\n----Close  Handle erro : ", e.msg, "\n\n");
-            }
-            catch
-            {
-            }
+			collectException(error("\n\n----Close  Handle erro : ", e.msg, "\n\n"));
         }
     }
 
@@ -400,14 +370,8 @@ protected:
                 }
                 catch (Exception e)
                 {
-                    try
-                    {
-                        error("\n\n----tcp on read erro do Close! erro : ", e.toString(),
-                            "\n\n");
-                    }
-                    catch
-                    {
-                    }
+					collectException(error("\n\n----tcp on read erro do Close! erro : ", e.toString(),
+                        "\n\n"));
                     onClose();
                     return;
                 }
@@ -436,13 +400,7 @@ protected:
                 DWORD dwLastError = GetLastError();
                 if (ERROR_IO_PENDING != dwLastError)
                 {
-                    try
-                    {
-                        error("WSARecv failed with error: ", dwLastError);
-                    }
-                    catch
-                    {
-                    }
+					collectException(error("WSARecv failed with error: ", dwLastError));
                     onClose();
                     return false;
                 }
@@ -511,13 +469,7 @@ final class WriteSite
             }
             catch (Exception e)
             {
-                try
-                {
-                    error("\n\n----Write Call Back Erro ! erro : ", e.msg, "\n\n");
-                }
-                catch
-                {
-                }
+				collectException(error("\n\n----Write Call Back Erro ! erro : ", e.msg, "\n\n"));
             }
         }
         _cback = null;

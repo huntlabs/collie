@@ -20,8 +20,10 @@ enum TransportType : short
     UDP
 }
 
-enum TCP_READ_BUFFER_SIZE = 4096;
-enum UDP_READ_BUFFER_SIZE = 4096;
+__gshared size_t TCP_READ_BUFFER_SIZE = 16 * 1024;
+__gshared size_t  UDP_READ_BUFFER_SIZE = 16 * 1024;
+
+
 
 abstract class AsyncTransport
 {
@@ -96,7 +98,7 @@ mixin template TransportSocketOption()
     /// Get a socket option.
     /// Returns: The number of bytes written to $(D result).
     //returns the length, in bytes, of the actual result - very different from getsockopt()
-    pragma(inline, true) final int getOption(SocketOptionLevel level,
+    pragma(inline) final int getOption(SocketOptionLevel level,
         SocketOption option, void[] result) @trusted
     {
 
@@ -104,54 +106,54 @@ mixin template TransportSocketOption()
     }
 
     /// Common case of getting integer and boolean options.
-    pragma(inline, true) final int getOption(SocketOptionLevel level,
+    pragma(inline) final int getOption(SocketOptionLevel level,
         SocketOption option, ref int32_t result) @trusted
     {
         return _socket.getOption(level, option, result);
     }
 
     /// Get the linger option.
-    pragma(inline, true) final int getOption(SocketOptionLevel level,
+    pragma(inline) final int getOption(SocketOptionLevel level,
         SocketOption option, ref Linger result) @trusted
     {
         return _socket.getOption(level, option, result);
     }
 
     /// Get a timeout (duration) option.
-    pragma(inline, true) final void getOption(SocketOptionLevel level,
+    pragma(inline) final void getOption(SocketOptionLevel level,
         SocketOption option, ref Duration result) @trusted
     {
         _socket.getOption(level, option, result);
     }
 
     /// Set a socket option.
-    pragma(inline, true) final void setOption(SocketOptionLevel level,
+    pragma(inline) final void setOption(SocketOptionLevel level,
         SocketOption option, void[] value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
     /// Common case for setting integer and boolean options.
-    pragma(inline, true) final void setOption(SocketOptionLevel level,
+    pragma(inline) final void setOption(SocketOptionLevel level,
         SocketOption option, int32_t value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
     /// Set the linger option.
-    pragma(inline, true) final void setOption(SocketOptionLevel level,
+    pragma(inline) final void setOption(SocketOptionLevel level,
         SocketOption option, Linger value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
-    pragma(inline, true) final void setOption(SocketOptionLevel level,
+    pragma(inline) final void setOption(SocketOptionLevel level,
         SocketOption option, Duration value) @trusted
     {
         return _socket.setOption(forward!(level, option, value));
     }
 
-    pragma(inline, true) final @property @trusted Address localAddress()
+    pragma(inline) final @property @trusted Address localAddress()
     {
         return _socket.localAddress();
     }

@@ -14,6 +14,7 @@ import core.stdc.errno;
 
 import std.socket;
 import std.functional;
+import std.exception;
 
 import collie.socket.common;
 import collie.socket.eventloop;
@@ -254,13 +255,7 @@ package:
 				DWORD dwLastError = GetLastError();
 				if (ERROR_IO_PENDING != dwLastError)
 				{
-					try
-					{
-						error("WSARecvFrom failed with error: ", dwLastError);
-					}
-					catch
-					{
-					}
+					collectException(error("WSARecvFrom failed with error: ", dwLastError));
 					onClose();
 					return false;
 				}

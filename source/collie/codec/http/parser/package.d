@@ -11,6 +11,7 @@
 module collie.codec.http.parser;
 
 public import collie.codec.http.parser.parsertype;
+import std.experimental.logger;
 
 /** ubyte[] 为传过去字段里的位置引用，没有数据拷贝，自己使用的时候注意拷贝数据， 
  bool 此段数据是否完结，可能只是数据的一部分。
@@ -1750,7 +1751,15 @@ public:
 						}
                         if (_onHeadersComplete !is null)
                         {
-                            //error("_onHeadersComplete " , errorString);
+
+                           
+							trace("-----------_keepAlive = ", _keepAlive, "  http_minor = ", http_minor, "   http_major = ", http_major);
+							if(_keepAlive == 0x00 && http_minor == 0 && http_major == 1){
+								_keepAlive = 0x02;
+							}else {
+								_keepAlive = 0x01;
+							}
+							_onHeadersComplete(this);
                             //error("handleIng  " , handleIng);
                             //error("handleIng  " , skipBody);
                             //error("state  " , state);

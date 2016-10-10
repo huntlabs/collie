@@ -14,6 +14,7 @@ import core.stdc.errno;
 import core.stdc.string;
 
 import std.socket;
+import std.exception;
 
 import collie.socket.eventloop;
 import collie.socket.common;
@@ -104,14 +105,8 @@ static if(USEDSSL)
                 }
                 catch (Exception e)
                 {
-                    try
-                    {
-                        error("\n\n----tcp on Write erro do Close! erro : ", e.msg,
-                            "\n\n");
-                    }
-                    catch
-                    {
-                    }
+                   collectException(error("\n\n----tcp on Write erro do Close! erro : ", e.msg,
+                        "\n\n"));
                     onClose();
                 }
             }
@@ -153,14 +148,8 @@ static if(USEDSSL)
                 }
                 catch (Exception e)
                 {
-                    try
-                    {
-                        error("\n\n----tcp on read erro do Close! erro : ", e.msg,
-                            "\n\n");
-                    }
-                    catch
-                    {
-                    }
+					collectException(error("\n\n----tcp on read erro do Close! erro : ", e.msg,
+                        "\n\n"));
                     onClose();
                 }
             }
@@ -171,13 +160,7 @@ static if(USEDSSL)
             int r = SSL_do_handshake(_ssl);
             if (r == 1)
             {
-                try
-                {
-                    trace("ssl connected fd : ", fd);
-                }
-                catch
-                {
-                }
+				//collectException(trace("ssl connected fd : ", fd));
                 _isHandshaked = true;
                 if (_handshakeCback)
                 {
@@ -196,36 +179,18 @@ static if(USEDSSL)
             int err = SSL_get_error(_ssl, r);
             if (err == SSL_ERROR_WANT_WRITE)
             {
-                try
-                {
-                    trace("return want write fd = ", fd);
-                }
-                catch
-                {
-                }
+				//collectException(trace("return want write fd = ", fd));
                 return false;
             }
             else if (err == SSL_ERROR_WANT_READ)
             {
-                try
-                {
-                    trace("return want read fd = ", fd);
-                }
-                catch
-                {
-                }
+				//collectException(trace("return want read fd = ", fd));
                 return false;
             }
             else
             {
-                try
-                {
-                    trace("SSL_do_handshake return: ", r, "  erro :", err,
-                        "  errno:", errno, "  erro string:", strerror(errno));
-                }
-                catch
-                {
-                }
+				collectException(trace("SSL_do_handshake return: ", r, "  erro :", err,
+                    "  errno:", errno, "  erro string:", strerror(errno)));
                 onClose();
                 return false;
             }

@@ -15,6 +15,7 @@ import core.sys.posix.sys.socket;
 
 import std.socket;
 import std.functional;
+import std.exception;
 
 import collie.socket.common;
 import collie.socket.eventloop;
@@ -79,7 +80,7 @@ final class Acceptor : AsyncTransport, EventCallInterface
             return false;
         }
         _event = AsyncEvent.create(AsynType.ACCEPT, this, _socket.handle, true, false,
-            false);
+            false,false);
         static if (IOMode == IO_MODE.iocp)
         {
             trace("start accept : , the fd is ", _socket.handle());
@@ -138,13 +139,7 @@ protected:
             }
             catch (Exception e)
             {
-                try
-                {
-                    error("\n\n----accept Exception! erro : ", e.msg, "\n\n");
-                }
-                catch
-                {
-                }
+				collectException(error("\n\n----accept Exception! erro : ", e.msg, "\n\n"));
             }
             _inSocket = null;
             doAccept();
@@ -163,13 +158,7 @@ protected:
                 }
                 catch (Exception e)
                 {
-                    try
-                    {
-                        error("\n\n----accept Exception! erro : ", e.msg, "\n\n");
-                    }
-                    catch
-                    {
-                    }
+					collectException(error("\n\n----accept Exception! erro : ", e.msg, "\n\n"));
                 }
             }
         }
@@ -215,13 +204,7 @@ protected:
                     DWORD dwLastError = GetLastError();
                     if (ERROR_IO_PENDING != dwLastError)
                     {
-                        try
-                        {
-                            error("AcceptEx failed with error: ", dwLastError);
-                        }
-                        catch
-                        {
-                        }
+						collectException(error("AcceptEx failed with error: ", dwLastError));
                         onClose();
                         return false;
                     }
@@ -229,13 +212,7 @@ protected:
             }
             catch (Exception e)
             {
-                try
-                {
-                    error("AcceptEx failed with error : ", e.msg);
-                }
-                catch
-                {
-                }
+				collectException(error("AcceptEx failed with error : ", e.msg));
             }
             return true;
         }

@@ -62,7 +62,7 @@ public:
 		if(shouldClose())
 			resp.Header.setHeaderValue("Connection", "Close");
 		else
-			resp.Header.setHeaderValue("Connection bhu", "Keep-Alive");
+			resp.Header.setHeaderValue("Connection", "Keep-Alive");
 		HTTPResponse.generateHeader(resp, buffer);
         writeSection(buffer, nullBody);
         trace("header write over, Go write body! ");
@@ -111,6 +111,8 @@ protected:
             }
             doUpgrade();
         }
+		trace("keepalive == ", _req.keepalive());
+		_keepalive = !(_req.keepalive() == 0x02);
     }
 
     final void requestDone(HTTPRequest req)
@@ -411,7 +413,7 @@ package:
 
 	pragma(inline, true)
 	final bool shouldClose(){
-		return _shouldClose || (_req.keepalive() == 0x024);
+		return _shouldClose || (!_keepalive);//(_req.keepalive() == 0x02);
 	}
 
 private:
@@ -420,5 +422,6 @@ private:
     WebSocket _websocket = null;
     HandleFrame _frame = null;
     bool _shouldClose = false;
+	bool _keepalive = true;
     File* _file;
 }
