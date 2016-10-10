@@ -32,7 +32,7 @@ import collie.utils.vector;
 
 final class SectionBuffer : Buffer
 {
-    alias BufferVector = Vector!(ubyte[], false, GCAllocator); //Mallocator);
+    alias BufferVector = Vector!(ubyte[], GCAllocator); //Mallocator);
 
     this(size_t sectionSize, IAllocator clloc = _processAllocator)
     {

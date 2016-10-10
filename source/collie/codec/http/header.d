@@ -34,7 +34,7 @@ enum HTTPVersion
 
 struct HTTPHeader
 {
-    alias CookieVector = Vector!(string, false, GCAllocator);
+    alias CookieVector = Vector!(string,GCAllocator);
 
     this(HTTPHeaderType type)
     {

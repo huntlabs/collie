@@ -13,11 +13,13 @@ module collie.utils.vector;
 import core.memory;
 import std.experimental.allocator.common;
 import std.experimental.allocator.mallocator : Mallocator;
+import std.experimental.allocator.gc_allocator;
 import std.traits;
 
-@trusted struct Vector(T, bool addToGC = hasIndirections!T, Allocator = Mallocator)
+@trusted struct Vector(T, Allocator = Mallocator, bool addInGC = hasIndirections!T)
 {
     alias TSize = stateSize!T;
+    enum addToGC = addInGC && !is(Allocator == GCAllocator);
 
     this(size_t size) 
     {
@@ -176,7 +178,7 @@ import std.traits;
         return list;
     }
 
-    pragma(inline) inout ref inout(T) opIndex(size_t i)
+	pragma(inline) ref inout(T) opIndex(size_t i) inout
     {
         assert(i < _len);
         return _data[i];
