@@ -14,8 +14,8 @@ struct HTTPHeaders
    * Remove all instances of the given header, returning true if anything was
    * removed and false if this header didn't exist in our set.
    */
-	bool remove(string name);
-	bool remove(HTTPHeaderCode code);
+	bool remove(string name){return true;}
+	bool remove(HTTPHeaderCode code){return true;}
 	/**
    * Get the total number of headers.
    */

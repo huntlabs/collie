@@ -12,13 +12,13 @@ import collie.buffer;
 import collie.codec.http.parser;
 
 
-class RequestHandler : Handler!(ubyte[], HTTPRequest, HTTPResponse, ubyte[])
-{
-	this()
-	{
-		// Constructor code
-	}
-private:
-	HTTPParser _parser = void;
-}
+//class RequestHandler : Handler!(ubyte[], HTTPRequest, HTTPResponse, ubyte[])
+//{
+//	this()
+//	{
+//		// Constructor code
+//	}
+//private:
+//	HTTPParser _parser = void;
+//}
 

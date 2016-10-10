@@ -15,9 +15,10 @@ import std.uri;
 import std.string;
 import std.experimental.allocator.gc_allocator;
 
-public import collie.codec.http.parsertype;
+public import collie.codec.http.parser;
 import collie.codec.http.config;
 import collie.utils.vector;
+import collie.codec.http.parser.parsertype;
 
 enum HTTPHeaderType
 {
@@ -32,7 +33,7 @@ enum HTTPVersion
     HTTP2 //暂时不支持
 }
 
-struct HTTPHeader
+class HTTPHeader
 {
     alias CookieVector = Vector!(string,GCAllocator);
 

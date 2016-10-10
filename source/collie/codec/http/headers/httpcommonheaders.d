@@ -1,5 +1,7 @@
 ﻿module collie.codec.http.headers.httpcommonheaders;
 
+import std.uni;
+
 enum HTTPHeaderCode : ubyte {
 	// code reserved to indicate the absence of an HTTP header
 	NONE = 0,
