@@ -19,6 +19,7 @@ auto arrayRemove(E)(ref E[] ary, E e)
     return ary;
 }
 
+
 unittest
 {
     import std.stdio;

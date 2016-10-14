@@ -1,7 +1,5 @@
 ﻿module collie.codec.http.headers.httpcommonheaders;
 
-import std.uni;
-
 enum HTTPHeaderCode : ubyte {
 	// code reserved to indicate the absence of an HTTP header
 	NONE = 0,
@@ -95,6 +93,33 @@ enum HTTPHeaderCode : ubyte {
 
 mixin(buildEnum!HTTPHeaderCode());
 
+string capitalizeHeader(string name)
+{
+	import std.uni;
+	import std.array;
+	import std.string;
+	string[] parts = name.split("_");
+	for (int i = 0; i < parts.length; i++)
+	{
+		parts[i] = parts[i].capitalize;
+	}
+	return join(parts, "-");
+}
+
+bool isSame(string s1,string s2)
+{
+	import std.uni;
+	if(s1.length != s2.length) return false;
+	for(size_t i = 0; i < s1.length; ++i)
+	{
+		dchar c1 = toLower(s1[i]);
+		dchar c2 = toLower(s2[i]);
+		if(c1 != c2)
+			return false;
+	}
+	return true;
+}
+
 private:
 string buildEnum(T)()
 {
@@ -110,29 +135,31 @@ string buildEnum(T)()
 	string codename = "enum string[] HTTPHeaderCodeName = [";
 	foreach(m; __traits(derivedMembers,T))
 	{
-		string str = toLower(m);
+		string str = capitalizeHeader(m);
 		str = str.replace("_","-");
 		codename ~= "\"" ~ str ~ "\","; 
 		list[str.length] ~= TMPV(str,m);
 	}
 	codename = codename[0..codename.length - 1];
 	codename ~= "];\n ";
-	string funn = "HTTPHeaderCode headersHash(string name){\n HTTPHeaderCode code ; \n switch (name.length) {\n";
+	string funn = "HTTPHeaderCode headersHash(string name){\n HTTPHeaderCode code = HTTPHeaderCode.OTHER; \n switch (name.length) {\n";
 	foreach(size_t index,TMPV[] ls; list)
 	{
 		if(ls.length > 0) {
 			funn ~= "case " ~ to!string(index) ~ " : {\n";
-			funn ~= "name = toLower(name); \n switch (name) {\n";
+			//funn ~= " name = toLower(name);\n";// switch (name) {\n";
 			foreach(ref TMPV st;ls)
-			{
-				funn ~= "case \"" ~ st.name ~ "\" : code = HTTPHeaderCode."~ st.value ~ "; break; \n";
+			{       funn ~= "if(isSame(name,\"" ~ st.name ~ "\" )){ code = HTTPHeaderCode."~ st.value ~ "; break;}\n";
+				//funn ~= "case \"" ~ st.name ~ "\" : code = HTTPHeaderCode."~ st.value ~ "; break; \n";
 			}
-			funn ~= "default: code = HTTPHeaderCode.OTHER; break;}\n} break;\n";
+			//funn ~= "default: code = HTTPHeaderCode.OTHER; break;}\n} break;\n";
+			funn ~= "\n} break;\n";
 		}
 	}
-	funn ~= "default: code = HTTPHeaderCode.OTHER; break;}\n return code;}\n";
+	funn ~= "default: break;}\n return code;}\n";
 	return codename ~ funn;
 }
+
 
 unittest
 {

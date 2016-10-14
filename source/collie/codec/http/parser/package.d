@@ -10,6 +10,7 @@
  */
 module collie.codec.http.parser;
 
+import collie.codec.http.headers.httpmethod;
 public import collie.codec.http.parser.parsertype;
 
 /** ubyte[] 为传过去字段里的位置引用，没有数据拷贝，自己使用的时候注意拷贝数据， 
