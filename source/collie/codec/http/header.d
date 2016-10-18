@@ -34,7 +34,7 @@ enum HTTPVersion
 
 final class HTTPHeader
 {
-    alias CookieVector = Vector!(string, false, GCAllocator);
+    alias CookieVector = Vector!(string);
 
     this(HTTPHeaderType type)
     {

@@ -12,7 +12,7 @@ module collie.utils.vector;
 
 import core.memory;
 import std.experimental.allocator.common;
-import std.experimental.allocator.mallocator : Mallocator;
+import std.experimental.allocator.gc_allocator;
 import std.traits;
 import std.exception;
 

@@ -319,8 +319,8 @@ private:
     CallBackRequest _RequestComplete;
     bool _dorun;
 private:
-    Vector!(ubyte, false, GCAllocator) _hkey;
-    Vector!(ubyte, false, GCAllocator) _hvalue;
+    Vector!(ubyte) _hkey;
+    Vector!(ubyte) _hvalue;
     SectionBuffer _body;
     HTTPConfig _config;
 }

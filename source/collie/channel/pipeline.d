@@ -31,9 +31,9 @@ abstract class PipelineBase
 {
     this()
     {
-        _ctxs = Vector!(PipelineContext, false, GCAllocator)(8);
-        _inCtxs = Vector!(PipelineContext, false, GCAllocator)(8);
-        _outCtxs = Vector!(PipelineContext, false, GCAllocator)(8);
+        _ctxs = Vector!(PipelineContext)(8);
+        _inCtxs = Vector!(PipelineContext)(8);
+        _outCtxs = Vector!(PipelineContext)(8);
     }
 
     ~this()
@@ -165,9 +165,9 @@ abstract class PipelineBase
     }
 
 protected:
-    Vector!(PipelineContext, false, GCAllocator) _ctxs = void;
-    Vector!(PipelineContext, false, GCAllocator) _inCtxs = void;
-    Vector!(PipelineContext, false, GCAllocator) _outCtxs = void;
+    Vector!(PipelineContext) _ctxs = void;
+    Vector!(PipelineContext) _inCtxs = void;
+    Vector!(PipelineContext) _outCtxs = void;
 
     bool _isFinalize = true;
 private:
