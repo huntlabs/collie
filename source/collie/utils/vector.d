@@ -253,6 +253,7 @@ private:
         return length >= _data.length;
     }
 
+	pragma(inline) 
     void exten(size_t len = 0)
     {
         auto size = _data.length + len;
