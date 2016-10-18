@@ -12,30 +12,25 @@ module collie.utils.vector;
 
 import core.memory;
 import std.experimental.allocator.common;
-import std.experimental.allocator.mallocator : Mallocator;
 import std.experimental.allocator.gc_allocator;
 import std.traits;
+import std.exception;
 
-@trusted struct Vector(T, Allocator = Mallocator, bool addInGC = hasIndirections!T)
+@trusted struct Vector(T, Allocator = GCAllocator, bool addInGC = hasIndirections!T)
 {
     alias TSize = stateSize!T;
     enum addToGC = addInGC && !is(Allocator == GCAllocator);
 
     this(size_t size) 
     {
-        auto len = TSize * size;
-        _data = cast(T[]) _alloc.allocate(len);
-        static if (addToGC)
-        {
-            GC.addRange(_data.ptr, len);
-        }
+		reserve(size);
     }
 
     this(T[] data)
     {
-        this(data.length);
-        _data[] = data[];
-        _len = data.length;
+		reserve(data.length);
+		_len = data.length;
+		_data[0.._len] = data[];
     }
 
     static if (stateSize!Allocator != 0)
@@ -67,7 +62,7 @@ import std.traits;
     pragma(inline) void insertBack(T value)
     {
         if (full)
-            exten(1);
+            exten();
         _data[_len] = value;
         ++_len;
     }
@@ -206,6 +201,31 @@ import std.traits;
         _len = 0;
     }
 
+	void reserve(size_t elements)
+	{
+		if(elements <= _data.length) return;
+		size_t len = elements * T.sizeof;
+		static if(hasMember!(Allocator,"goodAllocSize")){
+			len = _alloc.goodAllocSize(len);
+			elements = len / T.sizeof;
+		}
+//		static if (hasIndirections!T)  
+//		{
+			immutable oldLength = _data.length;
+			auto ptr = cast(T*)(enforce(_alloc.allocate(len)).ptr);
+			T[] data = ptr[0..elements];
+			data[0..oldLength] = _data[];
+			data[(oldLength + 1) .. $] = T.init;
+			static if (addToGC) {
+				GC.addRange(ptr, len);
+				GC.removeRange(_data.ptr);
+			}
+			_alloc.deallocate(_data);
+			_data = data;
+//		}
+//		else
+//		{}
+	}
 private:
     pragma(inline, true) 
     bool full()
@@ -213,25 +233,14 @@ private:
         return length >= _data.length;
     }
 
-    void exten(size_t len)
+    void exten(size_t len = 0)
     {
-        auto size = _data.length;
+        auto size = _data.length + len;
         if (size > 0)
             size = size > 128 ? size + ((size / 3) * 2) : size * 2;
         else
             size = 32;
-        size += len;
-        len = TSize * size;
-        auto data = cast(T[]) _alloc.allocate(len);
-        if(!empty)
-            data[0 .. length] = _data[0 .. length];
-        static if (addToGC)
-        {
-            GC.addRange(data.ptr, len);
-            GC.removeRange(_data.ptr);
-        }
-        _alloc.deallocate(_data);
-        _data = data;
+		reserve(size);
     }
 
 private:

@@ -99,7 +99,7 @@ interface HTTPTransactionHandler
 	void onEgressResumed();
 }
 
-class httptansaction
+class HTTPTransaction
 {
 	interface Transport
 	{
@@ -126,9 +126,16 @@ class httptansaction
 		
 		size_t sendEOM(HTTPTransaction txn);
 
-		size_t sendAbort(HTTPTransaction txn,
-			HTTPErrorCode statusCode);
+//		size_t sendAbort(HTTPTransaction txn,
+//			HTTPErrorCode statusCode);
+
+		void sendWsBinary(ubyte[] data);
 		
+		void sendWsText(string data);
+		
+		void sendWsPing(ubyte[] data);
+		
+		void sendWsPong(ubyte[] data);
 //		size_t sendPriority(HTTPTransaction txn,
 //			const http2::PriorityUpdate& pri);
 //		
@@ -148,9 +155,9 @@ class httptansaction
 		Address getPeerAddress();
 
 		
-		HTTPCodec getCodec() const;
+		HTTPCodec getCodec();
 		
-		bool isDraining() const = 0;
+		bool isDraining();
 
 	}
 
@@ -176,6 +183,135 @@ class httptansaction
 	Address getLocalAddress(){return _transport.getLocalAddress();}
 	
 	Address getPeerAddress(){return _transport.getPeerAddress();}
+
+	/**
+   * Invoked by the session when the ingress headers are complete
+   */
+	void onIngressHeadersComplete(HTTPMessage msg);
+	
+	/**
+   * Invoked by the session when some or all of the ingress entity-body has
+   * been parsed.
+   */
+	void onIngressBody(ubyte[] chain, uint16_t padding);
+	
+	/**
+   * Invoked by the session when a chunk header has been parsed.
+   */
+	void onIngressChunkHeader(size_t length);
+	
+	/**
+   * Invoked by the session when the CRLF terminating a chunk has been parsed.
+   */
+	void onIngressChunkComplete();
+
+	/**
+   * Invoked by the session when the ingress message is complete.
+   */
+	void onIngressEOM();
+
+	/**
+   * Schedule or refresh the timeout for this transaction
+   */
+	void refreshTimeout() {}
+
+	/**
+   * Timeout callback for this transaction.  The timer is active while
+   * until the ingress message is complete or terminated by error.
+   */
+	//void timeoutExpired() {}
+
+	/**
+   * Send the egress message headers to the Transport. This method does
+   * not actually write the message out on the wire immediately. All
+   * writes happen at the end of the event loop at the earliest.
+   * Note: This method should be called once per message unless the first
+   * headers sent indicate a 1xx status.
+   *
+   * sendHeaders will not set EOM flag in header frame, whereas
+   * sendHeadersWithEOM will. sendHeadersWithOptionalEOM backs both of them.
+   *
+   * @param headers  Message headers
+   */
+	void sendHeaders(HTTPMessage headers);
+	void sendHeadersWithEOM(HTTPMessage headers);
+	void sendHeadersWithOptionalEOM(HTTPMessage headers, bool eom);
+	/**
+   * Send part or all of the egress message body to the Transport. If flow
+   * control is enabled, the chunk boundaries may not be respected.
+   * This method does not actually write the message out on the wire
+   * immediately. All writes happen at the end of the event loop at the
+   * earliest.
+   * Note: This method may be called zero or more times per message.
+   *
+   * @param body Message body data; the Transport will take care of
+   *             applying any necessary protocol framing, such as
+   *             chunk headers.
+   */
+	void sendBody(ubyte[] body_);
+	
+	/**
+   * Write any protocol framing required for the subsequent call(s)
+   * to sendBody(). This method does not actually write the message out on
+   * the wire immediately. All writes happen at the end of the event loop
+   * at the earliest.
+   * @param length  Length in bytes of the body data to follow.
+   */
+	void sendChunkHeader(size_t length) {
+//		CHECK(HTTPTransactionEgressSM::transit(
+//				egressState_, HTTPTransactionEgressSM::Event::sendChunkHeader));
+//		// TODO: move this logic down to session/codec
+//		if (!transport_.getCodec().supportsParallelRequests()) {
+//			chunkHeaders_.emplace_back(Chunk(length));
+//		}
+	}
+	
+	/**
+   * Write any protocol syntax needed to terminate the data. This method
+   * does not actually write the message out on the wire immediately. All
+   * writes happen at the end of the event loop at the earliest.
+   * Frame begun by the last call to sendChunkHeader().
+   */
+	void sendChunkTerminator() {
+//		CHECK(HTTPTransactionEgressSM::transit(
+//				egressState_, HTTPTransactionEgressSM::Event::sendChunkTerminator));
+	}
+	/**
+   * Send part or all of the egress message body to the Transport. If flow
+   * control is enabled, the chunk boundaries may not be respected.
+   * This method does not actually write the message out on the wire
+   * immediately. All writes happen at the end of the event loop at the
+   * earliest.
+   * Note: This method may be called zero or more times per message.
+   *
+   * @param body Message body data; the Transport will take care of
+   *             applying any necessary protocol framing, such as
+   *             chunk headers.
+   */
+	/**
+   * Finalize the egress message; depending on the protocol used
+   * by the Transport, this may involve sending an explicit "end
+   * of message" indicator. This method does not actually write the
+   * message out on the wire immediately. All writes happen at the end
+   * of the event loop at the earliest.
+   *
+   * If the ingress message also is complete, the transaction may
+   * detach itself from the Handler and Transport and delete itself
+   * as part of this method.
+   *
+   * Note: Either this method or sendAbort() should be called once
+   *       per message.
+   */
+	void sendEOM();
+
+
+	void sendWsBinary(ubyte[] data);
+
+	void sendWsText(string data);
+
+	void sendWsPing(ubyte[] data);
+
+	void sendWsPong(ubyte[] data);
 
 private:
 	HTTPCodec.StreamID _id;

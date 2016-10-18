@@ -74,6 +74,11 @@ struct HTTPParser
         return method_strings[_method];
     }
 
+	pragma(inline,true)
+	@property statusCode()
+	{
+		return _statusCode;
+	}
     pragma(inline,true)
     @property major()
     {

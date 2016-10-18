@@ -147,12 +147,10 @@ string buildEnum(T)()
 	{
 		if(ls.length > 0) {
 			funn ~= "case " ~ to!string(index) ~ " : {\n";
-			//funn ~= " name = toLower(name);\n";// switch (name) {\n";
 			foreach(ref TMPV st;ls)
-			{       funn ~= "if(isSame(name,\"" ~ st.name ~ "\" )){ code = HTTPHeaderCode."~ st.value ~ "; break;}\n";
-				//funn ~= "case \"" ~ st.name ~ "\" : code = HTTPHeaderCode."~ st.value ~ "; break; \n";
+			{
+				funn ~= "if(isSame(name,\"" ~ st.name ~ "\" )){ code = HTTPHeaderCode."~ st.value ~ "; break;}\n";
 			}
-			//funn ~= "default: code = HTTPHeaderCode.OTHER; break;}\n} break;\n";
 			funn ~= "\n} break;\n";
 		}
 	}

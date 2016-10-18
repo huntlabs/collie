@@ -2,8 +2,19 @@
 
 import collie.codec.http.httpmessage;
 import collie.codec.http.errocode;
+import collie.codec.http.codec.wsframe;
+import collie.codec.http.httptansaction;
 
-class HTTPCodec
+enum CodecProtocol : ubyte {
+	HTTP_1_X,
+	WEBSOCKET,
+//	SPDY_3,
+//	SPDY_3_1,
+//	SPDY_3_1_HPACK,
+//	HTTP_2
+};
+
+abstract class HTTPCodec
 {
 
 	/**
@@ -28,7 +39,7 @@ class HTTPCodec
      * @param stream   The stream ID
      * @param msg      A newly allocated HTTPMessage
      */
-	 void onMessageBegin(StreamID stream, HTTPMessage* msg);
+	 void onMessageBegin(StreamID stream, HTTPMessage msg);
 		
 		/**
      * Called when a new push message is seen while parsing the ingress.
@@ -49,7 +60,7 @@ class HTTPCodec
      * @param size     Size of the ingress header
      */
 	void onHeadersComplete(StreamID stream,
-		HTTPMessage* msg);
+		HTTPMessage msg);
 		
 		/**
      * Called for each block of message body data
@@ -111,7 +122,12 @@ class HTTPCodec
      */
 		void onAbort(StreamID stream,
 			HTTPErrorCode code);
-		
+
+		void onWsFrame(StreamID,ref WSFrame);
+
+		void onWsPing(StreamID,ref WSFrame);
+
+		void onWsPong(StreamID,ref WSFrame);
 		/**
      * Called upon receipt of a frame header.
      * @param stream_id The stream ID
@@ -202,8 +218,174 @@ class HTTPCodec
      */
 		//uint32_t numIncomingStreams() const { return 0; }
 
+
 	}
 
+	CodecProtocol getProtocol();
+
+	StreamID createStream();
+	/**
+   * Get the transport direction of this codec:
+   * DOWNSTREAM if the codec receives requests from clients or
+   * UPSTREAM if the codec sends requests to servers.
+   */
+	TransportDirection getTransportDirection();
 	
+	/**
+   * Returns true iff this codec supports per stream flow control
+   */
+	bool supportsStreamFlowControl() const {
+		return false;
+	}
+	
+	/**
+   * Returns true iff this codec supports session level flow control
+   */
+	bool supportsSessionFlowControl() const {
+		return false;
+	}
+	
+	/**
+   * Reserve a stream ID.
+   * @return           A stream ID on success, or zero on error.
+   */
+	StreamID createStream();
+	
+	/**
+   * Set the callback to notify on ingress events
+   * @param callback  The callback object
+   */
+	void setCallback(CallBack callback);
+	
+	/**
+   * Check whether the codec still has at least one HTTP
+   * stream to parse.
+   */
+	bool isBusy();
+	
+	/**
+   * Pause or resume the ingress parser
+   * @param paused  Whether the caller wants the parser to be paused
+   */
+	void setParserPaused(bool paused);
+	
+	/**
+   * Parse ingress data.
+   * @param  buf   A single IOBuf of data to parse
+   * @return Number of bytes consumed.
+   */
+	size_t onIngress(ubyte[] buf);
+	
+	/**
+   * Finish parsing when the ingress stream has ended.
+   */
+	//void onIngressEOF();
+	
+/**
+   * Invoked on a codec that has been upgraded to via an HTTPMessage on
+   * a different codec.  The codec may return false to halt the upgrade.
+   */
+	bool onIngressUpgradeMessage(const HTTPMessage msg) {
+		return true;
+	}
+	
+	/**
+   * Check whether the codec can process new streams. Typically,
+   * an implementing subclass will return true when a new codec is
+   * created and false once it encounters a situation that would
+   * prevent reuse of the underlying transport (e.g., a "Connection: close"
+   * in HTTP/1.x).
+   * @note A return value of true means that the codec can process new
+   *       connections at some reasonable point in the future; that may
+   *       mean "immediately," for codecs that support pipelined or
+   *       interleaved requests, or "upon completion of the current
+   *       stream" for codecs that do not.
+   */
+//	bool isReusable();
+	
+	/**
+   * Returns true if this codec is in a state where it accepting new
+   * requests but will soon begin to reject new requests. For SPDY and
+   * HTTP/2, this is true when the first GOAWAY NO_ERROR is sent during
+   * graceful shutdown.
+   */
+//	bool isWaitingToDrain();
+	
+	/**
+   * Checks whether the socket needs to be closed when EOM is sent. This is used
+   * during CONNECT when EOF needs to be sent after upgrade to notify the server
+   */
+//	bool closeOnEgressComplete();
+	
+	/**
+   * Check whether the codec supports the processing of multiple
+   * requests in parallel.
+   */
+//	bool supportsParallelRequests();
+	
+	/**
+   * Check whether the codec supports pushing resources from server to
+   * client.
+   */
+//	bool supportsPushTransactions();
+	
+	/**
+   * Write an egress message header.  For pushed streams, you must specify
+   * the assocStream.
+   * @retval size the size of the generated message, both the actual size
+   *              and the size of the uncompressed data.
+   * @return None
+   */
+	ubyte[] generateHeader(
+		StreamID stream,
+		HTTPMessage msg,
+		StreamID assocStream = 0,
+		bool eom = false);
+		//HTTPHeaderSize* size = nullptr);
+	
+	/**
+   * Write part of an egress message body.
+   *
+   * This will automatically generate a chunk header and footer around the data
+   * if necessary (e.g. you haven't manually sent a chunk header and the
+   * message should be chunked).
+   *
+   * @param padding Optionally add padding bytes to the body if possible
+   * @param eom implicitly generate the EOM marker with this body frame
+   *
+   * @return number of bytes written
+   */
+	ubyte[] generateBody(StreamID stream,
+		ubyte[] chain,
+		ubyte padding,
+		bool eom);
+	
+	/**
+   * Write a body chunk header, if relevant.
+   */
+	ubyte[] generateChunkHeader(
+		StreamID stream,
+		size_t length);
+	
+	/**
+   * Write a body chunk terminator, if relevant.
+   */
+	ubyte[] generateChunkTerminator(
+		StreamID stream);
+
+	/**
+   * Generate any protocol framing needed to finalize an egress
+   * message. This method must be called to complete a stream.
+   *
+   * @return number of bytes written
+   */
+	ubyte[] generateEOM(StreamID stream);
+	
+	/**
+   * Generate any protocol framing needed to abort a connection.
+   * @return number of bytes written
+   */
+	ubyte[] generateRstStream(StreamID stream,HTTPErrorCode code);
+
 }
 
