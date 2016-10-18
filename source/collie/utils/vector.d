@@ -209,22 +209,42 @@ import std.exception;
 			len = _alloc.goodAllocSize(len);
 			elements = len / T.sizeof;
 		}
-//		static if (hasIndirections!T)  
-//		{
+		static if (hasIndirections!T)  
+		{
+			import core.stdc.string :  memset;
 			immutable oldLength = _data.length;
-			auto ptr = cast(T*)(enforce(_alloc.allocate(len)).ptr);
+			auto ptr = cast(T *) enforce(_alloc.allocate(len).ptr);
 			T[] data = ptr[0..elements];
-			data[0..oldLength] = _data[];
-			data[(oldLength + 1) .. $] = T.init;
+			memset((ptr + _len),0,(len - _len * T.sizeof));
+			if(_len > 0) {
+				data[0.._len] = _data[0.._len];
+			}
 			static if (addToGC) {
 				GC.addRange(ptr, len);
-				GC.removeRange(_data.ptr);
+				if(_data.ptr) {
+					GC.removeRange(_data.ptr);
+					_alloc.deallocate(_data);
+				}
+			} else {
+				if(_data.ptr) {
+					_alloc.deallocate(_data);
+				}
 			}
-			_alloc.deallocate(_data);
+			
 			_data = data;
-//		}
-//		else
-//		{}
+		}
+		else
+		{
+			if(_data.ptr is null) {
+				auto ptr = cast(T*)(enforce(_alloc.allocate(len).ptr));
+				_data = ptr[0..elements];
+			} else {
+				void[] td = cast(void[])_data;
+				enforce(_alloc.reallocate(td,len));
+				auto ptr = cast(T *)td.ptr;
+				_data = ptr[0..elements];
+			}
+		}
 	}
 private:
     pragma(inline, true) 
