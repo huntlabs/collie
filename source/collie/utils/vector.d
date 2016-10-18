@@ -14,231 +14,242 @@ import core.memory;
 import std.experimental.allocator.common;
 import std.experimental.allocator.mallocator : Mallocator;
 import std.traits;
+import std.exception;
 
-@trusted struct Vector(T, bool addToGC = hasIndirections!T, Allocator = Mallocator)
+@trusted struct Vector(T, Allocator = GCAllocator, bool addInGC = hasIndirections!T)
 {
-    alias TSize = stateSize!T;
-
-    this(size_t size) 
-    {
-        auto len = TSize * size;
-        _data = cast(T[]) _alloc.allocate(len);
-        static if (addToGC)
-        {
-            GC.addRange(_data.ptr, len);
-        }
-    }
-
-    this(T[] data)
-    {
-        this(data.length);
-        _data[] = data[];
-        _len = data.length;
-    }
-
-    static if (stateSize!Allocator != 0)
-    {
-        this(T[] data, Allocator alloc)
-        {
-            this._alloc = alloc;
-            this(data);
-        }
-
-        this(size_t size, Allocator alloc)
-        {
-            this._alloc = alloc;
-            this(size);
-        }
-
-    }
-
-    ~this()
-    {
-        if (_data.ptr)
-        {
-            static if (addToGC)
-                GC.removeRange(_data.ptr);
-            _alloc.deallocate(_data);
-        }
-    }
-
-    pragma(inline) void insertBack(T value)
-    {
-        if (full)
-            exten(1);
-        _data[_len] = value;
-        ++_len;
-    }
-
-    pragma(inline) void insertBack(T[] value)
-    {
-        if (_data.length < (_len + value.length))
-            exten(value.length);
-        auto len = _len + value.length;
-        _data[_len .. len] = value[];
-        _len = len;
-    }
-
-    void insertBefore(T value)
-    {
-        if (full)
-            exten(1);
-        if (empty())
-        {
-            _data[0] = value;
-            _len = 1;
-            return;
-        }
-        T tm = _data[0];
-        _data[0] = value;
-        import std.algorithm.mutation : move;
-
-        foreach (i; 1 .. _len)
-        {
-            auto tmp = _data[i];
-            _data[i] = tm;
-            tm = move(tmp);
-        }
-        _data[_len] = tm;
-        ++_len;
-    }
-
-    size_t removeBack(size_t howMany = 1)
-    {
-        if (howMany >= _len)
-        {
-            clear();
-            return _len;
-        }
-        auto size = _len - howMany;
-        _data[size .. _len] = T.init;
-        _len = size;
-        return howMany;
-    }
-
-    void removeSite(size_t site)
-    {
-        assert(site < _len);
-        --_len;
-        for (size_t i = site; i < _len; ++i)
-        {
-            _data[i] = _data[i + 1];
-        }
-        _data[_len] = T.init;
-    }
-
-    void removeOne(T value)
-    {
-        for (size_t i = 0; i < _len; ++i)
-        {
-            if (_data[i] == value)
-            {
-                removeSite(i);
-                return;
-            }
-        }
-    }
-
-    void removeAny(T value)
-    {
-            auto len = _len;
-            size_t rm = 0;
-            size_t site  = 0;
-            for (size_t j = site; j < len; ++j)
-            {
-                    if(_data[j] != value) {
-                            _data[site] = _data[j];
-                            site ++;
-                    } else {
-                            rm ++;
-                    }
-            }
-            len -= rm;
-            _data[len.._len] = T.init;
-            _len = len;
-    }
-
-    pragma(inline) @property T[] dup()
-    {
-        auto list = new T[length];
-        list[0 .. length] = _data[0 .. length];
-        return list;
-    }
-
-    pragma(inline) T[] data(bool rest = true)
-    {
-        auto list = _data[0 .. length];
-        if (rest)
-        {
-            _data = null;
-            _len = 0;
-        }
-        return list;
-    }
-
-    pragma(inline) inout ref inout(T) opIndex(size_t i)
-    {
-        assert(i < _len);
-        return _data[i];
-    }
-
-    pragma(inline, true) T at(size_t i)
-    {
-        assert(i < _len);
-        return _data[i];
-    }
-
-    pragma(inline, true) const @property bool empty()
-    {
-        return (_len == 0);
-    }
-
-    pragma(inline, true) const @property size_t length()
-    {
-        return _len;
-    }
-
-    pragma(inline, true) void clear()
-    {
-        _data[] = T.init;
-        _len = 0;
-    }
-
+	alias TSize = stateSize!T;
+	enum addToGC = addInGC && !is(Allocator == GCAllocator);
+	
+	this(size_t size) 
+	{
+		reserve(size);
+	}
+	
+	this(T[] data)
+	{
+		reserve(data.length);
+		_len = data.length;
+		_data[0.._len] = data[];
+	}
+	
+	static if (stateSize!Allocator != 0)
+	{
+		this(T[] data, Allocator alloc)
+		{
+			this._alloc = alloc;
+			this(data);
+		}
+		
+		this(size_t size, Allocator alloc)
+		{
+			this._alloc = alloc;
+			this(size);
+		}
+		
+	}
+	
+	~this()
+	{
+		if (_data.ptr)
+		{
+			static if (addToGC)
+				GC.removeRange(_data.ptr);
+			_alloc.deallocate(_data);
+		}
+	}
+	
+	pragma(inline) void insertBack(T value)
+	{
+		if (full)
+			exten();
+		_data[_len] = value;
+		++_len;
+	}
+	
+	pragma(inline) void insertBack(T[] value)
+	{
+		if (_data.length < (_len + value.length))
+			exten(value.length);
+		auto len = _len + value.length;
+		_data[_len .. len] = value[];
+		_len = len;
+	}
+	
+	void insertBefore(T value)
+	{
+		if (full)
+			exten(1);
+		if (empty())
+		{
+			_data[0] = value;
+			_len = 1;
+			return;
+		}
+		T tm = _data[0];
+		_data[0] = value;
+		import std.algorithm.mutation : move;
+		
+		foreach (i; 1 .. _len)
+		{
+			auto tmp = _data[i];
+			_data[i] = tm;
+			tm = move(tmp);
+		}
+		_data[_len] = tm;
+		++_len;
+	}
+	
+	size_t removeBack(size_t howMany = 1)
+	{
+		if (howMany >= _len)
+		{
+			clear();
+			return _len;
+		}
+		auto size = _len - howMany;
+		_data[size .. _len] = T.init;
+		_len = size;
+		return howMany;
+	}
+	
+	void removeSite(size_t site)
+	{
+		assert(site < _len);
+		--_len;
+		for (size_t i = site; i < _len; ++i)
+		{
+			_data[i] = _data[i + 1];
+		}
+		_data[_len] = T.init;
+	}
+	
+	void removeOne(T value)
+	{
+		for (size_t i = 0; i < _len; ++i)
+		{
+			if (_data[i] == value)
+			{
+				removeSite(i);
+				return;
+			}
+		}
+	}
+	
+	void removeAny(T value)
+	{
+		auto len = _len;
+		size_t rm = 0;
+		size_t site  = 0;
+		for (size_t j = site; j < len; ++j)
+		{
+			if(_data[j] != value) {
+				_data[site] = _data[j];
+				site ++;
+			} else {
+				rm ++;
+			}
+		}
+		len -= rm;
+		_data[len.._len] = T.init;
+		_len = len;
+	}
+	
+	pragma(inline) @property T[] dup()
+	{
+		auto list = new T[length];
+		list[0 .. length] = _data[0 .. length];
+		return list;
+	}
+	
+	pragma(inline) T[] data(bool rest = true)
+	{
+		auto list = _data[0 .. length];
+		if (rest)
+		{
+			_data = null;
+			_len = 0;
+		}
+		return list;
+	}
+	
+	pragma(inline) ref inout(T) opIndex(size_t i) inout
+	{
+		assert(i < _len);
+		return _data[i];
+	}
+	
+	pragma(inline, true) T at(size_t i)
+	{
+		assert(i < _len);
+		return _data[i];
+	}
+	
+	pragma(inline, true) const @property bool empty()
+	{
+		return (_len == 0);
+	}
+	
+	pragma(inline, true) const @property size_t length()
+	{
+		return _len;
+	}
+	
+	pragma(inline, true) void clear()
+	{
+		_data[] = T.init;
+		_len = 0;
+	}
+	
+	void reserve(size_t elements)
+	{
+		if(elements <= _data.length) return;
+		size_t len = elements * T.sizeof;
+		static if(hasMember!(Allocator,"goodAllocSize")){
+			len = _alloc.goodAllocSize(len);
+			elements = len / T.sizeof;
+		}
+		//		static if (hasIndirections!T)  
+		//		{
+		immutable oldLength = _data.length;
+		auto ptr = cast(T*)(enforce(_alloc.allocate(len).ptr));
+		T[] data = ptr[0..elements];
+		data[0..oldLength] = _data[];
+		data[(oldLength + 1) .. $] = T.init;
+		static if (addToGC) {
+			GC.addRange(ptr, len);
+			GC.removeRange(_data.ptr);
+		}
+		_alloc.deallocate(_data);
+		_data = data;
+		//		}
+		//		else
+		//		{}
+	}
 private:
-    pragma(inline, true) 
-    bool full()
-    {
-        return length >= _data.length;
-    }
-
-    void exten(size_t len)
-    {
-        auto size = _data.length;
-        if (size > 0)
-            size = size > 128 ? size + ((size / 3) * 2) : size * 2;
-        else
-            size = 32;
-        size += len;
-        len = TSize * size;
-        auto data = cast(T[]) _alloc.allocate(len);
-        if(!empty)
-            data[0 .. length] = _data[0 .. length];
-        static if (addToGC)
-        {
-            GC.addRange(data.ptr, len);
-            GC.removeRange(_data.ptr);
-        }
-        _alloc.deallocate(_data);
-        _data = data;
-    }
-
+	pragma(inline, true) 
+		bool full()
+	{
+		return length >= _data.length;
+	}
+	
+	void exten(size_t len = 0)
+	{
+		auto size = _data.length + len;
+		if (size > 0)
+			size = size > 128 ? size + ((size / 3) * 2) : size * 2;
+		else
+			size = 32;
+		reserve(size);
+	}
+	
 private:
-    size_t _len = 0;
-    T[] _data = null;
-    static if (stateSize!Allocator == 0)
-        alias _alloc = Allocator.instance;
-    else
-        Allocator _alloc;
+	size_t _len = 0;
+	T[] _data = null;
+	static if (stateSize!Allocator == 0)
+		alias _alloc = Allocator.instance;
+	else
+		Allocator _alloc;
 }
 
 unittest
