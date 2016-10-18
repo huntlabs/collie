@@ -4,6 +4,9 @@ import collie.codec.http.httpmessage;
 import collie.codec.http.errocode;
 import collie.codec.http.codec.wsframe;
 import collie.codec.http.httptansaction;
+import collie.utils.vector;
+
+import std.experimental.allocator.gc_allocator;
 
 enum CodecProtocol : ubyte {
 	HTTP_1_X,
@@ -28,6 +31,7 @@ abstract class HTTPCodec
    * StreamID.
    */
 	typedef StreamID = uint;
+	alias HVector = Vector!(ubyte,GCAllocator);
 
 	this()
 	{}
@@ -336,10 +340,10 @@ abstract class HTTPCodec
    *              and the size of the uncompressed data.
    * @return None
    */
-	ubyte[] generateHeader(
+	size_t generateHeader(
 		StreamID stream,
 		HTTPMessage msg,
-		StreamID assocStream = 0,
+		ref HVector buffer,
 		bool eom = false);
 		//HTTPHeaderSize* size = nullptr);
 	
@@ -355,23 +359,25 @@ abstract class HTTPCodec
    *
    * @return number of bytes written
    */
-	ubyte[] generateBody(StreamID stream,
-		ubyte[] chain,
+	size_t generateBody(StreamID stream,
+		ref HVector chain,
 		ubyte padding,
 		bool eom);
-	
+
 	/**
    * Write a body chunk header, if relevant.
    */
-	ubyte[] generateChunkHeader(
+	size_t generateChunkHeader(
 		StreamID stream,
+		ref HVector buffer,
 		size_t length);
 	
 	/**
    * Write a body chunk terminator, if relevant.
    */
-	ubyte[] generateChunkTerminator(
-		StreamID stream);
+	size_t generateChunkTerminator(
+		StreamID stream,
+		ref HVector buffer);
 
 	/**
    * Generate any protocol framing needed to finalize an egress
@@ -379,13 +385,15 @@ abstract class HTTPCodec
    *
    * @return number of bytes written
    */
-	ubyte[] generateEOM(StreamID stream);
+	size_t generateEOM(StreamID stream,
+		ref HVector buffer);
 	
 	/**
    * Generate any protocol framing needed to abort a connection.
    * @return number of bytes written
    */
-	ubyte[] generateRstStream(StreamID stream,HTTPErrorCode code);
+	size_t generateRstStream(StreamID stream,,
+		ref HVector buffer,HTTPErrorCode code);
 
 }
 

@@ -5,15 +5,12 @@ import collie.codec.http.parser;
 import collie.codec.http.httptansaction;
 import collie.codec.http.httpmessage;
 import collie.codec.http.headers;
-import collie.utils.vector;
-import std.experimental.allocator.gc_allocator;
 import std.conv;
 import std.array;
+import std.traits;
 
 class HTTP1XCodec : HTTPCodec
 {
-	alias HVector = Vector!(ubyte,GCAllocator);
-
 	this(TransportDirection direction, uint maxHeaderSize = (64 * 1024))
 	{
 		_transportDirection = direction;
@@ -72,34 +69,38 @@ class HTTP1XCodec : HTTPCodec
 		return cast(size_t) size;
 	}
 
-	override size_t generateHeader(StreamID stream,HTTPMessage msg,ref HVector buffer,bool eom = false)
+	override size_t generateHeader(
+		StreamID stream,
+		HTTPMessage msg,
+		ref HVector buffer,
+		bool eom = false)
 	{
 		const bool upstream = (transportDirection_ == TransportDirection.UPSTREAM);
+		const size_t beforLen = buffer.length;
 		auto hversion = msg.getHTTPVersion();
-		Appender!string data = appender!string;
 		_egressChunked = msg.chunked && !_egressUpgrade;
 		_lastChunkWritten = false;
 		bool hasTransferEncodingChunked = false;
 		bool hasUpgradeHeader = false;
 		bool hasDateHeader = false;
 		if(!upstream) {
-			data.put("HTTP/");
-			data.put(to!string(hversion.maj));
-			data.put(".");
-			data.put(to!string(hversion.min));
-			data.put(" ");
+			appendLiteral(buffer,"HTTP/");
+			appendLiteral(buffer,to!string(hversion.maj));
+			appendLiteral(buffer,".");
+			appendLiteral(buffer,to!string(hversion.min));
+			appendLiteral(buffer," ");
 			int code = msg.statusCode;
-			data.put(to!string(code));
-			data.put(" ");
-			data.put(HTTPMessage.statusText(code));
+			appendLiteral(buffer,to!string(code));
+			appendLiteral(buffer," ");
+			appendLiteral(buffer,HTTPMessage.statusText(code));
 		} else {
-			data.put(msg.methodString);
-			data.put(" ");
-			data.put(msg.getPath);
-			data.put(" HTTP/");
-			data.put(to!string(hversion.maj));
-			data.put(".");
-			data.put(to!string(hversion.min));
+			appendLiteral(buffer,msg.methodString);
+			appendLiteral(buffer," ");
+			appendLiteral(buffer,msg.getPath);
+			appendLiteral(buffer," HTTP/");
+			appendLiteral(buffer,to!string(hversion.maj));
+			appendLiteral(buffer,".");
+			appendLiteral(buffer,to!string(hversion.min));
 			_mayChunkEgress = msg.isHTTP1_1();
 		}
 		_egressChunked &= _mayChunkEgress;
@@ -125,10 +126,10 @@ class HTTP1XCodec : HTTPCodec
 				hasTransferEncodingChunked = true;
 				if(!_mayChunkEgress) continue;
 			} 
-			data.put(key);
-			data.put(": ");
-			data.put(value);
-			data.put("\r\n");
+			appendLiteral(buffer,key);
+			appendLiteral(buffer,": ");
+			appendLiteral(buffer,value);
+			appendLiteral(buffer,"\r\n");
 		}
 		_inChunk = false;
 		bool bodyCheck =
@@ -139,28 +140,29 @@ class HTTP1XCodec : HTTPCodec
 		// clear egressChunked_ if the header wasn't actually set
 		_egressChunked &= hasTransferEncodingChunked;
 		if(bodyCheck && contLen.length == 0 && _egressChunked){
-			data.put("Transfer-Encoding: chunked\r\n");
+			appendLiteral(buffer,"Transfer-Encoding: chunked\r\n");
 		}
 		if(upstream || hasUpgradeHeader){
-			data.put("Connection: ");
+			appendLiteral(buffer,"Connection: ");
 			if(hasUpgradeHeader)
-				data.put("upgrade\r\n");
+				appendLiteral(buffer,"upgrade\r\n");
 			if(_keepalive)
-				data.put("keep-alive\r\n");
+				appendLiteral(buffer,"keep-alive\r\n");
 			else
-				data.put("close\r\n");
+				appendLiteral(buffer,"close\r\n");
 		}
 		if(contLen.length > 0){
-			data.put("Content-Length: ");;
-			data.put(contLen);
-			data.put("\r\n");
+			appendLiteral(buffer,"Content-Length: ");;
+			appendLiteral(buffer,contLen);
+			appendLiteral(buffer,"\r\n");
 		}
 
-		data.put("\r\n");
+		appendLiteral(buffer,"\r\n");
+		return buffer.length - beforLen;
 	}
 
-	ubyte[] generateBody(StreamID stream,
-		ubyte[] chain,
+	override size_t generateBody(StreamID stream,
+		ref HVector chain,
 		bool eom)
 	{
 		if(_egressChunked && !_inChunk) {
@@ -168,40 +170,46 @@ class HTTP1XCodec : HTTPCodec
 		}
 	}
 
-	ubyte[] generateChunkHeader(
+	override size_t generateChunkHeader(
 		StreamID stream,
+		ref HVector buffer,
 		size_t length)
 	{
 		if (_egressChunked){
 			import std.format;
 			_inChunk = true;
 			string lent = format("%zx\r\n",length);
-			return cast(ubyte[])lent;
+			appendLiteral(buffer,lent);
+			return lent.length;
 		}
-		return ubyte[].init;
+		return 0;
 	}
 
 
-	ubyte[] generateChunkTerminator(
-		StreamID stream)
+	override size_t generateChunkTerminator(
+		StreamID stream,
+		ref HVector buffer)
 	{
 		if(_egressChunked && _inChunk)
 		{
 			_inChunk = false;
-			return cast(ubyte[])("\r\n".dup);
+			appendLiteral(buffer,"\r\n");
+			return 2;
 		}
-		return ubyte[].init;
+		return 0;
 	}
 
-	ubyte[] generateEOM(StreamID stream)
+	override size_t generateEOM(StreamID stream,
+		ref HVector buffer)
 	{
-		ubyte[] data;
+		size_t rlen = 0;
 		assert(stream == _egressTxnID);
 		if(_egressChunked) {
 			assert(!_inChunk);
 			if(!_lastChunkWritten)
 				_lastChunkWritten = true;
-			data = cast(ubyte[])("0\r\n".dup);
+			appendLiteral(buffer,"0\r\n");
+			rlen += 3;
 		}
 		switch (_transportDirection) {
 			case TransportDirection.DOWNSTREAM:
@@ -213,12 +221,19 @@ class HTTP1XCodec : HTTPCodec
 			default:
 				break;
 		}
-		return data;
+		return rlen;
 	}
 
-	ubyte[] generateRstStream(StreamID stream,HTTPErrorCode code)
+	override size_t  generateRstStream(StreamID stream,
+		ref HVector buffer,HTTPErrorCode code)
 	{}
 protected:
+
+	final void appendLiteral(T)(ref HVector buffer, T[] data) if(isSomeChar(T) || is(Unqual!T == byte) || is(Unqual!T == ubyte))
+	{
+		buffer.insertBack(cast(ubyte[])data);
+	}
+
 	void onMessageBegin(ref HTTPParser){
 		_finished = false;
 		_headersComplete = false;

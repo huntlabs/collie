@@ -16,21 +16,25 @@ import std.experimental.allocator.gc_allocator;
 import std.traits;
 import std.exception;
 
-@trusted struct Vector(T, Allocator = GCAllocator, bool addInGC = hasIndirections!T)
+@trusted struct Vector(T, Allocator = GCAllocator, bool addInGC = true)
 {
     alias TSize = stateSize!T;
-    enum addToGC = addInGC && !is(Allocator == GCAllocator);
+	enum addToGC = addInGC && hasIndirections!T !is(Allocator == GCAllocator);
 
     this(size_t size) 
     {
 		reserve(size);
     }
 
-    this(T[] data)
+    this(ref T[] data, bool copy = true)
     {
-		reserve(data.length);
 		_len = data.length;
-		_data[0.._len] = data[];
+		if(copy) {
+			reserve(data.length);
+			_data[0.._len] = data[];
+		} else {
+			_data = data;
+		}
     }
 
     static if (stateSize!Allocator != 0)
@@ -75,6 +79,9 @@ import std.exception;
         _data[_len .. len] = value[];
         _len = len;
     }
+
+	alias put = insertBack;
+	alias pushBack = insertBack;
 
     void insertBefore(T value)
     {
@@ -124,6 +131,8 @@ import std.exception;
         _data[_len] = T.init;
     }
 
+	alias removeIndex = removeSite;
+
     void removeOne(T value)
     {
         for (size_t i = 0; i < _len; ++i)
@@ -138,21 +147,21 @@ import std.exception;
 
     void removeAny(T value)
     {
-            auto len = _len;
-            size_t rm = 0;
-            size_t site  = 0;
-            for (size_t j = site; j < len; ++j)
-            {
-                    if(_data[j] != value) {
-                            _data[site] = _data[j];
-                            site ++;
-                    } else {
-                            rm ++;
-                    }
-            }
-            len -= rm;
-            _data[len.._len] = T.init;
-            _len = len;
+        auto len = _len;
+        size_t rm = 0;
+        size_t site  = 0;
+        for (size_t j = site; j < len; ++j)
+        {
+                if(_data[j] != value) {
+                        _data[site] = _data[j];
+                        site ++;
+                } else {
+                        rm ++;
+                }
+        }
+        len -= rm;
+        _data[len.._len] = T.init;
+        _len = len;
     }
 
     pragma(inline) @property T[] dup()
