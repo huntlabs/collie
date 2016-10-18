@@ -150,7 +150,11 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	override void onHeadersComplete(StreamID stream,
 		HTTPMessage msg){}
 
-	override void onBody(StreamID stream,const ubyte[] data){}
+	override void onBody(StreamID stream,const ubyte[] data){
+		HTTPTransaction tran = _transactions.get(stream,null);
+		if(tran)
+			tran.onIngressBody(data,0);
+	}
 
 	override void onChunkHeader(StreamID stream, size_t length){}
 

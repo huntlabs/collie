@@ -8,6 +8,7 @@ import collie.codec.http.headers;
 import std.conv;
 import std.array;
 import std.traits;
+import collie.codec.http.errocode;
 
 class HTTP1XCodec : HTTPCodec
 {
@@ -165,9 +166,14 @@ class HTTP1XCodec : HTTPCodec
 		ref HVector chain,
 		bool eom)
 	{
+		size_t rlen = 0;
 		if(_egressChunked && !_inChunk) {
-
+			appendLiteral(buffer,"\r\n");
+			rlen += 2;
 		}
+		if(eom)
+			rlen += generateEOM(stream,chain);
+		return rlen;
 	}
 
 	override size_t generateChunkHeader(

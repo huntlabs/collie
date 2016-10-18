@@ -15,7 +15,7 @@ interface HTTPTransactionHandler
    * Called once per transaction. This notifies the handler of which
    * transaction it should talk to and will receive callbacks from.
    */
-	
+	void setTransaction(HTTPTransaction txn);
 	/**
    * Called once after a transaction successfully completes. It
    * will be called even if a read or write error happened earlier.
@@ -165,9 +165,12 @@ class HTTPTransaction
 	{
 		_id = id;
 		_transport = port;
+		_seqNo = seqNo;
 	}
 	@property HTTPTransactionHandler handler(){return _handler;}
 	@property void handler(HTTPTransactionHandler han){_handler = han;}
+
+	@property transport(){return _transport;}
 
 	bool isUpstream() const {
 		return _direction == TransportDirection.UPSTREAM;
@@ -176,9 +179,10 @@ class HTTPTransaction
 	bool isDownstream() const {
 		return _direction == TransportDirection.DOWNSTREAM;
 	}
-
+	uint getSequenceNumber() const { return _seqNo; }
 
 	HTTPCodec.StreamID getID() const { return id; }
+
 
 	Address getLocalAddress(){return _transport.getLocalAddress();}
 	
@@ -187,28 +191,51 @@ class HTTPTransaction
 	/**
    * Invoked by the session when the ingress headers are complete
    */
-	void onIngressHeadersComplete(HTTPMessage msg);
+	void onIngressHeadersComplete(HTTPMessage msg)
+	{
+		if(isUpstream() && msg->isResponse()) {
+			_lastResponseStatus = msg.statusCode;
+		}
+		if(_handler)
+			_handler.onHeadersComplete(msg);
+	}
 	
 	/**
    * Invoked by the session when some or all of the ingress entity-body has
    * been parsed.
    */
-	void onIngressBody(ubyte[] chain, uint16_t padding);
+	void onIngressBody(ubyte[] chain, ushort padding)
+	{
+		if(_handler)
+			_handler.onBody(chain);
+	}
 	
 	/**
    * Invoked by the session when a chunk header has been parsed.
    */
-	void onIngressChunkHeader(size_t length);
+	void onIngressChunkHeader(size_t length)
+	{
+		if(_handler)
+			_handler.onChunkHeader(length);
+	}
 	
 	/**
    * Invoked by the session when the CRLF terminating a chunk has been parsed.
    */
-	void onIngressChunkComplete();
+	void onIngressChunkComplete()
+	{
+		if(_handler)
+			_handler.onChunkComplete();
+	}
 
 	/**
    * Invoked by the session when the ingress message is complete.
    */
-	void onIngressEOM();
+	void onIngressEOM()
+	{
+		if(_handler)
+			_handler.onEOM();
+	}
 
 	/**
    * Schedule or refresh the timeout for this transaction
@@ -219,7 +246,7 @@ class HTTPTransaction
    * Timeout callback for this transaction.  The timer is active while
    * until the ingress message is complete or terminated by error.
    */
-	//void timeoutExpired() {}
+	void timeoutExpired() {}
 
 	/**
    * Send the egress message headers to the Transport. This method does
@@ -233,9 +260,20 @@ class HTTPTransaction
    *
    * @param headers  Message headers
    */
-	void sendHeaders(HTTPMessage headers);
-	void sendHeadersWithEOM(HTTPMessage headers);
-	void sendHeadersWithOptionalEOM(HTTPMessage headers, bool eom);
+	void sendHeaders(HTTPMessage headers)
+	{
+		sendHeadersWithOptionalEOM(headers,false);
+	}
+
+	void sendHeadersWithEOM(HTTPMessage headers)
+	{
+		sendHeadersWithOptionalEOM(headers,true);
+	}
+
+	void sendHeadersWithOptionalEOM(HTTPMessage headers, bool eom)
+	{
+		transport.sendHeaders(this,headers,eom);
+	}
 	/**
    * Send part or all of the egress message body to the Transport. If flow
    * control is enabled, the chunk boundaries may not be respected.
@@ -248,7 +286,9 @@ class HTTPTransaction
    *             applying any necessary protocol framing, such as
    *             chunk headers.
    */
-	void sendBody(ubyte[] body_);
+	void sendBody(ubyte[] body_){
+
+	}
 	
 	/**
    * Write any protocol framing required for the subsequent call(s)
@@ -302,21 +342,34 @@ class HTTPTransaction
    * Note: Either this method or sendAbort() should be called once
    *       per message.
    */
-	void sendEOM();
+	void sendEOM(){
+
+	}
 
 
-	void sendWsBinary(ubyte[] data);
+	void sendWsBinary(ubyte[] data)
+	{}
 
-	void sendWsText(string data);
+	void sendWsText(string data){
 
-	void sendWsPing(ubyte[] data);
+	}
 
-	void sendWsPong(ubyte[] data);
+	void sendWsPing(ubyte[] data){
+
+	}
+
+	void sendWsPong(ubyte[] data){
+
+	}
 
 private:
 	HTTPCodec.StreamID _id;
 	Transport _transport;
 	HTTPTransactionHandler _handler;
 	TransportDirection _direction;
+	uint _seqNo;
+
+private:
+	ushort _lastResponseStatus;
 }
 
