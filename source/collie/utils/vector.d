@@ -16,10 +16,10 @@ import std.experimental.allocator.gc_allocator;
 import std.traits;
 import std.exception;
 
-@trusted struct Vector(T, Allocator = GCAllocator, bool addInGC = hasIndirections!T)
+@trusted struct Vector(T, Allocator = GCAllocator, bool addInGC = true)
 {
 	alias TSize = stateSize!T;
-	enum addToGC = addInGC && !is(Allocator == GCAllocator);
+	enum addToGC = addInGC && hasIndirections!T !is(Allocator == GCAllocator);
 	
 	this(size_t size) 
 	{
