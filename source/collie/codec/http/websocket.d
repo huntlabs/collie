@@ -16,65 +16,65 @@ import std.bitmanip;
 import std.experimental.logger;
 
 import collie.buffer.buffer;
-import collie.codec.http.handler;
+//import collie.codec.http.handler;
 
 enum WebSocketGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
-abstract class WebSocket
-{
-    pragma(inline)
-    final bool ping(ubyte[] data)
-    {
-        if (_hand)
-            return _hand.ping(data);
-        else
-            return false;
-    }
-
-    pragma(inline)
-    final bool sendText(string text)
-    {
-        if (_hand)
-        {
-            return _hand.send(cast(ubyte[]) text, false);
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    pragma(inline)
-    final bool sendBinary(ubyte[] data)
-    {
-        if (_hand)
-            return _hand.send(data, true);
-        else
-            return false;
-    }
-
-    pragma(inline,true)
-    final void close()
-    {
-        if (_hand)
-            _hand.doClose();
-    }
-
-    pragma(inline,true)
-    final @property Address remoteAdress()
-    {
-        return _addr;
-    }
-
-    void onClose();
-    void onTextFrame(Frame frame);
-    void onPongFrame(Frame frame);
-    void onBinaryFrame(Frame frame);
-
-package:
-    HTTPHandler _hand;
-    Address _addr;
-}
+//abstract class WebSocket
+//{
+//    pragma(inline)
+//    final bool ping(ubyte[] data)
+//    {
+//        if (_hand)
+//            return _hand.ping(data);
+//        else
+//            return false;
+//    }
+//
+//    pragma(inline)
+//    final bool sendText(string text)
+//    {
+//        if (_hand)
+//        {
+//            return _hand.send(cast(ubyte[]) text, false);
+//        }
+//        else
+//        {
+//            return false;
+//        }
+//    }
+//
+//    pragma(inline)
+//    final bool sendBinary(ubyte[] data)
+//    {
+//        if (_hand)
+//            return _hand.send(data, true);
+//        else
+//            return false;
+//    }
+//
+//    pragma(inline,true)
+//    final void close()
+//    {
+//        if (_hand)
+//            _hand.doClose();
+//    }
+//
+//    pragma(inline,true)
+//    final @property Address remoteAdress()
+//    {
+//        return _addr;
+//    }
+//
+//    void onClose();
+//    void onTextFrame(Frame frame);
+//    void onPongFrame(Frame frame);
+//    void onBinaryFrame(Frame frame);
+//
+//package:
+//    Object _hand;
+//    Address _addr;
+//}
 
 enum FRAME_SIZE_IN_BYTES = 512 * 512 * 2; //maximum size of a frame when sending a message
 

@@ -4,6 +4,7 @@ import collie.codec.http.headers;
 import collie.codec.http.httpmessage;
 import collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
+import collie.codec.http.codec.wsframe;
 import collie.channel;
 import collie.codec.http.errocode;
 
@@ -35,6 +36,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	HTTPCodec.CallBack
 {
 	alias HVector = HTTPCodec.HVector;
+	alias StreamID = HTTPCodec.StreamID;
 	interface InfoCallback {
 		// Note: you must not start any asynchronous work from onCreate()
 		void onCreate(HTTPSession);
@@ -52,7 +54,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 		void onIngressLimitExceeded(HTTPSession);
 		void onIngressPaused(HTTPSession);
 		void onTransactionDetached(HTTPSession);
-		void onPingReplySent(int64_t latency);
+		void onPingReplySent(ulong latency);
 		void onPingReplyReceived();
 		void onSettingsOutgoingStreamsFull(HTTPSession);
 		void onSettingsOutgoingStreamsNotFull(HTTPSession);
@@ -104,7 +106,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	override void transactionTimeout(HTTPTransaction txn){}
 	
 	override void sendHeaders(HTTPTransaction txn,
-		const HTTPMessage headers,
+		HTTPMessage headers,
 		bool eom)
 	{
 		HVector tdata;
@@ -119,21 +121,24 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 		HVector tdata = HVector(data,false);
 		size_t rlen = getCodec.generateBody(txn.streamID,tdata,eom);
 		write(context,tdata.data(true),bind(&writeCallBack,eom));
-
+		return rlen;
 	}
 	
 	override size_t sendChunkHeader(HTTPTransaction txn,size_t length)
 	{
 		HVector tdata;
-		_codec.generateChunkHeader(txn.streamID,tdata,length);
+		size_t rlen = _codec.generateChunkHeader(txn.streamID,tdata,length);
 		write(context,tdata.data(true),bind(&writeCallBack,false));
+		return rlen;
 	}
+
 	
 	override size_t sendChunkTerminator(HTTPTransaction txn)
 	{
 		HVector tdata;
-		_codec.generateChunkTerminator(txn.streamID,tdata);
+		size_t rlen = _codec.generateChunkTerminator(txn.streamID,tdata);
 		write(context,tdata.data(true),bind(&writeCallBack,true));
+		return rlen;
 	}
 	
 	
@@ -143,6 +148,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 		size_t rlen = _codec.generateEOM(txn.streamID,tdata);
 		if(rlen)
 			write(context,tdata.data(true),bind(&writeCallBack,true));
+		return rlen;
 	}
 	
 	//		size_t sendAbort(HTTPTransaction txn,
@@ -184,7 +190,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 		return _codec;
 	}
 	
-	override bool isDraining(){}
+	override bool isDraining(){return false;}
 	//HTTPTransaction.Transport, }
 
 
@@ -203,7 +209,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	override void onBody(StreamID stream,const ubyte[] data){
 		//HTTPTransaction tran = _transactions.get(stream,null);
 		if(_transaction)
-			_transaction.onIngressBody(data,0);
+			_transaction.onIngressBody(data,cast(ushort)0);
 	}
 
 	override void onChunkHeader(StreamID stream, size_t length){
@@ -243,8 +249,10 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	override bool onNativeProtocolUpgrade(StreamID stream,
 		CodecProtocol protocol,
 		string protocolString,
-		HTTPMessage msg);
-	{}
+		HTTPMessage msg)
+	{
+		return false;
+	}
 	// HTTPCodec.CallBack }
 protected:
 	/**
@@ -254,7 +262,8 @@ protected:
    */
 	void setupOnHeadersComplete(HTTPTransaction txn,
 		HTTPMessage msg);
-		
+
+protected:
 	void writeCallBack(bool isLast,ubyte[] data,uint size)
 	{
 		if(isLast && _codec.shouldClose)

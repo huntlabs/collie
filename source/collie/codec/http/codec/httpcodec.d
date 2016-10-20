@@ -30,7 +30,7 @@ abstract class HTTPCodec
    * A value of zero indicates an uninitialized/unknown/unspecified
    * StreamID.
    */
-	typedef StreamID = uint;
+	alias StreamID = uint;
 	alias HVector = Vector!(ubyte,GCAllocator);
 
 	this()
@@ -53,10 +53,10 @@ abstract class HTTPCodec
      *                 which can never be 0
      * @param msg      A newly allocated HTTPMessage
      */
-	void onPushMessageBegin(StreamID stream,
-		StreamID assocStream,
-			HTTPMessage* msg);
-		
+//	void onPushMessageBegin(StreamID stream,
+//		StreamID assocStream,
+//			HTTPMessage* msg);
+//		
 		/**
      * Called when all the headers of an ingress message have been parsed
      * @param stream   The stream ID
@@ -247,12 +247,6 @@ abstract class HTTPCodec
 	}
 	
 	/**
-   * Reserve a stream ID.
-   * @return           A stream ID on success, or zero on error.
-   */
-	StreamID createStream();
-	
-	/**
    * Set the callback to notify on ingress events
    * @param callback  The callback object
    */
@@ -390,7 +384,7 @@ abstract class HTTPCodec
    * Generate any protocol framing needed to abort a connection.
    * @return number of bytes written
    */
-	size_t generateRstStream(StreamID stream,,
+	size_t generateRstStream(StreamID stream,
 		ref HVector buffer,HTTPErrorCode code);
 
 }

@@ -17,7 +17,7 @@ class HTTP1XCodec : HTTPCodec
 		_transportDirection = direction;
 		_finished = true;
 		_maxHeaderSize = maxHeaderSize;
-		if(_transportDirection = TransportDirection.DOWNSTREAM){
+		if(_transportDirection == TransportDirection.DOWNSTREAM){
 			_parser = HTTPParser(HTTPParserType.HTTP_REQUEST,_maxHeaderSize);
 		}else {
 			_parser = HTTPParser(HTTPParserType.HTTP_RESPONSE,_maxHeaderSize);
@@ -45,9 +45,9 @@ class HTTP1XCodec : HTTPCodec
 
 	override StreamID createStream() {
 		if (_transportDirection == TransportDirection.DOWNSTREAM) {
-			return ++ingressTxnID_;
+			return ++_ingressTxnID;
 		} else {
-			return ++egressTxnID_;
+			return ++_egressTxnID;
 		}
 	}
 
@@ -81,7 +81,7 @@ class HTTP1XCodec : HTTPCodec
 		ref HVector buffer,
 		bool eom = false)
 	{
-		const bool upstream = (transportDirection_ == TransportDirection.UPSTREAM);
+		const bool upstream = (_transportDirection == TransportDirection.UPSTREAM);
 		const size_t beforLen = buffer.length;
 		auto hversion = msg.getHTTPVersion();
 		_egressChunked = msg.chunked && !_egressUpgrade;
@@ -141,7 +141,7 @@ class HTTP1XCodec : HTTPCodec
 		bool bodyCheck =
 			(!upstream && !_egressUpgrade) ||
 				// auto chunk POSTs and any request that came to us chunked
-				(upstream && ((msg.method == HTTPMethod.POST) || _egressChunked));
+				(upstream && ((msg.method == HTTPMethod.HTTP_POST) || _egressChunked));
 		// TODO: 400 a 1.0 POST with no content-length
 		// clear egressChunked_ if the header wasn't actually set
 		_egressChunked &= hasTransferEncodingChunked;
@@ -159,7 +159,7 @@ class HTTP1XCodec : HTTPCodec
 				appendLiteral(buffer,"close\r\n");
 		}
 		if(contLen.length > 0){
-			appendLiteral(buffer,"Content-Length: ");;
+			appendLiteral(buffer,"Content-Length: ");
 			appendLiteral(buffer,contLen);
 			appendLiteral(buffer,"\r\n");
 		}
@@ -174,7 +174,7 @@ class HTTP1XCodec : HTTPCodec
 	{
 		size_t rlen = 0;
 		if(_egressChunked && !_inChunk) {
-			appendLiteral(buffer,"\r\n");
+			appendLiteral(chain,"\r\n");
 			rlen += 2;
 		}
 		if(eom)
@@ -238,10 +238,12 @@ class HTTP1XCodec : HTTPCodec
 
 	override size_t  generateRstStream(StreamID stream,
 		ref HVector buffer,HTTPErrorCode code)
-	{}
+	{
+		return 0;
+	}
 protected:
 
-	final void appendLiteral(T)(ref HVector buffer, T[] data) if(isSomeChar(T) || is(Unqual!T == byte) || is(Unqual!T == ubyte))
+	final void appendLiteral(T)(ref HVector buffer, T[] data) if(isSomeChar!(Unqual!T) || is(Unqual!T == byte) || is(Unqual!T == ubyte))
 	{
 		buffer.insertBack(cast(ubyte[])data);
 	}
@@ -250,7 +252,7 @@ protected:
 		_finished = false;
 		_headersComplete = false;
 		_message = new HTTPMessage();
-		if (transportDirection_ == TransportDirection.DOWNSTREAM) {
+		if (_transportDirection == TransportDirection.DOWNSTREAM) {
 			_requestPending = true;
 			_responsePending = true;
 		}
@@ -259,10 +261,10 @@ protected:
 			!_is1xxResponse) {
 			++_ingressTxnID;
 		}
-		if (transportDirection_ == TransportDirection.UPSTREAM) {
+		if (_transportDirection == TransportDirection.UPSTREAM) {
 			_is1xxResponse = false;
 		}
-		_callback->onMessageBegin(_ingressTxnID, _message);
+		_callback.onMessageBegin(_ingressTxnID, _message);
 		_currtKey.clear();
 		_currtValue.clear();
 	}
@@ -290,7 +292,7 @@ protected:
 	}
 	
 	void onMessageComplete(ref HTTPParser parser){
-		switch (transportDirection_) {
+		switch (_transportDirection) {
 			case TransportDirection.DOWNSTREAM:
 			{
 				_requestPending = false;
@@ -304,7 +306,7 @@ protected:
 			default: break;
 		}
 		_callback.onMessageComplete(_ingressTxnID,parser.isUpgrade);
-		if(_transportDirection = TransportDirection.DOWNSTREAM){
+		if(_transportDirection == TransportDirection.DOWNSTREAM){
 			_parser.rest(HTTPParserType.HTTP_REQUEST,_maxHeaderSize);
 		}else {
 			_parser.rest(HTTPParserType.HTTP_RESPONSE,_maxHeaderSize);
@@ -323,8 +325,8 @@ protected:
 	{
 		_currtKey.insertBack(data);
 		if(finish) {
-			ubyte[] data = _currtKey.data(true);
-			_message.url = cast(string)data;
+			ubyte[] tdata = _currtKey.data(true);
+			_message.url = cast(string)tdata;
 		}
 	}
 	
@@ -333,7 +335,7 @@ protected:
 		_currtKey.insertBack(data);
 		if(finish) {
 			string sdata = cast(string)_currtKey.data(true);
-			_message.setStatusCode(cast(ushort)parser.statusCode);
+			_message.statusCode(cast(ushort)parser.statusCode);
 			_message.statusMessage(sdata);
 		}
 	}
@@ -370,7 +372,6 @@ private:
 	uint _maxHeaderSize;
 	bool _finished;
 private:
-	HeaderParseState _headerParseState;
 	bool _parserActive = false;
 	bool _pendingEOF = false;
 	bool _parserPaused = false;

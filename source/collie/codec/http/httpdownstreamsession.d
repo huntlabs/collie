@@ -3,6 +3,7 @@
 import collie.codec.http.httpsession;
 import collie.codec.http.httpmessage;
 import collie.codec.http.httptansaction;
+import collie.codec.http.codec.httpcodec;
 
 final class HTTPDownstreamSession : HTTPSession
 {
@@ -12,7 +13,7 @@ final class HTTPDownstreamSession : HTTPSession
 	}
 
 protected:
-	void setupOnHeadersComplete(HTTPTransaction txn,
+	override void setupOnHeadersComplete(HTTPTransaction txn,
 		HTTPMessage msg)
 	{
 		auto handle =  _controller.getRequestHandler(txn,msg);

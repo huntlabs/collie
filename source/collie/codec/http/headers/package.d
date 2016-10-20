@@ -115,7 +115,7 @@ struct HTTPHeaders
 		_codes.clear();
 		_headersNames.clear();
 		_headerValues.clear();
-		deletedCount_ = 0;
+		_deletedCount = 0;
 	}
 
 	int opApply(int delegate(string name,string value) opeartions)
@@ -149,7 +149,7 @@ struct HTTPHeaders
 		return header;
 	}
 
-	void copyTo(ref header)
+	void copyTo(ref HTTPHeaders header)
 	{
 		foreach(code,name,value; this)
 		{
@@ -184,6 +184,7 @@ struct HTTPHeaders
 				data.put(value);
 			}
 		}
+		return data.data;
 	}
 
 	size_t getNumberOfValues(string name)
@@ -198,7 +199,7 @@ struct HTTPHeaders
 				++index;
 			}
 		}
-		return removed;
+		return index;
 	}
 
 	size_t getNumberOfValues(HTTPHeaderCode code)
@@ -219,7 +220,7 @@ struct HTTPHeaders
 		return index;
 	}
 
-	string getSingleOrEmpty(string  name) const {
+	string getSingleOrEmpty(string  name)  {
 		HTTPHeaderCode code = headersHash(name);
 		if(code != HTTPHeaderCode.OTHER)
 			return getSingleOrEmpty(code);
@@ -232,7 +233,7 @@ struct HTTPHeaders
 		return string.init;
 	}
 
-	string getSingleOrEmpty(HTTPHeaderCode code) const {
+	string getSingleOrEmpty(HTTPHeaderCode code)  {
 		HTTPHeaderCode[] codes = _codes.data(false);
 		HTTPHeaderCode * ptr = cast(HTTPHeaderCode *)memchr(codes.ptr,code,codes.length);
 		if(ptr !is null){
@@ -259,7 +260,7 @@ struct HTTPHeaders
 	{
 		HTTPHeaderCode code = headersHash(name);
 		if(code != HTTPHeaderCode.OTHER)
-			return forEachValueOfHeader(code);
+			return forEachValueOfHeader(code,func);
 		size_t index = 0;
 		for(size_t i = 0; i < _headersNames.length; ++i){
 			if(_codes[i] != HTTPHeaderCode.OTHER) continue;
@@ -294,5 +295,5 @@ private:
 	Vector!(HTTPHeaderCode,GCAllocator) _codes;
 	HVector _headersNames;
 	HVector _headerValues;
-	size_t deletedCount_ = _deletedCount;
+	size_t _deletedCount = 0;
 }

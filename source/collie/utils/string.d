@@ -2,6 +2,8 @@
 
 import std.array;
 import std.string;
+import std.traits;
+import std.range;
 
 void splitNameValue(Range)(Range data, dchar pairDelim, dchar valueDelim, void delegate(string,string) callback)
 	if (isInputRange!Range && isSomeChar!(ElementEncodingType!Range) &&
@@ -25,8 +27,8 @@ void splitNameValue(Range)(Range data, dchar pairDelim, dchar valueDelim, void d
 			callback(keyValue,string.init);
 		} else {
 			string name = keyValue[0..valueDelimPos];
-			string value = keyValue[(valueDelimPos + i)..$];
-			callback(name.value);
+			string value = keyValue[(valueDelimPos + 1)..$];
+			callback(name,value);
 		}
 	}
 }

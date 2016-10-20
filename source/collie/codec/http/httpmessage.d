@@ -25,15 +25,15 @@ class HTTPMessage
    */
 	enum byte kMaxPriority = 7;
 	
-	static byte normalizePriority(byte pri) {
-		if (pri > kMaxPriority || pri < -kMaxPriority) {
-			// outside [-7, 7] => highest priority
-			return kMaxPriority;
-		} else if (pri < 0) {
-			return pri + kMaxPriority + 1;
-		}
-		return pri;
-	}
+//	static byte normalizePriority(byte pri) {
+//		if (pri > kMaxPriority || pri < -kMaxPriority) {
+//			// outside [-7, 7] => highest priority
+//			return kMaxPriority;
+//		} else if (pri < 0) {
+//			return pri + kMaxPriority + 1;
+//		}
+//		return pri;
+//	}
 
 	/**
    * Is this a chunked message? (fpreq, fpresp)
@@ -56,15 +56,15 @@ class HTTPMessage
 		request()._clientPort = addr.toPortString;
 	}
 	
-	@property Address clientAddress() const {
+	@property Address clientAddress() {
 		return request()._clientAddress;
 	}
 
-	string getClientIP() const {
+	string getClientIP()  {
 		return request()._clientIP;
 	}
 	
-	string getClientPort() const {
+	string getClientPort()  {
 		return request()._clientPort;
 	}
 
@@ -77,15 +77,15 @@ class HTTPMessage
 		_dstPort = addr.toPortString;
 	}
 	
-	@property Address dstAddress() const {
+	@property Address dstAddress()  {
 		return _dstAddress;
 	}
 
-	string getDstIP() const {
+	string getDstIP()  {
 		return _dstIP;
 	}
 	
-	string getDstPort() const {
+	string getDstPort()  {
 		return _dstPort;
 	}
 	
@@ -93,7 +93,7 @@ class HTTPMessage
    * Set/Get the local IP address
    */
 	@property void localIp(string ip) {
-		localIP_ = _ip;
+		_localIP = ip;
 	}
 	@property string localIp()  {
 		return _localIP;
@@ -122,7 +122,7 @@ class HTTPMessage
 
 	auto getHTTPVersion()
 	{
-		auro tv = Tuple!(ubyte, "maj", ubyte, "min");
+		Tuple!(ubyte, "maj", ubyte, "min") tv;
 		tv.maj = _version[0];
 		tv.min = _version[1];
 		return tv;
@@ -166,7 +166,7 @@ class HTTPMessage
 	/**
    * Access the status code (fpres)
    */
-	@property void setStatusCode(ushort status)
+	@property void statusCode(ushort status)
 	{
 		response()._status = status;
 	}
@@ -200,10 +200,11 @@ class HTTPMessage
 				} else if (max_forwards == 0) {
 					return 501;
 				} else {
-					_headers.set(HTTP_HEADER_MAX_FORWARDS,to!string(max_forwards - 1));
+					_headers.set(HTTPHeaderCode.MAX_FORWARDS,to!string(max_forwards - 1));
 				}
 			}
 		}
+		return 0;
 	}
 	
 	/**
@@ -237,9 +238,9 @@ class HTTPMessage
    * @param contentLength     the length of the data to be written out through
    *                          this message
    */
-	void constructDirectResponse(ubyte maj,ubyte min,const int statuscode,string statusMsg,int contentLength = 0)
+	void constructDirectResponse(ubyte maj,ubyte min,const int statucode,string statusMsg,int contentLength = 0)
 	{
-		statusCode(statuscode);
+		statusCode(cast(ushort)statucode);
 		statusMessage(statusMsg);
 		constructDirectResponse(maj,min, contentLength);
 	}
@@ -267,7 +268,7 @@ class HTTPMessage
 	/**
    * Check if query parameter with the specified name exists.
    */
-	bool hasQueryParam(string name) const
+	bool hasQueryParam(string name) 
 	{
 		parseQueryParams();
 		return _queryParams.get(name,string.init) != string.init;
@@ -313,7 +314,7 @@ class HTTPMessage
    * Set the query string to the specified value, and recreate the url_.
    *
    */
-	voif setQueryString(string query)
+	void setQueryString(string query)
 	{
 		unparseQueryParams();
 		request._query = query;
@@ -344,14 +345,14 @@ class HTTPMessage
    * @returns true if this HTTPMessage represents an HTTP request
    */
 	bool isRequest() const {
-		return fields_.peek!Request() ! is null;
+		return _fields.peek!Request() ! is null;
 	}
 	
 	/**
    * @returns true if this HTTPMessage represents an HTTP response
    */
 	bool isResponse() const {
-		return fields_.peek!Response() ! is null;
+		return _fields.peek!Response() ! is null;
 	}
 
 	static string statusText(int code)
@@ -489,36 +490,42 @@ protected:
    * Once an accessor for either is used, that fixes the type of HTTPMessage.
    * If an access is then used for the other type, a DCHECK will fail.
    */
-	struct Request {
-	Address _clientAddress;
-	string _clientIP;
-	string _clientPort;
+	struct Request 
+	{
+		Address _clientAddress;
+		string _clientIP;
+		string _clientPort;
 		HTTPMethod _method = HTTPMethod.HTTP_INVAILD;
-	string _path;
-	string _query;
-	string _url;
-		
-	ushort _pushStatus;
-	string _pushStatusStr;
-	};
+		string _path;
+		string _query;
+		string _url;
+			
+		ushort _pushStatus;
+		string _pushStatusStr;
+	}
 	
-	struct Response {
+	struct Response 
+	{
 		ushort _status;
 		string _statusStr;
 		string _statusMsg;
-	};
+	}
 
 	inout(Request) request() inout
 	{
-		if(_fields.type == typeid(null))
-			_fields = Request();
+		if(_fields.type == typeid(null)) {
+			//Request req;
+			//_fields = Variant(req);
+		}
 		return _fields.get!Request();
 	}
 
 	inout(Response) response() inout
 	{
-		if(_fields.type == typeid(null))
-			_fields = Response();
+		if(_fields.type == typeid(null)) {
+			//Response res;
+			//_fields = Variant(res);
+		}
 		return _fields.get!Response();
 	}
 
@@ -539,8 +546,8 @@ protected:
 			});
 	}
 	void unparseQueryParams(){
-		queryParams_.clear();
-		parsedQueryParams_ = false;
+		_queryParams.clear();
+		_parsedQueryParams = false;
 	}
 
 private:

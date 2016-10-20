@@ -4,6 +4,8 @@ import collie.codec.http.codec.httpcodec;
 import collie.codec.http.httpmessage;
 import collie.codec.http.errocode;
 
+import std.socket;
+
 enum TransportDirection : ubyte {
 	DOWNSTREAM,  // toward the client
 	UPSTREAM     // toward the origin application or data
@@ -110,8 +112,7 @@ class HTTPTransaction
 		void transactionTimeout(HTTPTransaction txn);
 		
 		void sendHeaders(HTTPTransaction txn,
-			const HTTPMessage headers,
-			//HTTPHeaderSize* size,
+			HTTPMessage headers,
 			bool eom);
 		
 		size_t sendBody(HTTPTransaction txn,
@@ -182,7 +183,7 @@ class HTTPTransaction
 	}
 	uint getSequenceNumber() const { return _seqNo; }
 
-	HTTPCodec.StreamID getID() const { return id; }
+	HTTPCodec.StreamID getID() const { return _id; }
 
 
 	Address getLocalAddress(){return _transport.getLocalAddress();}
@@ -194,7 +195,7 @@ class HTTPTransaction
    */
 	void onIngressHeadersComplete(HTTPMessage msg)
 	{
-		if(isUpstream() && msg->isResponse()) {
+		if(isUpstream() && msg.isResponse()) {
 			_lastResponseStatus = msg.statusCode;
 		}
 		if(_handler)
@@ -205,7 +206,7 @@ class HTTPTransaction
    * Invoked by the session when some or all of the ingress entity-body has
    * been parsed.
    */
-	void onIngressBody(ubyte[] chain, ushort padding)
+	void onIngressBody(const ubyte[] chain, ushort padding)
 	{
 		if(_handler)
 			_handler.onBody(chain);
@@ -241,7 +242,7 @@ class HTTPTransaction
 	void onErro(HTTPErrorCode erro)
 	{
 		if(_handler)
-			_handler.HTTPErrorCode(erro);
+			_handler.onError(erro);
 	}
 	/**
    * Schedule or refresh the timeout for this transaction
@@ -293,7 +294,7 @@ class HTTPTransaction
    *             chunk headers.
    */
 	void sendBody(ubyte[] body_){
-		transport.sendBody(this,body_);
+		transport.sendBody(this,body_, false);
 	}
 	
 	/**
@@ -304,7 +305,7 @@ class HTTPTransaction
    * @param length  Length in bytes of the body data to follow.
    */
 	void sendChunkHeader(size_t length) {
-		transport.sendChunkHeader(length);
+		transport.sendChunkHeader(this,length);
 	}
 	
 	/**
@@ -314,7 +315,7 @@ class HTTPTransaction
    * Frame begun by the last call to sendChunkHeader().
    */
 	void sendChunkTerminator() {
-		transport.sendChunkTerminator();
+		transport.sendChunkTerminator(this);
 	}
 	/**
    * Send part or all of the egress message body to the Transport. If flow
@@ -343,25 +344,25 @@ class HTTPTransaction
    *       per message.
    */
 	void sendEOM(){
-		transport.sendEOM();
+		transport.sendEOM(this);
 	}
 
 
 	void sendWsBinary(ubyte[] data)
 	{
-		transport.sendWsBinary(data);
+		transport.sendWsBinary(this,data);
 	}
 
 	void sendWsText(string data){
-		transport.sendWsText(data);
+		transport.sendWsText(this,data);
 	}
 
 	void sendWsPing(ubyte[] data){
-		transport.sendWsPing(data);
+		transport.sendWsPing(this,data);
 	}
 
 	void sendWsPong(ubyte[] data){
-		transport.sendWsPong(data);
+		transport.sendWsPong(this,data);
 	}
 
 private:
