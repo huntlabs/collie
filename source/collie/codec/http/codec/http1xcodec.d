@@ -55,6 +55,11 @@ class HTTP1XCodec : HTTPCodec
 		return !_finished;
 	}
 
+	override bool shouldClose()
+	{
+		return !_keepalive;
+	}
+
 	override void setParserPaused(bool paused){}
 
 	override void setCallback(CallBack callback) {
@@ -65,7 +70,7 @@ class HTTP1XCodec : HTTPCodec
 	{
 		auto size = _parser.httpParserExecute(buf);
 		if(size != buf.length && _parser.isUpgrade == false){
-			_callback.onError(0,"");
+			_callback.onError(_ingressTxnID,HTTPErrorCode.PROTOCOL_ERROR);
 		}
 		return cast(size_t) size;
 	}
@@ -145,9 +150,10 @@ class HTTP1XCodec : HTTPCodec
 		}
 		if(upstream || hasUpgradeHeader){
 			appendLiteral(buffer,"Connection: ");
-			if(hasUpgradeHeader)
+			if(hasUpgradeHeader) {
 				appendLiteral(buffer,"upgrade\r\n");
-			if(_keepalive)
+				_keepalive = true;
+			} else if(_keepalive)
 				appendLiteral(buffer,"keep-alive\r\n");
 			else
 				appendLiteral(buffer,"close\r\n");

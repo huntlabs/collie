@@ -115,7 +115,7 @@ abstract class HTTPCodec
      * @param error    Description of the error
      * @param newTxn   true if onMessageBegin has not been called for txn
      */
-		void onError(StreamID stream,string erromsg);
+		void onError(StreamID stream,HTTPErrorCode);
 		
 		/**
      * Called when the peer has asked to shut down a stream
@@ -201,13 +201,10 @@ abstract class HTTPCodec
      * Called upon receipt of a valid protocol switch.  Return false if
      * protocol switch could not be completed.
      */
-//		bool onNativeProtocolUpgrade(StreamID stream,
-//			CodecProtocol protocol,
-//			const std::string& protocolString,
-//			HTTPMessage& msg) {
-//			return false;
-//		}
-		
+		bool onNativeProtocolUpgrade(StreamID stream,
+			CodecProtocol protocol,
+			string protocolString,
+			HTTPMessage msg);
 		/**
      * Return the number of open streams started by this codec callback.
      * Parallel codecs with a maximum number of streams will invoke this
@@ -266,6 +263,8 @@ abstract class HTTPCodec
    * stream to parse.
    */
 	bool isBusy();
+
+	bool shouldClose();
 	
 	/**
    * Pause or resume the ingress parser
@@ -361,7 +360,6 @@ abstract class HTTPCodec
    */
 	size_t generateBody(StreamID stream,
 		ref HVector chain,
-		ubyte padding,
 		bool eom);
 
 	/**

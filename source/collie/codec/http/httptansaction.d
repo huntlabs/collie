@@ -84,7 +84,7 @@ interface HTTPTransactionHandler
    * is affected, check the direciont on the HTTPException. If the
    * direction is INGRESS, it MAY still be possible to send egress.
    */
-	void onError(string erromsg);
+	void onError(HTTPErrorCode erromsg);
 	
 	/**
    * If the remote side's receive buffer fills up, this callback will be
@@ -129,13 +129,13 @@ class HTTPTransaction
 //		size_t sendAbort(HTTPTransaction txn,
 //			HTTPErrorCode statusCode);
 
-		void sendWsBinary(ubyte[] data);
+		void sendWsBinary(HTTPTransaction txn,ubyte[] data);
 		
-		void sendWsText(string data);
+		void sendWsText(HTTPTransaction txn,string data);
 		
-		void sendWsPing(ubyte[] data);
+		void sendWsPing(HTTPTransaction txn,ubyte[] data);
 		
-		void sendWsPong(ubyte[] data);
+		void sendWsPong(HTTPTransaction txn,ubyte[] data);
 //		size_t sendPriority(HTTPTransaction txn,
 //			const http2::PriorityUpdate& pri);
 //		
@@ -170,6 +170,7 @@ class HTTPTransaction
 	@property HTTPTransactionHandler handler(){return _handler;}
 	@property void handler(HTTPTransactionHandler han){_handler = han;}
 
+	@property streamID(){return _id;}
 	@property transport(){return _transport;}
 
 	bool isUpstream() const {
@@ -237,6 +238,11 @@ class HTTPTransaction
 			_handler.onEOM();
 	}
 
+	void onErro(HTTPErrorCode erro)
+	{
+		if(_handler)
+			_handler.HTTPErrorCode(erro);
+	}
 	/**
    * Schedule or refresh the timeout for this transaction
    */
@@ -287,7 +293,7 @@ class HTTPTransaction
    *             chunk headers.
    */
 	void sendBody(ubyte[] body_){
-
+		transport.sendBody(this,body_);
 	}
 	
 	/**
@@ -298,12 +304,7 @@ class HTTPTransaction
    * @param length  Length in bytes of the body data to follow.
    */
 	void sendChunkHeader(size_t length) {
-//		CHECK(HTTPTransactionEgressSM::transit(
-//				egressState_, HTTPTransactionEgressSM::Event::sendChunkHeader));
-//		// TODO: move this logic down to session/codec
-//		if (!transport_.getCodec().supportsParallelRequests()) {
-//			chunkHeaders_.emplace_back(Chunk(length));
-//		}
+		transport.sendChunkHeader(length);
 	}
 	
 	/**
@@ -313,8 +314,7 @@ class HTTPTransaction
    * Frame begun by the last call to sendChunkHeader().
    */
 	void sendChunkTerminator() {
-//		CHECK(HTTPTransactionEgressSM::transit(
-//				egressState_, HTTPTransactionEgressSM::Event::sendChunkTerminator));
+		transport.sendChunkTerminator();
 	}
 	/**
    * Send part or all of the egress message body to the Transport. If flow
@@ -343,23 +343,25 @@ class HTTPTransaction
    *       per message.
    */
 	void sendEOM(){
-
+		transport.sendEOM();
 	}
 
 
 	void sendWsBinary(ubyte[] data)
-	{}
+	{
+		transport.sendWsBinary(data);
+	}
 
 	void sendWsText(string data){
-
+		transport.sendWsText(data);
 	}
 
 	void sendWsPing(ubyte[] data){
-
+		transport.sendWsPing(data);
 	}
 
 	void sendWsPong(ubyte[] data){
-
+		transport.sendWsPong(data);
 	}
 
 private:
