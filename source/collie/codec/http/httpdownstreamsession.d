@@ -19,6 +19,11 @@ protected:
 		auto handle =  _controller.getRequestHandler(txn,msg);
 		txn.handler(handle);
 	}
+
+	override bool onNativeProtocolUpgrade(StreamID stream,CodecProtocol protocol,string protocolString,HTTPMessage msg) {
+		return false;
+	}
+
 }
 
 

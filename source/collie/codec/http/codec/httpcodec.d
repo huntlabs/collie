@@ -282,9 +282,9 @@ abstract class HTTPCodec
    * Invoked on a codec that has been upgraded to via an HTTPMessage on
    * a different codec.  The codec may return false to halt the upgrade.
    */
-	bool onIngressUpgradeMessage(const HTTPMessage msg) {
-		return true;
-	}
+//	bool onIngressUpgradeMessage(const HTTPMessage msg) {
+//		return true;
+//	}
 	
 	/**
    * Check whether the codec can process new streams. Typically,
