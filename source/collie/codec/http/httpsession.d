@@ -17,17 +17,17 @@ abstract class HTTPSessionController
 {
 	HTTPTransactionHandler getRequestHandler(HTTPTransaction txn, HTTPMessage msg);
 
-	void attachSession(HTTPSession* session){}
+	void attachSession(HTTPSession session){}
 	
 	/**
    * Informed at the end when the given HTTPSession is going away.
    */
-	void detachSession(const HTTPSession* session){}
+	void detachSession(HTTPSession session){}
 	
 	/**
    * Inform the controller that the session's codec changed
    */
-	void onSessionCodecChange(HTTPSession* session) {}
+	void onSessionCodecChange(HTTPSession session) {}
 }
 
 /// HTTPSession will not send any read event
