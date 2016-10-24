@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.websocket;
-
+version(OLD_HTTP):
 import std.conv;
 import std.socket;
 import std.bitmanip;
