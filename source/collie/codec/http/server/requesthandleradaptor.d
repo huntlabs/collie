@@ -8,14 +8,14 @@ import collie.codec.http.headers;
 import collie.codec.http.server.requesthandler;
 import collie.codec.http.httptansaction;
 
-class RequestHandlerAdaptor : HTTPTransactionHandler,ResponseHandler
+class RequestHandlerAdaptor : 
+	ResponseHandler,HTTPTransactionHandler
 {
 	this(RequestHandler handler)
 	{
 		super(handler);
 	}
 
-private:
 	override void setTransaction(HTTPTransaction txn) {
 		_txn = txn;
 		_upstream.setResponseHandler(this);
@@ -59,6 +59,29 @@ private:
 			_upstream.onEOM();
 	}
 
+	override void onError(HTTPErrorCode erromsg)  {
+		_erro = true;
+		_upstream.onError(erromsg);
+	}
+
+	override void onEgressPaused() {}
+
+	override void onEgressResumed() {}
+
+
+	override void sendHeaders(HTTPMessage msg)
+	{
+		_responseStarted = true;
+		_txn.sendHeaders(msg);
+	}
+
+	override void sendChunkHeader(size_t len){_txn.sendChunkHeader(len);}
+
+	override void sendBody(ubyte[] data){_txn.sendBody(data);}
+
+	override void sendChunkTerminator(){_txn.sendChunkTerminator();}
+
+	override void sendEOM(){_txn.sendEOM();}
 
 private:
 	HTTPTransaction _txn;

@@ -34,7 +34,7 @@ abstract class RequestHandler
    * invoked after the response is fully sent. Once this callback has been
    * received, `downstream_` should be considered invalid.
    */
-	void requestComolete() nothrow;
+	void requestComplete() nothrow;
 
 	/**
    * Request failed. Maybe because of read/write error on socket or client

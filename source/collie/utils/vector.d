@@ -188,6 +188,30 @@ import std.exception;
         return _data[i];
     }
 
+	pragma(inline) size_t opDollar() const { return _len;}
+
+	pragma(inline) void opOpAssign(string op)(T value) if(op == "~")
+	{
+		insertBack(value);
+	}
+
+	pragma(inline) void opOpAssign(string op)(T[] value) if(op == "~")
+	{
+		insertBack(value);
+	}
+
+	pragma(inline) void opAssign(ref typeof(this) s)
+	{
+		this._len = s._len;
+		this._data = s._data.dup;
+	}
+
+	pragma(inline) void opAssign(T[] data)
+	{
+		this._len = data.length;
+		this._data = data.dup;
+	}
+
     pragma(inline, true) T at(size_t i)
     {
         assert(i < _len);

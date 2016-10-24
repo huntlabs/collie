@@ -12,9 +12,9 @@ abstract class ResponseHandler
 		_upstream = handle;
 	}
 
-	void sendHanders(HTTPMessage headers);
+	void sendHeaders(HTTPMessage headers);
 
-	void sendChunkHander(size_t len);
+	void sendChunkHeader(size_t len);
 
 	void sendBody(ubyte[] data);
 

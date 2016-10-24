@@ -96,26 +96,30 @@ final class ServerBootstrap(PipeLine)
         _address = new InternetAddress(ip, port);
     }
 
-    void stop()
+    void stopListening()
     {
-        if (!_runing)
+		if (!_listening)
             return;
+		scope(exit)_listening = false;
         foreach (ref accept; _serverlist)
         {
             accept.stop();
         }
         _mainAccept.stop();
-		if(_isLoopWait) {
-	        _group.stop();
-	        _loop.stop();
-		}
-        _runing = false;
-		_isLoopWait = false;
+
     }
+
+	void stop()
+	{
+		if(!_isLoopWait) return;
+		scope(exit) _isLoopWait = false;
+		_group.stop();
+		_loop.stop();
+	}
 
     void join()
     {
-        if (!_runing)
+		if (!_isLoopWait)
             return;
         if (_group)
             _group.wait();
@@ -123,21 +127,24 @@ final class ServerBootstrap(PipeLine)
 
     void waitForStop()
     {
-		start();
+		if(_isLoopWait)
+			throw new ServerIsRuningException("server is runing!");
+		if(!_listening)
+			startListening();
 		_isLoopWait = true;
 		if(_group)
 			_group.start();
 		_loop.run();
     }
 
-	void start()
+	void startListening()
 	{
-		if (_runing)
-			throw new ServerIsRuningException("server is runing!");
+		if (_listening)
+			throw new ServerIsListeningException("server is listening!");
 		if (_address is null || _childPipelineFactory is null)
 			throw new ServerStartException("the address or childPipelineFactory is null!");
 
-		_runing = true;
+		_listening = true;
 		uint wheel, time;
 		bool beat = getTimeWheelConfig(wheel, time);
 		_mainAccept = creatorAcceptor(_loop);
@@ -155,7 +162,7 @@ final class ServerBootstrap(PipeLine)
 					acceptor.startTimingWhile(wheel, time);
 			}
 		}
-		trace("server run!");
+		trace("server _listening!");
 	}
 
 	EventLoopGroup group(){return _group;}
@@ -168,7 +175,8 @@ protected:
     auto creatorAcceptor(EventLoop loop)
     {
         auto acceptor = new Acceptor(loop, _address.addressFamily == AddressFamily.INET6);
-        acceptor.reusePort = _rusePort;
+		if(_rusePort)
+        	acceptor.reusePort = _rusePort;
         acceptor.bind(_address);
         acceptor.listen(1024);
 		{
@@ -240,7 +248,7 @@ private:
     ServerAcceptor!(PipeLine)[] _serverlist;
     EventLoopGroup _group;
 
-    bool _runing = false;
+	bool _listening = false;
     bool _rusePort = true;
 	bool _isLoopWait = false;
     uint _timeOut = 0;

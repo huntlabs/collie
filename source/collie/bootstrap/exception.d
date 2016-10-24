@@ -13,6 +13,10 @@ mixin ExceptionBuild!("SSL", "CollieBoost");
 /// ServerIsRuningException : CollieBoostExceotion
 mixin ExceptionBuild!("ServerIsRuning", "CollieBoost");
 
+/// ServerIsListeningException : CollieBoostExceotion
+mixin ExceptionBuild!("ServerIsListening", "CollieBoost");
+
+
 /// ServerStartException : CollieBoostExceotion
 mixin ExceptionBuild!("ServerStart", "CollieBoost");
 

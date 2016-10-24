@@ -361,8 +361,10 @@ protected:
                         }
                         else
                         {
-                            error("read Erro Do Close the erro : ", errno,
-                                " the socket fd : ", fd);
+							import core.stdc.errno;
+							import core.stdc.string;
+							error("read Erro Do Close the erro code : ", errno, "  erro is : " ,strerror(errno), 
+                                " \n\tthe socket fd : ", fd);
                             onClose();
                             return;
                         }
@@ -370,8 +372,7 @@ protected:
                 }
                 catch (Exception e)
                 {
-					collectException(error("\n\n----tcp on read erro do Close! erro : ", e.toString(),
-                        "\n\n"));
+					collectException(error("\n\n----tcp on read erro do Close! erro : ", e.toString(),"\n\n"));
                     onClose();
                     return;
                 }
