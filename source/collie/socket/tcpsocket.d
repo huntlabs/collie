@@ -61,18 +61,14 @@ class TCPSocket : AsyncTransport, EventCallInterface
 
     ~this()
     {
+		import core.memory;
         scope (exit)
         {
             AsyncEvent.free(_event);
             _readBuffer = null;
         }
         _socket.destroy;
-        if (_event.isActive)
-        {
-            eventLoop.delEvent(_event);
-        }
-        import core.memory;
-
+		GC.free(cast(void *)_socket);
         GC.free(_readBuffer.ptr);
     }
 

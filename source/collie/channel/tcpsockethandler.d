@@ -40,8 +40,9 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
     {
         if (_isAttch && _socket) {
             _socket.close();
-        }
-        ctx.fireTransportInactive();
+		} else {
+        	ctx.fireTransportInactive();
+		}
     }
 
     override void write(Context ctx, ubyte[] msg, TheCallBack cback)

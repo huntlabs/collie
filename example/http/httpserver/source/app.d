@@ -84,11 +84,12 @@ void main()
 	trace("----------");
 	HTTPServerOptions option = new HTTPServerOptions();
 	option.handlerFactories.insertBack(toDelegate(&newHandler));
- 
-	HTTPServer server = new HTTPServer(option);
+	option.threads = 4;
 
 	HTTPServerOptions.IPConfig ipconfig ;
 	ipconfig.address = new InternetAddress("0.0.0.0", 8081);
+
+	HTTPServer server = new HTTPServer(option);
 	server.addBind(ipconfig);
 	server.start();
 }

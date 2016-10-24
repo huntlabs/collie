@@ -98,6 +98,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 			_transaction.onErro(HTTPErrorCode.REMOTE_CLOSED);
 			_transaction.onDelayedDestroy();
 		}
+		trace("connect closed!");
 	}
 
 	override void timeOut(Context ctx) {
@@ -281,7 +282,7 @@ protected:
 protected:
 	void writeCallBack(bool isLast,HTTPTransaction txn,ubyte[] data,uint size)
 	{
-		trace(cast(string)data);
+		//trace(cast(string)data);
 		import collie.utils.memory;
 		gcFree(data);
 		if(isLast && txn)
