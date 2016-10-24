@@ -365,6 +365,17 @@ class HTTPTransaction
 		transport.sendWsPong(this,data);
 	}
 
+package:
+	void onDelayedDestroy()
+	{
+		if(deleting) return;
+		deleting = true;
+		if(_handler)
+			_handler.detachTransaction();
+		_transport.detach(this);
+		import collie.utils.memory;
+		gcFree(this);
+	}
 private:
 	HTTPCodec.StreamID _id;
 	Transport _transport;
@@ -372,6 +383,7 @@ private:
 	TransportDirection _direction;
 	uint _seqNo;
 
+	bool deleting = false;
 private:
 	ushort _lastResponseStatus;
 }

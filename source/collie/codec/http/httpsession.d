@@ -111,7 +111,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	{
 		HVector tdata;
 		_codec.generateHeader(txn.streamID,headers,tdata,eom);
-		write(context,tdata.data(true),bind(&writeCallBack,eom));
+		write(context,tdata.data(true),bind(&writeCallBack,eom,txn));
 	}
 	
 	override size_t sendBody(HTTPTransaction txn,
@@ -120,7 +120,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	{
 		HVector tdata = HVector(data,false);
 		size_t rlen = getCodec.generateBody(txn.streamID,tdata,eom);
-		write(context,tdata.data(true),bind(&writeCallBack,eom));
+		write(context,tdata.data(true),bind(&writeCallBack,eom,txn));
 		return rlen;
 	}
 	
@@ -128,7 +128,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	{
 		HVector tdata;
 		size_t rlen = _codec.generateChunkHeader(txn.streamID,tdata,length);
-		write(context,tdata.data(true),bind(&writeCallBack,false));
+		write(context,tdata.data(true),bind(&writeCallBack,false,txn));
 		return rlen;
 	}
 
@@ -137,7 +137,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	{
 		HVector tdata;
 		size_t rlen = _codec.generateChunkTerminator(txn.streamID,tdata);
-		write(context,tdata.data(true),bind(&writeCallBack,true));
+		write(context,tdata.data(true),bind(&writeCallBack,true,txn));
 		return rlen;
 	}
 	
@@ -147,7 +147,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 		HVector tdata;
 		size_t rlen = _codec.generateEOM(txn.streamID,tdata);
 		if(rlen)
-			write(context,tdata.data(true),bind(&writeCallBack,true));
+			write(context,tdata.data(true),bind(&writeCallBack,true,txn));
 		return rlen;
 	}
 	
@@ -264,12 +264,14 @@ protected:
 		HTTPMessage msg);
 
 protected:
-	void writeCallBack(bool isLast,ubyte[] data,uint size)
+	void writeCallBack(bool isLast,HTTPTransaction txn,ubyte[] data,uint size)
 	{
 		if(isLast && _codec.shouldClose)
 			close(context);
 		import collie.utils.memory;
 		gcFree(data);
+		if(isLast)
+			txn.onDelayedDestroy();
 	}
 protected:
 	//HTTPTransaction[HTTPCodec.StreamID] _transactions;

@@ -22,10 +22,12 @@ class RequestHandlerAdaptor :
 	}
 
 	override void detachTransaction() {
+		_txn = null;
 		if(!_erro) {
 			_upstream.requestComplete();
 		}
-		// delete this
+		import collie.utils.memory;
+		gcFree(this);
 	}
 
 	override void onHeadersComplete(HTTPMessage msg) {
@@ -72,16 +74,17 @@ class RequestHandlerAdaptor :
 	override void sendHeaders(HTTPMessage msg)
 	{
 		_responseStarted = true;
-		_txn.sendHeaders(msg);
+		if(_txn)
+			_txn.sendHeaders(msg);
 	}
 
-	override void sendChunkHeader(size_t len){_txn.sendChunkHeader(len);}
+	override void sendChunkHeader(size_t len){if(_txn)_txn.sendChunkHeader(len);}
 
-	override void sendBody(ubyte[] data){_txn.sendBody(data);}
+	override void sendBody(ubyte[] data){if(_txn)_txn.sendBody(data);}
 
-	override void sendChunkTerminator(){_txn.sendChunkTerminator();}
+	override void sendChunkTerminator(){if(_txn)_txn.sendChunkTerminator();}
 
-	override void sendEOM(){_txn.sendEOM();}
+	override void sendEOM(){if(_txn)_txn.sendEOM(); _responseStarted = false;}
 
 private:
 	HTTPTransaction _txn;
