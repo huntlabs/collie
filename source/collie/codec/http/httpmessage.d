@@ -1,6 +1,7 @@
 ﻿module collie.codec.http.httpmessage;
 
 import collie.codec.http.headers;
+import collie.codec.http.exception;
 
 import std.typecons;
 import std.typetuple;
@@ -10,7 +11,7 @@ import std.conv;
 import std.exception;
 import std.string;
 
-class HTTPMessage
+final class HTTPMessage
 {
 	this()
 	{}
@@ -145,21 +146,24 @@ class HTTPMessage
 	/**
    * Access the path component (fpreq)
    */
-	string getPath() const {
+	string getPath()
+	{
 		return request()._path;
 	}
 	
 	/**
    * Access the query component (fpreq)
    */
-	string getQueryString() const {
+	string getQueryString()
+	{
 		return request()._query;
 	}
 
 	@property void statusMessage(string msg) {
 		response()._statusMsg = msg;
 	}
-	@property string statusMessage() const {
+	@property string statusMessage()
+	{
 		return response()._statusMsg;
 	}
 
@@ -170,7 +174,8 @@ class HTTPMessage
 	{
 		response()._status = status;
 	}
-	@property ushort statusCode() const
+
+	@property ushort statusCode()
 	{
 		return response()._status;
 	}
@@ -226,7 +231,7 @@ class HTTPMessage
 	/**
    * Returns true if this is a 1xx response.
    */
-	bool is1xxResponse() const { return (statusCode() / 100) == 1; }
+	bool is1xxResponse(){ return (statusCode() / 100) == 1; }
 
 	/**
    * Fill in the fields for a response message header that the server will
@@ -345,14 +350,14 @@ class HTTPMessage
    * @returns true if this HTTPMessage represents an HTTP request
    */
 	bool isRequest() const {
-		return _fields.peek!Request() ! is null;
+		return _isRequest == MegType.Request_;
 	}
 	
 	/**
    * @returns true if this HTTPMessage represents an HTTP response
    */
 	bool isResponse() const {
-		return _fields.peek!Response() ! is null;
+		return _isRequest == MegType.Response_;
 	}
 
 	static string statusText(int code)
@@ -500,33 +505,38 @@ protected:
 		string _query;
 		string _url;
 			
-		ushort _pushStatus;
-		string _pushStatusStr;
+		//ushort _pushStatus;
+		//string _pushStatusStr;
 	}
 	
 	struct Response 
 	{
-		ushort _status;
+		ushort _status = 200;
 		string _statusStr;
 		string _statusMsg;
 	}
 
-	inout(Request) request() inout
+	ref Request request() 
 	{
-		if(_fields.type == typeid(null)) {
-			//Request req;
-			//_fields = Variant(req);
+		if(_isRequest == MegType.Null_) {
+			_isRequest = MegType.Response_;
+			_resreq.req = Request();
+		} else if(_isRequest == MegType.Request_){
+			throw new HTTPMessageTypeException("the message type is Request not Response");
 		}
-		return _fields.get!Request();
+		return _resreq.req;
 	}
 
-	inout(Response) response() inout
+	ref Response response()
 	{
-		if(_fields.type == typeid(null)) {
-			//Response res;
-			//_fields = Variant(res);
+		if(_isRequest == MegType.Null_) {
+			_isRequest = MegType.Request_;
+			_resreq.res = Response();
+		} else if(_isRequest == MegType.Response_){
+			throw new HTTPMessageTypeException("the message type is Response not Request");
 		}
-		return _fields.get!Response();
+
+		return _resreq.res;
 	}
 
 protected:
@@ -550,6 +560,18 @@ protected:
 		_parsedQueryParams = false;
 	}
 
+	union Req_Res
+	{
+		Request req;
+		Response res;
+	}
+
+	enum MegType : ubyte{
+		Null_,
+		Request_,
+		Response_,
+	}
+
 private:
 	Address _dstAddress;
 	string _dstIP;
@@ -557,7 +579,8 @@ private:
 		
 	string _localIP;
 	string _versionStr;
-	Variant _fields;
+	MegType _isRequest = MegType.Null_;
+	Req_Res _resreq;
 private:
 	ubyte[2] _version;
 	HTTPHeaders _headers;

@@ -87,8 +87,10 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	}
 
 	override void transportInactive(Context ctx) {
-		if(_transaction)
+		if(_transaction) {
 			_transaction.onErro(HTTPErrorCode.REMOTE_CLOSED);
+			_transaction.onDelayedDestroy();
+		}
 	}
 
 	override void timeOut(Context ctx) {
@@ -171,7 +173,10 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	{}
 	
 	override void detach(HTTPTransaction txn)
-	{}
+	{
+		if(txn is _transaction)
+			_transaction = null;
+	}
 	
 	//		void notifyIngressBodyProcessed(uint32_t bytes);
 	//		

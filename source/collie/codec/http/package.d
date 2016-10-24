@@ -10,4 +10,7 @@
  */
 module collie.codec.http;
 
-
+public import collie.codec.http.headers;
+public import collie.codec.http.httpmessage;
+public import collie.codec.http.errocode;
+public import collie.codec.http.exception;
