@@ -72,6 +72,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 
 	//HandlerAdapter {
 	override void read(Context ctx,ubyte[] msg) {
+		trace("read data!!!");
 		_codec.onIngress(msg);
 	}
 
@@ -83,6 +84,12 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 		} else {
 			_localAddr = sock.localAddress;
 			_peerAddr = sock.remoteAddress;
+		}
+		{
+			Linger optLinger;
+			optLinger.on = 1;
+			optLinger.time = 0;
+			sock.setOption(SocketOptionLevel.SOCKET, SocketOption.LINGER, optLinger);
 		}
 	}
 
@@ -129,7 +136,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	override size_t sendChunkHeader(HTTPTransaction txn,size_t length)
 	{
 		HVector tdata;
-		size_t rlen = _codec.generateChunkHeader(txn.streamID,tdata,length);
+		size_t rlen = getCodec.generateChunkHeader(txn.streamID,tdata,length);
 		write(context,tdata.data(true),bind(&writeCallBack,false,txn));
 		return rlen;
 	}
@@ -138,7 +145,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	override size_t sendChunkTerminator(HTTPTransaction txn)
 	{
 		HVector tdata;
-		size_t rlen = _codec.generateChunkTerminator(txn.streamID,tdata);
+		size_t rlen = getCodec.generateChunkTerminator(txn.streamID,tdata);
 		write(context,tdata.data(true),bind(&writeCallBack,true,txn));
 		return rlen;
 	}
@@ -146,8 +153,9 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	
 	override size_t sendEOM(HTTPTransaction txn)
 	{
+		trace("send eom!!");
 		HVector tdata;
-		size_t rlen = _codec.generateEOM(txn.streamID,tdata);
+		size_t rlen = getCodec.generateEOM(txn.streamID,tdata);
 		if(rlen)
 			write(context,tdata.data(true),bind(&writeCallBack,true,txn));
 		return rlen;
@@ -203,12 +211,14 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	override void onMessageBegin(StreamID stream, HTTPMessage msg)
 	{
 		//_transaction = new HTTPTransaction(_codec.getTransportDirection,stream,0,this);
+		trace("begin a http requst or reaponse!");
 	}
 
 	override void onHeadersComplete(StreamID stream,
 		HTTPMessage msg){
 		_transaction = new HTTPTransaction(_codec.getTransportDirection,stream,0,this);
 		setupOnHeadersComplete(_transaction,msg);
+		_transaction.onIngressHeadersComplete(msg);
 	}
 
 	override void onBody(StreamID stream,const ubyte[] data){
@@ -265,18 +275,21 @@ protected:
    * upstream to do any setup (like preparing a handler) when headers are
    * first received from the remote side on a given transaction.
    */
-	void setupOnHeadersComplete(HTTPTransaction txn,
+	void setupOnHeadersComplete(ref HTTPTransaction txn,
 		HTTPMessage msg);
 
 protected:
 	void writeCallBack(bool isLast,HTTPTransaction txn,ubyte[] data,uint size)
 	{
-		if(isLast && _codec.shouldClose)
-			close(context);
+		trace(cast(string)data);
 		import collie.utils.memory;
 		gcFree(data);
-		if(isLast)
+		if(isLast && txn)
 			txn.onDelayedDestroy();
+		if(isLast && _codec.shouldClose) {
+			trace("\t\t --------do close!!!");
+			close(context);
+		}
 	}
 protected:
 	//HTTPTransaction[HTTPCodec.StreamID] _transactions;

@@ -10,6 +10,7 @@ import std.variant;
 import std.conv;
 import std.exception;
 import std.string;
+public import std.experimental.logger;
 
 final class HTTPMessage
 {
@@ -183,7 +184,7 @@ final class HTTPMessage
 	/**
    * Access the headers (fpreq, fpres)
    */
-	inout(HTTPHeaders) getHeaders() inout { return _headers; }
+	ref HTTPHeaders getHeaders(){ return _headers; }
 
 	/**
    * Decrements Max-Forwards header, when present on OPTIONS or TRACE methods.
@@ -519,10 +520,10 @@ protected:
 	ref Request request() 
 	{
 		if(_isRequest == MegType.Null_) {
-			_isRequest = MegType.Response_;
+			_isRequest = MegType.Request_;
 			_resreq.req = Request();
-		} else if(_isRequest == MegType.Request_){
-			throw new HTTPMessageTypeException("the message type is Request not Response");
+		} else if(_isRequest == MegType.Response_){
+			throw new HTTPMessageTypeException("the message type is Response not Request");
 		}
 		return _resreq.req;
 	}
@@ -530,10 +531,10 @@ protected:
 	ref Response response()
 	{
 		if(_isRequest == MegType.Null_) {
-			_isRequest = MegType.Request_;
+			_isRequest = MegType.Response_;
 			_resreq.res = Response();
-		} else if(_isRequest == MegType.Response_){
-			throw new HTTPMessageTypeException("the message type is Response not Request");
+		} else if(_isRequest == MegType.Request_){
+			throw new HTTPMessageTypeException("the message type is Request not Response");
 		}
 
 		return _resreq.res;
@@ -592,6 +593,6 @@ private:
 	bool _parsedQueryParams = false;
 	bool _chunked = false;
 	bool _upgraded = false;
-	bool _wantsKeepalive = false;
+	bool _wantsKeepalive = true;
 }
 

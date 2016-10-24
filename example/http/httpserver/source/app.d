@@ -11,6 +11,8 @@
 import std.stdio;
 import std.experimental.logger;
 import std.exception;
+import std.typecons;
+import std.functional;
 
 import collie.channel;
 import collie.bootstrap.server;
@@ -19,41 +21,74 @@ import collie.socket;
 import collie.codec.http;
 import collie.codec.http.server;
 
-import webfrom;
-
 debug { 
         extern(C) __gshared string[] rt_options = [ "gcopt=profile:1"];// maxPoolSize:50" ];
 }
 
 class MyHandler : RequestHandler
 {
-	void onResquest(HTTPMessage headers) nothrow
+	override void onResquest(HTTPMessage headers) nothrow
 	{
 		_header = headers;
 		collectException({
-				writeln("---new HTTP request!");
-				writeln("path is : ", _header.url);
-			});
+			trace("************************");
+			writeln("---new HTTP request!");
+			writeln("path is : ", _header.url);
+			}());
 	}
 
-	void onBody(const ubyte[] data) nothrow
-	{}
+	override void onBody(const ubyte[] data) nothrow
+	{
+		collectException({
+				writeln("body is : ", cast(string) data);
+			}());
+	}
 
-	void onEOM() nothrow
-	{}
+	override void onEOM() nothrow
+	{
+		collectException({
+				ResponseBuilder build = new ResponseBuilder(_downstream);// scoped!ResponseBuilder(_downstream);
+				build.status(200,HTTPMessage.statusText(200));
+				build.setBody(cast(ubyte[])"string hello = \"hello world!!\";");
+				build.sendWithEOM();
+			}());
+	}
 
-	void requestComplete() nothrow
-	{}
+	override void requestComplete() nothrow
+	{
+		collectException({
+				import collie.utils.memory;
+				gcFree(_header);
+				gcFree(this);
+			}());
+	}
 
 private:
 	HTTPMessage _header;
+}
+
+
+RequestHandler newHandler(RequestHandler,HTTPMessage)
+{
+
+	 auto handler = new MyHandler();
+	trace("----------newHandler, handle is : ", cast(void *)handler);
+	return handler;
 }
 
 void main()
 {
     
     writeln("Edit source/app.d to start your project.");
-    globalLogLevel(LogLevel.warning);
-    
+    //globalLogLevel(LogLevel.warning);
+	trace("----------");
+	HTTPServerOptions option = new HTTPServerOptions();
+	option.handlerFactories.insertBack(toDelegate(&newHandler));
  
+	HTTPServer server = new HTTPServer(option);
+
+	HTTPServerOptions.IPConfig ipconfig ;
+	ipconfig.address = new InternetAddress("0.0.0.0", 8081);
+	server.addBind(ipconfig);
+	server.start();
 }

@@ -31,7 +31,9 @@ class RequestHandlerAdaptor :
 	}
 
 	override void onHeadersComplete(HTTPMessage msg) {
+		trace("onHeadersComplete , erro is : ", _erro , " _upstream is ", cast(void *)_upstream);
 		if(msg.getHeaders.exists(HTTPHeaderCode.EXPECT)) {
+			trace("has header EXPECT--------");
 			string str = msg.getHeaders.getSingleOrEmpty(HTTPHeaderCode.EXPECT);
 			if(!isSame(str,"100-continue")) {
 //				ResponseBuilder(this)
@@ -80,7 +82,7 @@ class RequestHandlerAdaptor :
 
 	override void sendChunkHeader(size_t len){if(_txn)_txn.sendChunkHeader(len);}
 
-	override void sendBody(ubyte[] data){if(_txn)_txn.sendBody(data);}
+	override void sendBody(ubyte[] data, bool iseom = false){if(_txn)_txn.sendBody(data,iseom);}
 
 	override void sendChunkTerminator(){if(_txn)_txn.sendChunkTerminator();}
 

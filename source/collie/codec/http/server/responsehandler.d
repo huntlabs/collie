@@ -16,7 +16,7 @@ abstract class ResponseHandler
 
 	void sendChunkHeader(size_t len);
 
-	void sendBody(ubyte[] data);
+	void sendBody(ubyte[] data,bool iseom = false);
 
 	void sendChunkTerminator();
 

@@ -18,6 +18,7 @@ import collie.socket.eventloopgroup;
 
 import std.socket;
 import std.experimental.allocator.gc_allocator;
+import std.experimental.logger;
 
 
 alias HTTPPipeline = Pipeline!(ubyte[],ubyte[]);
@@ -44,6 +45,7 @@ final class HTTPServer : HTTPSessionController
 		_ipconfigs = addrs;
 		for(size_t i = 0; i < _servers.length; ++i)
 		{
+			trace("start listen!!!");
 			_servers[i].stopListening();
 		}
 		_servers.clear();
@@ -55,6 +57,7 @@ final class HTTPServer : HTTPSessionController
 
 	void addBind(ref HTTPServerOptions.IPConfig addr)
 	{
+		trace("",_isStart);
 		if(_isStart) return;
 		newServer(addr);
 		_ipconfigs.insertBack(addr);
@@ -62,9 +65,12 @@ final class HTTPServer : HTTPSessionController
 
 	void start()
 	{
+		trace("start ",_isStart);
 		if(_isStart) return;
+		_isStart = true;
 		for(size_t i = 0; i < _servers.length; ++i)
 		{
+			trace("start listen ---");
 			_servers[i].startListening();
 		}
 		if(_group)
@@ -124,6 +130,7 @@ protected:
 		ser.pipeline(new shared ServerAccpeTFactory(ipconfig));
 		ser.heartbeatTimeOut(cast(uint)_options.timeOut);
 		ser.bind(ipconfig.address);
+		_servers.insertBack(ser);
 	}
 private:
 	SVector _servers;
@@ -170,6 +177,7 @@ class ServerAccpeTFactory : AcceptPipelineFactory
 	}
 
 	override AcceptPipeline newPipeline(Acceptor acceptor) {
+		trace("--new accpetPipeLine");
 		AcceptPipeline pipe = AcceptPipeline.create();
 		HTTPServer.setAcceptorConfig(_conf,acceptor);
 		return pipe;

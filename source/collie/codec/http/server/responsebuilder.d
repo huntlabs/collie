@@ -71,7 +71,10 @@ final class ResponseBuilder
 		if(_headers && _sendEOM) chunked = false;
 
 		if(_headers){
-			if(_headers.isResponse() && _headers.statusCode >= 200) {
+			trace("is isResponse : ",_headers.isResponse());
+			trace("_headers.statusCode : ", _headers.statusCode);
+			if(_headers.isResponse() && (_headers.statusCode >= 200)) {
+				trace("is chanlk , ", chunked);
 				if(chunked) {
 					_headers.chunked(true);
 				} else {
@@ -85,12 +88,14 @@ final class ResponseBuilder
 				_txn.sendChunkHeader(_body.length);
 				_txn.sendBody(_body.data(true));
 				_txn.sendChunkTerminator();
+				if(_sendEOM) 
+					_txn.sendEOM();
 			} else {
-				_txn.sendBody(_body.data(true));
+				_txn.sendBody(_body.data(true),_sendEOM);
 			}
-		}
-		if(_sendEOM)
+		} else if(_sendEOM) {
 			_txn.sendEOM();
+		}
 	}
 
 	void acceptUpgradeRequest(bool connect_req,string upgradeProtocol = "") 

@@ -5,6 +5,7 @@ import collie.codec.http.httpmessage;
 import collie.codec.http.errocode;
 
 import std.socket;
+public import std.experimental.logger;
 
 enum TransportDirection : ubyte {
 	DOWNSTREAM,  // toward the client
@@ -195,6 +196,7 @@ class HTTPTransaction
    */
 	void onIngressHeadersComplete(HTTPMessage msg)
 	{
+		trace("onIngressHeadersComplete handle is ", (handler is null));
 		if(isUpstream() && msg.isResponse()) {
 			_lastResponseStatus = msg.statusCode;
 		}
@@ -293,8 +295,8 @@ class HTTPTransaction
    *             applying any necessary protocol framing, such as
    *             chunk headers.
    */
-	void sendBody(ubyte[] body_){
-		transport.sendBody(this,body_, false);
+	void sendBody(ubyte[] body_, bool iseom = false){
+		transport.sendBody(this,body_, iseom);
 	}
 	
 	/**

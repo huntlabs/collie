@@ -9,7 +9,7 @@
  *
  */
 //module hunt.http.webfrom;
-
+version(OLD_HTTP):
 import collie.codec.http;
 import collie.buffer;
 

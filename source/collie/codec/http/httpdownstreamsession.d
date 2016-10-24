@@ -13,7 +13,7 @@ final class HTTPDownstreamSession : HTTPSession
 	}
 
 protected:
-	override void setupOnHeadersComplete(HTTPTransaction txn,
+	override void setupOnHeadersComplete(ref HTTPTransaction txn,
 		HTTPMessage msg)
 	{
 		auto handle =  _controller.getRequestHandler(txn,msg);

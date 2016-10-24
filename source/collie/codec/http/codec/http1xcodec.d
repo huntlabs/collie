@@ -89,7 +89,10 @@ class HTTP1XCodec : HTTPCodec
 		bool hasTransferEncodingChunked = false;
 		bool hasUpgradeHeader = false;
 		bool hasDateHeader = false;
+		bool is1xxResponse = false;
+		_keepalive = _keepalive & msg.wantsKeepAlive;
 		if(!upstream) {
+			is1xxResponse = msg.is1xxResponse;
 			appendLiteral(buffer,"HTTP/");
 			appendLiteral(buffer,to!string(hversion.maj));
 			appendLiteral(buffer,".");
@@ -98,7 +101,7 @@ class HTTP1XCodec : HTTPCodec
 			int code = msg.statusCode;
 			appendLiteral(buffer,to!string(code));
 			appendLiteral(buffer," ");
-			appendLiteral(buffer,HTTPMessage.statusText(code));
+			appendLiteral(buffer,msg.statusMessage);
 		} else {
 			appendLiteral(buffer,msg.methodString);
 			appendLiteral(buffer," ");
@@ -109,6 +112,7 @@ class HTTP1XCodec : HTTPCodec
 			appendLiteral(buffer,to!string(hversion.min));
 			_mayChunkEgress = msg.isHTTP1_1();
 		}
+		appendLiteral(buffer,"\r\n");
 		_egressChunked &= _mayChunkEgress;
 		string contLen;
 		string upgradeHeader;
@@ -148,7 +152,7 @@ class HTTP1XCodec : HTTPCodec
 		if(bodyCheck && contLen.length == 0 && _egressChunked){
 			appendLiteral(buffer,"Transfer-Encoding: chunked\r\n");
 		}
-		if(upstream || hasUpgradeHeader){
+		if(!is1xxResponse || upstream || hasUpgradeHeader){
 			appendLiteral(buffer,"Connection: ");
 			if(hasUpgradeHeader) {
 				appendLiteral(buffer,"upgrade\r\n");
@@ -215,7 +219,7 @@ class HTTP1XCodec : HTTPCodec
 		ref HVector buffer)
 	{
 		size_t rlen = 0;
-		assert(stream == _egressTxnID);
+		//assert(stream == _egressTxnID);
 		if(_egressChunked) {
 			assert(!_inChunk);
 			if(!_lastChunkWritten)
@@ -275,12 +279,13 @@ protected:
 		_egressUpgrade = parser.isUpgrade;
 		_message.upgraded(parser.isUpgrade);
 		int klive = parser.keepalive;
+		trace("++++++++++klive : ", klive);
 		switch(klive){
 			case 1:
-				_keepalive = false;
+				_keepalive = true;
 				break;
 			case 2:
-				_keepalive = true;
+				_keepalive = false;
 				break;
 			default :
 				_keepalive = false;
