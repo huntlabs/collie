@@ -18,7 +18,6 @@ import std.exception;
 
 @trusted struct Vector(T, Allocator = GCAllocator, bool addInGC = true)
 {
-    alias TSize = stateSize!T;
 	enum addToGC = addInGC && hasIndirections!T && !is(Allocator == GCAllocator);
 
     this(size_t size) 
@@ -60,6 +59,7 @@ import std.exception;
             static if (addToGC)
                 GC.removeRange(_data.ptr);
             _alloc.deallocate(_data);
+			_data = null;
         }
     }
 

@@ -8,7 +8,7 @@ import collie.codec.http.headers;
 import collie.codec.http.server.requesthandler;
 import collie.codec.http.httptansaction;
 
-class RequestHandlerAdaptor : 
+final class RequestHandlerAdaptor : 
 	ResponseHandler,HTTPTransactionHandler
 {
 	this(RequestHandler handler)
@@ -64,6 +64,7 @@ class RequestHandlerAdaptor :
 	}
 
 	override void onError(HTTPErrorCode erromsg)  {
+		if(_erro) return;
 		_erro = true;
 		_upstream.onError(erromsg);
 	}

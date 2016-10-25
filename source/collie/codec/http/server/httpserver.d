@@ -98,6 +98,8 @@ protected:
 		{
 			req = _options.handlerFactories[i](req,msg);
 		}
+		if(req is null)
+			return null;
 		import collie.codec.http.server.requesthandleradaptor;
 		RequestHandlerAdaptor ada = new RequestHandlerAdaptor(req);
 		ada.setTransaction(txn);

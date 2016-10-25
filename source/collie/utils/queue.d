@@ -25,10 +25,10 @@ import std.traits;
         Allocator = which type Allocator will used
 */
 
-@trusted struct Queue(T, bool autoExten = false, bool addToGC = hasIndirections!T,
-    Allocator = Mallocator)
+@trusted struct Queue(T, Allocator = Mallocator, bool autoExten = false, bool addInGC = true)
 {
-    alias TSize = stateSize!T;
+    enum TSize = T.sizeof;
+	enum addToGC = addInGC && hasIndirections!T && !is(Allocator == GCAllocator);
     /**
         Params:
             size        =  the queue init size. 

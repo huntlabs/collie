@@ -17,6 +17,18 @@ protected:
 		HTTPMessage msg)
 	{
 		auto handle =  _controller.getRequestHandler(txn,msg);
+		if(handle is null)
+		{
+			try{
+				import collie.codec.http.headers;
+				import std.typecons;
+				scope HTTPMessage rmsg = new HTTPMessage();
+				rmsg.statusCode = 404;
+				rmsg.statusMessage = HTTPMessage.statusText(404);
+				rmsg.getHeaders.add(HTTPHeaderCode.CONNECTION,"close");
+				sendHeaders(txn,rmsg,true);
+			}catch{}
+		}
 		txn.handler(handle);
 	}
 

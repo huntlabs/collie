@@ -30,33 +30,44 @@ class MyHandler : RequestHandler
 	override void onResquest(HTTPMessage headers) nothrow
 	{
 		_header = headers;
-		collectException({
-			trace("************************");
-			writeln("---new HTTP request!");
-			writeln("path is : ", _header.url);
-			}());
+//		collectException({
+//			trace("************************");
+//			writeln("---new HTTP request!");
+//			writeln("path is : ", _header.url);
+//			}());
 	}
 
 	override void onBody(const ubyte[] data) nothrow
 	{
-		collectException({
-				writeln("body is : ", cast(string) data);
-			}());
+//		collectException({
+//				writeln("body is : ", cast(string) data);
+//			}());
 	}
 
 	override void onEOM() nothrow
 	{
 		collectException({
-				ResponseBuilder build = new ResponseBuilder(_downstream);// scoped!ResponseBuilder(_downstream);
+				Unique!ResponseBuilder build = Unique!ResponseBuilder(new ResponseBuilder(_downstream));
+				//ResponseBuilder build = new ResponseBuilder(_downstream);// scoped!ResponseBuilder(_downstream);
 				build.status(200,HTTPMessage.statusText(200));
 				build.setBody(cast(ubyte[])"string hello = \"hello world!!\";");
 				build.sendWithEOM();
 			}());
 	}
 
+	override void onError(HTTPErrorCode code) nothrow {
+		collectException({
+				//writeln("on erro : ", code);
+				import collie.utils.memory;
+				gcFree(_header);
+				gcFree(this);
+			}());
+	}
+
 	override void requestComplete() nothrow
 	{
 		collectException({
+				//writeln("requestComplete : ");
 				import collie.utils.memory;
 				gcFree(_header);
 				gcFree(this);
@@ -80,7 +91,7 @@ void main()
 {
     
     writeln("Edit source/app.d to start your project.");
-    //globalLogLevel(LogLevel.warning);
+    globalLogLevel(LogLevel.warning);
 	trace("----------");
 	HTTPServerOptions option = new HTTPServerOptions();
 	option.handlerFactories.insertBack(toDelegate(&newHandler));

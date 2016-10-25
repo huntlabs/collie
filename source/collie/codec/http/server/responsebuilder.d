@@ -17,23 +17,23 @@ final class ResponseBuilder
 		_txn = txn;
 	}
 
-	ResponseBuilder promise(string url, string host,ubyte maj = 1, ubyte min = 1)
+	ResponseBuilder promise(string url, string host)
 	{
 		_headers = new HTTPMessage();
-		_headers.setHTTPVersion(maj,min);
 		_headers.url(url);
 		_headers.getHeaders.add(HTTPHeaderCode.HOST,host);
 		return this;
 	}
 
-	ResponseBuilder status(ushort code, string message,ubyte maj = 1, ubyte min = 1)
+	ResponseBuilder status(ushort code, string message)
 	{
 		_headers = new HTTPMessage();
-		_headers.setHTTPVersion(maj,min);
 		_headers.statusCode(code);
 		_headers.statusMessage(message);
 		return this;
 	}
+
+	//@property headers(){return _headers;}
 
 	ResponseBuilder header(T = string)(string name,T value)
 	{

@@ -44,7 +44,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         super(loop, TransportType.TCP);
         _socket = sock;
         _socket.blocking = false;
-        _writeQueue = Queue!(WriteSite, true, false, GCAllocator)(32);
+		_writeQueue = Queue!(WriteSite, GCAllocator, true, false)(32);
         _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
         _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true, true,
             true);
@@ -409,7 +409,7 @@ protected:
     import std.experimental.allocator.gc_allocator;
 
     Socket _socket;
-    Queue!(WriteSite, true, false, GCAllocator) _writeQueue;
+	Queue!(WriteSite,GCAllocator, true, false) _writeQueue;
     AsyncEvent* _event;
     ubyte[] _readBuffer;
 

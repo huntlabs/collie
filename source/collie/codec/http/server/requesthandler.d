@@ -45,8 +45,7 @@ abstract class RequestHandler
    * No more callbacks will be invoked after this. You should clean up after
    * yourself.
    */
-	void onError(HTTPErrorCode code) nothrow
-	{}
+	void onError(HTTPErrorCode code) nothrow;
 
 	void onFrame(ref WSFrame frame) nothrow
 	{}

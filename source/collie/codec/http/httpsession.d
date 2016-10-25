@@ -96,7 +96,6 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	override void transportInactive(Context ctx) {
 		if(_transaction) {
 			_transaction.onErro(HTTPErrorCode.REMOTE_CLOSED);
-			_transaction.onDelayedDestroy();
 		}
 		trace("connect closed!");
 	}

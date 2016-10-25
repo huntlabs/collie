@@ -245,6 +245,8 @@ class HTTPTransaction
 	{
 		if(_handler)
 			_handler.onError(erro);
+		_handler = null;
+		onDelayedDestroy();
 	}
 	/**
    * Schedule or refresh the timeout for this transaction
@@ -370,11 +372,13 @@ class HTTPTransaction
 package:
 	void onDelayedDestroy()
 	{
+		trace("deleting is ", deleting);
 		if(deleting) return;
 		deleting = true;
 		if(_handler)
 			_handler.detachTransaction();
-		_transport.detach(this);
+		if(_transport)
+			_transport.detach(this);
 		import collie.utils.memory;
 		gcFree(this);
 	}
