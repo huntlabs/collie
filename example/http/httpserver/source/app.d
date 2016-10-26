@@ -95,7 +95,7 @@ void main()
 	trace("----------");
 	HTTPServerOptions option = new HTTPServerOptions();
 	option.handlerFactories.insertBack(toDelegate(&newHandler));
-	option.threads = 4;
+	option.threads = 1;
 
 	HTTPServerOptions.IPConfig ipconfig ;
 	ipconfig.address = new InternetAddress("0.0.0.0", 8081);

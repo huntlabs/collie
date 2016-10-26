@@ -181,7 +181,7 @@ unittest
 {
     import std.stdio;
 
-    auto myq = Queue!(int, true, false)(5);
+    auto myq = Queue!(int)(5);
     writeln("init is empty = ", myq.empty);
     foreach (i; 0 .. 13)
     {
