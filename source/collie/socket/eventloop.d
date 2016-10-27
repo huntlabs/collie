@@ -13,7 +13,6 @@ module collie.socket.eventloop;
 import core.thread;
 import core.sync.mutex;
 import core.memory;
-import core.sync.mutex;
 
 import std.exception;
 import std.datetime;
