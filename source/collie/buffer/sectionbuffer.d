@@ -408,6 +408,10 @@ final class SectionBuffer : Buffer
         return _rSize;
     }
 
+	override size_t readPos() {
+		return _rSize;
+	}
+
     pragma(inline,true)
     @property readCount() const
     {

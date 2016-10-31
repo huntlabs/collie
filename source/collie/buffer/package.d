@@ -23,4 +23,6 @@ interface Buffer
 	size_t readAll(void delegate(in ubyte[]) cback);
 	
 	size_t readUtil(in ubyte[] data, void delegate(in ubyte[]) cback);
+
+	size_t readPos();
 }

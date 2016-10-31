@@ -46,6 +46,10 @@ class WrapBuffer : Buffer
 		_rsize = _rsize;
 	}
 
+	override size_t readPos() {
+		return _rsize;
+	}
+
 	ubyte[] data(bool all = false)
 	{
 		if (all){
