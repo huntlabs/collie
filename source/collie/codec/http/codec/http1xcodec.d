@@ -328,6 +328,8 @@ protected:
 	
 	void onUrl(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
+		//trace("on Url");
+		_message.method = parser.methodCode();
 		_currtKey.insertBack(data);
 		if(finish) {
 			ubyte[] tdata = _currtKey.data(true);
@@ -337,6 +339,7 @@ protected:
 	
 	void onStatus(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
+
 		_currtKey.insertBack(data);
 		if(finish) {
 			string sdata = cast(string)_currtKey.data(true);
@@ -347,11 +350,13 @@ protected:
 	
 	void onHeaderField(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
+		//trace("on onHeaderField");
 		_currtKey.insertBack(data);
 	}
 	
 	void onHeaderValue(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
+	//	trace("on onHeaderField");
 		_currtValue.insertBack(data);
 		if(finish){
 			string key = cast(string)_currtKey.data(true);

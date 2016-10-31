@@ -216,6 +216,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 
 	override void onHeadersComplete(StreamID stream,
 		HTTPMessage msg){
+		trace("onHeadersComplete ------");
 		_transaction = new HTTPTransaction(_codec.getTransportDirection,stream,0,this);
 		setupOnHeadersComplete(_transaction,msg);
 	}

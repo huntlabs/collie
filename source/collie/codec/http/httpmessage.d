@@ -132,9 +132,11 @@ final class HTTPMessage
 
 	@property void url(string url){ 
 		auto idx = url.indexOf('?');
-		if (idx != -1){
+		if (idx > 0){
 			request()._path = url[0..idx];
 			request()._query = url[idx+1..$];
+		} else {
+			request()._path = url;
 		}
 		request()._url = url;
 	}
