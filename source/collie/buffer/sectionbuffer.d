@@ -20,7 +20,7 @@ import std.experimental.allocator;
 import std.experimental.allocator.gc_allocator;
 import std.experimental.logger;
 
-import collie.buffer.buffer;
+import collie.buffer;
 import collie.utils.vector;
 import collie.utils.bytes;
 
@@ -161,7 +161,7 @@ final class SectionBuffer : Buffer
 
     }
 
-    override size_t read(size_t size, void delegate(in ubyte[]) cback) //回调模式，数据不copy
+	override size_t read(size_t size,scope void delegate(in ubyte[]) cback) //回调模式，数据不copy
     {
         size_t len = _wSize - _rSize;
         size_t maxlen = size < len ? size : len;
@@ -228,113 +228,60 @@ final class SectionBuffer : Buffer
     }
 
     pragma(inline)
-    ubyte[] readLine(bool hasRN = false)() //返回的数据有copy
+    ubyte[] readLine() //返回的数据有copy
     {
       //  ubyte[] rbyte;
 		auto rbyte = appender!(ubyte[])();
-		auto len = readLine!(hasRN)(delegate(in ubyte[] data) { rbyte.put(data);/*rbyte ~= data;*/ });
+		auto len = readLine(delegate(in ubyte[] data) { rbyte.put(data);/*rbyte ~= data;*/ });
         return rbyte.data;
     }
-
-    size_t readLine(bool hasRN = false)(void delegate(in ubyte[]) cback) //回调模式，数据不copy
+	/*
+	 * 会自动跳过找到的\r\n字段
+	**/
+	override size_t readLine(scope void delegate(in ubyte[]) cback) //回调模式，数据不copy
     {
         if (isEof())
             return 0;
-        size_t rcount = readCount();
-        size_t rsite = readSite();
-        //bool crcf = false;
-        size_t size = _rSize;
-        ubyte[] rbyte;
-        size_t wsite = writeSite();
-        size_t wcount = writeCount();
-        ubyte[] byptr, by;
-        while (rcount <= wcount && !isEof())
+		size_t size = _rSize;
+		size_t wsite = writeSite();
+		size_t wcount = writeCount();
+		ubyte[] byptr, by;
+        while (!isEof())
         {
-            by = _buffer[rcount];
-            if (rcount == wcount)
-            {
-                byptr = by[rsite .. wsite];
-            }
-            else
-            {
-                byptr = by[rsite .. $];
-            }
-			ptrdiff_t site = findCharByte(byptr,cast(ubyte)('\n'));
-            if (site == -1)
-            {
-                if (rbyte.length > 0)
-                {
-                    cback(rbyte);
-                    rbyte = null;
-                }
-                rbyte = byptr;
-                rsite = 0;
-                ++rcount;
-                _rSize += rbyte.length;
-            }
-            else if (rbyte.length > 0 && site == 0)
-            {
-                ++_rSize;
-                static if (!hasRN)
-                {
-                    auto len = rbyte.length - 1;
-                    if (rbyte[len] == '\r')
-                    {
-                        if (len == 0)
-                        {
-                            _rSize += _rSize;
-                            return _rSize - size;
-                        }
-                        rbyte = rbyte[0 .. len];
-                    }
-                }
-                cback(rbyte);
-                static if (hasRN)
-                {
-                    cback(byptr[0 .. 1]);
-                }
-                rbyte = null;
-                break;
-            }
-            else
-            {
-                ++_rSize;
-                if (site == 0)
-                {
-                    static if (hasRN)
-                    {
-                        cback(byptr[0 .. 1]);
-                    }
-                    return _rSize - size;
-                }
-                cback(rbyte);
-                rbyte = null;
-                rbyte = byptr[0 .. (site + 1)];
-                _rSize += site; //rbyte.length;
-                static if (!hasRN)
-                {
-                    auto len = rbyte.length - 2;
-                    if (rbyte[len] == '\r')
-                    {
-                        if (len == 0)
-                            return _rSize - size;
-                        rbyte = rbyte[0 .. len];
-                    }
-                }
-                cback(rbyte);
-                rbyte = null;
-                break;
-            }
-        }
+			size_t rcount = readCount();
+			size_t rsite = readSite();
+			by = _buffer[rcount];
+			if (rcount == wcount){
+				byptr = by[rsite .. wsite];
+			} else {
+				byptr = by[rsite .. $];
+			}
+			ptrdiff_t site = findCharByte(byptr,cast(ubyte)'\n');
+			if (site < 0){
+				cback(byptr);
+				rsite = 0;
+				++rcount;
+				_rSize += byptr.length;
+			} else {
+				auto tsize = (_rSize + site);
+				if(site > 0){
+					size_t ts = site -1;
+					if(byptr[ts] == cast(ubyte)'\r') {
+						site = ts;
+					}
+				}
+				cback(byptr[0 .. site]);
 
-        if (rbyte.length > 0)
-        {
-            cback(rbyte);
+				_rSize = tsize + 1;
+				size += 1;
+				break;
+			}
+
         }
         return _rSize - size;
     }
 
-    size_t readAll(void delegate(in ubyte[]) cback) //回调模式，数据不copy
+	override size_t readAll(scope void delegate(in ubyte[]) cback) //回调模式，数据不copy
     {
         size_t maxlen = _wSize - _rSize;
         size_t rcount = readCount();
@@ -370,7 +317,10 @@ final class SectionBuffer : Buffer
         return rbyte;
     }
 
-    size_t readUtil(in ubyte[] data, void delegate(in ubyte[]) cback) //data.length 必须小于分段大小！
+	/*
+	 * 会自动跳过找到的data字段
+	**/
+	override size_t readUtil(in ubyte[] data,scope void delegate(in ubyte[]) cback) //data.length 必须小于分段大小！
     {
         if (data.length == 0 || isEof() || data.length >= _sectionSize)
             return 0;
@@ -405,32 +355,18 @@ final class SectionBuffer : Buffer
             {
                 auto tsize = (_rSize + site);
                 size_t i = 1;
-                for (++tsize; i < data.length && tsize < _wSize; ++i, ++tsize)
-                {
-                    if (data[i] != this[tsize])
-                    {
-						auto len = site + i;
-						//前面查找确认不是的数据就回调过去
-						if(byptr.length >= len) {
-							cback(byptr[0..len]); 
-						} else {
-							auto tlen = len - byptr.length;
-							cback(byptr);
-							rcount ++ ;
-							byptr = _buffer[rcount];
-							cback(byptr[0..tlen]);
-						}
-						_rSize = tsize;
+				size_t j = tsize + 1;
+                for (; i < data.length && j < _wSize; ++i, ++j) {
+                    if (data[i] != this[j]) {
+						cback(byptr[0..site + 1]); 
+						_rSize = tsize + 1;
                         goto next; //没找对，进行下次查找
                     }
-                    else
-                    {
-                        continue;
-                    }
                 } //循环正常执行完毕,表示
-                _rSize = tsize;
                 cback(byptr[0 .. site]);
-                return (_rSize - size);
+				_rSize = tsize + data.length; 
+				size += data.length;
+				break;
 
             next:
                 continue;
@@ -471,6 +407,10 @@ final class SectionBuffer : Buffer
     {
         return _rSize;
     }
+
+	override size_t readPos() {
+		return _rSize;
+	}
 
     pragma(inline,true)
     @property readCount() const
@@ -559,7 +499,7 @@ unittest
     writeln("buffer write :", buf.write(cast(ubyte[]) data));
     writeln("buffer  size:", buf.length);
     writeln("\n 1.");
-    dt = buf.readLine!false();
+    dt = buf.readLine();
     writeln("buffer read line size =", dt.length);
     writeln("buffer readline :", cast(string) dt);
     writeln("read size : ", buf._rSize);
@@ -569,13 +509,13 @@ unittest
     writeln("buffer read size =",buf.read(dt));
     writeln("buffer read data =",cast(string)dt);*/
 
-    dt = buf.readLine!false();
+    dt = buf.readLine();
     writeln("buffer read line size =", dt.length);
     writeln("buffer read line data =", cast(string) dt);
     writeln("read size : ", buf._rSize);
     writeln("\n 3.");
 
-    dt = buf.readLine!false();
+    dt = buf.readLine();
     writeln("buffer read line size =", dt.length);
     writeln("buffer read line data =", cast(string) dt);
     writeln("read size : ", buf._rSize);
@@ -585,7 +525,7 @@ unittest
     {
         ++j;
         writeln("\n ", j, " . ");
-        dt = buf.readLine!false();
+        dt = buf.readLine();
         writeln("buffer read line size =", dt.length);
         writeln("buffer readline :", cast(string) dt);
         writeln("read size : ", buf._rSize);

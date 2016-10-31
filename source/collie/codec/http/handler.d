@@ -19,7 +19,8 @@ import std.base64;
 import std.exception;
 
 import collie.channel;
-import collie.buffer;
+import collie.buffer.sectionbuffer;
+import collie.buffer.wrapbuffer;
 import collie.codec.http;
 
 abstract class HTTPHandler : Handler!(ubyte[], HTTPRequest, HTTPResponse, ubyte[])
@@ -357,7 +358,7 @@ protected: //WebSocket
             case OpCode.OpCodePing:
                 { //DO pong
                     ubyte[] tdata = cast(ubyte[]) httpAllocator.allocate(128);
-                    auto buf = scoped!PieceBuffer(tdata);
+                    auto buf = scoped!WrapBuffer(tdata);
                     _frame.pong(frame.data, buf);
                     context().fireWrite(buf.data(), &freeBuffer);
                 }
@@ -390,7 +391,7 @@ package:
         if (!context().transport.isAlive())
             return false;
         ubyte[] tdata = cast(ubyte[]) httpAllocator.allocate(128);
-        auto buf = scoped!PieceBuffer(tdata);
+        auto buf = scoped!WrapBuffer(tdata);
         _frame.ping(data, buf);
         context().fireWrite(buf.data(), &freeBuffer);
         return true;
