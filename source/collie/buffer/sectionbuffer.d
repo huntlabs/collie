@@ -22,6 +22,7 @@ import std.experimental.logger;
 
 import collie.buffer.buffer;
 import collie.utils.vector;
+import collie.utils.bytes;
 
 /** 
  * 分段buffer，把整块的很大大内存分成多快小内存存放在内存中，防止一次申请过大内存导致的问题，理论可以无限写入，会自己增加内存。
@@ -258,7 +259,7 @@ final class SectionBuffer : Buffer
             {
                 byptr = by[rsite .. $];
             }
-			ptrdiff_t site = findUbyte(byptr,cast(ubyte)('\n'));
+			ptrdiff_t site = findCharByte(byptr,cast(ubyte)('\n'));
             if (site == -1)
             {
                 if (rbyte.length > 0)
@@ -392,7 +393,7 @@ final class SectionBuffer : Buffer
             {
                 byptr = by[rsite .. $];
             }
-			ptrdiff_t site = findUbyte(byptr,ch);
+			ptrdiff_t site = findCharByte(byptr,ch);
             if (site == -1)
             {
                 cback(byptr);
@@ -494,27 +495,6 @@ final class SectionBuffer : Buffer
     {
         return _wSize % _sectionSize;
     }
-
-	ptrdiff_t findUbyte(in ref ubyte[] data, ubyte ch)
-	{
-		ptrdiff_t index = -1;
-		for(size_t id = 0; id < data.length; ++id)
-		{
-			if(ch == data[id]){
-				index = cast(ptrdiff_t)id;
-				break;
-			}
-		}
-		return index;
-	}
-
-/*	ptrdiff_t findUbyteArray(in ref ubyte[] data, ref in ubyte[] ch)
-	{
-		assert(data.length >= ch.length);
-		auto begin = findUbyte(data,ch[0]);
-		if(begin < 0) return -1;
-
-	}*/
 
 private:
     pragma(inline,true)
