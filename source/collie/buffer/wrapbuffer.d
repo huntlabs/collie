@@ -59,26 +59,22 @@ class WrapBuffer : Buffer
 
 	override @property size_t length() const { return _wsize; }
 	
-	override size_t readLine(bool hasRN = false)(void delegate(in ubyte[]) cback) //回调模式，数据不copy
+	override size_t readLine(void delegate(in ubyte[]) cback) //回调模式，数据不copy
 	{
 		if(eof()) return 0;
 		ubyte[] tdata = _data[_rsize.._wsize];
 		size_t size = _rsize;
 		ptrdiff_t index = findCharByte(tdata,cast(ubyte)'\n');
 		if(index < 0){
-			_rsize += tdata;
+			_rsize += tdata.length;
 			cback(tdata);
 		} else {
 			_rsize += (index + 1);
 			size += 1;
-			static if(hasRN){
-				index += 1;
-			} else {
-				if(index > 0){
-					size_t ts = index -1;
-					if(_data[ts] == cast(ubyte)'\r') {
-						index = ts;
-					}
+			if(index > 0){
+				size_t ts = index -1;
+				if(_data[ts] == cast(ubyte)'\r') {
+					index = ts;
 				}
 			}
 			cback(_data[0..index]);
@@ -134,6 +130,6 @@ unittest
 	writeln("buffer read data =", cast(string) dt);
 
 	
-	buf.readLine!false((in ubyte[] data2){writeln(cast(string)data2);});
+	buf.readLine((in ubyte[] data2){writeln(cast(string)data2);});
 
 }

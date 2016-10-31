@@ -18,7 +18,7 @@ interface Buffer
 	void rest(size_t size = 0);
 	@property size_t length() const;
 
-	size_t readLine(bool hasRN = false)(void delegate(in ubyte[]) cback); //回调模式，数据不copy
+	size_t readLine(void delegate(in ubyte[]) cback); //回调模式，数据不copy
 	
 	size_t readAll(void delegate(in ubyte[]) cback);
 	

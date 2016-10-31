@@ -228,17 +228,17 @@ final class SectionBuffer : Buffer
     }
 
     pragma(inline)
-    ubyte[] readLine(bool hasRN = false)() //返回的数据有copy
+    ubyte[] readLine() //返回的数据有copy
     {
       //  ubyte[] rbyte;
 		auto rbyte = appender!(ubyte[])();
-		auto len = readLine!(hasRN)(delegate(in ubyte[] data) { rbyte.put(data);/*rbyte ~= data;*/ });
+		auto len = readLine(delegate(in ubyte[] data) { rbyte.put(data);/*rbyte ~= data;*/ });
         return rbyte.data;
     }
 	/*
 	 * 会自动跳过找到的\r\n字段
 	**/
-    size_t readLine(bool hasRN = false)(void delegate(in ubyte[]) cback) //回调模式，数据不copy
+    size_t readLine(void delegate(in ubyte[]) cback) //回调模式，数据不copy
     {
         if (isEof())
             return 0;
@@ -264,17 +264,12 @@ final class SectionBuffer : Buffer
 				_rSize += byptr.length;
 			} else {
 				auto tsize = (_rSize + site);
-				static if(hasRN){
-					site += 1;
-				} else {
-					if(site > 0){
-						size_t ts = site -1;
-						if(byptr[ts] == cast(ubyte)'\r') {
-							site = ts;
-						}
+				if(site > 0){
+					size_t ts = site -1;
+					if(byptr[ts] == cast(ubyte)'\r') {
+						site = ts;
 					}
 				}
-
 				cback(byptr[0 .. site]);
 
 				_rSize = tsize + 1;
@@ -286,7 +281,7 @@ final class SectionBuffer : Buffer
         return _rSize - size;
     }
 
-    size_t readAll(void delegate(in ubyte[]) cback) //回调模式，数据不copy
+    override size_t readAll(void delegate(in ubyte[]) cback) //回调模式，数据不copy
     {
         size_t maxlen = _wSize - _rSize;
         size_t rcount = readCount();
@@ -325,7 +320,7 @@ final class SectionBuffer : Buffer
 	/*
 	 * 会自动跳过找到的data字段
 	**/
-    size_t readUtil(in ubyte[] data, void delegate(in ubyte[]) cback) //data.length 必须小于分段大小！
+	override size_t readUtil(in ubyte[] data, void delegate(in ubyte[]) cback) //data.length 必须小于分段大小！
     {
         if (data.length == 0 || isEof() || data.length >= _sectionSize)
             return 0;
@@ -500,7 +495,7 @@ unittest
     writeln("buffer write :", buf.write(cast(ubyte[]) data));
     writeln("buffer  size:", buf.length);
     writeln("\n 1.");
-    dt = buf.readLine!false();
+    dt = buf.readLine();
     writeln("buffer read line size =", dt.length);
     writeln("buffer readline :", cast(string) dt);
     writeln("read size : ", buf._rSize);
@@ -510,13 +505,13 @@ unittest
     writeln("buffer read size =",buf.read(dt));
     writeln("buffer read data =",cast(string)dt);*/
 
-    dt = buf.readLine!false();
+    dt = buf.readLine();
     writeln("buffer read line size =", dt.length);
     writeln("buffer read line data =", cast(string) dt);
     writeln("read size : ", buf._rSize);
     writeln("\n 3.");
 
-    dt = buf.readLine!false();
+    dt = buf.readLine();
     writeln("buffer read line size =", dt.length);
     writeln("buffer read line data =", cast(string) dt);
     writeln("read size : ", buf._rSize);
@@ -526,7 +521,7 @@ unittest
     {
         ++j;
         writeln("\n ", j, " . ");
-        dt = buf.readLine!false();
+        dt = buf.readLine();
         writeln("buffer read line size =", dt.length);
         writeln("buffer readline :", cast(string) dt);
         writeln("read size : ", buf._rSize);
