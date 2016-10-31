@@ -28,7 +28,10 @@ protected:
 				rmsg.getHeaders.add(HTTPHeaderCode.CONNECTION,"close");
 				sendHeaders(txn,rmsg,true);
 				txn = null;
-			}catch{}
+			}catch (Exception e){
+				import std.exception;
+				collectException(error(e.toString));
+			}
 		} else {
 			txn.handler(handle);
 			txn.onIngressHeadersComplete(msg);
