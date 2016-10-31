@@ -44,7 +44,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         super(loop, TransportType.TCP);
         _socket = sock;
         _socket.blocking = false;
-        _writeQueue = Queue!(WriteSite, true, false, GCAllocator)(32);
+		_writeQueue = Queue!(WriteSite, GCAllocator, true, false)(32);
         _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
         _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true, true,
             true);
@@ -61,18 +61,14 @@ class TCPSocket : AsyncTransport, EventCallInterface
 
     ~this()
     {
+		import core.memory;
         scope (exit)
         {
             AsyncEvent.free(_event);
             _readBuffer = null;
         }
         _socket.destroy;
-        if (_event.isActive)
-        {
-            eventLoop.delEvent(_event);
-        }
-        import core.memory;
-
+		GC.free(cast(void *)_socket);
         GC.free(_readBuffer.ptr);
     }
 
@@ -361,8 +357,10 @@ protected:
                         }
                         else
                         {
-                            error("read Erro Do Close the erro : ", errno,
-                                " the socket fd : ", fd);
+							import core.stdc.errno;
+							import core.stdc.string;
+							error("read Erro Do Close the erro code : ", errno, "  erro is : " ,strerror(errno), 
+                                " \n\tthe socket fd : ", fd);
                             onClose();
                             return;
                         }
@@ -370,8 +368,7 @@ protected:
                 }
                 catch (Exception e)
                 {
-					collectException(error("\n\n----tcp on read erro do Close! erro : ", e.toString(),
-                        "\n\n"));
+					collectException(error("\n\n----tcp on read erro do Close! erro : ", e.toString(),"\n\n"));
                     onClose();
                     return;
                 }
@@ -412,7 +409,7 @@ protected:
     import std.experimental.allocator.gc_allocator;
 
     Socket _socket;
-    Queue!(WriteSite, true, false, GCAllocator) _writeQueue;
+	Queue!(WriteSite,GCAllocator, true, false) _writeQueue;
     AsyncEvent* _event;
     ubyte[] _readBuffer;
 

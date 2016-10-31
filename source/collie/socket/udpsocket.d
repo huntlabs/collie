@@ -167,8 +167,9 @@ class UDPSocket : AsyncTransport, EventCallInterface
         {
             return _event.isActive && _socket.handle() != socket_t.init;
         }
-        catch
+        catch (Exception e)
         {
+			collectException(error(e.toString));
             return false;
         }
     }
@@ -201,8 +202,9 @@ protected:
                 _readCallBack(_readBuffer[0 .. len], _readAddr);
 			}
         }
-        catch
+        catch (Exception e)
         {
+			collectException(error(e.toString));
         }
     }
 

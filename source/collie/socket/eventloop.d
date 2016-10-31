@@ -13,7 +13,6 @@ module collie.socket.eventloop;
 import core.thread;
 import core.sync.mutex;
 import core.memory;
-import core.sync.mutex;
 
 import std.exception;
 import std.datetime;
@@ -36,10 +35,11 @@ static if (CustomTimer)
 
 class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
 {
+	alias CQueue = Queue!(CallBack,GCAllocator, true);
     this()
     {
         _poll = new T();
-        _callbackList = Queue!(CallBack, true, false, GCAllocator)(32);
+		_callbackList = CQueue(32);
         _mutex = new Mutex();
         _run = false;
         static if (CustomTimer)
@@ -193,7 +193,7 @@ protected:
     {
         import std.algorithm : swap;
 
-        auto tmp = Queue!(CallBack, true, false, GCAllocator)(32);
+		auto tmp = CQueue(32);
         synchronized (_mutex)
         {
             swap(tmp, _callbackList);
@@ -215,7 +215,7 @@ protected:
 private:
     T _poll;
     Mutex _mutex;
-    Queue!(CallBack, true, false, GCAllocator) _callbackList;
+	CQueue _callbackList;
     bool _run;
     ThreadID _thID;
     static if (CustomTimer)

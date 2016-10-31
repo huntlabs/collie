@@ -93,7 +93,7 @@ final class EventLoopGroup
         }
     }
 
-    int opApply(int delegate(EventLoop) dg)
+	int opApply(scope int delegate(EventLoop) dg)
     {
         int ret = 0;
         foreach (ref loop; _loops.keys)

@@ -111,8 +111,9 @@ final class Acceptor : AsyncTransport, EventCallInterface
         {
             return (_event != null) && _socket.isAlive();
         }
-        catch
+        catch (Exception e)
         {
+			collectException(error(e.toString));
             return false;
         }
     }

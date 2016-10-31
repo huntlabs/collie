@@ -101,13 +101,7 @@ final class EpollLoop
         epoll_event ev;
         if ((epoll_ctl(_efd, EPOLL_CTL_DEL, event.fd,  & ev)) != 0)
         {
-            try
-            {
-                error("EPOLL_CTL_DEL erro! ", event.fd);
-            }
-            catch
-            {
-            }
+			collectException(error("EPOLL_CTL_DEL erro! ", event.fd));
             return false;
         }
         event.isActive = false;

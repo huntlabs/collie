@@ -14,6 +14,7 @@ import core.memory;
 import core.sys.posix.time;
 
 import std.socket : socket_t;
+import std.exception;
 
 import collie.socket.common;
 import collie.socket.eventloop;
@@ -108,13 +109,7 @@ protected:
         }
         if (_callBack)
         {
-            try
-            {
-                _callBack();
-            }
-            catch
-            {
-            }
+			collectException(_callBack());
         }
         else
         {

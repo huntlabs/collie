@@ -11,11 +11,11 @@
 module collie.socket.tcpclient;
 
 import std.socket;
+import std.exception;
 
 import collie.socket.eventloop;
 import collie.socket.common;
 import collie.socket.tcpsocket;
-
 import collie.socket.exception;
 
 alias ConnectCallBack = void delegate(bool connect);
@@ -92,13 +92,7 @@ protected:
         if (_isFrist && !_isConnect && _connectBack)
         {
             _isFrist = false;
-            try
-            {
-                _connectBack(false);
-            }
-            catch
-            {
-            }
+			collectException(_connectBack(false));
             return;
         }
         super.onClose();
@@ -110,13 +104,7 @@ protected:
         if (_isFrist && !_isConnect && _connectBack)
         {
             _isFrist = false;
-            try
-            {
-                _connectBack(true);
-            }
-            catch
-            {
-            }
+			collectException(_connectBack(true));
             _isConnect = true;
         }
 
