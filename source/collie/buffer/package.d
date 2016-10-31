@@ -10,5 +10,17 @@
  */
 module collie.buffer;
 
-public import collie.buffer.sectionbuffer;
-public import collie.buffer.buffer;
+interface Buffer
+{
+	@property bool eof() const;
+	size_t read(size_t size, void delegate(in ubyte[]) cback);
+	size_t write(in ubyte[] data);
+	void rest(size_t size = 0);
+	@property size_t length() const;
+
+	size_t readLine(bool hasRN = false)(void delegate(in ubyte[]) cback); //回调模式，数据不copy
+	
+	size_t readAll(void delegate(in ubyte[]) cback);
+	
+	size_t readUtil(in ubyte[] data, void delegate(in ubyte[]) cback);
+}

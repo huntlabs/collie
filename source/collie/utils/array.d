@@ -19,6 +19,18 @@ auto arrayRemove(E)(ref E[] ary, E e)
     return ary;
 }
 
+ptrdiff_t findIndex(E)(in E[] ary, in E e)
+{
+	ptrdiff_t index = -1;
+	for(size_t id = 0; id < ary.length; ++id)
+	{
+		if(e == data[id]){
+			index = cast(ptrdiff_t)id;
+			break;
+		}
+	}
+	return index;
+}
 
 unittest
 {

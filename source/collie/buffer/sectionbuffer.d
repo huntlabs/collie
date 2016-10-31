@@ -20,8 +20,9 @@ import std.experimental.allocator;
 import std.experimental.allocator.gc_allocator;
 import std.experimental.logger;
 
-import collie.buffer.buffer;
+import collie.buffer;
 import collie.utils.vector;
+import collie.utils.bytes;
 
 /** 
  * 分段buffer，把整块的很大大内存分成多快小内存存放在内存中，防止一次申请过大内存导致的问题，理论可以无限写入，会自己增加内存。
@@ -32,7 +33,7 @@ import collie.utils.vector;
 
 final class SectionBuffer : Buffer
 {
-    alias BufferVector = Vector!(ubyte[], GCAllocator); //Mallocator);
+    alias BufferVector = Vector!(ubyte[]); //Mallocator);
 
     this(size_t sectionSize, IAllocator clloc = _processAllocator)
     {
@@ -234,101 +235,53 @@ final class SectionBuffer : Buffer
 		auto len = readLine!(hasRN)(delegate(in ubyte[] data) { rbyte.put(data);/*rbyte ~= data;*/ });
         return rbyte.data;
     }
-
+	/*
+	 * 会自动跳过找到的\r\n字段
+	**/
     size_t readLine(bool hasRN = false)(void delegate(in ubyte[]) cback) //回调模式，数据不copy
     {
         if (isEof())
             return 0;
-        size_t rcount = readCount();
-        size_t rsite = readSite();
-        //bool crcf = false;
-        size_t size = _rSize;
-        ubyte[] rbyte;
-        size_t wsite = writeSite();
-        size_t wcount = writeCount();
-        ubyte[] byptr, by;
-        while (rcount <= wcount && !isEof())
+		size_t size = _rSize;
+		size_t wsite = writeSite();
+		size_t wcount = writeCount();
+		ubyte[] byptr, by;
+        while (!isEof())
         {
-            by = _buffer[rcount];
-            if (rcount == wcount)
-            {
-                byptr = by[rsite .. wsite];
-            }
-            else
-            {
-                byptr = by[rsite .. $];
-            }
-			ptrdiff_t site = findUbyte(byptr,cast(ubyte)('\n'));
-            if (site == -1)
-            {
-                if (rbyte.length > 0)
-                {
-                    cback(rbyte);
-                    rbyte = null;
-                }
-                rbyte = byptr;
-                rsite = 0;
-                ++rcount;
-                _rSize += rbyte.length;
-            }
-            else if (rbyte.length > 0 && site == 0)
-            {
-                ++_rSize;
-                static if (!hasRN)
-                {
-                    auto len = rbyte.length - 1;
-                    if (rbyte[len] == '\r')
-                    {
-                        if (len == 0)
-                        {
-                            _rSize += _rSize;
-                            return _rSize - size;
-                        }
-                        rbyte = rbyte[0 .. len];
-                    }
-                }
-                cback(rbyte);
-                static if (hasRN)
-                {
-                    cback(byptr[0 .. 1]);
-                }
-                rbyte = null;
-                break;
-            }
-            else
-            {
-                ++_rSize;
-                if (site == 0)
-                {
-                    static if (hasRN)
-                    {
-                        cback(byptr[0 .. 1]);
-                    }
-                    return _rSize - size;
-                }
-                cback(rbyte);
-                rbyte = null;
-                rbyte = byptr[0 .. (site + 1)];
-                _rSize += site; //rbyte.length;
-                static if (!hasRN)
-                {
-                    auto len = rbyte.length - 2;
-                    if (rbyte[len] == '\r')
-                    {
-                        if (len == 0)
-                            return _rSize - size;
-                        rbyte = rbyte[0 .. len];
-                    }
-                }
-                cback(rbyte);
-                rbyte = null;
-                break;
-            }
-        }
+			size_t rcount = readCount();
+			size_t rsite = readSite();
+			by = _buffer[rcount];
+			if (rcount == wcount){
+				byptr = by[rsite .. wsite];
+			} else {
+				byptr = by[rsite .. $];
+			}
+			ptrdiff_t site = findCharByte(byptr,cast(ubyte)'\n');
+			if (site < 0){
+				cback(byptr);
+				rsite = 0;
+				++rcount;
+				_rSize += byptr.length;
+			} else {
+				auto tsize = (_rSize + site);
+				static if(hasRN){
+					site += 1;
+				} else {
+					if(site > 0){
+						size_t ts = site -1;
+						if(byptr[ts] == cast(ubyte)'\r') {
+							site = ts;
+						}
+					}
+				}
 
-        if (rbyte.length > 0)
-        {
-            cback(rbyte);
+				cback(byptr[0 .. site]);
+
+				_rSize = tsize + 1;
+				size += 1;
+				break;
+			}
+
         }
         return _rSize - size;
     }
@@ -369,6 +322,9 @@ final class SectionBuffer : Buffer
         return rbyte;
     }
 
+	/*
+	 * 会自动跳过找到的data字段
+	**/
     size_t readUtil(in ubyte[] data, void delegate(in ubyte[]) cback) //data.length 必须小于分段大小！
     {
         if (data.length == 0 || isEof() || data.length >= _sectionSize)
@@ -392,7 +348,7 @@ final class SectionBuffer : Buffer
             {
                 byptr = by[rsite .. $];
             }
-			ptrdiff_t site = findUbyte(byptr,ch);
+			ptrdiff_t site = findCharByte(byptr,ch);
             if (site == -1)
             {
                 cback(byptr);
@@ -404,32 +360,18 @@ final class SectionBuffer : Buffer
             {
                 auto tsize = (_rSize + site);
                 size_t i = 1;
-                for (++tsize; i < data.length && tsize < _wSize; ++i, ++tsize)
-                {
-                    if (data[i] != this[tsize])
-                    {
-						auto len = site + i;
-						//前面查找确认不是的数据就回调过去
-						if(byptr.length >= len) {
-							cback(byptr[0..len]); 
-						} else {
-							auto tlen = len - byptr.length;
-							cback(byptr);
-							rcount ++ ;
-							byptr = _buffer[rcount];
-							cback(byptr[0..tlen]);
-						}
-						_rSize = tsize;
+				size_t j = tsize + 1;
+                for (; i < data.length && j < _wSize; ++i, ++j) {
+                    if (data[i] != this[j]) {
+						cback(byptr[0..site + 1]); 
+						_rSize = tsize + 1;
                         goto next; //没找对，进行下次查找
                     }
-                    else
-                    {
-                        continue;
-                    }
                 } //循环正常执行完毕,表示
-                _rSize = tsize;
                 cback(byptr[0 .. site]);
-                return (_rSize - size);
+				_rSize = tsize + data.length; 
+				size += data.length;
+				break;
 
             next:
                 continue;
@@ -494,27 +436,6 @@ final class SectionBuffer : Buffer
     {
         return _wSize % _sectionSize;
     }
-
-	ptrdiff_t findUbyte(in ref ubyte[] data, ubyte ch)
-	{
-		ptrdiff_t index = -1;
-		for(size_t id = 0; id < data.length; ++id)
-		{
-			if(ch == data[id]){
-				index = cast(ptrdiff_t)id;
-				break;
-			}
-		}
-		return index;
-	}
-
-/*	ptrdiff_t findUbyteArray(in ref ubyte[] data, ref in ubyte[] ch)
-	{
-		assert(data.length >= ch.length);
-		auto begin = findUbyte(data,ch[0]);
-		if(begin < 0) return -1;
-
-	}*/
 
 private:
     pragma(inline,true)
