@@ -27,9 +27,12 @@ protected:
 				rmsg.statusMessage = HTTPMessage.statusText(404);
 				rmsg.getHeaders.add(HTTPHeaderCode.CONNECTION,"close");
 				sendHeaders(txn,rmsg,true);
+				txn = null;
 			}catch{}
+		} else {
+			txn.handler(handle);
+			txn.onIngressHeadersComplete(msg);
 		}
-		txn.handler(handle);
 	}
 
 	override bool onNativeProtocolUpgrade(StreamID stream,CodecProtocol protocol,string protocolString,HTTPMessage msg) {

@@ -218,7 +218,6 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 		HTTPMessage msg){
 		_transaction = new HTTPTransaction(_codec.getTransportDirection,stream,0,this);
 		setupOnHeadersComplete(_transaction,msg);
-		_transaction.onIngressHeadersComplete(msg);
 	}
 
 	override void onBody(StreamID stream,const ubyte[] data){
