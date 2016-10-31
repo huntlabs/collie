@@ -16,6 +16,7 @@ import std.stdio;
 import std.typecons;
 import std.digest.sha;
 import std.base64;
+import std.exception;
 
 import collie.channel;
 import collie.buffer;
@@ -273,8 +274,9 @@ protected: //WebSocket
                 context.fireWrite(data, &sendFile);
             }
         }
-        catch
+        catch(Exception e)
         {
+			collectException(error(e.toString));
             httpAllocator.deallocate(data);
             close(context());
         }
