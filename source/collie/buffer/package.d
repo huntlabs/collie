@@ -18,11 +18,11 @@ interface Buffer
 	void rest(size_t size = 0);
 	@property size_t length() const;
 
-	size_t readLine(void delegate(in ubyte[]) cback); //回调模式，数据不copy
+	size_t readLine(scope void delegate(in ubyte[]) cback); //回调模式，数据不copy
 	
-	size_t readAll(void delegate(in ubyte[]) cback);
+	size_t readAll(scope void delegate(in ubyte[]) cback);
 	
-	size_t readUtil(in ubyte[] data, void delegate(in ubyte[]) cback);
+	size_t readUtil(in ubyte[] data, scope void delegate(in ubyte[]) cback);
 
 	size_t readPos();
 }

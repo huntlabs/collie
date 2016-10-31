@@ -161,7 +161,7 @@ final class SectionBuffer : Buffer
 
     }
 
-    override size_t read(size_t size, void delegate(in ubyte[]) cback) //回调模式，数据不copy
+	override size_t read(size_t size,scope void delegate(in ubyte[]) cback) //回调模式，数据不copy
     {
         size_t len = _wSize - _rSize;
         size_t maxlen = size < len ? size : len;
@@ -238,7 +238,7 @@ final class SectionBuffer : Buffer
 	/*
 	 * 会自动跳过找到的\r\n字段
 	**/
-    size_t readLine(void delegate(in ubyte[]) cback) //回调模式，数据不copy
+	override size_t readLine(scope void delegate(in ubyte[]) cback) //回调模式，数据不copy
     {
         if (isEof())
             return 0;
@@ -281,7 +281,7 @@ final class SectionBuffer : Buffer
         return _rSize - size;
     }
 
-    override size_t readAll(void delegate(in ubyte[]) cback) //回调模式，数据不copy
+	override size_t readAll(scope void delegate(in ubyte[]) cback) //回调模式，数据不copy
     {
         size_t maxlen = _wSize - _rSize;
         size_t rcount = readCount();
@@ -320,7 +320,7 @@ final class SectionBuffer : Buffer
 	/*
 	 * 会自动跳过找到的data字段
 	**/
-	override size_t readUtil(in ubyte[] data, void delegate(in ubyte[]) cback) //data.length 必须小于分段大小！
+	override size_t readUtil(in ubyte[] data,scope void delegate(in ubyte[]) cback) //data.length 必须小于分段大小！
     {
         if (data.length == 0 || isEof() || data.length >= _sectionSize)
             return 0;

@@ -118,7 +118,7 @@ struct HTTPHeaders
 		_deletedCount = 0;
 	}
 
-	int opApply(int delegate(string name,string value) opeartions)
+	int opApply(scope int delegate(string name,string value) opeartions)
 	{
 		int result = 0;
 		for(size_t i = 0; i < _headersNames.length; ++i)
@@ -130,7 +130,7 @@ struct HTTPHeaders
 		return result;
 	}
 
-	int opApply(int delegate(HTTPHeaderCode code,string name,string value) opeartions)
+	int opApply(scope int delegate(HTTPHeaderCode code,string name,string value) opeartions)
 	{
 		int result = 0;
 		for(size_t i = 0; i < _headersNames.length; ++i)
@@ -256,7 +256,7 @@ struct HTTPHeaders
    * true), and false otherwise.
    */
 	alias LAMBDA = bool delegate(string value);
-	bool forEachValueOfHeader(string name, LAMBDA func)
+	bool forEachValueOfHeader(string name,scope LAMBDA func)
 	{
 		HTTPHeaderCode code = headersHash(name);
 		if(code != HTTPHeaderCode.OTHER)
@@ -272,7 +272,7 @@ struct HTTPHeaders
 		return false;
 	}
 
-	bool forEachValueOfHeader(HTTPHeaderCode code, LAMBDA func)
+	bool forEachValueOfHeader(HTTPHeaderCode code,scope LAMBDA func)
 	{
 		size_t index = 0;
 		HTTPHeaderCode[] codes = _codes.data(false);

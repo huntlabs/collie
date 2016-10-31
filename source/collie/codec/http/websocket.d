@@ -331,7 +331,7 @@ final class HandleFrame
         return;
     }
 
-    void readFrame(in ubyte[] data, void delegate(Frame frame, bool text) callback)
+    void readFrame(in ubyte[] data,scope void delegate(Frame frame, bool text) callback)
     {
 
         void resultOne()

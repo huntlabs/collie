@@ -21,7 +21,7 @@ class WrapBuffer : Buffer
 	{
 		return (_rsize >= _wsize);
 	}
-	override size_t read(size_t size, void delegate(in ubyte[]) cback)
+	override size_t read(size_t size,scope  void delegate(in ubyte[]) cback)
 	{
 		size_t len = _wsize - _rsize;
 		len = size < len ? size : len;
@@ -63,7 +63,7 @@ class WrapBuffer : Buffer
 
 	override @property size_t length() const { return _wsize; }
 	
-	override size_t readLine(void delegate(in ubyte[]) cback) //回调模式，数据不copy
+	override size_t readLine(scope void delegate(in ubyte[]) cback) //回调模式，数据不copy
 	{
 		if(eof()) return 0;
 		ubyte[] tdata = _data[_rsize.._wsize];
@@ -87,7 +87,7 @@ class WrapBuffer : Buffer
 		return _rsize - size;
 	}
 	
-	override size_t readAll(void delegate(in ubyte[]) cback)
+	override size_t readAll(scope void delegate(in ubyte[]) cback)
 	{
 		if(eof()) return 0;
 		ubyte[] tdata = _data[_rsize.._wsize];
@@ -96,7 +96,7 @@ class WrapBuffer : Buffer
 		return data.length;
 	}
 	
-	override size_t readUtil(in ubyte[] chs, void delegate(in ubyte[]) cback)
+	override size_t readUtil(in ubyte[] chs, scope void delegate(in ubyte[]) cback)
 	{
 		if(eof()) return 0;
 		ubyte[] tdata = _data[_rsize.._wsize];
