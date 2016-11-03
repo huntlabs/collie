@@ -105,8 +105,8 @@ static if(USEDSSL)
                 }
                 catch (Exception e)
                 {
-                   collectException(error("\n\n----tcp on Write erro do Close! erro : ", e.msg,
-                        "\n\n"));
+					import collie.utils.exception;
+					showException(e);
                     onClose();
                 }
             }
@@ -148,8 +148,8 @@ static if(USEDSSL)
                 }
                 catch (Exception e)
                 {
-					collectException(error("\n\n----tcp on read erro do Close! erro : ", e.msg,
-                        "\n\n"));
+					import collie.utils.exception;
+					showException(e);
                     onClose();
                 }
             }

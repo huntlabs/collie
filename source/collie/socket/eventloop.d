@@ -207,7 +207,8 @@ protected:
             }
             catch (Exception e)
             {
-				collectException(error("\n\n----doHandleList erro ! erro : ", e.msg, "\n\n"));
+				import collie.utils.exception;
+				showException(e);
             }
         }
     }

@@ -20,6 +20,7 @@ import collie.socket.common;
 import collie.socket.eventloop;
 import collie.socket.transport;
 import collie.utils.queue;
+import collie.utils.exception;
 
 alias TCPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
 alias TCPReadCallBack = void delegate(ubyte[] buffer);
@@ -278,8 +279,7 @@ protected:
                 }
                 catch (Exception e)
                 {
-					collectException(error("\n\n----tcp on Write erro do Close! erro : ", e.msg,
-                        "\n\n"));
+					showException(e);
                     onClose();
                 }
             }
@@ -312,7 +312,7 @@ protected:
         }
         catch (Exception e)
         {
-			collectException(error("\n\n----Close  Handle erro : ", e.msg, "\n\n"));
+			showException(e);
         }
     }
 
@@ -368,7 +368,7 @@ protected:
                 }
                 catch (Exception e)
                 {
-					collectException(error("\n\n----tcp on read erro do Close! erro : ", e.toString(),"\n\n"));
+					showException(e);
                     onClose();
                     return;
                 }

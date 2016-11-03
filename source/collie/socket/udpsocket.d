@@ -169,7 +169,8 @@ class UDPSocket : AsyncTransport, EventCallInterface
         }
         catch (Exception e)
         {
-			collectException(error(e.toString));
+			import collie.utils.exception;
+			showException(e);
             return false;
         }
     }
@@ -204,7 +205,8 @@ protected:
         }
         catch (Exception e)
         {
-			collectException(error(e.toString));
+			import collie.utils.exception;
+			showException(e);
         }
     }
 

@@ -113,7 +113,8 @@ final class Acceptor : AsyncTransport, EventCallInterface
         }
         catch (Exception e)
         {
-			collectException(error(e.toString));
+			import collie.utils.exception;
+			showException(e);
             return false;
         }
     }
@@ -140,7 +141,8 @@ protected:
             }
             catch (Exception e)
             {
-				collectException(error("\n\n----accept Exception! erro : ", e.msg, "\n\n"));
+				import collie.utils.exception;
+				showException(e);
             }
             _inSocket = null;
             doAccept();
@@ -159,7 +161,8 @@ protected:
                 }
                 catch (Exception e)
                 {
-					collectException(error("\n\n----accept Exception! erro : ", e.msg, "\n\n"));
+					import collie.utils.exception;
+					showException(e);
                 }
             }
         }
@@ -213,7 +216,8 @@ protected:
             }
             catch (Exception e)
             {
-				collectException(error("AcceptEx failed with error : ", e.msg));
+				import collie.utils.exception;
+				showException(e);
             }
             return true;
         }

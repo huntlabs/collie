@@ -62,7 +62,8 @@ class LengthFieldBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[]
         }
         catch (Exception e)
         {
-            error("write erro: ",e.msg);
+			import collie.utils.exception;
+			showException(e);
             if (cback)
                 cback(msg, 0);
         }

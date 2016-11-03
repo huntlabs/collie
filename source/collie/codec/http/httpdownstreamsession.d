@@ -29,8 +29,8 @@ protected:
 				sendHeaders(txn,rmsg,true);
 				txn = null;
 			}catch (Exception e){
-				import std.exception;
-				collectException(error(e.toString));
+				import collie.utils.exception;
+				showException(e);
 			}
 		} else {
 			txn.handler(handle);
