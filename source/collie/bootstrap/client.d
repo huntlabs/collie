@@ -15,10 +15,13 @@ import collie.socket;
 import collie.utils.memory;
 
 import collie.bootstrap.exception;
-import collie.bootstrap.clientmanger : LinkInfo;
+import collie.bootstrap.clientmanger : TLinkInfo;
 
 class ClientBootstrap(PipeLine) : PipelineManager
 {
+	alias ConnCallBack = void delegate(PipeLine);
+	alias LinkInfo = TLinkInfo!ConnCallBack;
+
 	this(EventLoop loop)
 	{
 		_loop = loop;
@@ -45,7 +48,7 @@ class ClientBootstrap(PipeLine) : PipelineManager
 		return this;
 	}
 
-	void connect(Address to, CallBack cback = null)
+	void connect(Address to, ConnCallBack cback = null)
 	{
 		if (_pipelineFactory is null)
 			throw new NeedPipeFactoryException(
@@ -96,9 +99,6 @@ protected:
 			_timer.stop();
 		if(_pipe)
 			_pipe.transportInactive();
-		else if(_info.cback)
-			_info.cback();
-
 	}
 	
 	void connectCallBack(bool isconnect)
@@ -121,6 +121,8 @@ protected:
 			}
 			_info.tryCount = 0;
 			_pipe = _pipelineFactory.newPipeline(_info.client);
+			if(_info.cback)
+				_info.cback(_pipe);
 			_pipe.finalize();
 			_pipe.pipelineManager(this);
 			_pipe.transportActive();
@@ -131,7 +133,7 @@ protected:
 			connect();
 		} else {
 			if(_info.cback)
-				_info.cback();
+				_info.cback(null);
 			gcFree(_info.client);
 			_info.client = null;
 			_info.cback = null;

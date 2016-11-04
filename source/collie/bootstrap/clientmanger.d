@@ -21,6 +21,8 @@ class ClientManger(PipeLine)
 {
 	alias ClientConnection = ClientLink!PipeLine;
 	alias PipeLineFactory = PipelineFactory!PipeLine;
+	alias ConnCallBack = void delegate(PipeLine);
+	alias LinkInfo = TLinkInfo!ConnCallBack;
 
 	this(EventLoop loop)
 	{
@@ -38,7 +40,7 @@ class ClientManger(PipeLine)
 		_factory = fac;
 	}
 
-	void connect(Address to, CallBack cback = null)
+	void connect(Address to, ConnCallBack cback = null)
 	{
 		LinkInfo * info = new LinkInfo();
 		info.addr = to;
@@ -87,6 +89,8 @@ protected:
 		if(isconnect)
 		{
 			auto pipe = _factory.newPipeline(info.client);
+			if(info.cback)
+				info.cback(pipe);
 			if(!pipe)
 			{
 				gcFree(info.client);
@@ -110,7 +114,8 @@ protected:
 				auto cback = info.cback;
 				gcFree(info.client);
 				gcFree(info);
-				cback();
+				if(cback)
+					cback(null);
 			}
 		}
 	}
@@ -181,12 +186,12 @@ private:
 
 package:
 
-struct LinkInfo
+struct TLinkInfo(TCallBack)
 {
 	TCPClient client;
 	Address addr;
 	uint tryCount = 0;
-	CallBack cback;
+	TCallBack cback;
 }
 
 

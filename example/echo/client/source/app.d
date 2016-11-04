@@ -15,6 +15,7 @@ import core.thread;
 import std.datetime;
 import std.stdio;
 import std.functional;
+import std.exception;
 
 import collie.socket;
 import collie.channel;
@@ -22,8 +23,8 @@ import collie.bootstrap.client;
 
 alias Pipeline!(ubyte[], ubyte[]) EchoPipeline;
 
-ClientBootstrap!EchoPipeline client;
-EventLoop loop;
+
+EventLoopGroup group;
 
 class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
@@ -47,7 +48,7 @@ public:
     
     override void transportInactive(Context ctx)
     {
-        loop.stop();
+		group.stop();
     }
 }
 
@@ -64,17 +65,32 @@ public:
     }
 }
 
+void waitForConnect(Address addr,ClientBootstrap!EchoPipeline client)
+{
+	writeln("waitForConnect");
+	import core.sync.semaphore;
+	Semaphore cod = new Semaphore(0);
+	client.connect(addr,(EchoPipeline pipe){
+			if(pipe)
+				writeln("connect suesss!");
+			else
+				writeln("connect erro!");
+			cod.notify();});
+	cod.wait();
+	enforce(client.pipeLine,"can not connet to server!");
+}
+
 
 void main()
 {
-    loop = new EventLoop();
-    client = new ClientBootstrap!EchoPipeline(loop);
+	group = new EventLoopGroup(1);
+	group.start();
+	ClientBootstrap!EchoPipeline client = new ClientBootstrap!EchoPipeline(group.at(0));
 	client.tryCount(3);
-	client.heartbeatTimeOut(2).pipelineFactory(new shared EchoPipelineFactory()).connect(new InternetAddress("127.0.0.1",8094),(){
-			writeln("connect erro!");
-			loop.stop();
-		});
-    loop.run();
+	client.heartbeatTimeOut(2)
+		.pipelineFactory(new shared EchoPipelineFactory());
+	waitForConnect(new InternetAddress("127.0.0.1",8094),client);
     
-    writeln("APP Stop!");
+    writeln("APP wait Stop!");
+	group.wait();
 }
