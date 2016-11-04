@@ -245,8 +245,6 @@ class HTTPTransaction
 	{
 		if(_handler)
 			_handler.onError(erro);
-		_handler = null;
-		onDelayedDestroy();
 	}
 	/**
    * Schedule or refresh the timeout for this transaction
@@ -351,6 +349,15 @@ class HTTPTransaction
 		transport.sendEOM(this);
 	}
 
+	void sendTimeOut()
+	{
+		import collie.codec.http.headers;
+		scope HTTPMessage msg = new HTTPMessage();
+		msg.statusCode(408);
+		msg.statusMessage("Request Timeout");
+		msg.getHeaders.add(HTTPHeaderCode.CONNECTION,"close");
+		sendHeadersWithEOM(msg);
+	}
 
 	void sendWsBinary(ubyte[] data)
 	{

@@ -89,6 +89,10 @@ final class RequestHandlerAdaptor :
 
 	override void sendEOM(){if(_txn)_txn.sendEOM(); _responseStarted = false;}
 
+	override void sendTimeOut() {
+		if(_txn)
+			_txn.sendTimeOut();
+	}
 private:
 	HTTPTransaction _txn;
 	bool _erro = false;

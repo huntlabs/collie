@@ -22,6 +22,8 @@ abstract class ResponseHandler
 
 	void sendEOM();
 
+	void sendTimeOut();
+
 protected:
 	RequestHandler _upstream;
 }
