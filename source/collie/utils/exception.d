@@ -17,7 +17,7 @@ mixin template ThrowExceptionBuild()
 	}
 }
 
-pragma(inline, true)
+pragma(inline)
 void showException(bool gcfree = false)(Exception e) nothrow
 {
 	import std.experimental.logger;

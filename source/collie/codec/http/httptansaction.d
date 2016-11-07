@@ -3,6 +3,7 @@
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.httpmessage;
 import collie.codec.http.errocode;
+import collie.socket.tcpsocket;
 
 import std.socket;
 public import std.experimental.logger;
@@ -106,6 +107,8 @@ class HTTPTransaction
 {
 	interface Transport
 	{
+		alias SocketWriteCallBack = TCPWriteCallBack;
+
 		void pauseIngress(HTTPTransaction txn);
 		
 		void resumeIngress(HTTPTransaction txn);
@@ -127,6 +130,8 @@ class HTTPTransaction
 
 		
 		size_t sendEOM(HTTPTransaction txn);
+
+		void socketWrite(HTTPTransaction txn,ubyte[] data,SocketWriteCallBack cback);
 
 //		size_t sendAbort(HTTPTransaction txn,
 //			HTTPErrorCode statusCode);
@@ -308,6 +313,10 @@ class HTTPTransaction
    */
 	void sendChunkHeader(size_t length) {
 		transport.sendChunkHeader(this,length);
+	}
+
+	void socketWrite(ubyte[] data, Transport.SocketWriteCallBack cback){
+		transport.socketWrite(this,data, cback);
 	}
 	
 	/**

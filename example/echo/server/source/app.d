@@ -28,18 +28,15 @@ ServerBootstrap!EchoPipeline ser;
 class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
 public:
-    override void read(Context ctx, ubyte[] msg)
-    {
+    override void read(Context ctx, ubyte[] msg){
         write(ctx,msg.dup, &callBack);
     }
 
-    void callBack(ubyte[] data, uint len)
-    {
+    void callBack(ubyte[] data, size_t len){
         writeln("writed data : ", cast(string) data, "   the length is ", len);
     }
 
-    override void timeOut(Context ctx)
-    {
+    override void timeOut(Context ctx){
         writeln("Sever beat time Out!");
     }
 }
@@ -47,8 +44,7 @@ public:
 shared class EchoPipelineFactory : PipelineFactory!EchoPipeline
 {
 public:
-    override EchoPipeline newPipeline(TCPSocket sock)
-    {
+    override EchoPipeline newPipeline(TCPSocket sock){
         auto pipeline = EchoPipeline.create();
         pipeline.addBack(new TCPSocketHandler(sock));
         pipeline.addBack(new EchoHandler());

@@ -93,6 +93,11 @@ final class RequestHandlerAdaptor :
 		if(_txn)
 			_txn.sendTimeOut();
 	}
+
+	override void socketWrite(ubyte[] data,SocketWriteCallBack cback) {
+		if(_txn)
+			_txn.socketWrite(data,cback);
+	}
 private:
 	HTTPTransaction _txn;
 	bool _erro = false;

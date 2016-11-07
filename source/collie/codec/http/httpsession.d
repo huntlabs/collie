@@ -72,7 +72,6 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 
 	//HandlerAdapter {
 	override void read(Context ctx,ubyte[] msg) {
-		trace("read data!!!");
 		_codec.onIngress(msg);
 	}
 
@@ -161,10 +160,15 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 			write(context,tdata.data(true),bind(&writeCallBack,true,txn));
 		return rlen;
 	}
-	
+
 	//		size_t sendAbort(HTTPTransaction txn,
 	//			HTTPErrorCode statusCode);
-	
+
+	override void socketWrite(HTTPTransaction txn,ubyte[] data,HTTPTransaction.Transport.SocketWriteCallBack cback) {
+		write(context,data,cback);
+	}
+
+
 	override void sendWsBinary(HTTPTransaction txn,ubyte[] data)
 	{
 	}
@@ -280,7 +284,7 @@ protected:
 		HTTPMessage msg);
 
 protected:
-	void writeCallBack(bool isLast,HTTPTransaction txn,ubyte[] data,uint size)
+	void writeCallBack(bool isLast,HTTPTransaction txn,ubyte[] data,size_t size)
 	{
 		//trace(cast(string)data);
 		import collie.utils.memory;

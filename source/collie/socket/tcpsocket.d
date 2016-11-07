@@ -22,7 +22,7 @@ import collie.socket.transport;
 import collie.utils.queue;
 import collie.utils.exception;
 
-alias TCPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
+alias TCPWriteCallBack = void delegate(ubyte[] data, size_t writeSzie);
 alias TCPReadCallBack = void delegate(ubyte[] buffer);
 
 class TCPSocket : AsyncTransport, EventCallInterface

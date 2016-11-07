@@ -80,7 +80,7 @@ protected:
         return data;
     }
 
-    void callBack(ubyte[] data,uint size)
+    void callBack(ubyte[] data,size_t size)
     {}
     
 protected:
@@ -220,7 +220,7 @@ unittest
         {
         }
 
-        override void fireWrite(ubyte[] msg, void delegate(ubyte[], uint) cback = null)
+        override void fireWrite(ubyte[] msg, void delegate(ubyte[], size_t) cback = null)
         {
             gloaData ~= msg;
             writeln("length is : ", msg[0 .. 4], " \n the data is : ", cast(string)(msg[4 .. $]));

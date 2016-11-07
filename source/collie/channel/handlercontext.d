@@ -23,7 +23,7 @@ import std.stdio;
 
 interface HandlerContext(In, Out)
 {
-    alias HandlerTheCallBack = void delegate(Out, uint);
+    alias HandlerTheCallBack = void delegate(Out, size_t);
 
     void fireRead(In msg);
 
@@ -56,7 +56,7 @@ interface InboundHandlerContext(In)
 
 interface OutboundHandlerContext(Out)
 {
-    alias OutboundTheCallBack = void delegate(Out, uint);
+	alias OutboundTheCallBack = void delegate(Out, size_t);
 
     void fireWrite(Out msg, OutboundTheCallBack cback = null);
     void fireClose();
@@ -259,7 +259,7 @@ mixin template ReadContextImpl()
 
 mixin template WriteContextImpl()
 {
-    alias NextCallBack = void delegate(Wout, uint);
+	alias NextCallBack = void delegate(Wout, size_t);
 
     pragma(inline)
     override void fireWrite(Wout msg, NextCallBack cback = null)
@@ -290,7 +290,7 @@ mixin template WriteContextImpl()
     }
 
     // OutboundLink overrides
-    alias ThisCallBack = void delegate(Win, uint);
+	alias ThisCallBack = void delegate(Win, size_t);
     pragma(inline)
     override void write(Win msg, ThisCallBack cback = null)
     {

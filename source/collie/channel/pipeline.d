@@ -311,7 +311,7 @@ final class Pipeline(R, W = void) : PipelineBase
 
     static if (!is(W == void))
     {
-        alias TheCallBack = void delegate(W, uint);
+        alias TheCallBack = void delegate(W, size_t);
         pragma(inline)
         void write(W msg, TheCallBack cback = null)
         {
