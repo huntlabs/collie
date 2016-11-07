@@ -21,13 +21,16 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 
     this(TCPSocket sock)
     {
-        _socket = sock;
-        _loop = sock.eventLoop();
+		restSocket(sock);
     }
 
-    ~this()
-    {
-    }
+	@property tcpSocket(){return _socket;}
+
+	void restSocket(TCPSocket sock)
+	{
+		_socket = sock;
+		_loop = sock.eventLoop();
+	}
 
     override void transportActive(Context ctx)
     {
@@ -86,7 +89,6 @@ protected:
         _socket.setCloseCallBack(null);
         _socket = null;
         context.pipeline.deletePipeline();
-
     }
 
     void readCallBack(ubyte[] buf)

@@ -57,13 +57,13 @@ static if(USEDSSL)
     protected:
         override void onClose()
         {
+			if (_ssl)
+			{
+				SSL_shutdown(_ssl);
+				SSL_free(_ssl);
+				_ssl = null;
+			}
             super.onClose();
-            if (_ssl)
-            {
-                SSL_shutdown(_ssl);
-                SSL_free(_ssl);
-                _ssl = null;
-            }
         }
 
         override void onWrite()
@@ -128,7 +128,7 @@ static if(USEDSSL)
                     auto len = SSL_read(_ssl, (_readBuffer.ptr), cast(int)(_readBuffer.length));
                     if (len > 0)
                     {
-                        _readCallBack(_readBuffer[0 .. len]);
+                        collectException(_readCallBack(_readBuffer[0 .. len]));
                     }
                     else
                     {

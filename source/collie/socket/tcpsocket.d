@@ -206,7 +206,6 @@ protected:
                         auto buf = _writeQueue.deQueue();
                         buf.doCallBack();
                         import collie.utils.memory;
-
                         gcFree(buf);
                     }
                     if (!_writeQueue.empty)
@@ -214,8 +213,9 @@ protected:
                     else
                         return;
                 }
-                catch
+                catch(Exception e)
                 {
+					showException(e);
                 }
             }
             _event.writeLen = 0;
@@ -302,18 +302,16 @@ protected:
         {
             _socket.shutdown(SocketShutdown.BOTH);
             _socket.close();
-            scope (exit)
-            {
-                _readCallBack = null;
-                _unActive = null;
-            }
-            if (_unActive)
-                _unActive();
         }
         catch (Exception e)
         {
 			showException(e);
         }
+		auto unActive = _unActive;
+		_readCallBack = null;
+		_unActive = null;
+		if (unActive)
+			collectException(unActive());
     }
 
     override void onRead() nothrow
@@ -326,12 +324,14 @@ protected:
                 if (_event.readLen > 0)
                     _readCallBack(_readBuffer[0 .. _event.readLen]);
             }
-            catch
+            catch(Exception e)
             {
+				showException(e);
             }
+			_event.readLen = 0;
             if (alive)
                 doRead();
-            _event.readLen = 0;
+            
         }
         else
         {
@@ -342,7 +342,7 @@ protected:
                     auto len = _socket.receive(_readBuffer);
                     if (len > 0)
                     {
-                        _readCallBack(_readBuffer[0 .. len]);
+                        collectException(_readCallBack(_readBuffer[0 .. len]));
                         continue;
                     }
                     else
@@ -462,11 +462,11 @@ final class WriteSite
         {
             try
             {
-                _cback(_data, cast(uint) _site);
+                _cback(_data, _site);
             }
             catch (Exception e)
             {
-				collectException(error("\n\n----Write Call Back Erro ! erro : ", e.msg, "\n\n"));
+				showException(e);
             }
         }
         _cback = null;

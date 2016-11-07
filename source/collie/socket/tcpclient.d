@@ -95,8 +95,8 @@ protected:
 			collectException(_connectBack(false));
             return;
         }
+		_isConnect = false;
         super.onClose();
-        _isConnect = false;
     }
 
     override void onWrite()
