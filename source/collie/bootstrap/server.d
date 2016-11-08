@@ -433,7 +433,6 @@ private:
 
     ~this()
     {
-        gcFree(_pipe);
     }
 
     pragma(inline, true) void initialize()
@@ -459,7 +458,7 @@ private:
     override void deletePipeline(PipelineBase pipeline)
     {
         pipeline.pipelineManager = null;
-        //_pipe = null;
+        _pipe = null;
         stop();
         _manger.remove(this);
     }
@@ -475,7 +474,7 @@ private:
         {
             _pipe.timeOut();
         }
-        catch
+        catch(Exception)
         {
         }
     }

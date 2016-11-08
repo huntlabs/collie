@@ -255,10 +255,10 @@ final class Pipeline(R, W = void) : PipelineBase
 
     ~this()
     {
-        if (!_isStatic)
-        {
-            detachHandlers();
-        }
+//        if (!_isStatic)  // USE GC, maybe the contex will free before pipeline
+//        {
+//            detachHandlers();
+//        }
     }
 
     pragma(inline)

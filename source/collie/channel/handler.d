@@ -23,7 +23,6 @@ abstract class HandlerBase(Context)
 
     ~this()
     {
-        //    writeln("HandlerBase(Context) ~this");
     }
 
     void attachPipeline(Context /*ctx*/ )

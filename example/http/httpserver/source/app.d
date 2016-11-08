@@ -49,7 +49,7 @@ class MyHandler : RequestHandler
 		collectException({
 				Unique!ResponseBuilder build = Unique!ResponseBuilder(new ResponseBuilder(_downstream));
 				//ResponseBuilder build = new ResponseBuilder(_downstream);// scoped!ResponseBuilder(_downstream);
-				build.status(200,HTTPMessage.statusText(200));
+				build.status(cast(ushort)200,HTTPMessage.statusText(200));
 				build.setBody(cast(ubyte[])"string hello = \"hello world!!\";");
 				build.sendWithEOM();
 			}());
