@@ -91,7 +91,7 @@ final class ResponseBuilder
 				if(_sendEOM) 
 					_txn.sendEOM();
 			} else {
-				_txn.sendBody(_body.data(true),_sendEOM);
+				_txn.sendBody(_body,_sendEOM);
 			}
 		} else if(_sendEOM) {
 			_txn.sendEOM();

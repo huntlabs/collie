@@ -122,12 +122,18 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 		_codec.generateHeader(txn.streamID,headers,tdata,eom);
 		write(context,tdata.data(true),bind(&writeCallBack,eom,txn));
 	}
+
+	override size_t sendBody(HTTPTransaction txn,ref HVector body_,bool eom) {
+		size_t rlen = getCodec.generateBody(txn.streamID,body_,eom);
+		write(context,body_.data(true),bind(&writeCallBack,eom,txn));
+		return rlen;
+	}
 	
 	override size_t sendBody(HTTPTransaction txn,
 		ubyte[] data,
 		bool eom)
 	{
-		HVector tdata = HVector(data,false);
+		HVector tdata = HVector(data,true);
 		size_t rlen = getCodec.generateBody(txn.streamID,tdata,eom);
 		write(context,tdata.data(true),bind(&writeCallBack,eom,txn));
 		return rlen;

@@ -105,6 +105,7 @@ interface HTTPTransactionHandler
 
 class HTTPTransaction
 {
+	alias HVector = HTTPCodec.HVector;
 	interface Transport
 	{
 		alias SocketWriteCallBack = TCPWriteCallBack;
@@ -121,6 +122,9 @@ class HTTPTransaction
 		
 		size_t sendBody(HTTPTransaction txn,
 			ubyte[],
+			bool eom);
+		size_t sendBody(HTTPTransaction txn,
+			ref HVector,
 			bool eom);
 		
 		size_t sendChunkHeader(HTTPTransaction txn,
@@ -301,6 +305,10 @@ class HTTPTransaction
    *             chunk headers.
    */
 	void sendBody(ubyte[] body_, bool iseom = false){
+		transport.sendBody(this,body_, iseom);
+	}
+
+	void sendBody(ref HVector body_, bool iseom = false){
 		transport.sendBody(this,body_, iseom);
 	}
 	

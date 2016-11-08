@@ -85,6 +85,8 @@ final class RequestHandlerAdaptor :
 
 	override void sendBody(ubyte[] data, bool iseom = false){if(_txn)_txn.sendBody(data,iseom);}
 
+	override void sendBody(ref HVector data,bool iseom = false) {if(_txn)_txn.sendBody(data,iseom);}
+
 	override void sendChunkTerminator(){if(_txn)_txn.sendChunkTerminator();}
 
 	override void sendEOM(){if(_txn)_txn.sendEOM(); _responseStarted = false;}

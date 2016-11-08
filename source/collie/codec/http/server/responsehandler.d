@@ -9,6 +9,7 @@ import collie.codec.http.httptansaction;
 abstract class ResponseHandler
 {
 	alias SocketWriteCallBack = HTTPTransaction.Transport.SocketWriteCallBack;
+	alias HVector = HTTPTransaction.HVector;
 
 	this(RequestHandler handle)
 	{
@@ -20,6 +21,8 @@ abstract class ResponseHandler
 	void sendChunkHeader(size_t len);
 
 	void sendBody(ubyte[] data,bool iseom = false);
+
+	void sendBody(ref HVector data,bool iseom = false);
 
 	void sendChunkTerminator();
 
