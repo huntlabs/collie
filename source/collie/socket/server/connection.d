@@ -46,6 +46,14 @@ abstract class ServerConnection : WheelTimer
 				});
 	}
 
+	final void close()
+	{
+		_loop.post(delegate(){
+				if(_socket)
+					_socket.close();
+			});
+	}
+
 	final @property tcpSocket(){return _socket;}
 protected:
 	void onActive() nothrow;

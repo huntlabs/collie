@@ -181,6 +181,14 @@ abstract class ClientConnection : WheelTimer
 			});
 	}
 
+	final void close()
+	{
+		_loop.post(delegate(){
+				if(_client)
+					_client.close();
+			});
+	}
+
 protected:
 	void onActive() nothrow;
 	void onClose() nothrow;

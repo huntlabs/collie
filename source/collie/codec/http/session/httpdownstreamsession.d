@@ -1,15 +1,15 @@
-﻿module collie.codec.http.httpdownstreamsession;
+﻿module collie.codec.http.session.httpdownstreamsession;
 
-import collie.codec.http.httpsession;
+import collie.codec.http.session.httpsession;
 import collie.codec.http.httpmessage;
 import collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
 
 final class HTTPDownstreamSession : HTTPSession
 {
-	this(HTTPSessionController controller,HTTPCodec codec)
+	this(HTTPSessionController controller,HTTPCodec codec, SessionDown down)
 	{
-		super(controller,codec);
+		super(controller,codec,down);
 	}
 
 protected:

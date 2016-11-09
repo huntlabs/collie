@@ -13,7 +13,7 @@ import collie.socket.server.exception;
 
 final class TCPServer
 {
-	alias NewConnection = ServerConnection delegate(Socket socket);
+	alias NewConnection = ServerConnection delegate(EventLoop,Socket);
 	alias OnAceptorCreator = void delegate(Acceptor);
 
 	this(EventLoop loop)
@@ -96,12 +96,17 @@ final class TCPServer
 		return _timer.start(time);
 	}
 
+	void close()
+	{
+		if(_acceptor)
+			_acceptor.close();
+	}
 protected:
 	void newConnect(Socket socket)
 	{
 		import std.exception;
 		ServerConnection connection;
-		collectException(_cback(socket),connection);
+		collectException(_cback(_loop,socket),connection);
 		if(connection is null) return;
 		if(connection.active() && _wheel)
 			_wheel.addNewTimer(connection);

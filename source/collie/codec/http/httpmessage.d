@@ -15,7 +15,10 @@ public import std.experimental.logger;
 final class HTTPMessage
 {
 	this()
-	{}
+	{
+		_version[0] = 1;
+		_version[1] = 1;
+	}
 
 	/* Setter and getter for the SPDY priority value (0 - 7).  When serialized
    * to SPDY/2, Codecs will collpase 0,1 -> 0, 2,3 -> 1, etc.

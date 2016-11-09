@@ -1,11 +1,10 @@
-﻿module collie.codec.http.httpsession;
+﻿module collie.codec.http.session.httpsession;
 
 import collie.codec.http.headers;
 import collie.codec.http.httpmessage;
 import collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.codec.wsframe;
-import collie.channel;
 import collie.codec.http.errocode;
 
 import collie.socket.tcpsocket;
@@ -30,9 +29,16 @@ abstract class HTTPSessionController
 	void onSessionCodecChange(HTTPSession session) {}
 }
 
+interface SessionDown
+{
+	void httpWrite(ubyte[],void delegate(ubyte[],size_t));
+	void httpClose();
+	Address localAddress();
+	Address remoteAddress();
+}
+
 /// HTTPSession will not send any read event
-abstract class HTTPSession : HandlerAdapter!(ubyte[]), 
-	HTTPTransaction.Transport,
+abstract class HTTPSession : HTTPTransaction.Transport,
 	HTTPCodec.CallBack
 {
 	alias HVector = HTTPCodec.HVector;
@@ -63,36 +69,25 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 		void onEgressBufferCleared(HTTPSession);
 	}
 
-	this(HTTPSessionController controller,HTTPCodec codec)
+	this(HTTPSessionController controller,HTTPCodec codec,SessionDown down)
 	{
 		_controller = controller;
+		_down = down;
 		_codec = codec;
 		_codec.setCallback(this);
 	}
 
 	//HandlerAdapter {
-	override void read(Context ctx,ubyte[] msg) {
+	void onRead(ubyte[] msg) {
 		_codec.onIngress(msg);
 	}
 
-	override void transportActive(Context ctx) {
-		TCPSocket sock = cast(TCPSocket)context.pipeline.transport;
-		if(sock is null){ 
-			_localAddr = new UnknownAddress();
-			_peerAddr = _localAddr;
-		} else {
-			_localAddr = sock.localAddress;
-			_peerAddr = sock.remoteAddress;
-		}
-		{
-			Linger optLinger;
-			optLinger.on = 1;
-			optLinger.time = 0;
-			sock.setOption(SocketOptionLevel.SOCKET, SocketOption.LINGER, optLinger);
-		}
+	void onActive() {
+		_localAddr = _down.localAddress;
+		_peerAddr = _down.remoteAddress;
 	}
 
-	override void transportInactive(Context ctx) {
+	void inActive() {
 		if(_transaction) {
 			_transaction.onErro(HTTPErrorCode.REMOTE_CLOSED);
 			_transaction.onDelayedDestroy();
@@ -100,7 +95,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 		trace("connect closed!");
 	}
 
-	override void timeOut(Context ctx) {
+	void onTimeout() @trusted {
 		if(_transaction){
 			_transaction.onErro(HTTPErrorCode.TIME_OUT);
 		}
@@ -120,12 +115,12 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	{
 		HVector tdata;
 		_codec.generateHeader(txn.streamID,headers,tdata,eom);
-		write(context,tdata.data(true),bind(&writeCallBack,eom,txn));
+		_down.httpWrite(tdata.data(true),bind(&writeCallBack,eom,txn));
 	}
 
 	override size_t sendBody(HTTPTransaction txn,ref HVector body_,bool eom) {
 		size_t rlen = getCodec.generateBody(txn.streamID,body_,eom);
-		write(context,body_.data(true),bind(&writeCallBack,eom,txn));
+		_down.httpWrite(body_.data(true),bind(&writeCallBack,eom,txn));
 		return rlen;
 	}
 	
@@ -135,7 +130,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	{
 		HVector tdata = HVector(data,true);
 		size_t rlen = getCodec.generateBody(txn.streamID,tdata,eom);
-		write(context,tdata.data(true),bind(&writeCallBack,eom,txn));
+		_down.httpWrite(tdata.data(true),bind(&writeCallBack,eom,txn));
 		return rlen;
 	}
 	
@@ -143,7 +138,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	{
 		HVector tdata;
 		size_t rlen = getCodec.generateChunkHeader(txn.streamID,tdata,length);
-		write(context,tdata.data(true),bind(&writeCallBack,false,txn));
+		_down.httpWrite(tdata.data(true),bind(&writeCallBack,false,txn));
 		return rlen;
 	}
 
@@ -152,7 +147,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	{
 		HVector tdata;
 		size_t rlen = getCodec.generateChunkTerminator(txn.streamID,tdata);
-		write(context,tdata.data(true),bind(&writeCallBack,true,txn));
+		_down.httpWrite(tdata.data(true),bind(&writeCallBack,true,txn));
 		return rlen;
 	}
 	
@@ -163,7 +158,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 		HVector tdata;
 		size_t rlen = getCodec.generateEOM(txn.streamID,tdata);
 		if(rlen)
-			write(context,tdata.data(true),bind(&writeCallBack,true,txn));
+			_down.httpWrite(tdata.data(true),bind(&writeCallBack,true,txn));
 		return rlen;
 	}
 
@@ -171,7 +166,7 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	//			HTTPErrorCode statusCode);
 
 	override void socketWrite(HTTPTransaction txn,ubyte[] data,HTTPTransaction.Transport.SocketWriteCallBack cback) {
-		write(context,data,cback);
+		_down.httpWrite(data,cback);
 	}
 
 
@@ -256,12 +251,12 @@ abstract class HTTPSession : HandlerAdapter!(ubyte[]),
 	override void onError(StreamID stream,HTTPErrorCode code){
 		//if(_transaction)
 		//	_transaction.
-		close(context);
+		_down.httpClose();
 	}
 
 	override void onAbort(StreamID stream,
 		HTTPErrorCode code){
-		close(context);
+		_down.httpClose();
 	}
 	
 	override void onWsFrame(StreamID,ref WSFrame){
@@ -299,7 +294,7 @@ protected:
 			txn.onDelayedDestroy();
 		if(isLast && _codec.shouldClose) {
 			trace("\t\t --------do close!!!");
-			close(context);
+			_down.httpClose();
 		}
 	}
 protected:
@@ -310,5 +305,6 @@ protected:
 	HTTPCodec _codec;
 
 	HTTPSessionController _controller;
+	SessionDown _down;
 }
 

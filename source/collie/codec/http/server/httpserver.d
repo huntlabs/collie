@@ -1,6 +1,6 @@
 ﻿module collie.codec.http.server.httpserver;
 
-import collie.codec.http.httpsession;
+import collie.codec.http.session.httpsession;
 import collie.codec.http.httptansaction;
 import collie.codec.http.server.httpserveroptions;
 import collie.codec.http.httpmessage;
@@ -14,7 +14,8 @@ import collie.socket.tcpsocket;
 import collie.socket.acceptor;
 import collie.socket.eventloop;
 import collie.socket.eventloopgroup;
-
+import collie.socket.server.tcpserver;
+import collie.socket.server.connection;
 
 import std.socket;
 import std.experimental.allocator.gc_allocator;
@@ -22,10 +23,16 @@ import std.experimental.logger;
 
 
 alias HTTPPipeline = Pipeline!(ubyte[],ubyte[]);
+alias HTTPServer = HTTPServerImpl!true;
+alias HttpServer = HTTPServerImpl!false;
 
-final class HTTPServer : HTTPSessionController
+final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 {
-	alias Server = ServerBootstrap!HTTPPipeline;
+	static if(UsePipeline){
+		alias Server = ServerBootstrap!HTTPPipeline;
+	} else {
+		alias Server = TCPServer;
+	}
 	alias SVector = Vector!(Server,GCAllocator);
 	alias IPVector = Vector!(HTTPServerOptions.IPConfig,GCAllocator);
 
@@ -46,7 +53,10 @@ final class HTTPServer : HTTPSessionController
 		for(size_t i = 0; i < _servers.length; ++i)
 		{
 			trace("start listen!!!");
-			_servers[i].stopListening();
+			static if(UsePipeline)
+				_servers[i].stopListening();
+			else
+				_servers[i].close();
 		}
 		_servers.clear();
 		for(size_t i = 0; i < _ipconfigs.length; ++i)
@@ -71,7 +81,13 @@ final class HTTPServer : HTTPSessionController
 		for(size_t i = 0; i < _servers.length; ++i)
 		{
 			trace("start listen ---");
-			_servers[i].startListening();
+			static if(UsePipeline)
+				_servers[i].startListening();
+			else {
+				Server ser = _servers[i];
+				ser.startTimeout(cast(uint)_options.timeOut);
+				ser.listen(1024);
+			}
 		}
 		if(_group)
 			_group.start();
@@ -114,25 +130,62 @@ protected:
 
 	uint maxHeaderSize() const shared {return cast(uint)_options.maxHeaderSize;}
 
-	static void setAcceptorConfig(ref shared(HTTPServerOptions.IPConfig) config,Acceptor acceptor)
-	{
-		version(linux) {
-			if(config.enableTCPFastOpen){
-				acceptor.setOption(SocketOptionLevel.TCP,cast(SocketOption)23,config.fastOpenQueueSize);
+	static if(UsePipeline){
+		static void setAcceptorConfig(ref shared(HTTPServerOptions.IPConfig) config,Acceptor acceptor)
+		{
+			version(linux) {
+				if(config.enableTCPFastOpen){
+					acceptor.setOption(SocketOptionLevel.TCP,cast(SocketOption)23,config.fastOpenQueueSize);
+				}
 			}
 		}
 	}
 
 	void newServer(ref HTTPServerOptions.IPConfig ipconfig )
 	{
-		Server ser = new Server(_mainLoop);
-		if(_group)
-			ser.setReusePort(true);
-		ser.group(_group).childPipeline(new shared ServerHandlerFactory(this));
-		ser.pipeline(new shared ServerAccpeTFactory(ipconfig));
-		ser.heartbeatTimeOut(cast(uint)_options.timeOut);
-		ser.bind(ipconfig.address);
-		_servers.insertBack(ser);
+		static if(UsePipeline){
+			Server ser = new Server(_mainLoop);
+			if(_group)
+				ser.setReusePort(true);
+			ser.group(_group).childPipeline(new shared ServerHandlerFactory(this));
+			ser.pipeline(new shared ServerAccpeTFactory(ipconfig));
+			ser.heartbeatTimeOut(cast(uint)_options.timeOut);
+			ser.bind(ipconfig.address);
+			_servers.insertBack(ser);
+		} else {
+			bool ruseport = _group !is null;
+			_servers.insertBack(newTCPServer(_mainLoop,ipconfig.address,ruseport,ipconfig.enableTCPFastOpen,ipconfig.fastOpenQueueSize));
+			if(ruseport){
+				foreach(EventLoop loop; _group){
+					_servers.insertBack(newTCPServer(loop,ipconfig.address,ruseport,ipconfig.enableTCPFastOpen,ipconfig.fastOpenQueueSize));
+				}
+			}
+
+		}
+	}
+	static if(!UsePipeline){
+		Server newTCPServer(EventLoop loop,Address address,bool ruseport, bool enableTCPFastOpen, uint fastOpenQueueSize )
+		{
+			Server ser = new Server(_mainLoop);
+			ser.setNewConntionCallBack(&newConnect);
+			ser.bind(address,(Acceptor accpet){
+					if(ruseport)
+						accpet.reusePort(true);
+					version(linux) {
+						if(enableTCPFastOpen){
+							accpet.setOption(SocketOptionLevel.TCP,cast(SocketOption)23,fastOpenQueueSize);
+						}
+					}
+				});
+			return ser;
+		}
+	}
+
+
+	ServerConnection newConnect(EventLoop loop,Socket sock)
+	{
+		return new HttpHandlerConnection(new TCPSocket(loop,sock),this,
+			new HTTP1XCodec(TransportDirection.DOWNSTREAM,cast(uint)_options.maxHeaderSize));
 	}
 private:
 	SVector _servers;
@@ -149,8 +202,26 @@ private:
 
 private:
 
-import collie.codec.http.httpdownstreamsession;
 import collie.codec.http.codec.http1xcodec;
+import collie.codec.http.session.httpdownstreamsession;
+import collie.codec.http.session.sessiondown;
+
+class HttpHandlerConnection : HTTPConnection
+{
+	this(TCPSocket sock,HTTPSessionController controller,HTTPCodec codec)
+	{
+		super(sock);
+		httpSession = new HTTPDownstreamSession(controller,codec,this);
+	}
+}
+
+class HttpHandlerPipeline : PipelineSessionDown
+{
+	this(HTTPSessionController controller,HTTPCodec codec)
+	{
+		httpSession = new HTTPDownstreamSession(controller,codec,this);
+	}
+}
 
 class ServerHandlerFactory : PipelineFactory!HTTPPipeline
 {
@@ -161,7 +232,7 @@ class ServerHandlerFactory : PipelineFactory!HTTPPipeline
 	override HTTPPipeline newPipeline(TCPSocket transport) {
 		auto pipe = HTTPPipeline.create();
 		pipe.addBack(new TCPSocketHandler(transport));
-		pipe.addBack(new HTTPDownstreamSession(cast(HTTPServer)_server,
+		pipe.addBack(new HttpHandlerPipeline(cast(HTTPServer)_server,
 				new HTTP1XCodec(TransportDirection.DOWNSTREAM,_server.maxHeaderSize)));
 		pipe.finalize();
 		return pipe;
