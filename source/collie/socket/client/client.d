@@ -8,7 +8,7 @@ import collie.socket.tcpclient;
 import collie.socket.tcpsocket;
 import collie.socket.client.exception;
 
-abstract class BaseTCPClient
+abstract class BaseClient
 {
 	alias OnTcpClientCreator = void delegate(TCPClient);
 
