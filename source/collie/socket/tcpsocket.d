@@ -45,7 +45,7 @@ alias TCPReadCallBack = void delegate(ubyte[] buffer);
         super(loop, TransportType.TCP);
         _socket = sock;
         _socket.blocking = false;
-		_writeQueue = Queue!(WriteSite, GCAllocator, true, false)(32);
+		_writeQueue = Queue!(WriteSite, GCAllocator, true, false)(128);
         _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
         _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true, true,
             true);
