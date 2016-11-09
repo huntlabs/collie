@@ -15,100 +15,79 @@ import core.thread;
 import std.datetime;
 import std.stdio;
 import std.functional;
+import std.exception;
 
 import collie.socket;
-import collie.channel;
-import collie.bootstrap.clientmanger;
+import collie.socket.client.clientmanger;
 
-alias Pipeline!(ubyte[], ubyte[]) EchoPipeline;
 
-ClientManger!EchoPipeline client;
-EventLoop loop;
-
-int num = 0;
-
-class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
+@trusted class EchoConnect : ClientConnection
 {
-public:
-	this(int nm)
-	{
-		import std.conv;
-		_nm = to!string(nm);
+	this(TCPClient sock, int id){
+		super(sock);
+		_id = id;
 	}
-    override void read(Context ctx, ubyte[] msg)
-    {
-         writeln("Read data : ", cast(string) msg.dup, "   the length is ", msg.length);
-    }
-
-    void callBack(ubyte[] data, size_t len)
-    {
-        writeln("\t writed data : ", cast(string) data, "   the length is ", len);
-    }
-
-    override void timeOut(Context ctx)
-    {
-        writeln("clent beat time Out!");
-        string data = "NO." ~ _nm ~ "   \t" ~ Clock.currTime().toSimpleString();
-        write(ctx, cast(ubyte[])data , &callBack);
-    }
-    
-    override void transportInactive(Context ctx)
-    {
-        loop.stop();
-    }
-
-private:
-	string _nm;
+	
+protected:
+	override void onActive() nothrow
+	{
+		collectException(writeln(_id," connected suess!"));
+	}
+	override void onClose() nothrow
+	{
+		collectException(writeln(_id," client disconnect!"));
+	}
+	override void onRead(ubyte[] data) nothrow
+	{
+		collectException({
+				writeln(_id," . read data : ", cast(string)data);
+			}());
+	}
+	
+	override void onTimeOut() nothrow
+	{
+		collectException({
+				if(isAlive) {
+					writeln(_id," time out do beat!");
+					string data = Clock.currTime().toSimpleString();
+					write(cast(ubyte[])data,null);
+				}
+			}());
+	}
+	int _id;
 }
 
-class EchoPipelineFactory : PipelineFactory!EchoPipeline
-{
-public:
-    override EchoPipeline newPipeline(TCPSocket sock)
-    {
-        auto pipeline = EchoPipeline.create();
-        pipeline.addBack(new TCPSocketHandler(sock));
-		num ++;
-		pipeline.addBack(new EchoHandler(num));
-        pipeline.finalize();
-        return pipeline;
-    }
-}
-
+ClientConnection[] clientList;
+__gshared _id = 10000;
 
 void main()
 {
-    loop = new EventLoop();
-	client = new ClientManger!EchoPipeline(loop);
+	ClientConnection newConnect(TCPClient client) @trusted 
+	{
+		return new EchoConnect(client,++_id);
+	}
 
-	client.tryCount(3);
-	client.heartbeatTimeOut(2);
-	client.pipelineFactory(new shared EchoPipelineFactory());
-	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
-			if(pipe is null)
-				writeln("connect erro! No. 1");
-		});
-	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
-			if(pipe is null)
-				writeln("connect erro! No. 2");
-		});
-	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
-			if(pipe is null)
-				writeln("connect erro! No. 3");
-		});
-	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
-			if(pipe is null)
-				writeln("connect erro! No. 4");
-		});
-	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
-			if(pipe is null)
-				writeln("connect erro! No. 5");
-		});
-	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
-			if(pipe is null)
-				writeln("connect erro! No. 6");
-		});
-    loop.run();
-    
-    writeln("APP Stop!");
+	void createClient(TCPClient client) @trusted 
+	{
+		writeln("new client!");
+	}
+
+	void newConnection(ClientConnection contion) @trusted 
+	{
+		writeln("new connection!!");
+		clientList ~= contion;
+	}
+	
+	EventLoop loop = new EventLoop();
+	
+	TCPClientManger manger = new TCPClientManger(loop);
+	manger.setNewConnectionCallBack(&newConnect);
+	manger.setClientCreatorCallBack(&createClient);
+	manger.startTimeout(5);
+	manger.tryCout(3);
+	foreach(i;0..20){
+		manger.connect(new InternetAddress("127.0.0.1",8094),&newConnection);
+	}
+	
+	loop.run();
 }

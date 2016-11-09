@@ -25,7 +25,7 @@ import collie.utils.exception;
 alias TCPWriteCallBack = void delegate(ubyte[] data, size_t writeSzie);
 alias TCPReadCallBack = void delegate(ubyte[] buffer);
 
-class TCPSocket : AsyncTransport, EventCallInterface
+@trusted class TCPSocket : AsyncTransport, EventCallInterface
 {
     this(EventLoop loop, bool isIpV6 = false)
     {
@@ -123,7 +123,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         if (!alive)
         {
             warning("tcp socket write on close!");
-            cback(data, 0);
+			if(cback) cback(data, 0);
             return;
         }
         auto buffer = new WriteSite(data, cback);

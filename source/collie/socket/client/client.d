@@ -6,66 +6,76 @@ import collie.socket.eventloop;
 import collie.socket.timer;
 import collie.socket.tcpclient;
 import collie.socket.tcpsocket;
+import collie.socket.client.linkinfo;
 import collie.socket.client.exception;
 
-abstract class BaseClient
+@trusted abstract class BaseClient
 {
-	alias OnTcpClientCreator = void delegate(TCPClient);
+	alias ClientCreatorCallBack = void delegate(TCPClient);
+	alias LinkInfo = TLinkInfo!ClientCreatorCallBack;
 
-	this(EventLoop loop)
+	this(EventLoop loop) 
 	{
 		_loop = loop;
 	}
 
-	final bool isActive()
+	final bool isAlive() @trusted
 	{
-		return _client && _client.isAlive;
+		return _info.client && _info.client.isAlive;
 	}
 
-	final void setTimeout(uint s)
+	final void setTimeout(uint s) @safe
 	{
 		_timeout = s;
 	}
 
-	final void connect(Address addr,OnTcpClientCreator cback)
+	@property tryCount(){return _tryCount;}
+	@property tryCount(uint count){_tryCount = count;}
+
+	final void connect(Address addr,ClientCreatorCallBack cback = null) @trusted
 	{
-		if(isActive)
+		if(isAlive)
 			throw new SocketClientException("must set NewConnection callback ");
-		_client = new TCPClient(_loop);
-		if(cback)
-			cback(_client);
-		_client.setConnectCallBack(&connectCallBack);
-		_client.setCloseCallBack(&onClose);
-		_client.setReadCallBack(&onRead);
-		_client.connect(addr);
+		_info.tryCount = 0;
+		_info.cback = cback;
+		_info.addr = addr;
+		_loop.post((){
+				startTimer();
+				connect();
+			});
+
 	}
 
 
-	final void write(ubyte[] data,TCPWriteCallBack cback)
+	final void write(ubyte[] data,TCPWriteCallBack cback = null) @trusted
 	{
-		if(_client is null){
-			cback(data,0);
+		if(_info.client is null){
+			if(cback) cback(data,0);
 			return;
 		}
-		_loop.post(delegate(){
-				if(_client)
-					_client.write(data, cback);
-				else
+		_loop.post((){
+				if(_info.client)
+					_info.client.write(data, cback);
+				else if(cback)
 					cback(data,0);
 			});
 	}
 	
-	final void close()
+	final void close() @trusted
 	{
-		if(_client is null) return;
-		_loop.post(delegate(){
-				if(_client)
-					_client.close();
+		if(_info.client is null) return;
+		_loop.post((){
+				if(_info.client)
+					_info.client.close();
 			});
 	}
 
+	@property tcpClient()@trusted {return _info.client;}
+	@property timeOut()@trusted {return _timer;}
+	@property eventLoop()@trusted {return _loop;}
 protected:
 	void onActive() nothrow;
+	void onFailure() nothrow;
 	void onClose() nothrow;
 	void onRead(ubyte[] data) nothrow;
 	void onTimeout() nothrow;
@@ -83,11 +93,33 @@ protected:
 		_timer.start(_timeout * 1000);
 	}
 private:
+	final void connect()
+	{
+		_info.client = new TCPClient(_loop);
+		if(_info.cback)
+			_info.cback(_info.client);
+		_info.client.setConnectCallBack(&connectCallBack);
+		_info.client.setCloseCallBack(&onClose);
+		_info.client.setReadCallBack(&onRead);
+		_info.client.connect(_info.addr);
+	}
+
 	final void connectCallBack(bool state){
 		if(state){
+			_info.cback = null;
 			onActive();
 		} else {
-			doClose();
+			import collie.utils.memory;
+			gcFree(_info.client);
+			_info.client = null;
+			if(_info.tryCount < _tryCount){
+				_info.tryCount ++;
+			} else {
+				_info.cback = null;
+				if(_timer)
+					_timer.stop();
+				onFailure();
+			}
 		}
 
 	}
@@ -96,13 +128,14 @@ private:
 		import collie.utils.memory;
 		if(_timer)
 			_timer.stop();
-		gcFree(_client);
-		_client = null;
+		gcFree(_info.client);
+		_info.client = null;
 		onClose();
 	}
 private
 	EventLoop _loop;
-	TCPClient _client;
+	LinkInfo _info;
+	uint _tryCount = 1;
 	Timer _timer;
 	uint _timeout;
 }

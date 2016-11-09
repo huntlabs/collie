@@ -20,7 +20,7 @@ import collie.socket.common;
 import collie.socket.eventloop;
 import collie.utils.functional;
 
-final class Timer : EventCallInterface
+@trusted final class Timer : EventCallInterface
 {
     this(EventLoop loop)
     {

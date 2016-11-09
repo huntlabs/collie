@@ -50,10 +50,11 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 
     override void write(Context ctx, ubyte[] msg, TheCallBack cback)
     {
-        _loop.post(delegate(){
+        _loop.post((){
             if(_socket is null)
             {
-                cback(msg,0);
+				if(cback)
+            		cback(msg,0);
                 return;
             }
             if (context.pipeline.pipelineManager)
@@ -65,7 +66,7 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 
     override void close(Context ctx)
     {
-        _loop.post(delegate(){
+        _loop.post((){
             if (_socket)
                 _socket.close();
         });

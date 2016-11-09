@@ -25,7 +25,7 @@ import collie.socket.tcpsocket;
 
 alias AcceptCallBack = void delegate(Socket sock);
 
-final class Acceptor : AsyncTransport, EventCallInterface
+@trusted final class Acceptor : AsyncTransport, EventCallInterface
 {
     this(EventLoop loop, bool isIpV6 = false)
     {

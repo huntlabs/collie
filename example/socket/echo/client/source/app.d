@@ -18,72 +18,104 @@ import std.functional;
 import std.exception;
 
 import collie.socket;
-import collie.channel;
-import collie.bootstrap.client;
+import collie.socket.client.client;
 
-EventLoopGroup group;
+import core.thread;
+import core.sync.semaphore;
 
-alias Pipeline!(ubyte[], ubyte[]) EchoPipeline;
-class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
+
+@trusted class MyClient : BaseClient
 {
-public:
-    override void read(Context ctx, ubyte[] msg){
-         writeln("Read data : ", cast(string) msg.dup, "   the length is ", msg.length);
-    }
+	this()
+	{
+		super(new EventLoop());
+	}
 
-    void callBack(ubyte[] data, uint len){
-        writeln("\t writed data : ", cast(string) data, "   the length is ", len);
-    }
+	void runInThread()
+	{
+		if(th !is null || isAlive)
+			return;
+		th = new Thread((){eventLoop.run();});
+		th.start();
+	}
 
-    override void timeOut(Context ctx){
-        writeln("clent beat time Out!");
-        string data = Clock.currTime().toSimpleString();
-        write(ctx, cast(ubyte[])data , &callBack);
-    }
-    
-    override void transportInactive(Context ctx){
-		group.stop();
-    }
-}
+	void syncConnet(Address addr)
+	{
+		if(sem is null){
+			sem = new Semaphore(0);
+		}
+		_sync = true;
+		scope(failure)_sync = false;
+		connect(addr,&onCreate);
+		sem.wait();
+	}
 
-class EchoPipelineFactory : PipelineFactory!EchoPipeline
-{
-public:
-    override EchoPipeline newPipeline(TCPSocket sock){
-        auto pipeline = EchoPipeline.create();
-        pipeline.addBack(new TCPSocketHandler(sock));
-        pipeline.addBack(new EchoHandler());
-        pipeline.finalize();
-        return pipeline;
-    }
-}
+protected:
+	override void onActive() nothrow {
+		collectException({
+				if(_sync)
+					sem.notify();
+				writeln("connect suess!");
+			}());
+	}
 
-void waitForConnect(Address addr,ClientBootstrap!EchoPipeline client)
-{
-	writeln("waitForConnect");
-	import core.sync.semaphore;
-	Semaphore cod = new Semaphore(0);
-	client.connect(addr,(EchoPipeline pipe){
-			if(pipe)
-				writeln("connect suesss!");
-			else
-				writeln("connect erro!");
-			cod.notify();});
-	cod.wait();
-	enforce(client.pipeLine,"can not connet to server!");
+	override void onFailure() nothrow
+	{
+		collectException({
+				if(_sync)
+					sem.notify();
+				writeln("connect failure!");
+			}());
+	}
+
+	override void onClose() nothrow {
+		collectException(writeln("connect close!"));
+	}
+
+	override void onRead(ubyte[] data) nothrow {
+		collectException(writeln("read data : ", cast(string)data));
+	}
+
+	override void onTimeout() nothrow {
+		collectException({
+				if(isAlive) {
+					writeln("time out do beat!");
+					string data = Clock.currTime().toSimpleString();
+					write(cast(ubyte[])data,null);
+				}
+			}());
+	}
+
+	void onCreate(TCPClient client)
+	{
+		// set client;
+		client.setKeepAlive(1200,2);
+		writeln("create a tcp client!");
+	}
+private:
+
+	Thread th;
+	Semaphore sem;
+	bool _sync = false;
 }
 
 
 void main()
 {
-	group = new EventLoopGroup(1);
-	group.start();
-	ClientBootstrap!EchoPipeline client = new ClientBootstrap!EchoPipeline(group.at(0));
+	MyClient client = new MyClient();
+	client.runInThread();
+	client.setTimeout(60);
 	client.tryCount(3);
-	client.heartbeatTimeOut(2)
-		.pipelineFactory(new shared EchoPipelineFactory());
-	waitForConnect(new InternetAddress("127.0.0.1",8094),client);
-    
-        writeln("APP wait Stop!");
-	group.wait();
+	client.syncConnet(new InternetAddress("127.0.0.1",8094));
+	//client.connect(new InternetAddress("127.0.0.1",8094));
+	//client.eventLoop.run();
+	if(!client.isAlive){
+		return;
+	}
+	while(true)
+	{
+		writeln("write to send server: ");
+		string data = readln();
+		client.write(cast(ubyte[])data,null);
+	}
 }

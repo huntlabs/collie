@@ -31,7 +31,7 @@ public:
          writeln("Read data : ", cast(string) msg.dup, "   the length is ", msg.length);
     }
 
-    void callBack(ubyte[] data, uint len){
+    void callBack(ubyte[] data, size_t len){
         writeln("\t writed data : ", cast(string) data, "   the length is ", len);
     }
 

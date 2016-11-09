@@ -15,50 +15,63 @@ import core.thread;
 import std.datetime;
 import std.stdio;
 import std.functional;
+import std.exception;
 import std.experimental.logger;
 
 import collie.socket;
-import collie.channel;
-import collie.bootstrap.server;
+import collie.socket.server.connection;
+import collie.socket.server.tcpserver;
 
-alias Pipeline!(ubyte[], ubyte[]) EchoPipeline;
-
-ServerBootstrap!EchoPipeline ser;
-
-class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
+@trusted class EchoConnect : ServerConnection
 {
-public:
-    override void read(Context ctx, ubyte[] msg){
-        write(ctx,msg.dup, &callBack);
-    }
+	this(TCPSocket sock){
+		super(sock);
+	}
 
-    void callBack(ubyte[] data, size_t len){
-        writeln("writed data : ", cast(string) data, "   the length is ", len);
-    }
+protected:
+	override void onActive() nothrow
+	{
+		collectException(writeln("new client connected : ",tcpSocket.remoteAddress.toString()));
+	}
 
-    override void timeOut(Context ctx){
-        writeln("Sever beat time Out!");
-    }
-}
+	override void onClose() nothrow
+	{
+		collectException(writeln("client disconnect"));
+	}
 
-shared class EchoPipelineFactory : PipelineFactory!EchoPipeline
-{
-public:
-    override EchoPipeline newPipeline(TCPSocket sock){
-        auto pipeline = EchoPipeline.create();
-        pipeline.addBack(new TCPSocketHandler(sock));
-        pipeline.addBack(new EchoHandler());
-        pipeline.finalize();
-        return pipeline;
-    }
+	override void onRead(ubyte[] data) nothrow
+	{
+		collectException({
+				writeln("read data : ", cast(string)data);
+				this.write(data.dup);
+			}());
+	}
+
+	override void onTimeOut() nothrow
+	{
+		collectException({
+				writeln("client timeout : ",tcpSocket.remoteAddress.toString());
+				close();
+			}());
+	}
 }
 
 void main()
 {
-    ser = new ServerBootstrap!EchoPipeline();
-    ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(5)
-        .group(new EventLoopGroup).bind(8094);
-    ser.waitForStop();
+	ServerConnection newConnect(EventLoop lop,Socket soc)
+	{
+		return new EchoConnect(new TCPSocket(lop,soc));
+	}
 
-    writeln("APP Stop!");
+	EventLoop loop = new EventLoop();
+
+	TCPServer server = new TCPServer(loop);
+	server.setNewConntionCallBack(&newConnect);
+	server.startTimeout(120);
+	server.bind(new InternetAddress("127.0.0.1",8094),(Acceptor accept){
+			accept.reusePort(true);
+		});
+	server.listen(1024);
+
+	loop.run();
 }

@@ -17,10 +17,11 @@ import collie.utils.memory;
 import collie.bootstrap.exception;
 import collie.socket.client.linkinfo;
 
-class ClientBootstrap(PipeLine) : PipelineManager
+final class ClientBootstrap(PipeLine) : PipelineManager
 {
 	alias ConnCallBack = void delegate(PipeLine);
 	alias LinkInfo = TLinkInfo!ConnCallBack;
+	alias ClientCreatorCallBack = void delegate(TCPClient);
 
 	this(EventLoop loop)
 	{
@@ -33,6 +34,11 @@ class ClientBootstrap(PipeLine) : PipelineManager
 			_timer.destroy;
 		if(_info.client)
 			_info.client.destroy;
+	}
+
+	void setClientCreatorCallBack(ClientCreatorCallBack cback)
+	{
+		_oncreator = cback;
 	}
 	
 	auto pipelineFactory(shared PipelineFactory!PipeLine pipeFactory)
@@ -58,7 +64,7 @@ class ClientBootstrap(PipeLine) : PipelineManager
 		_info.addr = to;
 		_info.tryCount = 0;
 		_info.cback = cback;
-		connect();
+		_loop.post(&connect());
 	}
 	
 	void close()
@@ -87,6 +93,8 @@ protected:
 	void connect()
 	{
 		_info.client = new TCPClient(_loop,_info.addr.addressFamily);
+		if(_oncreator)
+			_oncreator(info.client);
 		_info.client.setCloseCallBack(&closeCallBack);
 		_info.client.setConnectCallBack(&connectCallBack);
 		_info.client.setReadCallBack(&readCallBack);
@@ -176,4 +184,5 @@ private:
 	uint _tryCount;
 
 	LinkInfo _info;
+	ClientCreatorCallBack _oncreator;
 }

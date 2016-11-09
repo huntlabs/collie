@@ -4,7 +4,7 @@ import collie.utils.timingwheel;
 import collie.socket.tcpsocket;
 import collie.socket.eventloop;
 
-abstract class ServerConnection : WheelTimer
+@trusted abstract class ServerConnection : WheelTimer
 {
 	this(TCPSocket socket)
 	{
@@ -26,7 +26,11 @@ abstract class ServerConnection : WheelTimer
 		}
 	}
 
-	final bool active()
+	final bool isAlive() @trusted {
+		return _socket && _socket.isAlive;
+	}
+
+	final bool active() @trusted
 	{
 		if(_socket is null)
 			return false;
@@ -36,25 +40,31 @@ abstract class ServerConnection : WheelTimer
 		return active;
 	}
 
-	final void write(ubyte[] data,TCPWriteCallBack cback)
+	final void write(ubyte[] data,TCPWriteCallBack cback = null) @trusted
 	{
-		_loop.post(delegate(){
-					if(_socket)
+		_loop.post((){
+					if(_socket) {
+						rest();
 						_socket.write(data, cback);
-					else
+					}else if(cback)
 						cback(data,0);
 				});
 	}
 
-	final void close()
+	final void restTimeout() @trusted
 	{
-		_loop.post(delegate(){
+		_loop.post((){rest();});
+	}
+
+	final void close() @trusted
+	{
+		_loop.post((){
 				if(_socket)
 					_socket.close();
 			});
 	}
 
-	final @property tcpSocket(){return _socket;}
+	final @property tcpSocket()@safe {return _socket;}
 protected:
 	void onActive() nothrow;
 	void onClose() nothrow;

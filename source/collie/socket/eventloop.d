@@ -33,7 +33,7 @@ static if (CustomTimer)
  @date  2016.1
  */
 
-class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
+@trusted class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
 {
 	alias CQueue = Queue!(CallBack,GCAllocator, true);
     this()

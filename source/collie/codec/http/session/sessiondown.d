@@ -5,7 +5,7 @@ import collie.codec.http.session.httpsession;
 import std.socket;
 import collie.socket.tcpsocket;
 
-class PipelineSessionDown : HandlerAdapter!(ubyte[]),SessionDown
+@trusted class PipelineSessionDown : HandlerAdapter!(ubyte[]),SessionDown
 {
 	@property httpSession(){return _session;}
 	@property httpSession(HTTPSession session){_session = session;}
@@ -65,7 +65,7 @@ import collie.socket.server.tcpserver;
 import collie.socket.server.connection;
 import std.exception;
 
-class HTTPConnection : ServerConnection,SessionDown
+@trusted class HTTPConnection : ServerConnection,SessionDown
 {
 	this(TCPSocket sock)
 	{

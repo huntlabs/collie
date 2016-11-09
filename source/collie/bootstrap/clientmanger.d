@@ -16,15 +16,17 @@ import collie.utils.timingwheel;
 import collie.utils.memory;
 import collie.utils.functional;
 import collie.exception;
+import collie.utils.exception;
 import collie.socket.client.linkinfo;
 
 
-class ClientManger(PipeLine)
+final class ClientManger(PipeLine)
 {
 	alias ClientConnection = ClientLink!PipeLine;
 	alias PipeLineFactory = PipelineFactory!PipeLine;
 	alias ConnCallBack = void delegate(PipeLine);
 	alias LinkInfo = TLinkInfo!ConnCallBack;
+	alias ClientCreatorCallBack = void delegate(TCPClient);
 
 	this(EventLoop loop)
 	{
@@ -35,6 +37,11 @@ class ClientManger(PipeLine)
 	{
 		if (_timer)
 			_timer.destroy;
+	}
+
+	void setClientCreatorCallBack(ClientCreatorCallBack cback)
+	{
+		_oncreator = cback;
 	}
 
 	void pipelineFactory(shared PipeLineFactory fac)
@@ -48,8 +55,7 @@ class ClientManger(PipeLine)
 		info.addr = to;
 		info.tryCount = 0;
 		info.cback = cback;
-		_waitConnect[info] = 0;
-		connect(info);
+		_loop.post((){connect(info);});
 	}
 
 	void close()
@@ -78,7 +84,10 @@ class ClientManger(PipeLine)
 protected:
 	void connect(LinkInfo * info)
 	{
+		_waitConnect[info] = 0;
 		info.client = new TCPClient(_loop);
+		if(_oncreator)
+			_oncreator(info.client);
 		info.client.setCloseCallBack(&tmpCloseCallBack);
 		info.client.setConnectCallBack(bind(&connectCallBack,info));
 		info.client.setReadCallBack(&tmpReadCallBack);
@@ -177,6 +186,7 @@ private:
 	EventLoop _loop;
 
 	uint _tryCount;
+	ClientCreatorCallBack _oncreator;
 }
 
 package:

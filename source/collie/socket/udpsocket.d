@@ -24,7 +24,7 @@ import collie.utils.queue;
 alias UDPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
 alias UDPReadCallBack = void delegate(ubyte[] buffer, Address adr);
 
-class UDPSocket : AsyncTransport, EventCallInterface
+@trusted class UDPSocket : AsyncTransport, EventCallInterface
 {
     this(EventLoop loop, bool isIpV6 = false)
     {

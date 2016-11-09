@@ -11,7 +11,7 @@ import collie.socket.timer;
 import collie.socket.server.connection;
 import collie.socket.server.exception;
 
-final class TCPServer
+@trusted final class TCPServer
 {
 	alias NewConnection = ServerConnection delegate(EventLoop,Socket);
 	alias OnAceptorCreator = void delegate(Acceptor);
@@ -36,7 +36,7 @@ final class TCPServer
 		_acceptor.bind(_bind);
 	}
 
-	bool listen(int block)
+	void listen(int block)
 	{
 		if(_acceptor is null)
 			throw new SocketBindException("the server is not bind!");
@@ -44,8 +44,10 @@ final class TCPServer
 			throw new SocketServerException("Please set CallBack frist!");
 
 		_acceptor.setCallBack(&newConnect);
-		_acceptor.listen(block);
-		return _acceptor.start();
+		_loop.post((){
+				_acceptor.listen(block);
+				_acceptor.start();
+			});
 	}
 
 	void setNewConntionCallBack(NewConnection cback)
@@ -53,17 +55,14 @@ final class TCPServer
 		_cback = cback;
 	}
 
-	bool startTimeout(uint s)
+	void startTimeout(uint s)
 	{
 		if(_wheel !is null)
-			return false;
+			throw new SocketServerException("TimeOut is runing!");
 		_timeout = s;
-		if(_timeout == 0)
-			return false;
+		if(_timeout == 0)return;
 
 		uint whileSize;uint time; 
-		if (_timeout == 0)
-			return false;
 		if (_timeout <= 40)
 		{
 			whileSize = 50;
@@ -93,13 +92,13 @@ final class TCPServer
 		_wheel = new TimingWheel(whileSize);
 		_timer = new Timer(_loop);
 		_timer.setCallBack((){_wheel.prevWheel();});
-		return _timer.start(time);
+		_loop.post((){ _timer.start(time);});
 	}
 
 	void close()
 	{
 		if(_acceptor)
-			_acceptor.close();
+			_loop.post((){ _acceptor.close();});
 	}
 protected:
 	void newConnect(Socket socket)

@@ -182,7 +182,7 @@ protected:
 	}
 
 
-	ServerConnection newConnect(EventLoop loop,Socket sock)
+	ServerConnection newConnect(EventLoop loop,Socket sock) @trusted 
 	{
 		return new HttpHandlerConnection(new TCPSocket(loop,sock),this,
 			new HTTP1XCodec(TransportDirection.DOWNSTREAM,cast(uint)_options.maxHeaderSize));
