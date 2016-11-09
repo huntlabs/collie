@@ -46,6 +46,7 @@ class ClientManger(PipeLine)
 		info.addr = to;
 		info.tryCount = 0;
 		info.cback = cback;
+		_waitConnect[info] = 0;
 		connect(info);
 	}
 
@@ -88,19 +89,24 @@ protected:
 			return;
 		if(isconnect)
 		{
+			scope(exit){
+				_waitConnect.remove(info);
+				gcFree(info);
+			}
 			auto pipe = _factory.newPipeline(info.client);
-			if(info.cback)
-				info.cback(pipe);
+			auto cback = info.cback;
 			if(!pipe)
 			{
 				gcFree(info.client);
-				gcFree(info);
 				return;
 			}
+			if(cback)
+				cback(pipe);
 			ClientConnection con = new ClientConnection(this,pipe);
 			_wheel.addNewTimer(con);
 			_list[con] = 0;
 			con.initialize();
+
 		}
 		else
 		{// 重试一次，失败就释放资源
@@ -113,6 +119,7 @@ protected:
 			{
 				auto cback = info.cback;
 				gcFree(info.client);
+				_waitConnect.remove(info);
 				gcFree(info);
 				if(cback)
 					cback(null);
@@ -175,6 +182,7 @@ protected:
 
 private:
 	int[ClientConnection] _list;
+	int[LinkInfo *] _waitConnect;
 
 	shared PipeLineFactory _factory;
 	TimingWheel _wheel;
