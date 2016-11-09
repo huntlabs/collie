@@ -15,7 +15,7 @@ import collie.socket;
 import collie.utils.memory;
 
 import collie.bootstrap.exception;
-import collie.bootstrap.clientmanger : TLinkInfo;
+import collie.socket.client.linkinfo;
 
 class ClientBootstrap(PipeLine) : PipelineManager
 {

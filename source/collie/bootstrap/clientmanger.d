@@ -15,6 +15,8 @@ import collie.channel;
 import collie.utils.timingwheel;
 import collie.utils.memory;
 import collie.utils.functional;
+import collie.exception;
+import collie.socket.client.linkinfo;
 
 
 class ClientManger(PipeLine)
@@ -77,48 +79,38 @@ protected:
 	void connect(LinkInfo * info)
 	{
 		info.client = new TCPClient(_loop);
-		info.client.setCloseCallBack(bind(&closeCallBack,info));
+		info.client.setCloseCallBack(&tmpCloseCallBack);
 		info.client.setConnectCallBack(bind(&connectCallBack,info));
-		info.client.setReadCallBack(bind(&readCallBack,info));
+		info.client.setReadCallBack(&tmpReadCallBack);
 		info.client.connect(info.addr);
 	}
 
 	void connectCallBack(LinkInfo * info,bool isconnect)
 	{
-		if(info is null)
-			return;
-		if(isconnect)
-		{
+		import std.exception;
+		if(info is null)return;
+		if(isconnect){
 			scope(exit){
 				_waitConnect.remove(info);
 				gcFree(info);
 			}
-			auto pipe = _factory.newPipeline(info.client);
-			auto cback = info.cback;
-			if(!pipe)
-			{
-				gcFree(info.client);
-				return;
-			}
-			if(cback)
-				cback(pipe);
+			PipeLine pipe = null;
+			collectException(_factory.newPipeline(info.client),pipe);
+			if(info.cback)
+				info.cback(pipe);
+			if(pipe is null)return;
 			ClientConnection con = new ClientConnection(this,pipe);
 			_wheel.addNewTimer(con);
 			_list[con] = 0;
 			con.initialize();
 
-		}
-		else
-		{// 重试一次，失败就释放资源
+		} else {// 重试一次，失败就释放资源
+			gcFree(info.client);
 			if(info.tryCount < _tryCount) {
-				gcFree(info.client);
 				info.tryCount ++;
 				connect(info);
-			}
-			else 
-			{
+			}else{
 				auto cback = info.cback;
-				gcFree(info.client);
 				_waitConnect.remove(info);
 				gcFree(info);
 				if(cback)
@@ -127,14 +119,9 @@ protected:
 		}
 	}
 
-	void closeCallBack(LinkInfo * info)
-	{
-	}
+	void tmpCloseCallBack(){}
 
-	void readCallBack(LinkInfo * info,ubyte[] buffer)
-	{
-		info.client.close();
-	}
+	void tmpReadCallBack(ubyte[] buffer){}
 
 	void remove(ClientConnection con)
 	{
@@ -194,15 +181,6 @@ private:
 
 package:
 
-struct TLinkInfo(TCallBack)
-{
-	TCPClient client;
-	Address addr;
-	uint tryCount = 0;
-	TCallBack cback;
-}
-
-
 final @trusted class ClientLink(PipeLine) : WheelTimer, PipelineManager
 {
 	alias ConnectionManger = ClientManger!PipeLine;
@@ -221,7 +199,9 @@ final @trusted class ClientLink(PipeLine) : WheelTimer, PipelineManager
 	{
 		try{
 			_pipe.timeOut();
-		}catch{}
+		} catch (Exception e){
+			showException(e);
+		}
 	}
 
 	override void refreshTimeout() 
