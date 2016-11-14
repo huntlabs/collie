@@ -19,17 +19,21 @@ final class ResponseBuilder
 
 	ResponseBuilder promise(string url, string host)
 	{
-		_headers = new HTTPMessage();
-		_headers.url(url);
-		_headers.getHeaders.add(HTTPHeaderCode.HOST,host);
+		if(_txn){
+			_headers = new HTTPMessage();
+			_headers.url(url);
+			_headers.getHeaders.add(HTTPHeaderCode.HOST,host);
+		}
 		return this;
 	}
 
 	ResponseBuilder status(ushort code, string message)
 	{
-		_headers = new HTTPMessage();
-		_headers.statusCode(code);
-		_headers.statusMessage(message);
+		if(_txn && _headers){
+			_headers = new HTTPMessage();
+			_headers.statusCode(code);
+			_headers.statusMessage(message);
+		}
 		return this;
 	}
 
@@ -37,19 +41,22 @@ final class ResponseBuilder
 
 	ResponseBuilder header(T = string)(string name,T value)
 	{
-		_headers.getHeaders.add(name,to!string(value));
+		if(_txn && _headers)
+			_headers.getHeaders.add(name,to!string(value));
 		return this;
 	}
 
 	ResponseBuilder header(T = string)(HTTPHeaderCode code,T value)
 	{
-		_headers.getHeaders.add(code,to!string(value));
+		if(_txn && _headers)
+			_headers.getHeaders.add(code,to!string(value));
 		return this;
 	}
 
 	ResponseBuilder setBody(ubyte[] data)
 	{
-		_body.insertBack(data);
+		if(_txn)
+			_body.insertBack(data);
 		return this;
 	}
 
@@ -60,6 +67,7 @@ final class ResponseBuilder
 
 	void send()
 	{
+		if(_txn is null) return;
 		scope(exit){
 			if(_headers) {
 				import collie.utils.memory;
