@@ -90,7 +90,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	void inActive() {
 		if(_transaction) {
 			_transaction.onErro(HTTPErrorCode.REMOTE_CLOSED);
-			_transaction.onDelayedDestroy();
+			//_transaction.onDelayedDestroy();
 		}
 		trace("connect closed!");
 	}
