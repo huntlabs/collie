@@ -69,9 +69,10 @@ final class IOCPLoop
                 if (!v)
                     return false;
             }
-            catch
-            {
-            }
+			catch(Exception e)
+			{
+				collectException(error(e.toString));
+			}
         }
         return true;
     }
@@ -155,9 +156,10 @@ final class IOCPLoop
         {
             PostQueuedCompletionStatus(_iocp, 0, 0, cast(LPOVERLAPPED)( & _event));
         }
-        catch
-        {
-        }
+		catch(Exception e)
+		{
+			collectException(error(e.toString));
+		}
     }
     private : HANDLE _iocp;
     IOCP_DATA _event;

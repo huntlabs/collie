@@ -270,8 +270,9 @@ static if (IOMode == IO_MODE.kqueue)
             {
                 _pair[0].send("wekup");
             }
-            catch
+            catch(Exception e)
             {
+				collectException(error(e.toString));
             }
         }
 
@@ -285,9 +286,10 @@ static if (IOMode == IO_MODE.kqueue)
                     if (_pair[1].receive(data) <= 0)
                         return;
                 }
-                catch
-                {
-                }
+				catch(Exception e)
+				{
+					collectException(error(e.toString));
+				}
             }
         }
 
