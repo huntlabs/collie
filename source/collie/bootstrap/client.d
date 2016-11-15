@@ -64,7 +64,7 @@ final class ClientBootstrap(PipeLine) : PipelineManager
 		_info.addr = to;
 		_info.tryCount = 0;
 		_info.cback = cback;
-		_loop.post(&connect());
+		_loop.post(&connect);
 	}
 	
 	void close()
@@ -94,7 +94,7 @@ protected:
 	{
 		_info.client = new TCPClient(_loop,_info.addr.addressFamily);
 		if(_oncreator)
-			_oncreator(info.client);
+			_oncreator(_info.client);
 		_info.client.setCloseCallBack(&closeCallBack);
 		_info.client.setConnectCallBack(&connectCallBack);
 		_info.client.setReadCallBack(&readCallBack);
