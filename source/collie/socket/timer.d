@@ -71,7 +71,6 @@ import collie.utils.functional;
             its.it_interval.tv_nsec = its.it_value.tv_nsec;
             int err = timerfd_settime(_event.fd, 0, &its, null);
             if (err == -1)
-
             {
                 import core.sys.posix.unistd;
 
@@ -84,7 +83,7 @@ import collie.utils.functional;
 
     pragma(inline) void stop()
     {
-       	onClose();
+       onClose();
     }
 
 protected:

@@ -20,6 +20,7 @@ import std.variant;
 import std.algorithm.mutation;
 import std.stdio;
 import std.string;
+import std.exception;
 import std.experimental.allocator.gc_allocator;
 
 import collie.socket.common;
@@ -134,9 +135,9 @@ static if (CustomTimer)
                     event.timer = timer;
                     event.isActive(true);
                 }
-                catch
+                catch(Exception e)
                 {
-                    collectException(error("new CWheelTimer error!!!"));
+                    collectException(error("new CWheelTimer error!!! : ", e.toString));
                     return false;
                 }
                 return true;
@@ -165,16 +166,9 @@ static if (CustomTimer)
         {
             if (event.type() == AsynType.TIMER)
             {
+				import collie.utils.memory;
                 event.timer.stop();
-                try
-                {
-                    import collie.utils.memory;
-
-                    gcFree(event.timer);
-                }
-                catch
-                {
-                }
+				collectException(gcFree(event.timer));
                 event.timer = null;
                 event.isActive(false);
                 return true;
