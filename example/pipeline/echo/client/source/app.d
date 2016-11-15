@@ -84,6 +84,15 @@ void main()
 		.pipelineFactory(new shared EchoPipelineFactory());
 	waitForConnect(new InternetAddress("127.0.0.1",8094),client);
     
+        auto pipe = client.pipeline;
+        if(pipe is null )
+            throw new Execption("connect erro!!");
+        while(true)
+	{
+		writeln("write to send server: ");
+		string data = readln();
+		pipe.write(cast(ubyte[])data,null);
+	}
         writeln("APP wait Stop!");
 	group.wait();
 }
