@@ -70,9 +70,10 @@ import collie.socket.client.exception;
 			});
 	}
 
-	@property tcpClient()@trusted {return _info.client;}
-	@property timeOut()@trusted {return _timer;}
-	@property eventLoop()@trusted {return _loop;}
+	final @property tcpClient() @trusted {return _info.client;}
+	final @property timer() @trusted {return _timer;}
+	final @property timeout() @safe {return _timeout;}
+	final @property eventLoop() @trusted {return _loop;}
 protected:
 	void onActive() nothrow;
 	void onFailure() nothrow;
@@ -126,9 +127,11 @@ private:
 	final void doClose()
 	{
 		import collie.utils.memory;
+		import collie.utils.functional;
 		if(_timer)
 			_timer.stop();
-		gcFree(_info.client);
+		auto client = _info.client;
+		_loop.post!true((){gcFree(client);});
 		_info.client = null;
 		onClose();
 	}

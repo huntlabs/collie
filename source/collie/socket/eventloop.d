@@ -77,7 +77,7 @@ static if (CustomTimer)
     }
 
     //@property Channel[int] channelList(){return _channelList;}
-    void weakUp()
+    void weakUp() nothrow
     {
         _poll.weakUp();
     }
@@ -103,21 +103,20 @@ static if (CustomTimer)
         return _thID == Thread.getThis.id;
     }
 
-    void post(CallBack cback)
+    void post(bool MustInQueue = false)(CallBack cback)
     {
-        if (isInLoopThread())
+		static if(!MustInQueue) {
+	        if (isInLoopThread())
+	        {
+	            cback();
+	            return;
+	        }
+		}
+        synchronized (_mutex)
         {
-            cback();
-            return;
+            _callbackList.enQueue(cback);
         }
-        else
-        {
-            synchronized (_mutex)
-            {
-                _callbackList.enQueue(cback);
-            }
-            weakUp();
-        }
+        weakUp();
     }
 
     bool addEvent(AsyncEvent* event) nothrow
