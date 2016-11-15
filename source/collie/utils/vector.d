@@ -38,10 +38,10 @@ import std.exception;
 
     static if (stateSize!Allocator != 0)
     {
-        this(T[] data, Allocator alloc)
+		this(T[] data, Allocator alloc,bool copy = true)
         {
             this._alloc = alloc;
-            this(data);
+            this(data,copy);
         }
 
         this(size_t size, Allocator alloc)
@@ -49,6 +49,8 @@ import std.exception;
             this._alloc = alloc;
             this(size);
         }
+
+		@property allocator(){return _alloc;}
 
     }
 
@@ -164,7 +166,11 @@ import std.exception;
         _len = len;
     }
 
-    pragma(inline) @property T[] dup()
+	pragma(inline) @property ptr(){
+		return _data.ptr;
+	}
+
+    pragma(inline) @property T[] dup()  
     {
         auto list = new T[length];
         list[0 .. length] = _data[0 .. length];
@@ -212,7 +218,7 @@ import std.exception;
 		this._data = data.dup;
 	}
 
-    pragma(inline, true) T at(size_t i)
+    pragma(inline, true) T at(size_t i) 
     {
         assert(i < _len);
         return _data[i];

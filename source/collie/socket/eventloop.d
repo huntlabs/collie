@@ -20,6 +20,7 @@ import std.variant;
 import std.algorithm.mutation;
 import std.stdio;
 import std.string;
+import std.exception;
 import std.experimental.allocator.gc_allocator;
 
 import collie.socket.common;
@@ -33,7 +34,7 @@ static if (CustomTimer)
  @date  2016.1
  */
 
-class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
+@trusted class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
 {
 	alias CQueue = Queue!(CallBack,GCAllocator, true);
     this()
@@ -76,7 +77,7 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
     }
 
     //@property Channel[int] channelList(){return _channelList;}
-    void weakUp()
+    void weakUp() nothrow
     {
         _poll.weakUp();
     }
@@ -102,21 +103,20 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
         return _thID == Thread.getThis.id;
     }
 
-    void post(CallBack cback)
+    void post(bool MustInQueue = false)(CallBack cback)
     {
-        if (isInLoopThread())
+		static if(!MustInQueue) {
+	        if (isInLoopThread())
+	        {
+	            cback();
+	            return;
+	        }
+		}
+        synchronized (_mutex)
         {
-            cback();
-            return;
+            _callbackList.enQueue(cback);
         }
-        else
-        {
-            synchronized (_mutex)
-            {
-                _callbackList.enQueue(cback);
-            }
-            weakUp();
-        }
+        weakUp();
     }
 
     bool addEvent(AsyncEvent* event) nothrow
@@ -134,9 +134,9 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
                     event.timer = timer;
                     event.isActive(true);
                 }
-                catch
+                catch(Exception e)
                 {
-                    collectException(error("new CWheelTimer error!!!"));
+                    collectException(error("new CWheelTimer error!!! : ", e.toString));
                     return false;
                 }
                 return true;
@@ -165,16 +165,9 @@ class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
         {
             if (event.type() == AsynType.TIMER)
             {
+				import collie.utils.memory;
                 event.timer.stop();
-                try
-                {
-                    import collie.utils.memory;
-
-                    gcFree(event.timer);
-                }
-                catch
-                {
-                }
+				collectException(gcFree(event.timer));
                 event.timer = null;
                 event.isActive(false);
                 return true;
@@ -207,7 +200,8 @@ protected:
             }
             catch (Exception e)
             {
-				collectException(error("\n\n----doHandleList erro ! erro : ", e.msg, "\n\n"));
+				import collie.utils.exception;
+				collectException(warning(e.toString));
             }
         }
     }

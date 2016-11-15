@@ -15,12 +15,19 @@ import collie.channel;
 import collie.utils.timingwheel;
 import collie.utils.memory;
 import collie.utils.functional;
+import collie.exception;
+
+import std.exception;
+import std.experimental.logger;
 
 
-class ClientManger(PipeLine)
+final class ClientManger(PipeLine)
 {
 	alias ClientConnection = ClientLink!PipeLine;
 	alias PipeLineFactory = PipelineFactory!PipeLine;
+	alias ConnCallBack = void delegate(PipeLine);
+	alias LinkInfo = TLinkInfo!ConnCallBack;
+	alias ClientCreatorCallBack = void delegate(TCPClient);
 
 	this(EventLoop loop)
 	{
@@ -33,18 +40,23 @@ class ClientManger(PipeLine)
 			_timer.destroy;
 	}
 
+	void setClientCreatorCallBack(ClientCreatorCallBack cback)
+	{
+		_oncreator = cback;
+	}
+
 	void pipelineFactory(shared PipeLineFactory fac)
 	{
 		_factory = fac;
 	}
 
-	void connect(Address to, CallBack cback = null)
+	void connect(Address to, ConnCallBack cback = null)
 	{
 		LinkInfo * info = new LinkInfo();
 		info.addr = to;
 		info.tryCount = 0;
 		info.cback = cback;
-		connect(info);
+		_loop.post((){connect(info);});
 	}
 
 	void close()
@@ -73,56 +85,53 @@ class ClientManger(PipeLine)
 protected:
 	void connect(LinkInfo * info)
 	{
+		_waitConnect[info] = 0;
 		info.client = new TCPClient(_loop);
-		info.client.setCloseCallBack(bind(&closeCallBack,info));
+		if(_oncreator)
+			_oncreator(info.client);
+		info.client.setCloseCallBack(&tmpCloseCallBack);
 		info.client.setConnectCallBack(bind(&connectCallBack,info));
-		info.client.setReadCallBack(bind(&readCallBack,info));
+		info.client.setReadCallBack(&tmpReadCallBack);
 		info.client.connect(info.addr);
 	}
 
 	void connectCallBack(LinkInfo * info,bool isconnect)
 	{
-		if(info is null)
-			return;
-		if(isconnect)
-		{
-			auto pipe = _factory.newPipeline(info.client);
-			if(!pipe)
-			{
-				gcFree(info.client);
+		import std.exception;
+		if(info is null)return;
+		if(isconnect){
+			scope(exit){
+				_waitConnect.remove(info);
 				gcFree(info);
-				return;
 			}
+			PipeLine pipe = null;
+			collectException(_factory.newPipeline(info.client),pipe);
+			if(info.cback)
+				info.cback(pipe);
+			if(pipe is null)return;
 			ClientConnection con = new ClientConnection(this,pipe);
 			_wheel.addNewTimer(con);
 			_list[con] = 0;
 			con.initialize();
-		}
-		else
-		{// 重试一次，失败就释放资源
+
+		} else {// 重试一次，失败就释放资源
+			gcFree(info.client);
 			if(info.tryCount < _tryCount) {
-				gcFree(info.client);
 				info.tryCount ++;
 				connect(info);
-			}
-			else 
-			{
+			}else{
 				auto cback = info.cback;
-				gcFree(info.client);
+				_waitConnect.remove(info);
 				gcFree(info);
-				cback();
+				if(cback)
+					cback(null);
 			}
 		}
 	}
 
-	void closeCallBack(LinkInfo * info)
-	{
-	}
+	void tmpCloseCallBack(){}
 
-	void readCallBack(LinkInfo * info,ubyte[] buffer)
-	{
-		info.client.close();
-	}
+	void tmpReadCallBack(ubyte[] buffer){}
 
 	void remove(ClientConnection con)
 	{
@@ -170,6 +179,7 @@ protected:
 
 private:
 	int[ClientConnection] _list;
+	int[LinkInfo *] _waitConnect;
 
 	shared PipeLineFactory _factory;
 	TimingWheel _wheel;
@@ -177,18 +187,10 @@ private:
 	EventLoop _loop;
 
 	uint _tryCount;
+	ClientCreatorCallBack _oncreator;
 }
 
 package:
-
-struct LinkInfo
-{
-	TCPClient client;
-	Address addr;
-	uint tryCount = 0;
-	CallBack cback;
-}
-
 
 final @trusted class ClientLink(PipeLine) : WheelTimer, PipelineManager
 {
@@ -208,7 +210,9 @@ final @trusted class ClientLink(PipeLine) : WheelTimer, PipelineManager
 	{
 		try{
 			_pipe.timeOut();
-		}catch{}
+		} catch (Exception e){
+			collectException(warning(e.toString));
+		}
 	}
 
 	override void refreshTimeout() 
@@ -235,4 +239,13 @@ private:
 	ConnectionManger _manger;
 	PipeLine _pipe;
 	string _name;
+}
+
+package:
+struct TLinkInfo(TCallBack) if(is(TCallBack == delegate))
+{
+	TCPClient client;
+	Address addr;
+	uint tryCount = 0;
+	TCallBack cback;
 }

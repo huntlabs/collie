@@ -63,8 +63,11 @@ final class EpollLoop
 	 */
     bool addEvent(AsyncEvent * event) nothrow
     {
-        if (event.fd == socket_t.init)
-            return false;
+		if (event.fd == socket_t.init){
+			collectException(warning("the fd is erro!"));
+			event.isActive = false;
+			return false;
+		}
 
         mixin(mixinModEvent());
         if ((epoll_ctl(_efd, EPOLL_CTL_ADD, event.fd,  & ev)) != 0)
@@ -78,8 +81,11 @@ final class EpollLoop
 
     bool modEvent(AsyncEvent * event) nothrow
     {
-        if (event.fd == socket_t.init)
-            return false;
+		if (event.fd == socket_t.init){
+			collectException(warning("the fd is erro!"));
+			event.isActive = false;
+			return false;
+		}
         mixin(mixinModEvent());
 
         if ((epoll_ctl(_efd, EPOLL_CTL_MOD, event.fd,  & ev)) != 0)
@@ -96,8 +102,11 @@ final class EpollLoop
 	 */
     bool delEvent(AsyncEvent * event) nothrow
     {
-        if (event.fd == socket_t.init)
+        if (event.fd == socket_t.init) {
+			collectException(warning("the fd is erro!"));
+			event.isActive = false;
             return false;
+		}
         epoll_event ev;
         if ((epoll_ctl(_efd, EPOLL_CTL_DEL, event.fd,  & ev)) != 0)
         {

@@ -84,23 +84,29 @@ void main()
 	client.tryCount(3);
 	client.heartbeatTimeOut(2);
 	client.pipelineFactory(new shared EchoPipelineFactory());
-	client.connect(new InternetAddress("127.0.0.1",8094),(){
-			writeln("connect erro! No. 1");
+	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
+			if(pipe is null)
+				writeln("connect erro! No. 1");
 		});
-	client.connect(new InternetAddress("127.0.0.1",8094),(){
-			writeln("connect erro! No. 2");
+	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
+			if(pipe is null)
+				writeln("connect erro! No. 2");
 		});
-	client.connect(new InternetAddress("127.0.0.1",8094),(){
-			writeln("connect erro! No. 3");
+	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
+			if(pipe is null)
+				writeln("connect erro! No. 3");
 		});
-	client.connect(new InternetAddress("127.0.0.1",8094),(){
-			writeln("connect erro! No. 4");
+	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
+			if(pipe is null)
+				writeln("connect erro! No. 4");
 		});
-	client.connect(new InternetAddress("127.0.0.1",8094),(){
-			writeln("connect erro! No. 5");
+	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
+			if(pipe is null)
+				writeln("connect erro! No. 5");
 		});
-	client.connect(new InternetAddress("127.0.0.1",8094),(){
-			writeln("connect erro! No. 6");
+	client.connect(new InternetAddress("127.0.0.1",8094),(EchoPipeline pipe){
+			if(pipe is null)
+				writeln("connect erro! No. 6");
 		});
     loop.run();
     

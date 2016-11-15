@@ -20,7 +20,7 @@ import collie.socket.common;
 import collie.socket.eventloop;
 import collie.utils.functional;
 
-final class Timer : EventCallInterface
+@trusted final class Timer : EventCallInterface
 {
     this(EventLoop loop)
     {
@@ -30,20 +30,13 @@ final class Timer : EventCallInterface
 
     ~this()
     {
-        if (_event.isActive)
-        {
-            _loop.delEvent(_event);
-            static if (IOMode == IO_MODE.epoll)
-            {
-                import core.sys.posix.unistd;
-
-                close(_event.fd);
-            }
+		if (isActive){
+			onClose();
         }
         AsyncEvent.free(_event);
     }
 
-    pragma(inline, true) @property bool isActive()
+    pragma(inline, true) @property bool isActive() nothrow
     {
         return _event.isActive;
     }
@@ -78,7 +71,6 @@ final class Timer : EventCallInterface
             its.it_interval.tv_nsec = its.it_value.tv_nsec;
             int err = timerfd_settime(_event.fd, 0, &its, null);
             if (err == -1)
-
             {
                 import core.sys.posix.unistd;
 
@@ -91,10 +83,7 @@ final class Timer : EventCallInterface
 
     pragma(inline) void stop()
     {
-        if (isActive())
-        {
-            onClose();
-        }
+       onClose();
     }
 
 protected:
@@ -123,13 +112,14 @@ protected:
 
     override void onClose() nothrow
     {
-        static if (IOMode == IO_MODE.epoll)
+		if(!isActive) return;
+		_loop.delEvent(_event);
+		static if (IOMode == IO_MODE.epoll)
         {
             import core.sys.posix.unistd;
-
-            _loop.delEvent(_event);
             close(_event.fd);
-        }
+			_event.fd = socket_t.init;
+        } 
     }
 
 private:

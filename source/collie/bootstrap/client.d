@@ -15,10 +15,14 @@ import collie.socket;
 import collie.utils.memory;
 
 import collie.bootstrap.exception;
-import collie.bootstrap.clientmanger : LinkInfo;
+import collie.bootstrap.clientmanger : TLinkInfo;
 
-class ClientBootstrap(PipeLine) : PipelineManager
+final class ClientBootstrap(PipeLine) : PipelineManager
 {
+	alias ConnCallBack = void delegate(PipeLine);
+	alias LinkInfo = TLinkInfo!ConnCallBack;
+	alias ClientCreatorCallBack = void delegate(TCPClient);
+
 	this(EventLoop loop)
 	{
 		_loop = loop;
@@ -30,6 +34,11 @@ class ClientBootstrap(PipeLine) : PipelineManager
 			_timer.destroy;
 		if(_info.client)
 			_info.client.destroy;
+	}
+
+	void setClientCreatorCallBack(ClientCreatorCallBack cback)
+	{
+		_oncreator = cback;
 	}
 	
 	auto pipelineFactory(shared PipelineFactory!PipeLine pipeFactory)
@@ -45,7 +54,7 @@ class ClientBootstrap(PipeLine) : PipelineManager
 		return this;
 	}
 
-	void connect(Address to, CallBack cback = null)
+	void connect(Address to, ConnCallBack cback = null)
 	{
 		if (_pipelineFactory is null)
 			throw new NeedPipeFactoryException(
@@ -55,7 +64,7 @@ class ClientBootstrap(PipeLine) : PipelineManager
 		_info.addr = to;
 		_info.tryCount = 0;
 		_info.cback = cback;
-		connect();
+		_loop.post(&connect);
 	}
 	
 	void close()
@@ -70,7 +79,7 @@ class ClientBootstrap(PipeLine) : PipelineManager
 		return _loop;
 	}
 	
-	@property pipeLine()
+	@property auto pipeLine()
 	{
 		if(_info.client is null)
 			return null;
@@ -84,6 +93,8 @@ protected:
 	void connect()
 	{
 		_info.client = new TCPClient(_loop,_info.addr.addressFamily);
+		if(_oncreator)
+			_oncreator(_info.client);
 		_info.client.setCloseCallBack(&closeCallBack);
 		_info.client.setConnectCallBack(&connectCallBack);
 		_info.client.setReadCallBack(&readCallBack);
@@ -96,9 +107,6 @@ protected:
 			_timer.stop();
 		if(_pipe)
 			_pipe.transportInactive();
-		else if(_info.cback)
-			_info.cback();
-
 	}
 	
 	void connectCallBack(bool isconnect)
@@ -121,6 +129,8 @@ protected:
 			}
 			_info.tryCount = 0;
 			_pipe = _pipelineFactory.newPipeline(_info.client);
+			if(_info.cback)
+				_info.cback(_pipe);
 			_pipe.finalize();
 			_pipe.pipelineManager(this);
 			_pipe.transportActive();
@@ -131,7 +141,7 @@ protected:
 			connect();
 		} else {
 			if(_info.cback)
-				_info.cback();
+				_info.cback(null);
 			gcFree(_info.client);
 			_info.client = null;
 			_info.cback = null;
@@ -174,4 +184,5 @@ private:
 	uint _tryCount;
 
 	LinkInfo _info;
+	ClientCreatorCallBack _oncreator;
 }
