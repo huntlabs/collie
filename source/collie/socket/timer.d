@@ -36,7 +36,6 @@ import collie.utils.functional;
             static if (IOMode == IO_MODE.epoll)
             {
                 import core.sys.posix.unistd;
-
                 close(_event.fd);
             }
         }
@@ -123,13 +122,13 @@ protected:
 
     override void onClose() nothrow
     {
-        static if (IOMode == IO_MODE.epoll)
+		_loop.delEvent(_event);
+		static if (IOMode == IO_MODE.epoll)
         {
             import core.sys.posix.unistd;
-
-            _loop.delEvent(_event);
             close(_event.fd);
-        }
+			_event.fd = socket_t.init;
+        } 
     }
 
 private:
