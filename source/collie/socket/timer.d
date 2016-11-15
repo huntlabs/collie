@@ -30,19 +30,13 @@ import collie.utils.functional;
 
     ~this()
     {
-        if (_event.isActive)
-        {
-            _loop.delEvent(_event);
-            static if (IOMode == IO_MODE.epoll)
-            {
-                import core.sys.posix.unistd;
-                close(_event.fd);
-            }
+		if (isActive){
+			onClose();
         }
         AsyncEvent.free(_event);
     }
 
-    pragma(inline, true) @property bool isActive()
+    pragma(inline, true) @property bool isActive() nothrow
     {
         return _event.isActive;
     }
@@ -90,10 +84,7 @@ import collie.utils.functional;
 
     pragma(inline) void stop()
     {
-        if (isActive())
-        {
-            onClose();
-        }
+       	onClose();
     }
 
 protected:
@@ -122,6 +113,7 @@ protected:
 
     override void onClose() nothrow
     {
+		if(!isActive) return;
 		_loop.delEvent(_event);
 		static if (IOMode == IO_MODE.epoll)
         {
