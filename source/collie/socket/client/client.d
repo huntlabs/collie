@@ -100,7 +100,7 @@ private:
 		if(_info.cback)
 			_info.cback(_info.client);
 		_info.client.setConnectCallBack(&connectCallBack);
-		_info.client.setCloseCallBack(&onClose);
+		_info.client.setCloseCallBack(&doClose);
 		_info.client.setReadCallBack(&onRead);
 		_info.client.connect(_info.addr);
 	}
