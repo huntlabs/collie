@@ -15,6 +15,7 @@ import core.stdc.string;
 
 import std.socket;
 import std.exception;
+import std.experimental.logger;
 
 import collie.socket.eventloop;
 import collie.socket.common;
@@ -168,8 +169,9 @@ static if(USEDSSL)
                     {
                         _handshakeCback();
                     }
-                    catch
+                    catch (Exception e)
                     {
+						collectException(error(e.toString));
                         onClose();
                         return false;
                     }

@@ -213,8 +213,9 @@ protected:
                     else
                         return;
                 }
-                catch
-                {
+				catch(Exception e)
+				{
+					collectException(error(e.toString()));
                 }
             }
             _event.writeLen = 0;
@@ -246,40 +247,38 @@ protected:
                 {
                     auto buffer = _writeQueue.front;
                     auto len = _socket.send(buffer.data);
-                    if (len > 0)
-                    {
-                        if (buffer.add(len))
-                        {
-                            auto buf = _writeQueue.deQueue();
-                            buf.doCallBack();
-                            import collie.utils.memory;
-
-                            gcFree(buf);
-                        }
-                        continue;
-                    }
-                    else
-                    {
-                        if (errno == EAGAIN || errno == EWOULDBLOCK)
-                        {
-                            return;
-                        }
-                        else if (errno == 4)
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            error(" write Erro Do Close erro = ", errno);
-                            onClose();
-                            return;
-                        }
-                    }
+					if (len > 0)
+					{
+						if (buffer.add(len))
+						{
+							auto buf = _writeQueue.deQueue();
+							buf.doCallBack();
+							import collie.utils.memory;
+							
+							gcFree(buf);
+						}
+						continue;
+					}
+					else if(len < 0)
+					{
+						if (errno == EAGAIN || errno == EWOULDBLOCK)
+						{
+							return;
+						}
+						else if (errno == 4)
+						{
+							continue;
+						}
+					}
+					import core.stdc.string;
+					error("write size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,strerror(errno), 
+						" \n\tthe socket fd : ", fd);
+					onClose();
+					return;
                 }
-                catch (Exception e)
-                {
-					collectException(error("\n\n----tcp on Write erro do Close! erro : ", e.msg,
-                        "\n\n"));
+				catch(Exception e)
+				{
+					collectException(error(e.toString()));
                     onClose();
                 }
             }
@@ -310,10 +309,10 @@ protected:
             if (_unActive)
                 _unActive();
         }
-        catch (Exception e)
-        {
-			collectException(error("\n\n----Close  Handle erro : ", e.msg, "\n\n"));
-        }
+		catch(Exception e)
+		{
+			collectException(error(e.toString()));
+		}
     }
 
     override void onRead() nothrow
@@ -326,8 +325,9 @@ protected:
                 if (_event.readLen > 0)
                     _readCallBack(_readBuffer[0 .. _event.readLen]);
             }
-            catch
-            {
+			catch (Exception e)
+			{
+				collectException(error("\n\n----tcp on read erro do Close! erro : ", e.toString(),"\n\n"));
             }
             if (alive)
                 doRead();
@@ -340,37 +340,32 @@ protected:
                 try
                 {
                     auto len = _socket.receive(_readBuffer);
-                    if (len > 0)
-                    {
-                        _readCallBack(_readBuffer[0 .. len]);
-                        continue;
-                    }
-                    else
-                    {
-                        if (errno == EAGAIN || errno == EWOULDBLOCK)
-                        {
-                            return;
-                        }
-                        else if (errno == 4)
-                        {
-                            continue;
-                        }
-                        else
-                        {
-							import core.stdc.errno;
-							import core.stdc.string;
-							error("read Erro Do Close the erro code : ", errno, "  erro is : " ,strerror(errno), 
-                                " \n\tthe socket fd : ", fd);
-                            onClose();
-                            return;
-                        }
-                    }
+					if (len > 0)
+					{
+						collectException(_readCallBack(_readBuffer[0 .. len]));
+						continue;
+					}
+					else if(len < 0)
+					{
+						if (errno == EAGAIN || errno == EWOULDBLOCK)
+						{
+							return;
+						}
+						else if (errno == 4)
+						{
+							continue;
+						}
+					}
+					import core.stdc.string;
+					error("read size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,strerror(errno), 
+						" \n\tthe socket fd : ", fd);
+					onClose();
+					return;
                 }
                 catch (Exception e)
                 {
 					collectException(error("\n\n----tcp on read erro do Close! erro : ", e.toString(),"\n\n"));
                     onClose();
-                    return;
                 }
             }
         }

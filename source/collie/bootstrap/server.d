@@ -16,6 +16,7 @@ import collie.bootstrap.serversslconfig;
 public import collie.bootstrap.exception;
 
 import std.stdio;
+import std.exception;
 
 final class ServerBootstrap(PipeLine)
 {
@@ -463,13 +464,7 @@ private:
 
     override void onTimeOut() nothrow
     {
-        try
-        {
-            _pipe.timeOut();
-        }
-        catch
-        {
-        }
+		collectException(_pipe.timeOut());
     }
 
 private:
