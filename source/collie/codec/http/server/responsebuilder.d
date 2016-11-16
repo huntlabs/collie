@@ -29,7 +29,7 @@ final class ResponseBuilder
 
 	ResponseBuilder status(ushort code, string message)
 	{
-		if(_txn && _headers){
+		if(_txn){
 			_headers = new HTTPMessage();
 			_headers.statusCode(code);
 			_headers.statusMessage(message);

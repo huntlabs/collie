@@ -21,6 +21,7 @@ import collie.socket.eventloop;
 import collie.socket.transport;
 import collie.utils.queue;
 import collie.utils.exception;
+import std.string;
 
 alias TCPWriteCallBack = void delegate(ubyte[] data, size_t writeSzie);
 alias TCPReadCallBack = void delegate(ubyte[] buffer);
@@ -270,7 +271,7 @@ protected:
 						}
 					}
 					import core.stdc.string;
-					error("write size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,strerror(errno), 
+					error("write size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
 						" \n\tthe socket fd : ", fd);
 					onClose();
 					return;
@@ -355,7 +356,7 @@ protected:
 						}
 					}
 					import core.stdc.string;
-					error("read size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,strerror(errno), 
+					error("read size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
 						" \n\tthe socket fd : ", fd);
 					onClose();
 					return;

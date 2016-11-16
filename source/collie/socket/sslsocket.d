@@ -25,6 +25,7 @@ static if(USEDSSL)
 {
 
     import deimos.openssl.ssl;
+import std.string;
 
     class SSLSocket : TCPSocket
     {
@@ -182,7 +183,7 @@ static if(USEDSSL)
             else
             {
 				collectException(trace("SSL_do_handshake return: ", r, "  erro :", err,
-                    "  errno:", errno, "  erro string:", strerror(errno)));
+                    "  errno:", errno, "  erro string:", fromStringz(strerror(errno))));
                 onClose();
                 return false;
             }
