@@ -28,7 +28,7 @@ protected:
 				rmsg.getHeaders.add(HTTPHeaderCode.CONNECTION,"close");
 				sendHeaders(txn,rmsg,true);
 				txn = null;
-			}catch (Exception e){
+			} catch (Exception e){
 				import collie.utils.exception;
 				showException(e);
 			}

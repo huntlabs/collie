@@ -164,15 +164,7 @@ static if(USEDSSL)
                 _isHandshaked = true;
                 if (_handshakeCback)
                 {
-                    try
-                    {
-                        _handshakeCback();
-                    }
-                    catch
-                    {
-                        onClose();
-                        return false;
-                    }
+                    collectException(_handshakeCback());
                 }
                 return true;
             }
