@@ -42,9 +42,9 @@ class UdpSocketHandler : HandlerAdapter!(UdpData)
 
 
 	override void write(Context ctx,UdpData msg,TheCallBack cback) {
-		auto  leng = _socket.sendTo(msg.data, msg.address);
+		auto leng = _socket.sendTo(msg.data, msg.address);
 		if(cback)
-			cback(msg,cast(uint)leng);
+			cback(msg,cast(size_t)leng);
 	}
 
 protected:

@@ -16,8 +16,6 @@ import std.functional;
 import collie.channel.pipeline;
 import collie.channel.handlercontext;
 
-import std.stdio;
-
 abstract class HandlerBase(Context)
 {
 

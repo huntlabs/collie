@@ -2,6 +2,7 @@
 
 import core.stdc.string;
 import std.traits;
+import std.bitmanip;
 
 ptrdiff_t findCharByte(T)(in T[] data, in T ch) if(isCharByte!(T))
 {
@@ -46,27 +47,6 @@ ptrdiff_t findCharBytes(T)(in T[] data, in T[] chs) if(isCharByte!(T))
 		continue;
 	}
 	return index;
-
-//	auto ptr = memchr(data.ptr,chs[0],data.length);
-//	if(ptr !is null){
-//		size_t fistindex = (cast(ubyte *) ptr) - data.ptr;
-//		size_t len = data.length - fistindex;
-//		if(len < chs.length) 
-//			return -1;
-//		size_t i = 1;
-//		size_t j = fistindex + 1;
-//		while(i < chs.length && j < data.length){
-//			if(chs[i] != data[j]){
-//				auto tdata = data[(fistindex + 1)..$];
-//				return findCharBytes!T(tdata,chs);
-//			}
-//			++i;
-//			++j;
-//		}
-//		return cast(ptrdiff_t)fistindex;
-//	}
-//	
-//	return -1;
 }
 
 
@@ -78,4 +58,22 @@ template isMutilCharByte(T)
 template isCharByte(T)
 {
 	enum bool isCharByte = is(Unqual!T == byte) || is(Unqual!T == ubyte) || is(Unqual!T == char) ;
+}
+
+
+template endianToNative(bool litte, T)
+{
+	static if(litte)
+		alias endianToNative = littleEndianToNative!(T,T.sizeof);
+	else
+		alias endianToNative = bigEndianToNative!(T,T.sizeof);
+}
+
+template nativeToEndian(bool litte, T)
+{
+	static if(litte)
+		alias nativeToEndian = nativeToLittleEndian!(T);
+	else
+		alias nativeToEndian = nativeToBigEndian!(T);
+	
 }

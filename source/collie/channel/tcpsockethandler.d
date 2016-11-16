@@ -16,9 +16,6 @@ import collie.channel.handlercontext;
 
 final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
-    //alias TheCallBack = void delegate(ubyte[],uint);
-    //alias HandleContext!(UniqueBuffer, ubyte[]) Context;
-
     this(TCPSocket sock)
     {
 		restSocket(sock);

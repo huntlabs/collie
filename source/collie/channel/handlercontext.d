@@ -18,9 +18,6 @@ import collie.channel.handler;
 import collie.channel.exception;
 import collie.socket;
 
-
-import std.stdio;
-
 interface HandlerContext(In, Out)
 {
     alias HandlerTheCallBack = void delegate(Out, size_t);
