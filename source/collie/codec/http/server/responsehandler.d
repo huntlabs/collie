@@ -18,6 +18,8 @@ abstract class ResponseHandler
 
 	void sendHeaders(HTTPMessage headers);
 
+	void sendHeadersWithEOM(HTTPMessage headers);
+
 	void sendChunkHeader(size_t len);
 
 	void sendBody(ubyte[] data,bool iseom = false);

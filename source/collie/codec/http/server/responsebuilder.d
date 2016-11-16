@@ -89,7 +89,10 @@ final class ResponseBuilder
 					_headers.getHeaders.add(HTTPHeaderCode.CONTENT_LENGTH, to!string(_body.length));
 				}
 			}
-			_txn.sendHeaders(_headers);
+			if(_body.empty && _sendEOM)
+				_txn.sendHeadersWithEOM(_headers);
+			else
+				_txn.sendHeaders(_headers);
 		}
 		if(!_body.empty) {
 			if(chunked) {

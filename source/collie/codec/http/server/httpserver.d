@@ -219,7 +219,7 @@ class HttpHandlerPipeline : PipelineSessionDown
 {
 	this(HTTPSessionController controller,HTTPCodec codec)
 	{
-		httpSession = new HTTPDownstreamSession(controller,codec,this);
+		httpSession(new HTTPDownstreamSession(controller,codec,this));
 	}
 }
 

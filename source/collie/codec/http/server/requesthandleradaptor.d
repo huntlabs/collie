@@ -7,6 +7,7 @@ import collie.codec.http.codec.wsframe;
 import collie.codec.http.headers;
 import collie.codec.http.server.requesthandler;
 import collie.codec.http.httptansaction;
+import collie.codec.http.server.responsebuilder;
 
 final class RequestHandlerAdaptor : 
 	ResponseHandler,HTTPTransactionHandler
@@ -26,24 +27,26 @@ final class RequestHandlerAdaptor :
 		if(!_erro) {
 			_upstream.requestComplete();
 		}
-		import collie.utils.memory;
-		gcFree(this);
 	}
 
 	override void onHeadersComplete(HTTPMessage msg) {
+
 		trace("onHeadersComplete , erro is : ", _erro , " _upstream is ", cast(void *)_upstream);
 		if(msg.getHeaders.exists(HTTPHeaderCode.EXPECT)) {
 			trace("has header EXPECT--------");
 			string str = msg.getHeaders.getSingleOrEmpty(HTTPHeaderCode.EXPECT);
 			if(!isSame(str,"100-continue")) {
-//				ResponseBuilder(this)
-//					.status(417, "Expectation Failed")
-//						.closeConnection()
-//						.sendWithEOM();
+				scope HTTPMessage headers = new HTTPMessage();
+				headers.statusCode(417);
+				headers.statusMessage("Expectation Failed");
+				headers.wantsKeepAlive(false);
+				_txn.sendHeadersWithEOM(headers);
+				return;
 			}else {
-//				ResponseBuilder(this)
-//					.status(100, "Continue")
-//						.send();
+				scope HTTPMessage headers = new HTTPMessage();
+				headers.statusCode(100);
+				headers.statusMessage("Continue");
+				_txn.sendHeaders(headers);
 			}
 		}
 		if(!_erro)
@@ -73,6 +76,10 @@ final class RequestHandlerAdaptor :
 
 	override void onEgressResumed() {}
 
+	override void sendHeadersWithEOM(HTTPMessage msg) {
+		if(_txn)
+			_txn.sendHeadersWithEOM(msg);
+	}
 
 	override void sendHeaders(HTTPMessage msg)
 	{
