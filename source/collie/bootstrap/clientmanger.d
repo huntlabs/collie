@@ -25,13 +25,15 @@ final class ClientManger(PipeLine)
 {
 	alias ClientConnection = ClientLink!PipeLine;
 	alias PipeLineFactory = PipelineFactory!PipeLine;
-	alias ConnCallBack = void delegate(PipeLine);
-	alias LinkInfo = TLinkInfo!ConnCallBack;
 	alias ClientCreatorCallBack = void delegate(TCPClient);
+	alias ConnCallBack = void delegate(PipeLine);
+	alias LinkManger = TLinkManger!ConnCallBack;
+	alias LinkInfo = LinkManger.LinkInfo;
 
 	this(EventLoop loop)
 	{
 		_loop = loop;
+		_list = new ClientConnection();
 	}
 	
 	~this()
@@ -52,13 +54,13 @@ final class ClientManger(PipeLine)
 
 	void connect(Address to, ConnCallBack cback = null)
 	{
-		LinkInfo * info = new LinkInfo();
-		info.addr = to;
-		info.tryCount = 0;
-		info.cback = cback;
+		LinkInfo * tinfo = new LinkInfo();
+		tinfo.addr = to;
+		tinfo.tryCount = 0;
+		tinfo.cback = cback;
 		_loop.post((){
-				_waitConnect.addInfo(info);
-				connect(info);
+				_waitConnect.addInfo(tinfo);
+				connect(tinfo);
 			});
 	}
 
@@ -100,19 +102,19 @@ protected:
 		info.client.connect(info.addr);
 	}
 
-	void connectCallBack(LinkInfo * info,bool isconnect)
+	void connectCallBack(LinkInfo * tinfo,bool isconnect)
 	{
 		import std.exception;
-		if(info is null)return;
+		if(tinfo is null)return;
 		if(isconnect){
 			scope(exit){
-				_waitConnect.rmInfo(info);
-				gcFree(info);
+				_waitConnect.rmInfo(tinfo);
+				gcFree(tinfo);
 			}
 			PipeLine pipe = null;
-			collectException(_factory.newPipeline(info.client),pipe);
-			if(info.cback)
-				info.cback(pipe);
+			collectException(_factory.newPipeline(tinfo.client),pipe);
+			if(tinfo.cback)
+				tinfo.cback(pipe);
 			if(pipe is null)return;
 			ClientConnection con = new ClientConnection(this,pipe);
 			_wheel.addNewTimer(con);
@@ -126,14 +128,14 @@ protected:
 			con.initialize();
 
 		} else {// 重试一次，失败就释放资源
-			gcFree(info.client);
-			if(info.tryCount < _tryCount) {
-				info.tryCount ++;
-				connect(info);
+			gcFree(tinfo.client);
+			if(tinfo.tryCount < _tryCount) {
+				tinfo.tryCount ++;
+				connect(tinfo);
 			}else{
-				auto cback = info.cback;
-				_waitConnect.rmInfo(info);
-				gcFree(info);
+				auto cback = tinfo.cback;
+				_waitConnect.rmInfo(tinfo);
+				gcFree(tinfo);
 				if(cback)
 					cback(null);
 			}
@@ -193,7 +195,7 @@ protected:
 private:
 	//int[ClientConnection] _list;
 	ClientConnection _list;
-	TLinkManger!ConnCallBack _waitConnect;
+	LinkManger _waitConnect;
 
 	shared PipeLineFactory _factory;
 	TimingWheel _wheel;

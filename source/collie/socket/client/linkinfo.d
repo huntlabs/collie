@@ -11,6 +11,7 @@ struct TLinkInfo(TCallBack) if(is(TCallBack == delegate))
 	uint tryCount = 0;
 	TCallBack cback;
 
+private:
 	TLinkInfo!(TCallBack) * prev;
 	TLinkInfo!(TCallBack) * next;
 }

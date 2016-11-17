@@ -1,9 +1,9 @@
 ﻿module collie.utils.thread;
 
-import core.thread;
+public import core.thread;
 import std.exception;
 
-pragma(inline,true)
+pragma(inline)
 Thread currentThread() nothrow @trusted
 {
 	auto th = Thread.getThis();
