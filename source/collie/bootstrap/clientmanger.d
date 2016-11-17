@@ -56,14 +56,20 @@ final class ClientManger(PipeLine)
 		info.addr = to;
 		info.tryCount = 0;
 		info.cback = cback;
-		_loop.post((){connect(info);});
+		_loop.post((){
+				_waitConnect.addInfo(info);
+				connect(info);
+			});
 	}
 
 	void close()
 	{
-		foreach(con,fd ; _list)
-		{
-			con.close();
+		auto con = _list.next;
+		_list.next = null;
+		while(con) {
+			auto tcon = con;
+			con = con.next;
+			tcon.close();
 		}
 	}
 
@@ -85,7 +91,6 @@ final class ClientManger(PipeLine)
 protected:
 	void connect(LinkInfo * info)
 	{
-		_waitConnect[info] = 0;
 		info.client = new TCPClient(_loop);
 		if(_oncreator)
 			_oncreator(info.client);
@@ -101,7 +106,7 @@ protected:
 		if(info is null)return;
 		if(isconnect){
 			scope(exit){
-				_waitConnect.remove(info);
+				_waitConnect.rmInfo(info);
 				gcFree(info);
 			}
 			PipeLine pipe = null;
@@ -111,7 +116,13 @@ protected:
 			if(pipe is null)return;
 			ClientConnection con = new ClientConnection(this,pipe);
 			_wheel.addNewTimer(con);
-			_list[con] = 0;
+
+			con.next = _list.next;
+			if(con.next)
+				con.next.prev = con;
+			con.prev = _list;
+			_list.next = con;
+
 			con.initialize();
 
 		} else {// 重试一次，失败就释放资源
@@ -121,7 +132,7 @@ protected:
 				connect(info);
 			}else{
 				auto cback = info.cback;
-				_waitConnect.remove(info);
+				_waitConnect.rmInfo(info);
 				gcFree(info);
 				if(cback)
 					cback(null);
@@ -135,7 +146,9 @@ protected:
 
 	void remove(ClientConnection con)
 	{
-		_list.remove(con);
+		con.prev.next = con.next;
+		if(con.next)
+			con.next.prev = con.prev;
 		gcFree(con);
 	}
 
@@ -178,8 +191,9 @@ protected:
 	}
 
 private:
-	int[ClientConnection] _list;
-	int[LinkInfo *] _waitConnect;
+	//int[ClientConnection] _list;
+	ClientConnection _list;
+	TLinkManger!ConnCallBack _waitConnect;
 
 	shared PipeLineFactory _factory;
 	TimingWheel _wheel;
@@ -234,7 +248,10 @@ protected:
 		_pipe.finalize();
 		_pipe.pipelineManager(this);
 	}
-
+private:
+	this(){}
+	ClientLink!PipeLine prev;
+	ClientLink!PipeLine next;
 private:
 	ConnectionManger _manger;
 	PipeLine _pipe;

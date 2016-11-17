@@ -88,7 +88,10 @@ import collie.utils.memory;
 		info.addr = addr;
 		info.tryCount = 0;
 		info.cback = cback;
-		_loop.post((){connect(info);});
+		_loop.post((){
+				_waitConnect.addInfo(info);
+				connect(info);
+			});
 	}
 
 protected:
@@ -101,10 +104,7 @@ protected:
 		info.client.setCloseCallBack(&tmpCloseCallBack);
 		info.client.setConnectCallBack(bind(&connectCallBack,info));
 		info.client.setReadCallBack(&tmpReadCallBack);
-		_loop.post((){
-				_waitConnect[info] = 0;
-				info.client.connect(info.addr);
-			});
+		info.client.connect(info.addr);
 	}
 
 	void tmpReadCallBack(ubyte[]){}
@@ -116,7 +116,7 @@ protected:
 		if(info is null)return;
 		if(state) {
 			scope(exit){
-				_waitConnect.remove(info);
+				_waitConnect.rmInfo(info);
 				gcFree(info);
 			}
 			ClientConnection con;
@@ -134,7 +134,7 @@ protected:
 				connect(info);
 			} else {
 				auto cback = info.cback;
-				_waitConnect.remove(info);
+				_waitConnect.rmInfo(info);
 				gcFree(info);
 				if(cback)
 					cback(null);
@@ -152,7 +152,7 @@ private:
 	EventLoop _loop;
 	Timer _timer;
 	TimingWheel _wheel;
-	int[LinkInfo *] _waitConnect;
+	TLinkManger!ConCallBack _waitConnect;
 
 	NewConnection _cback;
 	ClientCreatorCallBack _oncreator;

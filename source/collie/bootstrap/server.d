@@ -276,6 +276,9 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
         _pipe.transport(_acceptor);
         _acceptor.setCallBack(&acceptCallBack);
         _sslctx = ctx;
+		_list = new ServerConnection!PipeLine();
+		static if(USEDSSL)
+			_sharkList = new SSLHandShark();
     }
 
     pragma(inline, true) void initialize()
@@ -305,7 +308,12 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
                     SSL_set_accept_state(ssl);
                     auto asynssl = new SSLSocket(_acceptor.eventLoop, msg, ssl);
                     auto shark = new SSLHandShark(asynssl, &doHandShark);
-                    _sharkList[shark] = 0;
+
+					shark.next = _sharkList.next;
+					if(shark.next) shark.next.prev = shark;
+					shark.prev = _sharkList;
+					_sharkList.next = shark;
+
                     asynssl.start();
             }
             else
@@ -332,19 +340,22 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
     override void transportInactive(Context ctx)
     {
         _acceptor.close();
-        foreach (con, value; _list)
-        {
-            con.close();
-            con.stop();
-        }
-        _list.clear();
+		auto con = _list.next;
+		_list.next = null;
+		while(con) {
+			auto tcon = con;
+			con = con.next;
+			tcon.close();
+		}
         _acceptor.eventLoop.stop();
     }
 
 protected:
     pragma(inline) void remove(ServerConnection!PipeLine conn)
     {
-        _list.remove(conn);
+		conn.prev.next = conn.next;
+		if(conn.next)
+			conn.next.prev = conn.prev;
         gcFree(conn);
     }
 
@@ -378,7 +389,8 @@ protected:
     {
         void doHandShark(SSLHandShark shark, SSLSocket sock)
         {
-            _sharkList.remove(shark);
+			shark.prev.next = shark.next;
+			if(shark.next) shark.next.prev = shark.prev;
             scope (exit)
                 delete shark;
             if (sock)
@@ -400,18 +412,25 @@ protected:
         pipe.finalize();
         auto con = new ServerConnection!PipeLine(pipe);
         con.serverAceptor = this;
-        _list[con] = 0;
+
+		con.next = _list.next;
+		if(con.next)
+			con.next.prev = con;
+		con.prev = _list;
+		_list.next = con;
+
         con.initialize();
         if (_wheel)
             _wheel.addNewTimer(con);
     }
 
 private:
-    int[ServerConnection!PipeLine] _list;
-    
+   // int[ServerConnection!PipeLine] _list;
+	ServerConnection!PipeLine _list;
+
     static if(USEDSSL)
     {
-        int[SSLHandShark] _sharkList;
+		SSLHandShark _sharkList;
     }
 
     Acceptor _acceptor;
@@ -472,7 +491,10 @@ private:
     {
 		collectException(_pipe.timeOut());
     }
-
+private:
+	this(){}
+	ServerConnection!PipeLine prev;
+	ServerConnection!PipeLine next;
 private:
     ServerAcceptor!PipeLine _manger;
     PipeLine _pipe;
@@ -518,6 +540,10 @@ static if(USEDSSL)
             _cback(this, _socket);
         }
 
+	private:
+		this(){}
+		SSLHandShark prev;
+		SSLHandShark next;
     private:
         SSLSocket _socket;
         SSLHandSharkCallBack _cback;
