@@ -56,7 +56,7 @@ public:
 void main()
 {
     ser = new ServerBootstrap!EchoPipeline();
-    ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(5)
+    ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(360)
         .group(new EventLoopGroup).bind(8094);
     ser.waitForStop();
 

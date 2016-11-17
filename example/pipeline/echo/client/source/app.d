@@ -80,7 +80,7 @@ void main()
 	group.start();
 	ClientBootstrap!EchoPipeline client = new ClientBootstrap!EchoPipeline(group.at(0));
 	client.tryCount(3);
-	client.heartbeatTimeOut(2)
+	client.heartbeatTimeOut(120)
 		.pipelineFactory(new shared EchoPipelineFactory());
 	waitForConnect(new InternetAddress("127.0.0.1",8094),client);
     
