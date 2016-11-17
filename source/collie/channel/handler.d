@@ -16,14 +16,11 @@ import std.functional;
 import collie.channel.pipeline;
 import collie.channel.handlercontext;
 
-import std.stdio;
-
 abstract class HandlerBase(Context)
 {
 
     ~this()
     {
-        //    writeln("HandlerBase(Context) ~this");
     }
 
     void attachPipeline(Context /*ctx*/ )
@@ -56,7 +53,7 @@ protected:
 abstract class Handler(Rin, Rout = Rin, Win = Rout, Wout = Rin) : HandlerBase!(
     HandlerContext!(Rout, Wout))
 {
-    alias TheCallBack = void delegate(Win, uint);
+    alias TheCallBack = void delegate(Win, size_t);
     alias Context = HandlerContext!(Rout, Wout);
 
     alias rin = Rin;
@@ -131,7 +128,7 @@ public:
     static enum dir = HandlerDir.OUT;
 
     alias Context = OutboundHandlerContext!Wout;
-    alias OutboundHandlerCallBack = void delegate(Win, uint);
+    alias OutboundHandlerCallBack = void delegate(Win, size_t);
 
     alias rin = uint;
     alias rout = uint;
@@ -204,7 +201,7 @@ interface InboundLink(In)
 
 interface OutboundLink(Out)
 {
-    alias OutboundLinkCallBack = void delegate(Out, uint);
+    alias OutboundLinkCallBack = void delegate(Out, size_t);
     void write(Out msg, OutboundLinkCallBack cback = null);
     void close();
 }

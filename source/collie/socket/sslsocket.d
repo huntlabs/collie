@@ -26,6 +26,7 @@ static if(USEDSSL)
 {
 
     import deimos.openssl.ssl;
+import std.string;
 
     class SSLSocket : TCPSocket
     {
@@ -58,13 +59,13 @@ static if(USEDSSL)
     protected:
         override void onClose()
         {
+			if (_ssl)
+			{
+				SSL_shutdown(_ssl);
+				SSL_free(_ssl);
+				_ssl = null;
+			}
             super.onClose();
-            if (_ssl)
-            {
-                SSL_shutdown(_ssl);
-                SSL_free(_ssl);
-                _ssl = null;
-            }
         }
 
         override void onWrite()
@@ -106,8 +107,8 @@ static if(USEDSSL)
                 }
                 catch (Exception e)
                 {
-                   collectException(error("\n\n----tcp on Write erro do Close! erro : ", e.msg,
-                        "\n\n"));
+					import collie.utils.exception;
+					showException(e);
                     onClose();
                 }
             }
@@ -129,7 +130,7 @@ static if(USEDSSL)
                     auto len = SSL_read(_ssl, (_readBuffer.ptr), cast(int)(_readBuffer.length));
                     if (len > 0)
                     {
-                        _readCallBack(_readBuffer[0 .. len]);
+                        collectException(_readCallBack(_readBuffer[0 .. len]));
                     }
                     else
                     {
@@ -149,8 +150,8 @@ static if(USEDSSL)
                 }
                 catch (Exception e)
                 {
-					collectException(error("\n\n----tcp on read erro do Close! erro : ", e.msg,
-                        "\n\n"));
+					import collie.utils.exception;
+					showException(e);
                     onClose();
                 }
             }
@@ -165,16 +166,7 @@ static if(USEDSSL)
                 _isHandshaked = true;
                 if (_handshakeCback)
                 {
-                    try
-                    {
-                        _handshakeCback();
-                    }
-                    catch (Exception e)
-                    {
-						collectException(error(e.toString));
-                        onClose();
-                        return false;
-                    }
+                    collectException(_handshakeCback());
                 }
                 return true;
             }
@@ -192,7 +184,7 @@ static if(USEDSSL)
             else
             {
 				collectException(trace("SSL_do_handshake return: ", r, "  erro :", err,
-                    "  errno:", errno, "  erro string:", strerror(errno)));
+                    "  errno:", errno, "  erro string:", fromStringz(strerror(errno))));
                 onClose();
                 return false;
             }

@@ -20,11 +20,13 @@ import collie.socket.common;
 import collie.socket.eventloop;
 import collie.socket.transport;
 import collie.utils.queue;
+import collie.utils.exception;
+import std.string;
 
-alias TCPWriteCallBack = void delegate(ubyte[] data, uint writeSzie);
+alias TCPWriteCallBack = void delegate(ubyte[] data, size_t writeSzie);
 alias TCPReadCallBack = void delegate(ubyte[] buffer);
 
-class TCPSocket : AsyncTransport, EventCallInterface
+@trusted class TCPSocket : AsyncTransport, EventCallInterface
 {
     this(EventLoop loop, bool isIpV6 = false)
     {
@@ -44,7 +46,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         super(loop, TransportType.TCP);
         _socket = sock;
         _socket.blocking = false;
-		_writeQueue = Queue!(WriteSite, GCAllocator, true, false)(32);
+		_writeQueue = Queue!(WriteSite, GCAllocator, true, false)(128);
         _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
         _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true, true,
             true);
@@ -122,7 +124,7 @@ class TCPSocket : AsyncTransport, EventCallInterface
         if (!alive)
         {
             warning("tcp socket write on close!");
-            cback(data, 0);
+			if(cback) cback(data, 0);
             return;
         }
         auto buffer = new WriteSite(data, cback);
@@ -205,7 +207,6 @@ protected:
                         auto buf = _writeQueue.deQueue();
                         buf.doCallBack();
                         import collie.utils.memory;
-
                         gcFree(buf);
                     }
                     if (!_writeQueue.empty)
@@ -213,9 +214,9 @@ protected:
                     else
                         return;
                 }
-				catch(Exception e)
-				{
-					collectException(error(e.toString()));
+                catch(Exception e)
+                {
+					showException(e);
                 }
             }
             _event.writeLen = 0;
@@ -254,7 +255,6 @@ protected:
 							auto buf = _writeQueue.deQueue();
 							buf.doCallBack();
 							import collie.utils.memory;
-							
 							gcFree(buf);
 						}
 						continue;
@@ -271,14 +271,14 @@ protected:
 						}
 					}
 					import core.stdc.string;
-					error("write size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,strerror(errno), 
+					error("write size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
 						" \n\tthe socket fd : ", fd);
 					onClose();
 					return;
                 }
-				catch(Exception e)
-				{
-					collectException(error(e.toString()));
+                catch (Exception e)
+                {
+					showException(e);
                     onClose();
                 }
             }
@@ -301,18 +301,16 @@ protected:
         {
             _socket.shutdown(SocketShutdown.BOTH);
             _socket.close();
-            scope (exit)
-            {
-                _readCallBack = null;
-                _unActive = null;
-            }
-            if (_unActive)
-                _unActive();
         }
-		catch(Exception e)
-		{
-			collectException(error(e.toString()));
-		}
+        catch (Exception e)
+        {
+			showException(e);
+        }
+		auto unActive = _unActive;
+		_readCallBack = null;
+		_unActive = null;
+		if (unActive)
+			collectException(unActive());
     }
 
     override void onRead() nothrow
@@ -325,13 +323,14 @@ protected:
                 if (_event.readLen > 0)
                     _readCallBack(_readBuffer[0 .. _event.readLen]);
             }
-			catch (Exception e)
-			{
-				collectException(error("\n\n----tcp on read erro do Close! erro : ", e.toString(),"\n\n"));
+            catch(Exception e)
+            {
+				showException(e);
             }
+			_event.readLen = 0;
             if (alive)
                 doRead();
-            _event.readLen = 0;
+            
         }
         else
         {
@@ -357,14 +356,14 @@ protected:
 						}
 					}
 					import core.stdc.string;
-					error("read size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,strerror(errno), 
+					error("read size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
 						" \n\tthe socket fd : ", fd);
 					onClose();
 					return;
                 }
                 catch (Exception e)
                 {
-					collectException(error("\n\n----tcp on read erro do Close! erro : ", e.toString(),"\n\n"));
+					showException(e);
                     onClose();
                 }
             }
@@ -457,11 +456,11 @@ final class WriteSite
         {
             try
             {
-                _cback(_data, cast(uint) _site);
+                _cback(_data, _site);
             }
             catch (Exception e)
             {
-				collectException(error("\n\n----Write Call Back Erro ! erro : ", e.msg, "\n\n"));
+				showException(e);
             }
         }
         _cback = null;

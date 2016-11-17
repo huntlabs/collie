@@ -25,7 +25,7 @@ import collie.socket.tcpsocket;
 
 alias AcceptCallBack = void delegate(Socket sock);
 
-final class Acceptor : AsyncTransport, EventCallInterface
+@trusted final class Acceptor : AsyncTransport, EventCallInterface
 {
     this(EventLoop loop, bool isIpV6 = false)
     {
@@ -140,7 +140,8 @@ protected:
             }
             catch (Exception e)
             {
-				collectException(error("\n\n----accept Exception! erro : ", e.msg, "\n\n"));
+				import collie.utils.exception;
+				showException(e);
             }
             _inSocket = null;
             doAccept();
@@ -159,7 +160,8 @@ protected:
                 }
                 catch (Exception e)
                 {
-					collectException(error("\n\n----accept Exception! erro : ", e.msg, "\n\n"));
+					import collie.utils.exception;
+					showException(e);
                 }
             }
         }
@@ -213,7 +215,8 @@ protected:
             }
             catch (Exception e)
             {
-				collectException(error("AcceptEx failed with error : ", e.msg));
+				import collie.utils.exception;
+				showException(e);
             }
             return true;
         }

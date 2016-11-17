@@ -16,10 +16,10 @@ import collie.utils.timingwheel;
 import collie.utils.memory;
 import collie.utils.functional;
 import collie.exception;
-
+import collie.utils.exception;
+import collie.socket.client.linkinfo;
 import std.exception;
 import std.experimental.logger;
-
 
 final class ClientManger(PipeLine)
 {
@@ -211,7 +211,7 @@ final @trusted class ClientLink(PipeLine) : WheelTimer, PipelineManager
 		try{
 			_pipe.timeOut();
 		} catch (Exception e){
-			collectException(warning(e.toString));
+			showException(e);
 		}
 	}
 

@@ -16,18 +16,18 @@ import collie.channel.handlercontext;
 
 final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
-    //alias TheCallBack = void delegate(ubyte[],uint);
-    //alias HandleContext!(UniqueBuffer, ubyte[]) Context;
-
     this(TCPSocket sock)
     {
-        _socket = sock;
-        _loop = sock.eventLoop();
+		restSocket(sock);
     }
 
-    ~this()
-    {
-    }
+	@property tcpSocket(){return _socket;}
+
+	void restSocket(TCPSocket sock)
+	{
+		_socket = sock;
+		_loop = sock.eventLoop();
+	}
 
     override void transportActive(Context ctx)
     {
@@ -40,16 +40,18 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
     {
         if (_isAttch && _socket) {
             _socket.close();
-        }
-        ctx.fireTransportInactive();
+		} else {
+        	ctx.fireTransportInactive();
+		}
     }
 
     override void write(Context ctx, ubyte[] msg, TheCallBack cback)
     {
-        _loop.post(delegate(){
+        _loop.post((){
             if(_socket is null)
             {
-                cback(msg,0);
+				if(cback)
+            		cback(msg,0);
                 return;
             }
             if (context.pipeline.pipelineManager)
@@ -61,7 +63,7 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 
     override void close(Context ctx)
     {
-        _loop.post(delegate(){
+        _loop.post((){
             if (_socket)
                 _socket.close();
         });
@@ -85,7 +87,6 @@ protected:
         _socket.setCloseCallBack(null);
         _socket = null;
         context.pipeline.deletePipeline();
-
     }
 
     void readCallBack(ubyte[] buf)

@@ -6,6 +6,7 @@ import std.experimental.logger;
 
 import collie.channel;
 import collie.codec.exception;
+import collie.utils.bytes;
 
 /// The Pack format
 /// header: ubytes 4 "00 00 00 00" -> uint 
@@ -67,7 +68,7 @@ class LengthBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[])
 					_readComType = ch;
 					_pos = ReadPOS.Body;
 					_readLen = 0;
-					_msgLen = bigEndianToNative!(uint)(_lenByte);
+					_msgLen = endianToNative!(littleEndian,uint)(_lenByte);
 					if(_msgLen == 0) {
 						doFireRead();
 						continue;
@@ -110,14 +111,7 @@ class LengthBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[])
 				throw new MsgLengthTooBig("the max is : " ~ to!string(_max) ~ " the length is :" ~ to!string(_msgLen));
 			}
 			ubyte[] data = new ubyte[size + 5];
-			static if (littleEndian)
-			{
-				ubyte[4] length = nativeToLittleEndian(size); 
-			}
-			else
-			{
-				ubyte[4] length = nativeToBigEndian(size); 
-			}
+			ubyte[4] length = nativeToEndian!(littleEndian,uint)(size); 
 			data[0 .. 4] = length[];
 			data[4] = ctype;
 			data[5 .. $] = tmsg[];
@@ -127,7 +121,8 @@ class LengthBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[])
 		}
 		catch (Exception e)
 		{
-			error("write erro: ",e.msg);
+			import collie.utils.exception;
+			showException(e);
 			if (cback)
 				cback(msg, 0);
 		}
@@ -144,7 +139,7 @@ protected:
 		return data;
 	}
 	
-	void callBack(ubyte[] data,uint size)
+	void callBack(ubyte[] data,size_t size)
 	{}
 
 private:
@@ -169,6 +164,7 @@ private:
 	uint _max;
 	ubyte _compressType;
 }
+
 
 unittest
 {
@@ -197,7 +193,7 @@ unittest
 		{
 		}
 		
-		override void fireWrite(ubyte[] msg, void delegate(ubyte[], uint) cback = null)
+		override void fireWrite(ubyte[] msg, void delegate(ubyte[], size_t) cback = null)
 		{
 			gloaData ~= msg;
 			writeln("length is : ", msg[0 .. 4], " \n the data is : ", cast(string)(msg[4 .. $]));

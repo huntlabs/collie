@@ -20,7 +20,7 @@ import collie.socket.exception;
 
 alias ConnectCallBack = void delegate(bool connect);
 
-final class TCPClient : TCPSocket
+@trusted final class TCPClient : TCPSocket
 {
     this(EventLoop loop, bool isIpV6 = false)
     {
@@ -89,23 +89,25 @@ final class TCPClient : TCPSocket
 protected:
     override void onClose()
     {
+		//collectException(trace("onclose!!"));
         if (_isFrist && !_isConnect && _connectBack)
         {
             _isFrist = false;
 			collectException(_connectBack(false));
             return;
         }
+		_isConnect = false;
         super.onClose();
-        _isConnect = false;
     }
 
     override void onWrite()
     {
+		//collectException(trace("onWrite!!"));
         if (_isFrist && !_isConnect && _connectBack)
         {
             _isFrist = false;
+			_isConnect = true;
 			collectException(_connectBack(true));
-            _isConnect = true;
         }
 
         super.onWrite();

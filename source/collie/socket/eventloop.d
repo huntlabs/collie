@@ -201,7 +201,7 @@ protected:
             catch (Exception e)
             {
 				import collie.utils.exception;
-				collectException(warning(e.toString));
+				showException(e);
             }
         }
     }

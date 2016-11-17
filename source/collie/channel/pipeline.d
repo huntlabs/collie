@@ -31,9 +31,9 @@ abstract class PipelineBase
 {
     this()
     {
-        _ctxs = Vector!(PipelineContext)(8);
-        _inCtxs = Vector!(PipelineContext)(8);
-        _outCtxs = Vector!(PipelineContext)(8);
+        _ctxs = 		Vector!(PipelineContext,  	GCAllocator)(8);
+        _inCtxs = 	Vector!(PipelineContext, 	GCAllocator)(8);
+        _outCtxs = 	Vector!(PipelineContext,		GCAllocator)(8);
     }
 
     ~this()
@@ -165,9 +165,9 @@ abstract class PipelineBase
     }
 
 protected:
-    Vector!(PipelineContext) _ctxs = void;
-    Vector!(PipelineContext) _inCtxs = void;
-    Vector!(PipelineContext) _outCtxs = void;
+    Vector!(PipelineContext, GCAllocator) _ctxs = void;
+    Vector!(PipelineContext, GCAllocator) _inCtxs = void;
+    Vector!(PipelineContext, GCAllocator) _outCtxs = void;
 
     bool _isFinalize = true;
 private:
@@ -255,10 +255,10 @@ final class Pipeline(R, W = void) : PipelineBase
 
     ~this()
     {
-        if (!_isStatic)
-        {
-            detachHandlers();
-        }
+//        if (!_isStatic)  // USE GC, maybe the contex will free before pipeline
+//        {
+//            detachHandlers();
+//        }
     }
 
     pragma(inline)
@@ -311,7 +311,7 @@ final class Pipeline(R, W = void) : PipelineBase
 
     static if (!is(W == void))
     {
-        alias TheCallBack = void delegate(W, uint);
+        alias TheCallBack = void delegate(W, size_t);
         pragma(inline)
         void write(W msg, TheCallBack cback = null)
         {
