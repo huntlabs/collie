@@ -171,19 +171,9 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	}
 
 
-	override void sendWsBinary(HTTPTransaction txn,ubyte[] data)
+	override void sendWsData(HTTPTransaction txn,OpCode code,ubyte[] data)
 	{
 	}
-	
-	override void sendWsText(HTTPTransaction txn,string data)
-	{}
-	
-	override void sendWsPing(HTTPTransaction txn,ubyte[] data)
-	{}
-	
-	override void sendWsPong(HTTPTransaction txn,ubyte[] data)
-	{}
-	
 	override void notifyPendingEgress()
 	{}
 	
@@ -209,6 +199,12 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	override HTTPCodec getCodec(){
 		return _codec;
 	}
+
+	void restCodeC(HTTPCodec codec){
+		if(_codec)
+			_codec.setCallback(null);
+		_codec = codec;
+	}
 	
 	override bool isDraining(){return false;}
 	//HTTPTransaction.Transport, }
@@ -226,6 +222,12 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		trace("onHeadersComplete ------");
 		_transaction = new HTTPTransaction(_codec.getTransportDirection,stream,0,this);
 		setupOnHeadersComplete(_transaction,msg);
+	}
+
+	override void onNativeProtocolUpgrade(StreamID stream,CodecProtocol protocol,string protocolString,HTTPMessage msg)
+	{
+		_transaction = new HTTPTransaction(_codec.getTransportDirection,stream,0,this);
+		setupProtocolUpgrade(_transaction,protocol,protocolString.msg);
 	}
 
 	override void onBody(StreamID stream,const ubyte[] data){
@@ -260,21 +262,11 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		_down.httpClose();
 	}
 	
-	override void onWsFrame(StreamID,ref WSFrame){
-
+	override void onWsFrame(StreamID,ref WSFrame wsf){
+		if(_transaction)
+			_transaction.onWsFrame(wsf);
 	}
-	
-	override void onWsPing(StreamID,ref WSFrame){}
-	
-	override void onWsPong(StreamID,ref WSFrame){}
 
-	override bool onNativeProtocolUpgrade(StreamID stream,
-		CodecProtocol protocol,
-		string protocolString,
-		HTTPMessage msg)
-	{
-		return false;
-	}
 	// HTTPCodec.CallBack }
 protected:
 	/**
@@ -285,6 +277,7 @@ protected:
 	void setupOnHeadersComplete(ref HTTPTransaction txn,
 		HTTPMessage msg);
 
+	void setupProtocolUpgrade(ref HTTPTransaction txn,CodecProtocol protocol,string protocolString,HTTPMessage msg);
 protected:
 	void writeCallBack(bool isLast,HTTPTransaction txn,ubyte[] data,size_t size)
 	{

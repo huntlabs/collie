@@ -4,6 +4,7 @@ import collie.codec.http.httpmessage;
 import collie.codec.http.server.responsehandler;
 import collie.codec.http.errocode;
 import collie.codec.http.codec.wsframe;
+import collie.codec.http.codec.httpcodec;
 
 abstract class RequestHandler
 {
@@ -50,11 +51,9 @@ abstract class RequestHandler
 	void onFrame(ref WSFrame frame) nothrow
 	{}
 
-	void onPing(ref WSFrame frame) nothrow
-	{}
-
-	void onPong(ref WSFrame frame) nothrow
-	{}
+	bool onUpgtade(CodecProtocol protocol, HTTPMessage msg) nothrow {
+		return false;
+	}
 
 protected:
 	ResponseHandler _downstream;

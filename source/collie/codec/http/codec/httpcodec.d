@@ -9,12 +9,13 @@ import collie.utils.vector;
 import std.experimental.allocator.gc_allocator;
 
 enum CodecProtocol : ubyte {
-	HTTP_1_X,
-	WEBSOCKET,
+	init = 0,
+	HTTP_1_X = 1,
+	WEBSOCKET = 2,
 //	SPDY_3,
 //	SPDY_3_1,
 //	SPDY_3_1_HPACK,
-//	HTTP_2
+	HTTP_2 = 3
 };
 
 abstract class HTTPCodec
@@ -128,10 +129,6 @@ abstract class HTTPCodec
 			HTTPErrorCode code);
 
 		void onWsFrame(StreamID,ref WSFrame);
-
-		void onWsPing(StreamID,ref WSFrame);
-
-		void onWsPong(StreamID,ref WSFrame);
 		/**
      * Called upon receipt of a frame header.
      * @param stream_id The stream ID
@@ -201,7 +198,7 @@ abstract class HTTPCodec
      * Called upon receipt of a valid protocol switch.  Return false if
      * protocol switch could not be completed.
      */
-		bool onNativeProtocolUpgrade(StreamID stream,
+		void onNativeProtocolUpgrade(StreamID stream,
 			CodecProtocol protocol,
 			string protocolString,
 			HTTPMessage msg);
@@ -387,5 +384,23 @@ abstract class HTTPCodec
 	size_t generateRstStream(StreamID stream,
 		ref HVector buffer,HTTPErrorCode code);
 
+
+	size_t generateWsFrame(StreamID stream,
+		ref HVector buffer,OpCode code, ubyte[] data)
+	{
+		return 0;
+	}
+
+	static CodecProtocol getProtocol(string str)
+	{
+		switch(str){
+			case "websocket" : 
+				return CodecProtocol.WEBSOCKET;
+			case "H2C" :
+				return CodecProtocol.HTTP_2;
+			default:
+				return CodecProtocol.init;
+		}
+	}
 }
 

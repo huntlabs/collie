@@ -34,6 +34,14 @@ abstract class ResponseHandler
 
 	void socketWrite(ubyte[],SocketWriteCallBack);
 
+	void sendWsBinary(ubyte[] data);
+	
+	void sendWsText(string data);
+	
+	void sendWsPing(ubyte[] data);
+	
+	void sendWsPong(ubyte[] data);
+
 protected:
 	RequestHandler _upstream;
 }

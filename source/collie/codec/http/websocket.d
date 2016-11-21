@@ -18,7 +18,7 @@ import std.experimental.logger;
 import collie.buffer.buffer;
 //import collie.codec.http.handler;
 
-enum WebSocketGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+
 
 //abstract class WebSocket
 //{
@@ -91,42 +91,9 @@ enum ProcessingState
     PS_READ_PAYLOAD
 }
 
-enum OpCode
-{
-    OpCodeContinue = 0x0,
-    OpCodeText = 0x1,
-    OpCodeBinary = 0x2,
-    OpCodeReserved3 = 0x3,
-    OpCodeReserved4 = 0x4,
-    OpCodeReserved5 = 0x5,
-    OpCodeReserved6 = 0x6,
-    OpCodeReserved7 = 0x7,
-    OpCodeClose = 0x8,
-    OpCodePing = 0x9,
-    OpCodePong = 0xA,
-    OpCodeReservedB = 0xB,
-    OpCodeReservedC = 0xC,
-    OpCodeReservedD = 0xD,
-    OpCodeReservedE = 0xE,
-    OpCodeReservedF = 0xF
-}
 
-enum CloseCode
-{
-    CloseCodeNormal = 1000,
-    CloseCodeGoingAway = 1001,
-    CloseCodeProtocolError = 1002,
-    CloseCodeDatatypeNotSupported = 1003,
-    CloseCodeReserved1004 = 1004,
-    CloseCodeMissingStatusCode = 1005,
-    CloseCodeAbnormalDisconnection = 1006,
-    CloseCodeWrongDatatype = 1007,
-    CloseCodePolicyViolated = 1008,
-    CloseCodeTooMuchData = 1009,
-    CloseCodeMissingExtension = 1010,
-    CloseCodeBadOperation = 1011,
-    CloseCodeTlsHandshakeFailed = 1015
-}
+
+
 
 final class Frame
 {

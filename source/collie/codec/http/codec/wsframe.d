@@ -1,5 +1,7 @@
 ﻿module collie.codec.http.codec.wsframe;
 
+enum WebSocketGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+
 enum OpCode
 {
 	OpCodeContinue = 0x0,
@@ -61,6 +63,11 @@ struct WSFrame
 	{
 		return _opCode;
 	}
+
+	@property parentCode()
+	{
+		return _lastCode;
+	}
 	
 	@property isFinalFrame() const
 	{
@@ -98,7 +105,8 @@ struct WSFrame
 	}
 	
 	ubyte[] data;
-private:
+
+package (collie.codec.http.codec):  
 	
 	bool _isFinalFrame;
 	bool _rsv1;
@@ -106,6 +114,7 @@ private:
 	bool _rsv3;
 	bool _isValid = false;
 	OpCode _opCode;
+	OpCode _lastCode;
 	string _closeReason;
 	CloseCode _closeCode;
 }

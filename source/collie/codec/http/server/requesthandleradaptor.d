@@ -8,6 +8,7 @@ import collie.codec.http.headers;
 import collie.codec.http.server.requesthandler;
 import collie.codec.http.httptansaction;
 import collie.codec.http.server.responsebuilder;
+import collie.codec.http.codec.httpcodec;
 
 final class RequestHandlerAdaptor : 
 	ResponseHandler,HTTPTransactionHandler
@@ -72,6 +73,10 @@ final class RequestHandlerAdaptor :
 		_upstream.onError(erromsg);
 	}
 
+	override void onWsFrame(ref WSFrame wsf) {
+		_upstream.onFrame(wsf);
+	}
+
 	override void onEgressPaused() {}
 
 	override void onEgressResumed() {}
@@ -106,6 +111,31 @@ final class RequestHandlerAdaptor :
 	override void socketWrite(ubyte[] data,SocketWriteCallBack cback) {
 		if(_txn)
 			_txn.socketWrite(data,cback);
+	}
+
+	override void sendWsBinary(ubyte[] data)
+	{
+		if(_txn)
+			_txn.sendWsBinary(this,data);
+	}
+	
+	override void sendWsText(string data){
+		if(_txn)
+			_txn.sendWsText(this,data);
+	}
+	
+	override void sendWsPing(ubyte[] data){
+		if(_txn)
+			_txn.sendWsPing(this,data);
+	}
+	
+	override void sendWsPong(ubyte[] data){
+		if(_txn)
+			_txn.sendWsPong(this,data);
+	}
+
+	override bool onUpgtade(CodecProtocol protocol,HTTPMessage msg) {
+		return _upstream.onUpgtade(protocol, msg);
 	}
 private:
 	HTTPTransaction _txn;

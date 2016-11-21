@@ -7,6 +7,7 @@ import collie.socket.tcpsocket;
 
 import std.socket;
 public import std.experimental.logger;
+import collie.codec.http.codec.wsframe;
 
 enum TransportDirection : ubyte {
 	DOWNSTREAM,  // toward the client
@@ -101,6 +102,11 @@ interface HTTPTransactionHandler
    * and you can now continue to send data.
    */
 	void onEgressResumed();
+
+	void onWsFrame(ref WSFrame wsf);
+
+
+	bool onUpgtade(CodecProtocol protocol,HTTPMessage msg);
 }
 
 class HTTPTransaction
@@ -140,13 +146,7 @@ class HTTPTransaction
 //		size_t sendAbort(HTTPTransaction txn,
 //			HTTPErrorCode statusCode);
 
-		void sendWsBinary(HTTPTransaction txn,ubyte[] data);
-		
-		void sendWsText(HTTPTransaction txn,string data);
-		
-		void sendWsPing(HTTPTransaction txn,ubyte[] data);
-		
-		void sendWsPong(HTTPTransaction txn,ubyte[] data);
+		void sendWsData(HTTPTransaction txn,OpCode code,ubyte[] data);
 //		size_t sendPriority(HTTPTransaction txn,
 //			const http2::PriorityUpdate& pri);
 //		
@@ -376,21 +376,21 @@ class HTTPTransaction
 		sendHeadersWithEOM(msg);
 	}
 
-	void sendWsBinary(ubyte[] data)
+	void sendWsData(OpCode code,ubyte[] data)
 	{
-		transport.sendWsBinary(this,data);
+		transport.sendWsData(this,code,data);
 	}
 
-	void sendWsText(string data){
-		transport.sendWsText(this,data);
+	void onWsFrame(ref WSFrame wsf){
+		if(_handler)
+			_handler.onWsFrame(wsf);
 	}
 
-	void sendWsPing(ubyte[] data){
-		transport.sendWsPing(this,data);
-	}
+	bool onUpgtade(CodecProtocol protocol, HTTPMessage msg){
+		if(_handler)
+			return _handler.onUpgtade(protocol, msg);
 
-	void sendWsPong(ubyte[] data){
-		transport.sendWsPong(this,data);
+		return false;
 	}
 
 package:
