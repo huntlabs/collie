@@ -10,6 +10,7 @@
  */
 module collie.codec.http.parser;
 
+import std.experimental.logger;
 import collie.codec.http.headers.httpmethod;
 public import collie.codec.http.parser.parsertype;
 
@@ -245,8 +246,10 @@ public:
         size_t p = 0;
         if (_httpErrno != HTTPParserErrno.HPE_OK)
         {
+			trace("_httpErrno eror : ", _httpErrno);
             return 0;
         }
+		trace("data.lengt : ",data.length, "   _state = ", _state);
         if (data.length == 0)
         {
             switch (_state)
@@ -2390,6 +2393,7 @@ enum NEW_MESSAGE = "httpShouldKeepAlive() ? (type == HTTPParserType.HTTP_REQUEST
 string CALLBACK_NOTIFY(string code)
 {
     string _s = " {if (_on" ~ code ~ " !is null){
+               trace(\" CALLBACK_NOTIFY : " ~ code ~ "\");
                _on" ~ code ~ "(this); if(!handleIng){
                 _httpErrno = HTTPParserErrno.HPE_CB_" ~ code ~ ";
                 return  p + 1;}} }";
@@ -2399,6 +2403,7 @@ string CALLBACK_NOTIFY(string code)
 string CALLBACK_NOTIFY_NOADVANCE(string code)
 {
     string _s = " {if (_on" ~ code ~ " != null){
+                   trace(\" CALLBACK_NOTIFY_NOADVANCE : " ~ code ~ "\");
 	               _on" ~ code ~ "(this); if(!handleIng){
 	                _httpErrno = HTTPParserErrno.HPE_CB_" ~ code ~ ";
 	                return  p;} }}";
@@ -2411,7 +2416,7 @@ string CALLBACK_DATA(string code)
                 ulong len = (p - m" ~ code ~ "Mark) ;
                 
                 if(len > 0) {  
-               /* writeln(\"CALLBACK_DATA at  \",__LINE__, \"  " ~ code ~ "\");*/
+                trace(\"CALLBACK_DATA at  \",__LINE__, \"  " ~ code ~ "\");
                 ubyte[]  _data =  data[m" ~ code ~ "Mark..p];
                 _on" ~ code ~ "(this,_data,true);
                 if (!handleIng){
@@ -2425,7 +2430,7 @@ string CALLBACK_DATA_NOADVANCE(string code)
 	string _s = "{ if(m" ~ code ~ "Mark != size_t.max && _on" ~ code ~ " !is null){
                 ulong len = (p - m" ~ code ~ "Mark) ;
                 if(len > 0) {  
-                 /*writeln(\"CALLBACK_DATA_NOADVANCE at  \",__LINE__, \"  " ~ code ~ "\");*/
+                trace(\"CALLBACK_DATA_NOADVANCE at  \",__LINE__, \"  " ~ code ~ "\");
                 ubyte[]  _data = data[m" ~ code ~ "Mark..p];
                 _on" ~ code ~ "(this,_data,false);
                 if (!handleIng){

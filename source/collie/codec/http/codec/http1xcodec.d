@@ -17,11 +17,6 @@ class HTTP1XCodec : HTTPCodec
 		_transportDirection = direction;
 		_finished = true;
 		_maxHeaderSize = maxHeaderSize;
-		if(_transportDirection == TransportDirection.DOWNSTREAM){
-			_parser = HTTPParser(HTTPParserType.HTTP_REQUEST,_maxHeaderSize);
-		}else {
-			_parser = HTTPParser(HTTPParserType.HTTP_RESPONSE,_maxHeaderSize);
-		}
 		_parser.onUrl(&onUrl);
 		_parser.onMessageBegin(&onMessageBegin);
 		_parser.onHeaderComplete(&onHeadersComplete);
@@ -64,6 +59,10 @@ class HTTP1XCodec : HTTPCodec
 
 	override size_t onIngress(ubyte[] buf)
 	{
+		trace("on Ingress!!");
+		if(_finished) {
+			_parser.rest(HTTPParserType.HTTP_BOTH,_maxHeaderSize);
+		}
 		auto size = _parser.httpParserExecute(buf);
 		if(size != buf.length && _parser.isUpgrade == false && _transaction && _callback){
 				_callback.onError(_transaction,HTTPErrorCode.PROTOCOL_ERROR);
@@ -324,6 +323,7 @@ protected:
 	}
 	
 	void onMessageComplete(ref HTTPParser parser){
+		_finished = true;
 		switch (_transportDirection) {
 			case TransportDirection.DOWNSTREAM:
 			{
@@ -339,11 +339,6 @@ protected:
 		}
 		if(_callback)
 			_callback.onMessageComplete(_transaction,parser.isUpgrade);
-		if(_transportDirection == TransportDirection.DOWNSTREAM){
-			_parser.rest(HTTPParserType.HTTP_REQUEST,_maxHeaderSize);
-		}else {
-			_parser.rest(HTTPParserType.HTTP_RESPONSE,_maxHeaderSize);
-		}
 	}
 	
 	void onChunkHeader(ref HTTPParser parser){

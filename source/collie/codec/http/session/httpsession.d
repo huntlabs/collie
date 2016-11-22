@@ -79,6 +79,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 	//HandlerAdapter {
 	void onRead(ubyte[] msg) {
+		//trace("on read: ", cast(string)msg);
 		_codec.onIngress(msg);
 	}
 
