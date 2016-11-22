@@ -294,7 +294,7 @@ protected:
 		_headersComplete = true;
 		if(_message.upgraded){
 			string upstring  = _message.getHeaders.getSingleOrEmpty(HTTPHeaderCode.UPGRADE);
-			CodecProtocol pro = getProtocol(upstring);
+			CodecProtocol pro = getProtocolFormString(upstring);
 			_callback.onNativeProtocolUpgrade(_ingressTxnID,pro,upstring,_message);
 		} else {
 			_callback.onHeadersComplete(_ingressTxnID,_message);

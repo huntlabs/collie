@@ -10,6 +10,7 @@ import collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
 import std.base64;
 import std.digest.sha;
+import collie.codec.http.codec.websocketcodec;
 
 final class HTTPDownstreamSession : HTTPSession
 {
@@ -44,7 +45,7 @@ protected:
 		}
 	}
 
-	override void setupProtocolUpgrade(StreamID stream,CodecProtocol protocol,string protocolString,HTTPMessage msg) {
+	override void setupProtocolUpgrade(ref HTTPTransaction txn,CodecProtocol protocol,string protocolString,HTTPMessage msg) {
 		void doErro(){
 			scope HTTPMessage rmsg = new HTTPMessage();
 			rmsg.statusCode = 400;
@@ -54,41 +55,33 @@ protected:
 		}
 		auto handle =  _controller.getRequestHandler(txn,msg);
 		if(handle is null){
-			collectException( doClose());
+			collectException( doErro());
 			return;
 		}
 		txn.handler(handle);
 		if(protocol == CodecProtocol.init || !txn.onUpgtade(protocol, msg))
 		{
-			collectException( doClose());
+			collectException( doErro());
 			return;
 		}
 		bool rv = true;
 		switch(protocol){
 			case CodecProtocol.WEBSOCKET :
-				rv = doUpgradeWebSocket(msg);
+				rv = doUpgradeWebSocket(txn,msg);
 				break;
 			default :
 				rv = false;
-				brek;
+				break;
 		}
 		if(!rv)
 			doErro();
 	}
 
-	bool doUpgradeWebSocket(HTTPMessage msg)
+	bool doUpgradeWebSocket(ref HTTPTransaction txn,HTTPMessage msg)
 	{
-		void doErro(){
-			scope HTTPMessage rmsg = new HTTPMessage();
-			rmsg.statusCode = 400;
-			rmsg.statusMessage = HTTPMessage.statusText(400);
-			rmsg.getHeaders.add(HTTPHeaderCode.CONNECTION,"close");
-			sendHeaders(txn,rmsg,true);
-		}
-
 		string key = msg.getHeaders.getSingleOrEmpty(HTTPHeaderCode.SEC_WEBSOCKET_KEY);
 		string ver = msg.getHeaders.getSingleOrEmpty(HTTPHeaderCode.SEC_WEBSOCKET_VERSION);
-		if(ver != "13")
+		if(ver != "13") 
 			return false;
 		auto accept = cast(string) Base64.encode(sha1Of(key ~ WebSocketGuid));
 
@@ -99,8 +92,9 @@ protected:
 		rmsg.getHeaders.add(HTTPHeaderCode.SEC_WEBSOCKET_ACCEPT,accept);
 		rmsg.getHeaders.add(HTTPHeaderCode.CONNECTION,"Upgrade");
 		rmsg.getHeaders.add(HTTPHeaderCode.UPGRADE,"websocket");
-		sendHeaders(txn,rmsg,true);
-		//restCodeC(new 
+		sendHeaders(txn,rmsg,false);
+		restCodeC(new WebsocketCodec(TransportDirection.DOWNSTREAM));
+		return true;
 	}
 
 }

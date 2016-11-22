@@ -146,7 +146,7 @@ class HTTPTransaction
 //		size_t sendAbort(HTTPTransaction txn,
 //			HTTPErrorCode statusCode);
 
-		void sendWsData(HTTPTransaction txn,OpCode code,ubyte[] data);
+		size_t sendWsData(HTTPTransaction txn,OpCode code,ubyte[] data);
 //		size_t sendPriority(HTTPTransaction txn,
 //			const http2::PriorityUpdate& pri);
 //		

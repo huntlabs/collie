@@ -391,7 +391,7 @@ abstract class HTTPCodec
 		return 0;
 	}
 
-	static CodecProtocol getProtocol(string str)
+	static CodecProtocol getProtocolFormString(string str)
 	{
 		switch(str){
 			case "websocket" : 

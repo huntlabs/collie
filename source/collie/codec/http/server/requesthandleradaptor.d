@@ -113,25 +113,10 @@ final class RequestHandlerAdaptor :
 			_txn.socketWrite(data,cback);
 	}
 
-	override void sendWsBinary(ubyte[] data)
+	override void sendWsData(OpCode code,ubyte[] data)
 	{
 		if(_txn)
-			_txn.sendWsBinary(this,data);
-	}
-	
-	override void sendWsText(string data){
-		if(_txn)
-			_txn.sendWsText(this,data);
-	}
-	
-	override void sendWsPing(ubyte[] data){
-		if(_txn)
-			_txn.sendWsPing(this,data);
-	}
-	
-	override void sendWsPong(ubyte[] data){
-		if(_txn)
-			_txn.sendWsPong(this,data);
+			_txn.sendWsData(code,data);
 	}
 
 	override bool onUpgtade(CodecProtocol protocol,HTTPMessage msg) {

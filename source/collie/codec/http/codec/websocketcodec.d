@@ -4,6 +4,9 @@ import collie.codec.http.codec.httpcodec;
 import collie.codec.http.httptansaction;
 import std.bitmanip;
 import collie.codec.http.codec.wsframe;
+import collie.codec.http.httpmessage;
+import collie.codec.http.errocode;
+import std.conv;
 
 enum FRAME_SIZE_IN_BYTES = 512 * 512 * 2; //maximum size of a frame when sending a message
 
@@ -47,7 +50,7 @@ class WebsocketCodec : HTTPCodec
 	
 	override bool shouldClose()
 	{
-		return false;
+		return _shouldClose;
 	}
 	
 	override void setParserPaused(bool paused){}
@@ -99,7 +102,7 @@ class WebsocketCodec : HTTPCodec
 	{
 		return 0;
 	}
-	
+
 	override size_t  generateRstStream(StreamID stream,
 		ref HVector buffer,HTTPErrorCode code)
 	{
@@ -110,8 +113,11 @@ class WebsocketCodec : HTTPCodec
 		ref HVector buffer,OpCode code, ubyte[] data)
 	{
 		buffer.clear();
-		if((_opCode & 0x08) == 0x08 && (data.length > 125))
+		if((code & 0x08) == 0x08 && (data.length > 125))
 				data = data[0 .. 125];
+		if(code == OpCode.OpCodeClose)
+			_shouldClose = true;
+
 		int numFrames = cast(int)(data.length / FRAME_SIZE_IN_BYTES);
 		auto sizeLeft = data.length % FRAME_SIZE_IN_BYTES;
 		if (numFrames == 0)
@@ -138,9 +144,9 @@ class WebsocketCodec : HTTPCodec
 				buffer.insertBack(mask[]);
 				buffer.insertBack(data);
 				auto tdata = buffer.data(false);
-				for (size_t i = tdata.length - payloadLength; i < tdata.length; i++)
+				for (size_t j = tdata.length - payloadLength; j < tdata.length; i++)
 				{
-					tdata[i] ^= mask[i % 4];
+					tdata[j] ^= mask[j % 4];
 				}
 			}
 			else
@@ -165,7 +171,7 @@ protected:
 	void getFrameHeader(OpCode code, size_t payloadLength, bool lastFrame, ref HVector buffer)
 	{
 		ubyte[2] wdata = [0, 0];
-		wdata[0] = cast(ubyte)((opCode & 0x0F) | (lastFrame ? 0x80 : 0x00));
+		wdata[0] = cast(ubyte)((code & 0x0F) | (lastFrame ? 0x80 : 0x00));
 		if(doMask())
 			wdata[1] = 0x80;
 		if (payloadLength <= 125){
@@ -183,6 +189,52 @@ protected:
 			buffer.insertBack(length[]);
 		}
 	}
+
+	bool checkValidity()
+	{
+		void setError(CloseCode code, string closeReason)
+		{
+			frame._closeCode = code;
+			frame._closeReason = closeReason;
+			frame._isValid = false;
+		}
+		
+		if (frame._rsv1 || frame._rsv2 || frame._rsv3)
+		{
+			setError(CloseCode.CloseCodeProtocolError, "Rsv field is non-zero");
+		}
+		else if (isOpCodeReserved(frame._opCode))
+		{
+			setError(CloseCode.CloseCodeProtocolError, "Used reserved opcode");
+		}
+		else if (frame.isControlFrame())
+		{
+			if (_length > 125)
+			{
+				setError(CloseCode.CloseCodeProtocolError, "Control frame is larger than 125 bytes");
+			}
+			else if (!frame._isFinalFrame)
+			{
+				setError(CloseCode.CloseCodeProtocolError, "Control frames cannot be fragmented");
+			}
+			else
+			{
+				frame._isValid = true;
+			}
+		}
+		else
+		{
+			frame._isValid = true;
+		}
+		return frame._isValid;
+	}
+
+	bool isOpCodeReserved(OpCode code)
+	{
+		return ((code > OpCode.OpCodeBinary) && (code < OpCode.OpCodeClose))
+			|| (code > OpCode.OpCodePong);
+	}
+
 	pragma(inline)
 	void clear()
 	{
@@ -191,7 +243,7 @@ protected:
 		_hasMask = false;
 		_buffer[] = 0;
 		_readLen = 0;
-		frame = Frame();
+		frame = WSFrame();
 	}
 
 	void readFrame(in ubyte[] data)
@@ -406,6 +458,7 @@ protected:
 private:
 	TransportDirection _transportDirection;
 	bool _finished;
+	bool _shouldClose = false;
 	CallBack _callback;
 
 	ProcessingState _state;

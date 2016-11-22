@@ -171,9 +171,16 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	}
 
 
-	override void sendWsData(HTTPTransaction txn,OpCode code,ubyte[] data)
+	override size_t sendWsData(HTTPTransaction txn,OpCode code,ubyte[] data)
 	{
+		HVector tdata;
+		size_t rlen = getCodec.generateWsFrame(txn.streamID,tdata,code,data);
+		if(rlen) {
+			_down.httpWrite(tdata.data(true),bind(&writeCallBack,getCodec.shouldClose(),txn));
+		}
+		return rlen;
 	}
+
 	override void notifyPendingEgress()
 	{}
 	
@@ -227,7 +234,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	override void onNativeProtocolUpgrade(StreamID stream,CodecProtocol protocol,string protocolString,HTTPMessage msg)
 	{
 		_transaction = new HTTPTransaction(_codec.getTransportDirection,stream,0,this);
-		setupProtocolUpgrade(_transaction,protocol,protocolString.msg);
+		setupProtocolUpgrade(_transaction,protocol,protocolString,msg);
 	}
 
 	override void onBody(StreamID stream,const ubyte[] data){
