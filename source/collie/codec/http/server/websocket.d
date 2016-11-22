@@ -11,6 +11,7 @@
 module collie.codec.http.server.websocket;
 
 import std.socket;
+import std.exception;
 import std.experimental.logger;
 import std.experimental.allocator.gc_allocator;
 
@@ -23,9 +24,10 @@ import collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
 import collie.utils.vector;
 import collie.utils.memory;
+import collie.codec.http.server;
 
 
-abstract class IWebSocket : HTTPTransactionHandler
+abstract class IWebSocket : RequestHandler
 {
 	alias Buffer = Vector!(ubyte,GCAllocator);
 	pragma(inline)
@@ -59,89 +61,71 @@ abstract class IWebSocket : HTTPTransactionHandler
 	}
 
     void onClose(ubyte[] data);
-	void onErro(HTTPErrorCode code);
     void onText(string frame);
     void onPong(ubyte[] frame);
     void onBinary(ubyte[] frame);
+	void onErro(HTTPErrorCode code);
 
-protected:
-	override void setTransaction(HTTPTransaction txn) {
-		_hand = txn;
+	final override void onResquest(HTTPMessage headers) nothrow{}
+	final override void onBody(const ubyte[] data) nothrow{}
+	final override void onEOM() nothrow{}
+	final override void requestComplete() nothrow{}
+	final override void onError(HTTPErrorCode code) nothrow {
+		_downstream = null;
+		collectException(onErro(code));
 	}
-	
-	override void detachTransaction() {
-		_hand = null;
-	}
-	
-	override void onHeadersComplete(HTTPMessage msg) {
-	}
-	
-	override void onBody(const ubyte[] chain) {
-	}
-	
-	override void onChunkHeader(size_t lenght){}
-	
-	override void onChunkComplete() {}
-	
-	override void onEOM() {
-	}
-	
-	override void onError(HTTPErrorCode erromsg)  {
-	}
-	override bool onUpgtade(CodecProtocol protocol,HTTPMessage msg) {
-		_addr = msg.clientAddress();
+	override bool onUpgtade(CodecProtocol protocol,HTTPMessage msg) nothrow{
+		//_addr = msg.clientAddress();
+		collectException(msg.clientAddress(),_addr);
 		if(protocol == CodecProtocol.WEBSOCKET)
 			return true;
 		return false;
 	}
 	
-	override void onWsFrame(ref WSFrame wsf) {
+	override void onFrame(ref WSFrame wsf) nothrow{
 		if(wsf.isControlFrame){
 			switch(wsf.opCode){
 				case OpCode.OpCodePing:
-					sendFarme(OpCode.OpCodePong,wsf.data);
+					collectException(sendFarme(OpCode.OpCodePong,wsf.data));
 					break;
 				case OpCode.OpCodePong:
-					onPong(wsf.data);
+					collectException(onPong(wsf.data));
 					break;
 				case OpCode.OpCodeClose:
-					sendFarme(OpCode.OpCodeClose,wsf.data);
-					onClose(wsf.data);
+					collectException((){sendFarme(OpCode.OpCodeClose,wsf.data);
+							onClose(wsf.data);}());
 					break;
 				default:
 					break;
 			}
 		} else {
 			if(wsf.parentCode == OpCode.OpCodeText){
-				_text.insertBack(wsf.data);
+				collectException((){_text.insertBack(wsf.data);
 				gcFree(wsf.data);
 				if(wsf.isFinalFrame){
 					onText(cast(string)(_text.data(true)));
 				}
+					}());
 			} else {
-				_binary.insertBack(wsf.data);
+				collectException((){_binary.insertBack(wsf.data);
 				gcFree(wsf.data);
 				if(wsf.isFinalFrame){
 					onBinary(_text.data(true));
 				}
+					}());
 			}
 		}
 	}
-	
-	override void onEgressPaused() {}
-	
-	override void onEgressResumed() {}
 
 	bool sendFarme(OpCode code,ubyte[] data)
 	{
-		if(!_hand) return false;
-		_hand.sendWsData(code,data);
+		if(!_downstream) return false;
+			_downstream.sendWsData(code,data);
 		return true;
 	}
 
 package:
 	Buffer _text;
 	Buffer _binary;
-	HTTPTransaction _hand;
     Address _addr;
 }

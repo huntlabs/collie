@@ -44,62 +44,62 @@ enum CloseCode
 struct WSFrame
 {
 	
-	bool isControlFrame() const
+	bool isControlFrame() const nothrow
 	{
 		return (_opCode & 0x08) == 0x08;
 	}
 	
-	bool isDataFrame() const
+	bool isDataFrame() const nothrow
 	{
 		return !isControlFrame();
 	}
 	
-	bool isContinuationFrame() const
+	bool isContinuationFrame() const nothrow
 	{
 		return isDataFrame() && (opCode == OpCode.OpCodeContinue);
 	}
 	
-	@property opCode() const
-	{
+	@property opCode() const nothrow
+	{ 
 		return _opCode;
 	}
 
-	@property parentCode()
+	@property parentCode() nothrow
 	{
 		return _lastCode;
 	}
 	
-	@property isFinalFrame() const
+	@property isFinalFrame() const nothrow
 	{
 		return _isFinalFrame;
 	}
 	
-	@property closeCode() const
+	@property closeCode() const nothrow
 	{
 		return _closeCode;
 	}
 	
-	@property closeReason()
+	@property closeReason() nothrow
 	{
 		return _closeReason;
 	}
 	
-	@property rsv1() const
+	@property rsv1() const nothrow
 	{
 		return _rsv1;
 	}
 	
-	@property rsv2() const
+	@property rsv2() const nothrow
 	{
 		return _rsv2;
 	}
 	
-	@property rsv3() const
-	{
+	@property rsv3() const nothrow
+	{ 
 		return _rsv3;
 	}
 	
-	@property isValid() const
+	@property isValid() const nothrow
 	{
 		return _isValid;
 	}

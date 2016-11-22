@@ -203,6 +203,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	void restCodeC(HTTPCodec codec){
 		if(_codec)
 			_codec.setCallback(null);
+		codec.setCallback(this);
 		_codec = codec;
 	}
 	
@@ -260,6 +261,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	}
 	
 	override void onWsFrame(HTTPTransaction txn,ref WSFrame wsf){
+		trace(".....");
 		if(txn)
 			txn.onWsFrame(wsf);
 	}

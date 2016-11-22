@@ -71,7 +71,7 @@ struct HTTPHeaders
 	}
 	void add(HTTPHeaderCode code, string value)
 	{
-		if(code == HTTPHeaderCode.OTHER || code > HTTPHeaderCode.X_XSS_PROTECTION)
+		if(code == HTTPHeaderCode.OTHER || code > HTTPHeaderCode.SEC_WEBSOCKET_ACCEPT)
 			return;
 		_codes.insertBack(code);
 		_headersNames.insertBack(HTTPHeaderCodeName[code]);

@@ -391,6 +391,7 @@ class HTTPTransaction
 	}
 
 	void onWsFrame(ref WSFrame wsf){
+		trace(".....");
 		if(_handler)
 			_handler.onWsFrame(wsf);
 	}

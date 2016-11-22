@@ -29,6 +29,7 @@ class WebsocketCodec : HTTPCodec
 	this(TransportDirection direc, HTTPTransaction txn)
 	{
 		_transportDirection = direc;
+		_transaction = txn;
 	}
 
 	override CodecProtocol getProtocol() {
@@ -86,7 +87,7 @@ class WebsocketCodec : HTTPCodec
 	
 	override size_t onIngress(ubyte[] buf)
 	{
-
+		readFrame(buf);
 		return buf.length;
 	}
 	
@@ -291,7 +292,8 @@ protected:
 					}
 				}
 			}
-			_callback.onWsFrame(_transaction,frame);
+			if(_callback)
+				_callback.onWsFrame(_transaction,frame);
 			clear();
 		}
 		

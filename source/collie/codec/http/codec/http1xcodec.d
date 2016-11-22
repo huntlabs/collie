@@ -65,8 +65,8 @@ class HTTP1XCodec : HTTPCodec
 	override size_t onIngress(ubyte[] buf)
 	{
 		auto size = _parser.httpParserExecute(buf);
-		if(size != buf.length && _parser.isUpgrade == false && _transaction){
-			_callback.onError(_transaction,HTTPErrorCode.PROTOCOL_ERROR);
+		if(size != buf.length && _parser.isUpgrade == false && _transaction && _callback){
+				_callback.onError(_transaction,HTTPErrorCode.PROTOCOL_ERROR);
 		}
 		return cast(size_t) size;
 	}
@@ -287,7 +287,8 @@ protected:
 			_is1xxResponse = false;
 		}
 		_transaction = new HTTPTransaction(_transportDirection,0,0);
-		_callback.onMessageBegin(_transaction, _message);
+		if(_callback)
+			_callback.onMessageBegin(_transaction, _message);
 		_currtKey.clear();
 		_currtValue.clear();
 	}
@@ -314,9 +315,11 @@ protected:
 		if(_message.upgraded){
 			string upstring  = _message.getHeaders.getSingleOrEmpty(HTTPHeaderCode.UPGRADE);
 			CodecProtocol pro = getProtocolFormString(upstring);
-			_callback.onNativeProtocolUpgrade(_transaction,pro,upstring,_message);
+			if(_callback)
+				_callback.onNativeProtocolUpgrade(_transaction,pro,upstring,_message);
 		} else {
-			_callback.onHeadersComplete(_transaction,_message);
+			if(_callback)
+				_callback.onHeadersComplete(_transaction,_message);
 		}
 	}
 	
@@ -334,7 +337,8 @@ protected:
 				break;
 			default: break;
 		}
-		_callback.onMessageComplete(_transaction,parser.isUpgrade);
+		if(_callback)
+			_callback.onMessageComplete(_transaction,parser.isUpgrade);
 		if(_transportDirection == TransportDirection.DOWNSTREAM){
 			_parser.rest(HTTPParserType.HTTP_REQUEST,_maxHeaderSize);
 		}else {
@@ -343,11 +347,13 @@ protected:
 	}
 	
 	void onChunkHeader(ref HTTPParser parser){
-		_callback.onChunkHeader(_transaction,cast(size_t)parser.contentLength);
+		if(_callback)
+			_callback.onChunkHeader(_transaction,cast(size_t)parser.contentLength);
 	}
 	
 	void onChunkComplete(ref HTTPParser parser){
-		_callback.onChunkComplete(_transaction);
+		if(_callback)
+			_callback.onChunkComplete(_transaction);
 	}
 	
 	void onUrl(ref HTTPParser parser, ubyte[] data, bool finish)
