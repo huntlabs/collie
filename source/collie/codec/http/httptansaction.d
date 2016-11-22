@@ -172,16 +172,16 @@ class HTTPTransaction
 
 	}
 
-	this(TransportDirection direction, HTTPCodec.StreamID id,uint seqNo,Transport port)
+	this(TransportDirection direction, HTTPCodec.StreamID id,uint seqNo)
 	{
 		_id = id;
-		_transport = port;
 		_seqNo = seqNo;
 	}
 	@property HTTPTransactionHandler handler(){return _handler;}
 	@property void handler(HTTPTransactionHandler han){_handler = han;}
 
 	@property streamID(){return _id;}
+	@property transport(Transport port){_transport = port;}
 	@property transport(){return _transport;}
 
 	bool isUpstream() const {
@@ -290,7 +290,8 @@ class HTTPTransaction
 
 	void sendHeadersWithOptionalEOM(HTTPMessage headers, bool eom)
 	{
-		transport.sendHeaders(this,headers,eom);
+		if(transport)
+			transport.sendHeaders(this,headers,eom);
 	}
 	/**
    * Send part or all of the egress message body to the Transport. If flow
@@ -305,11 +306,13 @@ class HTTPTransaction
    *             chunk headers.
    */
 	void sendBody(ubyte[] body_, bool iseom = false){
-		transport.sendBody(this,body_, iseom);
+		if(transport)
+			if(transport)transport.sendBody(this,body_, iseom);
 	}
 
 	void sendBody(ref HVector body_, bool iseom = false){
-		transport.sendBody(this,body_, iseom);
+		if(transport)
+			if(transport)transport.sendBody(this,body_, iseom);
 	}
 	
 	/**
@@ -320,11 +323,13 @@ class HTTPTransaction
    * @param length  Length in bytes of the body data to follow.
    */
 	void sendChunkHeader(size_t length) {
-		transport.sendChunkHeader(this,length);
+		if(transport)
+			transport.sendChunkHeader(this,length);
 	}
 
 	void socketWrite(ubyte[] data, Transport.SocketWriteCallBack cback){
-		transport.socketWrite(this,data, cback);
+		if(transport)
+			transport.socketWrite(this,data, cback);
 	}
 	
 	/**
@@ -334,7 +339,8 @@ class HTTPTransaction
    * Frame begun by the last call to sendChunkHeader().
    */
 	void sendChunkTerminator() {
-		transport.sendChunkTerminator(this);
+		if(transport)
+			transport.sendChunkTerminator(this);
 	}
 	/**
    * Send part or all of the egress message body to the Transport. If flow
@@ -363,11 +369,13 @@ class HTTPTransaction
    *       per message.
    */
 	void sendEOM(){
-		transport.sendEOM(this);
+		if(transport)
+			transport.sendEOM(this);
 	}
 
 	void sendTimeOut()
 	{
+		if(!transport) return;
 		import collie.codec.http.headers;
 		scope HTTPMessage msg = new HTTPMessage();
 		msg.statusCode(408);
@@ -378,7 +386,8 @@ class HTTPTransaction
 
 	void sendWsData(OpCode code,ubyte[] data)
 	{
-		transport.sendWsData(this,code,data);
+		if(transport)
+			transport.sendWsData(this,code,data);
 	}
 
 	void onWsFrame(ref WSFrame wsf){

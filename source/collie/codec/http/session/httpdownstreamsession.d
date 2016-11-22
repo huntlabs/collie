@@ -93,7 +93,7 @@ protected:
 		rmsg.getHeaders.add(HTTPHeaderCode.CONNECTION,"Upgrade");
 		rmsg.getHeaders.add(HTTPHeaderCode.UPGRADE,"websocket");
 		sendHeaders(txn,rmsg,false);
-		restCodeC(new WebsocketCodec(TransportDirection.DOWNSTREAM));
+		restCodeC(new WebsocketCodec(TransportDirection.DOWNSTREAM,txn));
 		return true;
 	}
 

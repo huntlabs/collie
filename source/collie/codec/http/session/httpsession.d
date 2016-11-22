@@ -88,18 +88,12 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	}
 
 	void inActive() {
-		if(_transaction) {
-			_transaction.onErro(HTTPErrorCode.REMOTE_CLOSED);
-			_transaction.handler = null;
-			//_transaction.onDelayedDestroy();
-		}
+		getCodec.onConnectClose();
 		trace("connect closed!");
 	}
 
 	void onTimeout() @trusted {
-		if(_transaction){
-			_transaction.onErro(HTTPErrorCode.TIME_OUT);
-		}
+		getCodec.onTimeOut();
 	}
 
 	//HandlerAdapter}
@@ -115,12 +109,12 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		bool eom)
 	{
 		HVector tdata;
-		_codec.generateHeader(txn.streamID,headers,tdata,eom);
+		_codec.generateHeader(txn,headers,tdata,eom);
 		_down.httpWrite(tdata.data(true),bind(&writeCallBack,eom,txn));
 	}
 
 	override size_t sendBody(HTTPTransaction txn,ref HVector body_,bool eom) {
-		size_t rlen = getCodec.generateBody(txn.streamID,body_,eom);
+		size_t rlen = getCodec.generateBody(txn,body_,eom);
 		_down.httpWrite(body_.data(true),bind(&writeCallBack,eom,txn));
 		return rlen;
 	}
@@ -130,7 +124,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		bool eom)
 	{
 		HVector tdata = HVector(data,true);
-		size_t rlen = getCodec.generateBody(txn.streamID,tdata,eom);
+		size_t rlen = getCodec.generateBody(txn,tdata,eom);
 		_down.httpWrite(tdata.data(true),bind(&writeCallBack,eom,txn));
 		return rlen;
 	}
@@ -138,7 +132,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	override size_t sendChunkHeader(HTTPTransaction txn,size_t length)
 	{
 		HVector tdata;
-		size_t rlen = getCodec.generateChunkHeader(txn.streamID,tdata,length);
+		size_t rlen = getCodec.generateChunkHeader(txn,tdata,length);
 		_down.httpWrite(tdata.data(true),bind(&writeCallBack,false,txn));
 		return rlen;
 	}
@@ -147,7 +141,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	override size_t sendChunkTerminator(HTTPTransaction txn)
 	{
 		HVector tdata;
-		size_t rlen = getCodec.generateChunkTerminator(txn.streamID,tdata);
+		size_t rlen = getCodec.generateChunkTerminator(txn,tdata);
 		_down.httpWrite(tdata.data(true),bind(&writeCallBack,true,txn));
 		return rlen;
 	}
@@ -157,7 +151,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	{
 		trace("send eom!!");
 		HVector tdata;
-		size_t rlen = getCodec.generateEOM(txn.streamID,tdata);
+		size_t rlen = getCodec.generateEOM(txn,tdata);
 		if(rlen)
 			_down.httpWrite(tdata.data(true),bind(&writeCallBack,true,txn));
 		return rlen;
@@ -174,7 +168,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	override size_t sendWsData(HTTPTransaction txn,OpCode code,ubyte[] data)
 	{
 		HVector tdata;
-		size_t rlen = getCodec.generateWsFrame(txn.streamID,tdata,code,data);
+		size_t rlen = getCodec.generateWsFrame(txn,tdata,code,data);
 		if(rlen) {
 			_down.httpWrite(tdata.data(true),bind(&writeCallBack,getCodec.shouldClose(),txn));
 		}
@@ -186,8 +180,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	
 	override void detach(HTTPTransaction txn)
 	{
-		if(txn is _transaction)
-			_transaction = null;
+		getCodec.detach(txn);
 	}
 	
 	//		void notifyIngressBodyProcessed(uint32_t bytes);
@@ -218,60 +211,57 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 
 	// HTTPCodec.CallBack {
-	override void onMessageBegin(StreamID stream, HTTPMessage msg)
+	override void onMessageBegin(HTTPTransaction txn, HTTPMessage msg)
 	{
-		//_transaction = new HTTPTransaction(_codec.getTransportDirection,stream,0,this);
+		if(txn){
+			txn.transport = this;
+		}
 		trace("begin a http requst or reaponse!");
 	}
 
-	override void onHeadersComplete(StreamID stream,
+	override void onHeadersComplete(HTTPTransaction txn,
 		HTTPMessage msg){
 		trace("onHeadersComplete ------");
-		_transaction = new HTTPTransaction(_codec.getTransportDirection,stream,0,this);
-		setupOnHeadersComplete(_transaction,msg);
+		setupOnHeadersComplete(txn,msg);
 	}
 
-	override void onNativeProtocolUpgrade(StreamID stream,CodecProtocol protocol,string protocolString,HTTPMessage msg)
+	override void onNativeProtocolUpgrade(HTTPTransaction txn,CodecProtocol protocol,string protocolString,HTTPMessage msg)
 	{
-		_transaction = new HTTPTransaction(_codec.getTransportDirection,stream,0,this);
-		setupProtocolUpgrade(_transaction,protocol,protocolString,msg);
+		setupProtocolUpgrade(txn,protocol,protocolString,msg);
 	}
 
-	override void onBody(StreamID stream,const ubyte[] data){
-		//HTTPTransaction tran = _transactions.get(stream,null);
-		if(_transaction)
-			_transaction.onIngressBody(data,cast(ushort)0);
+	override void onBody(HTTPTransaction txn,const ubyte[] data){
+		if(txn)
+			txn.onIngressBody(data,cast(ushort)0);
 	}
 
-	override void onChunkHeader(StreamID stream, size_t length){
-		if(_transaction)
-			_transaction.onIngressChunkHeader(length);
+	override void onChunkHeader(HTTPTransaction txn, size_t length){
+		if(txn)
+			txn.onIngressChunkHeader(length);
 	}
 
-	override void onChunkComplete(StreamID stream){
-		if(_transaction)
-			_transaction.onIngressChunkComplete();
+	override void onChunkComplete(HTTPTransaction txn){
+		if(txn)
+			txn.onIngressChunkComplete();
 	}
 
-	override void onMessageComplete(StreamID stream, bool upgrade){
-		if(_transaction)
-			_transaction.onIngressEOM();
+	override void onMessageComplete(HTTPTransaction txn, bool upgrade){
+		if(txn)
+			txn.onIngressEOM();
 	}
 
-	override void onError(StreamID stream,HTTPErrorCode code){
-		//if(_transaction)
-		//	_transaction.
+	override void onError(HTTPTransaction txn,HTTPErrorCode code){
 		_down.httpClose();
 	}
 
-	override void onAbort(StreamID stream,
+	override void onAbort(HTTPTransaction txn,
 		HTTPErrorCode code){
 		_down.httpClose();
 	}
 	
-	override void onWsFrame(StreamID,ref WSFrame wsf){
-		if(_transaction)
-			_transaction.onWsFrame(wsf);
+	override void onWsFrame(HTTPTransaction txn,ref WSFrame wsf){
+		if(txn)
+			txn.onWsFrame(wsf);
 	}
 
 	// HTTPCodec.CallBack }
@@ -299,8 +289,6 @@ protected:
 		}
 	}
 protected:
-	//HTTPTransaction[HTTPCodec.StreamID] _transactions;
-	HTTPTransaction _transaction;
 	Address _localAddr;
 	Address _peerAddr;
 	HTTPCodec _codec;

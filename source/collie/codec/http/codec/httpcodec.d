@@ -44,7 +44,7 @@ abstract class HTTPCodec
      * @param stream   The stream ID
      * @param msg      A newly allocated HTTPMessage
      */
-	 void onMessageBegin(StreamID stream, HTTPMessage msg);
+	 void onMessageBegin(HTTPTransaction txn, HTTPMessage msg);
 		
 		/**
      * Called when a new push message is seen while parsing the ingress.
@@ -54,7 +54,7 @@ abstract class HTTPCodec
      *                 which can never be 0
      * @param msg      A newly allocated HTTPMessage
      */
-//	void onPushMessageBegin(StreamID stream,
+//	void onPushMessageBegin(HTTPTransaction txn,
 //		StreamID assocStream,
 //			HTTPMessage* msg);
 //		
@@ -64,7 +64,7 @@ abstract class HTTPCodec
      * @param msg      The message
      * @param size     Size of the ingress header
      */
-	void onHeadersComplete(StreamID stream,
+	void onHeadersComplete(HTTPTransaction txn,
 		HTTPMessage msg);
 		
 		/**
@@ -75,7 +75,7 @@ abstract class HTTPCodec
      *                headers, from the buffers before calling this function.
      * @param padding Number of pad bytes that came with the data segment
      */
-		void onBody(StreamID stream,const ubyte[] data);
+		void onBody(HTTPTransaction txn,const ubyte[] data);
 		
 		/**
      * Called for each HTTP chunk header.
@@ -92,7 +92,7 @@ abstract class HTTPCodec
      * @param stream    The stream ID
      * @param length    The chunk length.
      */
-		void onChunkHeader(StreamID stream, size_t length);
+		void onChunkHeader(HTTPTransaction txn, size_t length);
 		
 		/**
      * Called when the terminating CRLF is received to end a chunk of HTTP body
@@ -100,7 +100,7 @@ abstract class HTTPCodec
      *
      * @param stream    The stream ID
      */
-		void onChunkComplete(StreamID stream);
+		void onChunkComplete(HTTPTransaction txn);
 		
 		/**
      * Called at end of a message (including body and trailers, if applicable)
@@ -108,7 +108,7 @@ abstract class HTTPCodec
      * @param upgrade  Whether the connection has been upgraded to another
      *                 protocol.
      */
-		void onMessageComplete(StreamID stream, bool upgrade);
+		void onMessageComplete(HTTPTransaction txn, bool upgrade);
 		
 		/**
      * Called when a parsing or protocol error has occurred
@@ -116,7 +116,7 @@ abstract class HTTPCodec
      * @param error    Description of the error
      * @param newTxn   true if onMessageBegin has not been called for txn
      */
-		void onError(StreamID stream,HTTPErrorCode);
+		void onError(HTTPTransaction txn,HTTPErrorCode);
 		
 		/**
      * Called when the peer has asked to shut down a stream
@@ -125,10 +125,10 @@ abstract class HTTPCodec
      * @param code     The code the stream was aborted with
      * @note  Not applicable to all protocols.
      */
-		void onAbort(StreamID stream,
+		void onAbort(HTTPTransaction txn,
 			HTTPErrorCode code);
 
-		void onWsFrame(StreamID,ref WSFrame);
+		void onWsFrame(HTTPTransaction ,ref WSFrame);
 		/**
      * Called upon receipt of a frame header.
      * @param stream_id The stream ID
@@ -171,7 +171,7 @@ abstract class HTTPCodec
      * Called upon receipt of a window update, for protocols that support
      * flow control. For instance spdy/3 and higher.
      */
-//		void onWindowUpdate(StreamID stream, uint amount);
+//		void onWindowUpdate(HTTPTransaction txn, uint amount);
 		
 		/**
      * Called upon receipt of a settings frame, for protocols that support
@@ -191,14 +191,14 @@ abstract class HTTPCodec
      * Called upon receipt of a priority frame, for protocols that support
      * dynamic priority
      */
-//		void onPriority(StreamID stream,
+//		void onPriority(HTTPTransaction txn,
 //			const HTTPMessage::HTTPPriority& pri);
 		
 		/**
      * Called upon receipt of a valid protocol switch.  Return false if
      * protocol switch could not be completed.
      */
-		void onNativeProtocolUpgrade(StreamID stream,
+		void onNativeProtocolUpgrade(HTTPTransaction txn,
 			CodecProtocol protocol,
 			string protocolString,
 			HTTPMessage msg);
@@ -269,10 +269,16 @@ abstract class HTTPCodec
    * @return Number of bytes consumed.
    */
 	size_t onIngress(ubyte[] buf);
-	
+
+	void onConnectClose();
+
+	void onTimeOut();
+
+	void detach(HTTPTransaction txn);
 	/**
    * Finish parsing when the ingress stream has ended.
    */
+
 	//void onIngressEOF();
 	
 /**
@@ -331,7 +337,7 @@ abstract class HTTPCodec
    * @return None
    */
 	size_t generateHeader(
-		StreamID stream,
+		HTTPTransaction txn,
 		HTTPMessage msg,
 		ref HVector buffer,
 		bool eom = false);
@@ -349,7 +355,7 @@ abstract class HTTPCodec
    *
    * @return number of bytes written
    */
-	size_t generateBody(StreamID stream,
+	size_t generateBody(HTTPTransaction txn,
 		ref HVector chain,
 		bool eom);
 
@@ -357,7 +363,7 @@ abstract class HTTPCodec
    * Write a body chunk header, if relevant.
    */
 	size_t generateChunkHeader(
-		StreamID stream,
+		HTTPTransaction txn,
 		ref HVector buffer,
 		size_t length);
 	
@@ -365,7 +371,7 @@ abstract class HTTPCodec
    * Write a body chunk terminator, if relevant.
    */
 	size_t generateChunkTerminator(
-		StreamID stream,
+		HTTPTransaction txn,
 		ref HVector buffer);
 
 	/**
@@ -374,18 +380,18 @@ abstract class HTTPCodec
    *
    * @return number of bytes written
    */
-	size_t generateEOM(StreamID stream,
+	size_t generateEOM(HTTPTransaction txn,
 		ref HVector buffer);
 	
 	/**
    * Generate any protocol framing needed to abort a connection.
    * @return number of bytes written
    */
-	size_t generateRstStream(StreamID stream,
+	size_t generateRstStream(HTTPTransaction txn,
 		ref HVector buffer,HTTPErrorCode code);
 
 
-	size_t generateWsFrame(StreamID stream,
+	size_t generateWsFrame(HTTPTransaction txn,
 		ref HVector buffer,OpCode code, ubyte[] data)
 	{
 		return 0;

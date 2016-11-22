@@ -26,7 +26,7 @@ class WebsocketCodec : HTTPCodec
 		PS_READ_PAYLOAD
 	}
 
-	this(TransportDirection direc)
+	this(TransportDirection direc, HTTPTransaction txn)
 	{
 		_transportDirection = direc;
 	}
@@ -34,6 +34,31 @@ class WebsocketCodec : HTTPCodec
 	override CodecProtocol getProtocol() {
 		return CodecProtocol.WEBSOCKET;
 	}
+
+	override void onConnectClose()
+	{
+		if(_transaction){
+			_transaction.onErro(HTTPErrorCode.REMOTE_CLOSED);
+			_transaction.handler = null;
+			_transaction.transport = null;
+		}
+	}
+	
+	override void onTimeOut()
+	{
+		if(_transaction){
+			_transaction.onErro(HTTPErrorCode.TIME_OUT);
+			_transaction.handler = null;
+			_transaction.transport = null;
+		}
+	}
+	
+	override void detach(HTTPTransaction txn)
+	{
+		if(txn is _transaction)
+			_transaction = null;
+	}
+
 	
 	override TransportDirection getTransportDirection()
 	{
@@ -66,7 +91,7 @@ class WebsocketCodec : HTTPCodec
 	}
 	
 	override size_t generateHeader(
-		StreamID stream,
+		HTTPTransaction txn,
 		HTTPMessage msg,
 		ref HVector buffer,
 		bool eom = false)
@@ -74,7 +99,7 @@ class WebsocketCodec : HTTPCodec
 		return 0;
 	}
 	
-	override size_t generateBody(StreamID stream,
+	override size_t generateBody(HTTPTransaction txn,
 		ref HVector chain,
 		bool eom)
 	{
@@ -82,7 +107,7 @@ class WebsocketCodec : HTTPCodec
 	}
 	
 	override size_t generateChunkHeader(
-		StreamID stream,
+		HTTPTransaction txn,
 		ref HVector buffer,
 		size_t length)
 	{
@@ -91,25 +116,25 @@ class WebsocketCodec : HTTPCodec
 	
 	
 	override size_t generateChunkTerminator(
-		StreamID stream,
+		HTTPTransaction txn,
 		ref HVector buffer)
 	{
 		return 0;
 	}
 	
-	override size_t generateEOM(StreamID stream,
+	override size_t generateEOM(HTTPTransaction txn,
 		ref HVector buffer)
 	{
 		return 0;
 	}
 
-	override size_t  generateRstStream(StreamID stream,
+	override size_t  generateRstStream(HTTPTransaction txn,
 		ref HVector buffer,HTTPErrorCode code)
 	{
 		return 0;
 	}
 
-	override size_t generateWsFrame(StreamID stream,
+	override size_t generateWsFrame(HTTPTransaction txn,
 		ref HVector buffer,OpCode code, ubyte[] data)
 	{
 		buffer.clear();
@@ -266,7 +291,7 @@ protected:
 					}
 				}
 			}
-			_callback.onWsFrame(0,frame);
+			_callback.onWsFrame(_transaction,frame);
 			clear();
 		}
 		
@@ -460,6 +485,7 @@ private:
 	bool _finished;
 	bool _shouldClose = false;
 	CallBack _callback;
+	HTTPTransaction _transaction;
 
 	ProcessingState _state;
 	OpCode _lastcode;

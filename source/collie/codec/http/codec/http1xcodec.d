@@ -44,11 +44,7 @@ class HTTP1XCodec : HTTPCodec
 	}
 
 	override StreamID createStream() {
-		if (_transportDirection == TransportDirection.DOWNSTREAM) {
-			return ++_ingressTxnID;
-		} else {
-			return ++_egressTxnID;
-		}
+		return 0;
 	}
 
 	override bool isBusy() {
@@ -69,14 +65,38 @@ class HTTP1XCodec : HTTPCodec
 	override size_t onIngress(ubyte[] buf)
 	{
 		auto size = _parser.httpParserExecute(buf);
-		if(size != buf.length && _parser.isUpgrade == false){
-			_callback.onError(_ingressTxnID,HTTPErrorCode.PROTOCOL_ERROR);
+		if(size != buf.length && _parser.isUpgrade == false && _transaction){
+			_callback.onError(_transaction,HTTPErrorCode.PROTOCOL_ERROR);
 		}
 		return cast(size_t) size;
 	}
 
+	override void onConnectClose()
+	{
+		if(_transaction){
+			_transaction.onErro(HTTPErrorCode.REMOTE_CLOSED);
+			_transaction.handler = null;
+			_transaction.transport = null;
+		}
+	}
+
+	override void onTimeOut()
+	{
+		if(_transaction){
+			_transaction.onErro(HTTPErrorCode.TIME_OUT);
+			_transaction.handler = null;
+			_transaction.transport = null;
+		}
+	}
+
+	override void detach(HTTPTransaction txn)
+	{
+		if(txn is _transaction)
+			_transaction = null;
+	}
+
 	override size_t generateHeader(
-		StreamID stream,
+		HTTPTransaction txn,
 		HTTPMessage msg,
 		ref HVector buffer,
 		bool eom = false)
@@ -172,7 +192,7 @@ class HTTP1XCodec : HTTPCodec
 		return buffer.length - beforLen;
 	}
 
-	override size_t generateBody(StreamID stream,
+	override size_t generateBody(HTTPTransaction txn,
 		ref HVector chain,
 		bool eom)
 	{
@@ -182,12 +202,12 @@ class HTTP1XCodec : HTTPCodec
 			rlen += 2;
 		}
 		if(eom)
-			rlen += generateEOM(stream,chain);
+			rlen += generateEOM(txn,chain);
 		return rlen;
 	}
 
 	override size_t generateChunkHeader(
-		StreamID stream,
+		HTTPTransaction txn,
 		ref HVector buffer,
 		size_t length)
 	{
@@ -203,7 +223,7 @@ class HTTP1XCodec : HTTPCodec
 
 
 	override size_t generateChunkTerminator(
-		StreamID stream,
+		HTTPTransaction txn,
 		ref HVector buffer)
 	{
 		if(_egressChunked && _inChunk)
@@ -215,11 +235,10 @@ class HTTP1XCodec : HTTPCodec
 		return 0;
 	}
 
-	override size_t generateEOM(StreamID stream,
+	override size_t generateEOM(HTTPTransaction txn,
 		ref HVector buffer)
 	{
 		size_t rlen = 0;
-		//assert(stream == _egressTxnID);
 		if(_egressChunked) {
 			assert(!_inChunk);
 			if(!_lastChunkWritten)
@@ -240,7 +259,7 @@ class HTTP1XCodec : HTTPCodec
 		return rlen;
 	}
 
-	override size_t  generateRstStream(StreamID stream,
+	override size_t  generateRstStream(HTTPTransaction txn,
 		ref HVector buffer,HTTPErrorCode code)
 	{
 		return 0;
@@ -263,12 +282,12 @@ protected:
 		// If there was a 1xx on this connection, don't increment the ingress txn id
 		if (_transportDirection == TransportDirection.DOWNSTREAM ||
 			!_is1xxResponse) {
-			++_ingressTxnID;
 		}
 		if (_transportDirection == TransportDirection.UPSTREAM) {
 			_is1xxResponse = false;
 		}
-		_callback.onMessageBegin(_ingressTxnID, _message);
+		_transaction = new HTTPTransaction(_transportDirection,0,0);
+		_callback.onMessageBegin(_transaction, _message);
 		_currtKey.clear();
 		_currtValue.clear();
 	}
@@ -295,9 +314,9 @@ protected:
 		if(_message.upgraded){
 			string upstring  = _message.getHeaders.getSingleOrEmpty(HTTPHeaderCode.UPGRADE);
 			CodecProtocol pro = getProtocolFormString(upstring);
-			_callback.onNativeProtocolUpgrade(_ingressTxnID,pro,upstring,_message);
+			_callback.onNativeProtocolUpgrade(_transaction,pro,upstring,_message);
 		} else {
-			_callback.onHeadersComplete(_ingressTxnID,_message);
+			_callback.onHeadersComplete(_transaction,_message);
 		}
 	}
 	
@@ -315,7 +334,7 @@ protected:
 				break;
 			default: break;
 		}
-		_callback.onMessageComplete(_ingressTxnID,parser.isUpgrade);
+		_callback.onMessageComplete(_transaction,parser.isUpgrade);
 		if(_transportDirection == TransportDirection.DOWNSTREAM){
 			_parser.rest(HTTPParserType.HTTP_REQUEST,_maxHeaderSize);
 		}else {
@@ -324,11 +343,11 @@ protected:
 	}
 	
 	void onChunkHeader(ref HTTPParser parser){
-		_callback.onChunkHeader(_ingressTxnID,cast(size_t)parser.contentLength);
+		_callback.onChunkHeader(_transaction,cast(size_t)parser.contentLength);
 	}
 	
 	void onChunkComplete(ref HTTPParser parser){
-		_callback.onChunkComplete(_ingressTxnID);
+		_callback.onChunkComplete(_transaction);
 	}
 	
 	void onUrl(ref HTTPParser parser, ubyte[] data, bool finish)
@@ -372,13 +391,12 @@ protected:
 	
 	void onBody(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
-		_callback.onBody(_ingressTxnID,data);
+		_callback.onBody(_transaction,data);
 	}
 private:
 	TransportDirection _transportDirection;
 	CallBack _callback;
-	StreamID _ingressTxnID;
-	StreamID _egressTxnID;
+	HTTPTransaction _transaction;
 	HTTPMessage _message;
 	HVector _currtKey;
 	HVector _currtValue;
