@@ -8,7 +8,7 @@ import collie.codec.http.headers;
 import std.conv;
 
 
-final class ResponseBuilder
+class ResponseBuilder
 {
 	alias HVector = HTTPCodec.HVector;
 
@@ -17,7 +17,7 @@ final class ResponseBuilder
 		_txn = txn;
 	}
 
-	ResponseBuilder promise(string url, string host)
+	final ResponseBuilder promise(string url, string host)
 	{
 		if(_txn){
 			if(_headers is null)
@@ -28,7 +28,7 @@ final class ResponseBuilder
 		return this;
 	}
 
-	ResponseBuilder status(ushort code, string message)
+	final ResponseBuilder status(ushort code, string message)
 	{
 		if(_txn){
 			if(_headers is null)
@@ -39,37 +39,37 @@ final class ResponseBuilder
 		return this;
 	}
 
-	ResponseBuilder header(T = string)(string name,T value)
+	final ResponseBuilder header(T = string)(string name,T value)
 	{
 		if(_txn && _headers)
 			_headers.getHeaders.add(name,to!string(value));
 		return this;
 	}
 
-	ResponseBuilder header(T = string)(HTTPHeaderCode code,T value)
+	final ResponseBuilder header(T = string)(HTTPHeaderCode code,T value)
 	{
 		if(_txn && _headers)
 			_headers.getHeaders.add(code,to!string(value));
 		return this;
 	}
 
-	ResponseBuilder setBody(ubyte[] data)
+	final ResponseBuilder setBody(ubyte[] data)
 	{
 		if(_txn)
 			_body.insertBack(data);
 		return this;
 	}
 
-	ResponseBuilder connectionClose(){
+	final ResponseBuilder connectionClose(){
 		return header(HTTPHeaderCode.CONNECTION,"close");
 	}
 
-	void sendWithEOM(){
+	final void sendWithEOM(){
 		_sendEOM = true;
 		send();
 	}
 
-	void send()
+	final void send()
 	{
 		if(_txn is null) return;
 		scope(exit){
@@ -113,9 +113,9 @@ final class ResponseBuilder
 		}
 	}
 
-	@property headers(){return _headers;}
-	@property bodys(){return &_body;}
-	@property responseHandler(){return _txn;};
+	final @property headers(){return _headers;}
+	final @property bodys(){return &_body;}
+	final @property responseHandler(){return _txn;};
 private:
 	ResponseHandler _txn;
 	HTTPMessage _headers;
