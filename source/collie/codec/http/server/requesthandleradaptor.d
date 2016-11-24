@@ -9,6 +9,7 @@ import collie.codec.http.server.requesthandler;
 import collie.codec.http.httptansaction;
 import collie.codec.http.server.responsebuilder;
 import collie.codec.http.codec.httpcodec;
+import collie.utils.string;
 
 final class RequestHandlerAdaptor : 
 	ResponseHandler,HTTPTransactionHandler
@@ -36,7 +37,7 @@ final class RequestHandlerAdaptor :
 		if(msg.getHeaders.exists(HTTPHeaderCode.EXPECT)) {
 			trace("has header EXPECT--------");
 			string str = msg.getHeaders.getSingleOrEmpty(HTTPHeaderCode.EXPECT);
-			if(!isSame(str,"100-continue")) {
+			if(!isSameIngnoreLowUp(str,"100-continue")) {
 				scope HTTPMessage headers = new HTTPMessage();
 				headers.statusCode(417);
 				headers.statusMessage("Expectation Failed");

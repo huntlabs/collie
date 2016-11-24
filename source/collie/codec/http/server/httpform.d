@@ -1,24 +1,38 @@
-﻿module collie.codec.http.httpform;
+﻿module collie.codec.http.server.httpform;
 
 import collie.buffer;
 import std.array;
 import std.string;
 import std.exception;
 import std.experimental.logger;
+import collie.utils.string;
+import collie.utils.vector;
+import std.experimental.allocator.gc_allocator;
+import std.uri;
 
 class HTTPForm
 {
 	alias StringArray = string[];
 	enum ubyte[2] ENDMYITLFORM = ['-','-']; 
+	enum ubyte[2] LRLN = ['\r','\n']; 
 
 	final class FormFile
 	{
-		string fileName;
-		string contentType;
-		ulong startSize = 0;
-		ulong length = 0;
-//		ubyte[] data;
+		@property fileName(){return _fileName;}
+		@property contentType(){return _contentType;}
+		@property fileSzie(){return _length;} 
+		void read(size_t size,void delegate(in ubyte[] data) cback)
+		{
+			size = size > _length ? _length : size;
+			_body.rest(_startSize);
+			_body.read(size,cback);
+		}
 	private : 
+		Buffer _body;
+		size_t _startSize = 0;
+		size_t _length = 0;
+		string _fileName;
+		string _contentType;
 		this(){}
 	}
 	
@@ -26,8 +40,14 @@ class HTTPForm
 	{
 		if (contype.indexOf("multipart/form-data") > -1)
 		{
-			auto tmp = parseKeyValues(contype, "; ");
-			auto strBoundary = tmp.get("boundary", "").strip();
+			string strBoundary;
+			splitNameValue(contype,';','=',(string key,string value){
+					if(isSameIngnoreLowUp(strip(key),"boundary")) {
+						strBoundary = value;
+						return false;
+					}
+					return true;
+				});
 			if (strBoundary.length > 0)
 			{
 				if(strBoundary[0] == '\"')
@@ -85,12 +105,20 @@ class HTTPForm
 protected:
 	void readXform(Buffer buffer)
 	{
-		//ubyte[] buf = new ubyte[buffer.length];
-		Appender!(ubyte[]) buf = appender!(ubyte[]);
+
+		Vector!(ubyte,GCAllocator) buf;
+		buf.reserve(buffer.length);
 		buffer.readAll((in ubyte[] data){
-				buf.put(data);
+				buf.insertBack(cast(ubyte[])data);
 			});
-		parseFromKeyValues(cast(string) buf.data);
+		ubyte[] dt = buf.data(false);
+		splitNameValue(cast(string)dt,'&','=',(string key, string value){
+				if(value.length > 0)
+					_forms[key] ~= decodeComponent(value);
+				else
+					_forms[key] ~= "";
+				return true;
+			});
 	}
 	
 	void readMultiFrom(string brand, Buffer buffer)
@@ -140,9 +168,6 @@ protected:
 			string key = cast(string)(line[0 .. pos]);
 			header[toLower(key.strip)] = (cast(string)(line[pos + 1 .. $])).strip;
 		} while(true);
-		/*if("content-disposition" !in header){
-		return false;
-		}*/
 		string cd = header.get("content-disposition", "");
 		if (cd.length == 0)
 			return false;
@@ -166,15 +191,13 @@ protected:
 		{
 			import std.array;
 			FormFile fp = new FormFile;
-			fp.fileName = filename;
-			fp.contentType = header.get("content-type", "");
-			fp.startSize = buffer.readPos();
-			//auto value = appender!(ubyte[])();
+			fp._fileName = filename;
+			fp._contentType = header.get("content-type", "");
+			fp._startSize = buffer.readPos();
+			fp._body = buffer;
 			buffer.readUtil(boundary,(in ubyte[] rdata) {
-					fp.length += rdata.length;
-					//value.put(rdata);
+					fp._length += rdata.length;
 				});
-			//fp.data = value.data;
 			_files[name] = fp;
 		}
 		else
@@ -211,65 +234,12 @@ protected:
 		{
 			return false;
 		}
-		enforce(ub == cast(ubyte[]) "\r\n", "showed be \\r\\n");
+		enforce(ub == LRLN, "showed be \\r\\n");
 		return true;
 	}
-	
-	void parseFromKeyValues(string raw, string split1 = "&", string spilt2 = "=")
-	{
-		import std.uri;
-		if (raw.length == 0)
-			return ;
-		string[] pairs = raw.strip.split(split1);
-		foreach (string pair; pairs)
-		{
-			string[] parts = pair.split(spilt2);
-			
-			// Accept formats a=b/a=b=c=d/a
-			if (parts.length == 1)
-			{
-				string key = parts[0];
-				_forms[key] ~= "";
-			}
-			else if (parts.length > 1)
-			{
-				string key = parts[0];
-				string value = pair[parts[0].length + 1 .. $];
-				_forms[key] ~= decodeComponent(value);
-			}
-		}
-	}
+
 private:
 	bool _vaild = true;
 	StringArray[string] _forms;
 	FormFile[string] _files;
-
-}
-
-string[string] parseKeyValues(string raw, string split1 = "&", string spilt2 = "=")
-{
-	import std.uri;
-	
-	string[string] map;
-	if (raw.length == 0)
-		return map;
-	string[] pairs = raw.strip.split(split1);
-	foreach (string pair; pairs)
-	{
-		string[] parts = pair.split(spilt2);
-		
-		// Accept formats a=b/a=b=c=d/a
-		if (parts.length == 1)
-		{
-			string key = decode(parts[0]);
-			map[key] = "";
-		}
-		else if (parts.length > 1)
-		{
-			string key = decode(parts[0]);
-			string value = decodeComponent(pair[parts[0].length + 1 .. $]);
-			map[key] = value;
-		}
-	}
-	return map;
 }

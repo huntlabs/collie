@@ -1,5 +1,6 @@
 ﻿module collie.codec.http.headers;
 
+import collie.utils.string;
 import collie.utils.vector;
 import std.experimental.allocator.gc_allocator;
 import core.stdc.string;
@@ -25,7 +26,7 @@ struct HTTPHeaders
 		bool removed = false;
 		for(size_t i = 0; i < _headersNames.length; ++i){
 			if(_codes[i] != HTTPHeaderCode.OTHER) continue;
-			if(isSame(name,_headersNames[i])){
+			if(isSameIngnoreLowUp(name,_headersNames[i])){
 				_codes[i] = HTTPHeaderCode.NONE;
 				_headersNames[i] = null;
 				_headerValues[i] = null;
@@ -97,7 +98,7 @@ struct HTTPHeaders
 			return exists(code);
 		for(size_t i = 0; i < _headersNames.length; ++i){
 			if(_codes[i] != HTTPHeaderCode.OTHER) continue;
-			if(isSame(name,_headersNames[i])){
+			if(isSameIngnoreLowUp(name,_headersNames[i])){
 				return true;
 			}
 		}
@@ -195,7 +196,7 @@ struct HTTPHeaders
 		size_t index = 0;
 		for(size_t i = 0; i < _headersNames.length; ++i){
 			if(_codes[i] != HTTPHeaderCode.OTHER) continue;
-			if(isSame(name,_headersNames[i])){
+			if(isSameIngnoreLowUp(name,_headersNames[i])){
 				++index;
 			}
 		}
@@ -226,7 +227,7 @@ struct HTTPHeaders
 			return getSingleOrEmpty(code);
 		for(size_t i = 0; i < _headersNames.length; ++i){
 			if(_codes[i] != HTTPHeaderCode.OTHER) continue;
-			if(isSame(name,_headersNames[i])){
+			if(isSameIngnoreLowUp(name,_headersNames[i])){
 				return _headerValues[i];
 			}
 		}
@@ -264,7 +265,7 @@ struct HTTPHeaders
 		size_t index = 0;
 		for(size_t i = 0; i < _headersNames.length; ++i){
 			if(_codes[i] != HTTPHeaderCode.OTHER) continue;
-			if(isSame(name,_headersNames[i])){
+			if(isSameIngnoreLowUp(name,_headersNames[i])){
 				if(func(_headerValues[i]))
 					return true;
 			}

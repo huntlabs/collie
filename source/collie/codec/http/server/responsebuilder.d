@@ -109,32 +109,6 @@ final class ResponseBuilder
 		}
 	}
 
-	void acceptUpgradeRequest(bool connect_req,string upgradeProtocol = "") 
-	{
-		scope(exit){
-			if(_headers) {
-				import collie.utils.memory;
-				gcFree(_headers);
-			}
-			_headers = null;
-		}
-		_headers = new HTTPMessage();
-		if (connect_req) {
-			_headers.setHTTPVersion(1,1);
-			_headers.statusCode = 200;
-			_headers.statusMessage("OK");
-		} else {
-			_headers.setHTTPVersion(1,1);
-			_headers.statusCode = 101;
-			_headers.statusMessage("Switching Protocols");
-			_headers.getHeaders().add(HTTPHeaderCode.UPGRADE, upgradeProtocol);
-			_headers.getHeaders().add(HTTPHeaderCode.CONNECTION, "Upgrade");
-		}
-		_txn.sendHeaders(_headers);
-	}
-
-
-
 private:
 	ResponseHandler _txn;
 	HTTPMessage _headers;

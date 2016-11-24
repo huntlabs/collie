@@ -558,7 +558,7 @@ protected:
 				name = strip(name);
 				value = strip(value);
 				_queryParams[name] = value;
-
+				return true;
 			});
 	}
 	void unparseQueryParams(){

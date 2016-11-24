@@ -1,5 +1,7 @@
 ﻿module collie.codec.http.headers.httpcommonheaders;
 
+import collie.utils.string;
+
 enum HTTPHeaderCode : ubyte {
 	// code reserved to indicate the absence of an HTTP header
 	NONE = 0,
@@ -109,21 +111,6 @@ string capitalizeHeader(string name)
 	}
 	return join(parts, "-");
 }
-
-bool isSame(string s1,string s2)
-{
-	import std.uni;
-	if(s1.length != s2.length) return false;
-	for(size_t i = 0; i < s1.length; ++i)
-	{
-		dchar c1 = toLower(s1[i]);
-		dchar c2 = toLower(s2[i]);
-		if(c1 != c2)
-			return false;
-	}
-	return true;
-}
-
 private:
 string buildEnum(T)()
 {
@@ -153,7 +140,7 @@ string buildEnum(T)()
 			funn ~= "case " ~ to!string(index) ~ " : {\n";
 			foreach(ref TMPV st;ls)
 			{
-				funn ~= "if(isSame(name,\"" ~ st.name ~ "\" )){ code = HTTPHeaderCode."~ st.value ~ "; break;}\n";
+				funn ~= "if(isSameIngnoreLowUp(name,\"" ~ st.name ~ "\" )){ code = HTTPHeaderCode."~ st.value ~ "; break;}\n";
 			}
 			funn ~= "\n} break;\n";
 		}

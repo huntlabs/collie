@@ -6,6 +6,7 @@ import collie.codec.http.headers;
 import collie.codec.http.httpmessage;
 import collie.codec.http.httptansaction;
 import collie.codec.http.parser;
+import collie.utils.string;
 import std.array;
 import std.conv;
 import std.traits;
@@ -141,7 +142,7 @@ class HTTP1XCodec : HTTPCodec
 				contLen = value;
 				continue;
 			} else if (code ==  HTTPHeaderCode.CONNECTION) {
-				if(isSame(value,"close")) {
+				if(isSameIngnoreLowUp(value,"close")) {
 					_keepalive = false;
 				}
 				continue;
@@ -150,7 +151,7 @@ class HTTP1XCodec : HTTPCodec
 				hasUpgradeHeader = true;
 			}  else if (!hasTransferEncodingChunked &&
 				code == HTTPHeaderCode.TRANSFER_ENCODING) {
-				if(!isSame(value,"chunked")) 
+				if(!isSameIngnoreLowUp(value,"chunked")) 
 					continue;
 				hasTransferEncodingChunked = true;
 				if(!_mayChunkEgress) continue;
