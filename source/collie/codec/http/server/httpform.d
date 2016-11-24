@@ -105,7 +105,6 @@ class HTTPForm
 protected:
 	void readXform(Buffer buffer)
 	{
-
 		Vector!(ubyte,GCAllocator) buf;
 		buf.reserve(buffer.length);
 		buffer.readAll((in ubyte[] data){
@@ -153,22 +152,30 @@ protected:
 	
 	bool readMultiftomPart(Buffer buffer, ubyte[] boundary)
 	{
-		string[string] header;
-		do {
-			Appender!(ubyte[]) buf = appender!(ubyte[]);
-			buffer.readLine((in ubyte[] data){
-					buf.put(data);
-				});
-			ubyte[] line = buf.data;
-			if(line.length == 0)
-				break;
-			auto pos = (cast(string) line).indexOf(":");
-			if (pos <= 0 || pos == (line.length - 1))
-				continue;
-			string key = cast(string)(line[0 .. pos]);
-			header[toLower(key.strip)] = (cast(string)(line[pos + 1 .. $])).strip;
-		} while(true);
-		string cd = header.get("content-disposition", "");
+		string cd;
+		string cType;
+		{
+			Vector!(ubyte,GCAllocator) buf;
+			do {
+				buf.clear();
+				buffer.readLine((in ubyte[] data){
+						buf.insertBack(cast(ubyte[])data);
+					});
+				ubyte[] line = buf.data(false);
+				if(line.length == 0)
+					break;
+				auto pos = (cast(string) line).indexOf(":");
+				if (pos <= 0 || pos == (line.length - 1))
+					continue;
+				string key = cast(string)(line[0 .. pos]);
+				if(isSameIngnoreLowUp(strip(key),"content-disposition")){
+					cd = strip((cast(string)(line[pos + 1 .. $]))).idup;
+				} else if(isSameIngnoreLowUp(strip(key),"content-type")){
+					cType = strip((cast(string)(line[pos + 1 .. $]))).idup;
+				}
+			
+			} while(true);
+		}
 		if (cd.length == 0)
 			return false;
 		string name;
@@ -192,7 +199,7 @@ protected:
 			import std.array;
 			FormFile fp = new FormFile;
 			fp._fileName = filename;
-			fp._contentType = header.get("content-type", "");
+			fp._contentType = cType;
 			fp._startSize = buffer.readPos();
 			fp._body = buffer;
 			buffer.readUtil(boundary,(in ubyte[] rdata) {
