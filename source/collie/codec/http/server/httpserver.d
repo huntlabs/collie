@@ -116,7 +116,6 @@ protected:
 		}
 		if(req is null)
 			return null;
-		import collie.codec.http.server.requesthandleradaptor;
 		RequestHandlerAdaptor ada = new RequestHandlerAdaptor(req);
 		ada.setTransaction(txn);
 		return ada;
@@ -180,7 +179,6 @@ protected:
 			return ser;
 		}
 	}
-
 
 	ServerConnection newConnect(EventLoop loop,Socket sock) @trusted 
 	{

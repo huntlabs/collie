@@ -20,7 +20,8 @@ final class ResponseBuilder
 	ResponseBuilder promise(string url, string host)
 	{
 		if(_txn){
-			_headers = new HTTPMessage();
+			if(_headers is null)
+				_headers = new HTTPMessage();
 			_headers.url(url);
 			_headers.getHeaders.add(HTTPHeaderCode.HOST,host);
 		}
@@ -30,14 +31,13 @@ final class ResponseBuilder
 	ResponseBuilder status(ushort code, string message)
 	{
 		if(_txn){
-			_headers = new HTTPMessage();
+			if(_headers is null)
+				_headers = new HTTPMessage();
 			_headers.statusCode(code);
 			_headers.statusMessage(message);
 		}
 		return this;
 	}
-
-	//@property headers(){return _headers;}
 
 	ResponseBuilder header(T = string)(string name,T value)
 	{
@@ -58,6 +58,10 @@ final class ResponseBuilder
 		if(_txn)
 			_body.insertBack(data);
 		return this;
+	}
+
+	ResponseBuilder connectionClose(){
+		return header(HTTPHeaderCode.CONNECTION,"close");
 	}
 
 	void sendWithEOM(){
@@ -109,6 +113,9 @@ final class ResponseBuilder
 		}
 	}
 
+	@property headers(){return _headers;}
+	@property bodys(){return &_body;}
+	@property responseHandler(){return _txn;};
 private:
 	ResponseHandler _txn;
 	HTTPMessage _headers;

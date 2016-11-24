@@ -65,7 +65,7 @@ abstract class IWebSocket : RequestHandler
     void onPong(ubyte[] frame);
     void onBinary(ubyte[] frame);
 	void onErro(HTTPErrorCode code);
-
+protected:
 	final override void onResquest(HTTPMessage headers) nothrow{}
 	final override void onBody(const ubyte[] data) nothrow{}
 	final override void onEOM() nothrow{}
