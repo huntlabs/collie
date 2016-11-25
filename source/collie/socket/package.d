@@ -11,7 +11,6 @@
 module collie.socket;
 
 public import std.socket;
-
 public import collie.socket.common;
 public import collie.socket.eventloop;
 public import collie.socket.transport;
@@ -21,7 +20,5 @@ public import collie.socket.acceptor;
 public import collie.socket.timer;
 public import collie.socket.tcpclient;
 public import collie.socket.udpsocket;
-
 public import collie.socket.sslsocket;
-
 public import collie.socket.exception;
