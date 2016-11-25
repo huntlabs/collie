@@ -5,3 +5,4 @@ public import collie.codec.http.server.httpserver;
 public import collie.codec.http.server.requesthandler;
 public import collie.codec.http.server.responsebuilder;
 public import collie.codec.http.server.responsehandler;
+public import collie.codec.http.server.httpform;
