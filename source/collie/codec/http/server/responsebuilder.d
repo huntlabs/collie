@@ -14,7 +14,7 @@ class ResponseBuilder
 
 	this(ResponseHandler txn)
 	{
-		_txn = txn;
+		setResponseHandler(txn);
 	}
 
 	final ResponseBuilder promise(string url, string host)
@@ -116,6 +116,8 @@ class ResponseBuilder
 	final @property headers(){return _headers;}
 	final @property bodys(){return &_body;}
 	final @property responseHandler(){return _txn;};
+protected:
+	pragma(inline,true) void setResponseHandler(ResponseHandler txn){_txn = txn;}
 private:
 	ResponseHandler _txn;
 	HTTPMessage _headers;
