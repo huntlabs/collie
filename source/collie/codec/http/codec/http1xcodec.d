@@ -183,6 +183,7 @@ class HTTP1XCodec : HTTPCodec
 			else
 				appendLiteral(buffer,"close\r\n");
 		}
+		appendLiteral(buffer,"Server: Collie\r\n");
 		if(contLen.length > 0){
 			appendLiteral(buffer,"Content-Length: ");
 			appendLiteral(buffer,contLen);
