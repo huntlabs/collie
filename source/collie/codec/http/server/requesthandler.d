@@ -16,7 +16,6 @@ abstract class RequestHandler
 		_downstream = handler;
 	}
 
-protected:
 	/**
    * Invoked when we have successfully fetched headers from client. This will
    * always be the first callback invoked on your handler.

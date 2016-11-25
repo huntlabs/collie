@@ -27,6 +27,7 @@ debug {
 
 class MyHandler : RequestHandler
 {
+protected:
 	override void onResquest(HTTPMessage headers) nothrow
 	{
 		_header = headers;

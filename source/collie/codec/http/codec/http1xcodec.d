@@ -77,6 +77,7 @@ class HTTP1XCodec : HTTPCodec
 			_transaction.onErro(HTTPErrorCode.REMOTE_CLOSED);
 			_transaction.handler = null;
 			_transaction.transport = null;
+			_transaction = null;
 		}
 	}
 
