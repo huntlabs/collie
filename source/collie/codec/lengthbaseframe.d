@@ -170,6 +170,7 @@ unittest
 {
 	import collie.socket.common;
 	import collie.socket.transport;
+	import collie.channel.handlercontext;
 	import std.stdio;
 	
 	ubyte[] gloaData;
