@@ -253,6 +253,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	}
 
 	override void onError(HTTPTransaction txn,HTTPErrorCode code){
+		trace("ERRO : ", code);
 		_down.httpClose();
 	}
 

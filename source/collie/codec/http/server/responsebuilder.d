@@ -71,6 +71,7 @@ class ResponseBuilder
 
 	final void send()
 	{
+		trace("_txn is ", cast(void *)_txn);
 		if(_txn is null) return;
 		scope(exit){
 			if(_headers) {
@@ -93,22 +94,21 @@ class ResponseBuilder
 					_headers.getHeaders.add(HTTPHeaderCode.CONTENT_LENGTH, to!string(_body.length));
 				}
 			}
-			if(_body.empty && _sendEOM)
+			if(_body.empty && _sendEOM && _txn)
 				_txn.sendHeadersWithEOM(_headers);
-			else
-				_txn.sendHeaders(_headers);
+			else if(_txn)_txn.sendHeaders(_headers);
 		}
 		if(!_body.empty) {
 			if(chunked) {
-				_txn.sendChunkHeader(_body.length);
-				_txn.sendBody(_body.data(true));
-				_txn.sendChunkTerminator();
-				if(_sendEOM) 
+				if(_txn)_txn.sendChunkHeader(_body.length);
+				if(_txn)_txn.sendBody(_body.data(true));
+				if(_txn)_txn.sendChunkTerminator();
+				if(_sendEOM && _txn) 
 					_txn.sendEOM();
 			} else {
-				_txn.sendBody(_body,_sendEOM);
+				if(_txn)_txn.sendBody(_body,_sendEOM);
 			}
-		} else if(_sendEOM) {
+		} else if(_sendEOM && _txn) {
 			_txn.sendEOM();
 		}
 	}

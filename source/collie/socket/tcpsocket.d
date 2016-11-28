@@ -259,7 +259,7 @@ protected:
 						}
 						continue;
 					}
-					else if(len < 0)
+					else 
 					{
 						if (errno == EAGAIN || errno == EWOULDBLOCK)
 						{
