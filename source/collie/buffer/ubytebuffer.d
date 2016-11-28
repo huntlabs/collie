@@ -1,4 +1,4 @@
-﻿module collie.buffer.UbyteBuffer;
+﻿module collie.buffer.ubytebuffer;
 
 import collie.buffer;
 import collie.utils.vector;
