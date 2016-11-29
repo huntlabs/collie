@@ -242,6 +242,7 @@ protected:
         }
         else
         {
+			import core.stdc.string;
             while (alive && !_writeQueue.empty)
             {
                 try
@@ -261,6 +262,8 @@ protected:
 					}
 					else 
 					{
+						trace("write size: ",len," erro code is : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
+							"   the socket fd : ", fd);
 						if (errno == EAGAIN || errno == EWOULDBLOCK)
 						{
 							return;
@@ -270,7 +273,6 @@ protected:
 							continue;
 						}
 					}
-					import core.stdc.string;
 					error("write size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
 						" \n\tthe socket fd : ", fd);
 					onClose();

@@ -116,6 +116,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 	override size_t sendBody(HTTPTransaction txn,ref HVector body_,bool eom) {
 		size_t rlen = getCodec.generateBody(txn,body_,eom);
+		trace("sendBody!! ",rlen);
 		_down.httpWrite(body_.data(true),bind(&writeCallBack,eom,txn));
 		return rlen;
 	}
@@ -150,9 +151,9 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	
 	override size_t sendEOM(HTTPTransaction txn)
 	{
-		trace("send eom!!");
 		HVector tdata;
 		size_t rlen = getCodec.generateEOM(txn,tdata);
+		trace("send eom!! ",rlen);
 		if(rlen)
 			_down.httpWrite(tdata.data(true),bind(&writeCallBack,true,txn));
 		return rlen;
@@ -282,14 +283,14 @@ protected:
 protected:
 	void writeCallBack(bool isLast,HTTPTransaction txn,ubyte[] data,size_t size)
 	{
-		//trace(cast(string)data);
 		import collie.utils.memory;
 		gcFree(data);
-		if(isLast && txn)
+		if(isLast){
 			txn.onDelayedDestroy();
-		if(isLast && _codec.shouldClose) {
-			trace("\t\t --------do close!!!");
-			_down.httpClose();
+			if(_codec is null || _codec.shouldClose()) {
+				trace("\t\t --------do close!!!");
+				_down.httpClose();
+			}
 		}
 	}
 protected:

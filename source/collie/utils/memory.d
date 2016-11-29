@@ -30,7 +30,9 @@ pragma(inline, true) void gcFree(T)(T* obj)
 pragma(inline, true) void gcFree(void[] obj, bool index = false)
 {
     void* t = obj.ptr;
-    if (index)
-        t = GC.addrOf(t);
-    GC.free(t);
+	if(t) {
+	    if (index)
+	        t = GC.addrOf(t);
+	    GC.free(t);
+	}
 }
