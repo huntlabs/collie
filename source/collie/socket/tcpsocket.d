@@ -46,7 +46,6 @@ alias TCPReadCallBack = void delegate(ubyte[] buffer);
         super(loop, TransportType.TCP);
         _socket = sock;
         _socket.blocking = false;
-		_writeQueue = Queue!(WriteSite, GCAllocator, true, false)(128);
         _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
         _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true, true,
             true);
@@ -134,14 +133,7 @@ alias TCPReadCallBack = void delegate(ubyte[] buffer);
             bool dowrite = _writeQueue.empty;
         }
 
-        if (!_writeQueue.enQueue(buffer))
-        {
-            warning("tcp socket write on _writeQueue close!");
-            buffer.doCallBack();
-            import collie.utils.memory;
-
-            gcFree(buffer);
-        }
+		_writeQueue.enQueue(buffer);
         static if (IOMode == IO_MODE.iocp)
         {
             trace("do write: ", dowrite);
@@ -405,7 +397,7 @@ protected:
     import std.experimental.allocator.gc_allocator;
 
     Socket _socket;
-	Queue!(WriteSite,GCAllocator, true, false) _writeQueue;
+	WriteSiteQueue _writeQueue;
     AsyncEvent* _event;
     ubyte[] _readBuffer;
 
@@ -423,7 +415,7 @@ protected:
 }
 
 package:
-final class WriteSite
+struct WriteSite
 {
     this(ubyte[] data, TCPWriteCallBack cback = null)
     {
@@ -473,4 +465,46 @@ private:
     size_t _site = 0;
     ubyte[] _data;
     TCPWriteCallBack _cback;
+	WriteSite * _next;
 }
+
+struct WriteSiteQueue
+{
+	WriteSite * front()nothrow{
+		return _frist;
+	}
+
+	bool empty()nothrow{
+		return _frist is null;
+	}
+
+	void enQueue(WriteSite * wsite) nothrow
+	in{
+		assert(wsite);
+	}body{
+		if(_last){
+			_last._next = wsite;
+		} else {
+			_frist = wsite;
+		}
+		wsite._next = null;
+		_last = wsite;
+	}
+
+	WriteSite * deQueue() nothrow
+	in{
+		assert(_frist && _last);
+	}body{
+		WriteSite * wsite = _frist;
+		_frist = _frist._next;
+		if(_frist is null)
+			_last = null;
+		return wsite;
+	}
+
+private:
+	WriteSite * _last = null;
+	WriteSite * _frist = null;
+}
+
+

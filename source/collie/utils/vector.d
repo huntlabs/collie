@@ -11,10 +11,10 @@
 module collie.utils.vector;
 
 import core.memory;
+import std.exception;
 import std.experimental.allocator.common;
 import std.experimental.allocator.gc_allocator;
 import std.traits;
-import std.exception;
 
 @trusted struct Vector(T, Allocator = GCAllocator, bool addInGC = true)
 {
