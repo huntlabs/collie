@@ -19,6 +19,10 @@ import std.traits;
 @trusted struct Vector(T, Allocator = GCAllocator, bool addInGC = true)
 {
 	enum addToGC = addInGC && hasIndirections!T && !is(Allocator == GCAllocator);
+	static if(hasIndirections!T)
+		alias InsertT = T;
+	else
+		alias InsertT = const T;
 
     this(size_t size) 
     {
@@ -65,7 +69,7 @@ import std.traits;
         }
     }
 
-    pragma(inline) void insertBack(T value)
+	pragma(inline) void insertBack(InsertT value)
     {
         if (full)
             exten();
@@ -73,7 +77,7 @@ import std.traits;
         ++_len;
     }
 
-    pragma(inline) void insertBack(T[] value)
+	pragma(inline) void insertBack(InsertT[] value)
     {
         if (_data.length < (_len + value.length))
             exten(value.length);
@@ -85,7 +89,7 @@ import std.traits;
 	alias put = insertBack;
 	alias pushBack = insertBack;
 
-    void insertBefore(T value)
+	void insertBefore(InsertT value)
     {
         if (full)
             exten(1);
@@ -135,7 +139,7 @@ import std.traits;
 
 	alias removeIndex = removeSite;
 
-    void removeOne(T value)
+	void removeOne(InsertT value)
     {
         for (size_t i = 0; i < _len; ++i)
         {
@@ -147,7 +151,7 @@ import std.traits;
         }
     }
 
-    void removeAny(T value)
+	void removeAny(InsertT value)
     {
         auto len = _len;
         size_t rm = 0;
@@ -196,12 +200,12 @@ import std.traits;
 
 	pragma(inline) size_t opDollar() const { return _len;}
 
-	pragma(inline) void opOpAssign(string op)(T value) if(op == "~")
+	pragma(inline) void opOpAssign(string op)(InsertT value) if(op == "~")
 	{
 		insertBack(value);
 	}
 
-	pragma(inline) void opOpAssign(string op)(T[] value) if(op == "~")
+	pragma(inline) void opOpAssign(string op)(InsertT[] value) if(op == "~")
 	{
 		insertBack(value);
 	}

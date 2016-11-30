@@ -29,6 +29,11 @@ import std.traits;
 {
     enum TSize = T.sizeof;
 	enum addToGC = addInGC && hasIndirections!T && !is(Allocator == GCAllocator);
+	static if(hasIndirections!T)
+		alias InsertT = T;
+	else
+		alias InsertT = const T;
+
     /**
         Params:
             size        =  the queue init size. 
@@ -106,7 +111,7 @@ import std.traits;
         }
     }
 
-    bool enQueue(T x)
+	bool enQueue(InsertT x)
     {
         if (full())
         { //队满
