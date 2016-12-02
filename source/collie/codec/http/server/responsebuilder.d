@@ -74,10 +74,6 @@ class ResponseBuilder
 	{
 		trace("_txn is ", cast(void *)_txn);
 		scope(exit){
-			if(_headers) {
-				import collie.utils.memory;
-				gcFree(_headers);
-			}
 			_headers = null;
 		}
 		bool chunked = true;

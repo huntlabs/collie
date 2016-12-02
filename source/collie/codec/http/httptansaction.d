@@ -409,12 +409,14 @@ package:
 		trace("deleting is ", deleting);
 		if(deleting) return;
 		deleting = true;
-		if(_handler)
+		if(_handler) {
 			_handler.detachTransaction();
-		if(_transport)
+			_handler = null;
+		}
+		if(_transport) {
 			_transport.detach(this);
-		import collie.utils.memory;
-		gcFree(this);
+			_transport = null;
+		}
 	}
 private:
 	HTTPCodec.StreamID _id;
