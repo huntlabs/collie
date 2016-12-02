@@ -2,7 +2,6 @@
 
 import collie.utils.string;
 import collie.utils.vector;
-import std.experimental.allocator.gc_allocator;
 import core.stdc.string;
 import std.string;
 import std.array;
@@ -12,7 +11,7 @@ public import collie.codec.http.headers.httpmethod;
 
 struct HTTPHeaders
 {
-	alias HVector = Vector!(string,GCAllocator);
+	alias HVector = Vector!(string);
 	enum kInitialVectorReserve = 32;
 
 	/**
@@ -293,7 +292,7 @@ struct HTTPHeaders
 		return false;
 	}
 private:
-	Vector!(HTTPHeaderCode,GCAllocator) _codes;
+	Vector!(HTTPHeaderCode) _codes;
 	HVector _headersNames;
 	HVector _headerValues;
 	size_t _deletedCount = 0;

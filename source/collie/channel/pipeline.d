@@ -13,7 +13,6 @@ module collie.channel.pipeline;
 import std.typecons;
 import std.variant;
 import std.functional;
-import std.experimental.allocator.gc_allocator;
 
 import collie.utils.vector;
 import collie.channel.handler;
@@ -31,9 +30,9 @@ abstract class PipelineBase
 {
     this()
     {
-        _ctxs = 		Vector!(PipelineContext,  	GCAllocator)(8);
-        _inCtxs = 	Vector!(PipelineContext, 	GCAllocator)(8);
-        _outCtxs = 	Vector!(PipelineContext,		GCAllocator)(8);
+        _ctxs = 		Vector!(PipelineContext)(8);
+        _inCtxs = 	Vector!(PipelineContext)(8);
+        _outCtxs = 	Vector!(PipelineContext)(8);
     }
 
     ~this()
@@ -165,9 +164,9 @@ abstract class PipelineBase
     }
 
 protected:
-    Vector!(PipelineContext, GCAllocator) _ctxs = void;
-    Vector!(PipelineContext, GCAllocator) _inCtxs = void;
-    Vector!(PipelineContext, GCAllocator) _outCtxs = void;
+    Vector!(PipelineContext) _ctxs = void;
+    Vector!(PipelineContext) _inCtxs = void;
+    Vector!(PipelineContext) _outCtxs = void;
 
     bool _isFinalize = true;
 private:

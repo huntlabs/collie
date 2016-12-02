@@ -7,7 +7,6 @@ import std.exception;
 import std.experimental.logger;
 import collie.utils.string;
 import collie.utils.vector;
-import std.experimental.allocator.gc_allocator;
 import std.uri;
 
 class HTTPForm
@@ -105,7 +104,7 @@ class HTTPForm
 protected:
 	void readXform(Buffer buffer)
 	{
-		Vector!(ubyte,GCAllocator) buf;
+		Vector!(ubyte) buf;
 		buf.reserve(buffer.length);
 		buffer.readAll((in ubyte[] data){
 				buf.insertBack(cast(ubyte[])data);
@@ -155,7 +154,7 @@ protected:
 		string cd;
 		string cType;
 		{
-			Vector!(ubyte,GCAllocator) buf;
+			Vector!(ubyte) buf;
 			do {
 				buf.clear();
 				buffer.readLine((in ubyte[] data){

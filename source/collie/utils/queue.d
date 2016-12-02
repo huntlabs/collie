@@ -15,6 +15,7 @@ import std.experimental.allocator.common;
 import std.experimental.allocator.mallocator : Mallocator;
 import std.experimental.allocator.gc_allocator;
 import std.traits;
+import collie.utils.allocator;
 
 /**
     Queue Struct Template.
@@ -25,10 +26,10 @@ import std.traits;
         Allocator = which type Allocator will used
 */
 
-@trusted struct Queue(T, Allocator = Mallocator, bool autoExten = false, bool addInGC = true)
+@trusted struct Queue(T,  Allocator = CollieAllocator!T, bool autoExten = false, bool addInGC = true)
 {
     enum TSize = T.sizeof;
-	enum addToGC = addInGC && hasIndirections!T && !is(Allocator == GCAllocator);
+	enum addToGC = addInGC && hasIndirections!T && !is(Allocator == GCAllocator) && !is(Allocator == CollieAllocator!T);
 	static if(hasIndirections!T)
 		alias InsertT = T;
 	else

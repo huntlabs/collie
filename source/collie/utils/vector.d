@@ -14,11 +14,12 @@ import core.memory;
 import std.exception;
 import std.experimental.allocator.common;
 import std.experimental.allocator.gc_allocator;
+import collie.utils.allocator;
 import std.traits;
 
-@trusted struct Vector(T, Allocator = GCAllocator, bool addInGC = true)
+@trusted struct Vector(T, Allocator = CollieAllocator!T, bool addInGC = true)
 {
-	enum addToGC = addInGC && hasIndirections!T && !is(Allocator == GCAllocator);
+	enum addToGC = addInGC && hasIndirections!T && !is(Allocator == GCAllocator) && !is(Allocator == CollieAllocator!T);
 	static if(hasIndirections!T)
 		alias InsertT = T;
 	else

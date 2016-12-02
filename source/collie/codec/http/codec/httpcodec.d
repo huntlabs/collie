@@ -32,7 +32,7 @@ abstract class HTTPCodec
    * StreamID.
    */
 	alias StreamID = uint;
-	alias HVector = Vector!(ubyte,GCAllocator);
+	alias HVector = Vector!(ubyte);
 
 	this()
 	{}

@@ -29,7 +29,7 @@ import collie.codec.http.server;
 
 abstract class IWebSocket : RequestHandler
 {
-	alias Buffer = Vector!(ubyte,GCAllocator);
+	alias Buffer = Vector!(ubyte);
 	pragma(inline)
 		final bool ping(ubyte[] data)
 	{

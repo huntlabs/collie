@@ -18,7 +18,6 @@ import collie.socket.server.tcpserver;
 import collie.socket.server.connection;
 
 import std.socket;
-import std.experimental.allocator.gc_allocator;
 import std.experimental.logger;
 
 
@@ -33,8 +32,8 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 	} else {
 		alias Server = TCPServer;
 	}
-	alias SVector = Vector!(Server,GCAllocator);
-	alias IPVector = Vector!(HTTPServerOptions.IPConfig,GCAllocator);
+	alias SVector = Vector!(Server);
+	alias IPVector = Vector!(HTTPServerOptions.IPConfig);
 
 	this(HTTPServerOptions options)
 	{
