@@ -44,7 +44,7 @@ import collie.utils.memory;
 		if(_wheel !is null)
 			throw new SocketClientException("TimeOut is runing!");
 		_timeout = s;
-		if(_timeout == 0)
+		if(_timeout == 0 || _timer)
 			return;
 		
 		uint whileSize;uint time; 
@@ -92,6 +92,13 @@ import collie.utils.memory;
 				_waitConnect.addInfo(info);
 				connect(info);
 			});
+	}
+
+	void stopTimer(){
+		if(_timer) {
+			_timer.stop();
+			_timer = null;
+		}
 	}
 
 protected:
