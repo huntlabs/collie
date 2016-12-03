@@ -67,8 +67,7 @@ static if (CustomTimer)
             static if (CustomTimer)
                 timeout = doWheel();
             _poll.wait(timeout);
-            if (!_callbackList.empty)
-            {
+            if (!_callbackList.empty){
                 doHandleList();
             }
         }
@@ -76,7 +75,6 @@ static if (CustomTimer)
         _run = false;
     }
 
-    //@property Channel[int] channelList(){return _channelList;}
     void weakUp() nothrow
     {
         _poll.weakUp();
@@ -104,7 +102,9 @@ static if (CustomTimer)
     }
 
     void post(bool MustInQueue = false)(CallBack cback)
-    {
+	in{
+		assert(cback);
+	}body{
 		static if(!MustInQueue) {
 	        if (isInLoopThread())
 	        {
@@ -187,8 +187,7 @@ protected:
         import std.algorithm : swap;
 
 		auto tmp = CQueue(32);
-        synchronized (_mutex)
-        {
+        synchronized (_mutex){
             swap(tmp, _callbackList);
         }
         while (!tmp.empty)

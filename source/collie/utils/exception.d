@@ -18,11 +18,12 @@ mixin template ThrowExceptionBuild()
 }
 
 pragma(inline)
-void showException(bool gcfree = false)(Exception e) nothrow
+	void showException(bool gcfree = false,int line = __LINE__, string file = __FILE__,
+		string funcName = __FUNCTION__)(Exception e) nothrow
 {
 	import std.experimental.logger;
 	import std.exception;
-	collectException(error(e.toString));
+	collectException(error!(line,file,funcName)(e.toString));
 	static if(gcfree){
 		import collie.utils.memory;
 		collectException(gcFree(e));
