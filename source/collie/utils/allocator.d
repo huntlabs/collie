@@ -4,30 +4,26 @@ import core.memory;
 import std.traits;
 import std.experimental.allocator.common;
 
-struct CollieAllocator(T)
+struct CollieAllocator(T,bool scan = true)
 {
 	enum uint alignment = platformAlignment;
-	enum TInfo = typeid(T[]);
+	enum TInfo = typeid(T);
 
-	static if(hasIndirections!T){
+	static if(hasIndirections!T && scan){
 		enum uint blkAttr = 0;
 	} else {
 		enum uint blkAttr = GC.BlkAttr.NO_SCAN;
 	}
 
 	pure nothrow @trusted void[] allocate(size_t bytes) shared
-	in{
-		assert((bytes % T.sizeof) == 0);
-	}body{
+	{
 		if (!bytes) return null;
 		auto p = GC.malloc(bytes,blkAttr,TInfo);
 		return p ? p[0 .. bytes] : null;
 	}
 
 	@system bool expand(ref void[] b, size_t delta) shared
-	in{
-		assert((delta % T.sizeof) == 0);
-	}body{
+	{
 		if (delta == 0) return true;
 		if (b is null) return false;
 		immutable curLength = GC.sizeOf(b.ptr);
@@ -49,9 +45,7 @@ struct CollieAllocator(T)
 	}
 
 	pure nothrow @system bool reallocate(ref void[] b, size_t newSize) shared
-	in{
-		assert((newSize % T.sizeof) == 0);
-	}body{
+	{
 		import core.exception : OutOfMemoryError;
 		try
 		{

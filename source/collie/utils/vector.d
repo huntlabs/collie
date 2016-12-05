@@ -26,7 +26,7 @@ import std.traits;
 		version(OSX) {
 			alias Allocator = GCAllocator;
 		} else {
-			alias Allocator = CollieAllocator!IAllocator;
+			alias Allocator = CollieAllocator!(T[],(hasIndirections!T));
 		}
 		enum addToGC = false;
 	}
