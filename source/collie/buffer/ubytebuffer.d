@@ -9,9 +9,9 @@ class UbyteBuffer(Alloc) : Buffer
 {
 	alias BufferStore = Vector!(ubyte,Alloc,false); 
 
-	static if (stateSize!Alloc != 0)
+	static if (stateSize!(BufferStore.Allocator) != 0)
 	{
-		this(Alloc alloc)
+		this(BufferStore.Allocator alloc)
 		{
 			_store = BufferStore(1024,alloc);
 		}
