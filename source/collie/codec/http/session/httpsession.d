@@ -95,7 +95,8 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	}
 
 	void onTimeout() @trusted {
-		getCodec.onTimeOut();
+		if(_codec)
+			_codec.onTimeOut();
 	}
 
 	//HandlerAdapter}

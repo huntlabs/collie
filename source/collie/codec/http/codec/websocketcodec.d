@@ -49,8 +49,6 @@ class WebsocketCodec : HTTPCodec
 	{
 		if(_transaction){
 			_transaction.onErro(HTTPErrorCode.TIME_OUT);
-			_transaction.handler = null;
-			_transaction.transport = null;
 		}
 	}
 	
