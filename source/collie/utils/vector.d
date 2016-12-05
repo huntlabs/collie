@@ -17,9 +17,20 @@ import std.experimental.allocator.gc_allocator;
 import collie.utils.allocator;
 import std.traits;
 
-@trusted struct Vector(T, Allocator = CollieAllocator!T, bool addInGC = true)
+@trusted struct Vector(T, IAllocator = T, bool addInGC = true)
 {
-	enum addToGC = addInGC && hasIndirections!T && !is(Allocator == GCAllocator) && !is(Allocator == CollieAllocator!T);
+	static if(hasMember!(IAllocator,"allocate") && hasMember!(IAllocator,"deallocate") ){
+		alias Allocator = IAllocator;
+		enum addToGC = addInGC && hasIndirections!T && !is(Allocator == GCAllocator);
+	} else {
+		version(OSX) {
+			alias Allocator = GCAllocator;
+		} else {
+			alias Allocator = CollieAllocator!IAllocator;
+		}
+		enum addToGC = false;
+	}
+	
 	static if(hasIndirections!T)
 		alias InsertT = T;
 	else
@@ -320,6 +331,7 @@ private:
 unittest
 {
     import std.stdio;
+	import std.experimental.allocator.mallocator;
 
     Vector!(int) vec; // = Vector!int(5);
     int[] aa = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -358,7 +370,7 @@ unittest
     vec.removeAny(2);
     assert(vec.dup == [15, 3, 4, 0, 1, 3, 4, 5, 6, 7]);
     
-    Vector!(ubyte[]) vec2;
+    Vector!(ubyte[],Mallocator) vec2;
     vec2.insertBack(cast(ubyte[])"hahaha");
     vec2.insertBack(cast(ubyte[])"huhuhu");
     assert(vec2.length == 2);

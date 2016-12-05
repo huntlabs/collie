@@ -211,7 +211,7 @@ protected:
 		} else {
 			wdata[1] |= 127;
 			buffer.insertBack(wdata[]);
-			ubyte[8] length = nativeToBigEndian(payloadLength);
+			auto length = nativeToBigEndian(payloadLength);
 			buffer.insertBack(length[]);
 		}
 	}
