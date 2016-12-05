@@ -7,6 +7,7 @@ import std.experimental.allocator.common;
 struct CollieAllocator(T)
 {
 	enum uint alignment = platformAlignment;
+	enum TInfo = typeid(T[]);
 
 	static if(hasIndirections!T){
 		enum uint blkAttr = 0;
@@ -15,14 +16,18 @@ struct CollieAllocator(T)
 	}
 
 	pure nothrow @trusted void[] allocate(size_t bytes) shared
-	{
+	in{
+		assert((bytes % T.sizeof) == 0);
+	}body{
 		if (!bytes) return null;
-		auto p = GC.malloc(bytes,blkAttr);
+		auto p = GC.malloc(bytes,blkAttr,TInfo);
 		return p ? p[0 .. bytes] : null;
 	}
 
 	@system bool expand(ref void[] b, size_t delta) shared
-	{
+	in{
+		assert((delta % T.sizeof) == 0);
+	}body{
 		if (delta == 0) return true;
 		if (b is null) return false;
 		immutable curLength = GC.sizeOf(b.ptr);
@@ -31,7 +36,7 @@ struct CollieAllocator(T)
 		if (desired > curLength) // check to see if the current block can't hold the data
 		{
 			immutable sizeRequest = desired - curLength;
-			immutable newSize = GC.extend(b.ptr, sizeRequest, sizeRequest);
+			immutable newSize = GC.extend(b.ptr, sizeRequest, sizeRequest,TInfo);
 			if (newSize == 0)
 			{
 				// expansion unsuccessful
@@ -44,11 +49,13 @@ struct CollieAllocator(T)
 	}
 
 	pure nothrow @system bool reallocate(ref void[] b, size_t newSize) shared
-	{
+	in{
+		assert((newSize % T.sizeof) == 0);
+	}body{
 		import core.exception : OutOfMemoryError;
 		try
 		{
-			auto p = cast(ubyte*) GC.realloc(b.ptr, newSize,blkAttr);
+			auto p = cast(ubyte*) GC.realloc(b.ptr, newSize,blkAttr,TInfo);
 			b = p[0 .. newSize];
 		}
 		catch (OutOfMemoryError)
@@ -70,23 +77,6 @@ struct CollieAllocator(T)
 	{
 		GC.free(b.ptr);
 		return true;
-	}
-
-	size_t goodAllocSize(size_t n) shared
-	{
-		if (n == 0)
-			return 0;
-		if (n <= 16)
-			return 16;
-		
-		import core.bitop : bsr;
-		
-		auto largestBit = bsr(n-1) + 1;
-		if (largestBit <= 12) // 4096 or less
-			return size_t(1) << largestBit;
-		
-		// larger, we use a multiple of 4096.
-		return ((n + 4095) / 4096) * 4096;
 	}
 
 	static shared CollieAllocator!T instance;
