@@ -101,12 +101,8 @@ unittest
 	import core.memory : GC;
 	
 	// test allocation sizes
-	assert(CollieAllocator!int.instance.goodAllocSize(1) == 16);
 	for (size_t s = 16; s <= 8192; s *= 2)
 	{
-		assert(CollieAllocator!int.instance.goodAllocSize(s) == s);
-		assert(CollieAllocator!int.instance.goodAllocSize(s - (s / 2) + 1) == s);
-		
 		auto buffer = CollieAllocator!int.instance.allocate(s);
 		scope(exit) CollieAllocator!int.instance.deallocate(buffer);
 		
@@ -117,7 +113,5 @@ unittest
 		
 		assert(GC.sizeOf(buffer2.ptr) == s);
 	}
-	
-	// anything above a page is simply rounded up to next page
-	assert(CollieAllocator!int.instance.goodAllocSize(4096 * 4 + 1) == 4096 * 5);
+
 }

@@ -387,12 +387,14 @@ protected:
 		if(finish){
 			string key = cast(string)_currtKey.data(true);
 			string value = cast(string)_currtValue.data(true);
+			trace("http header: \t", key, " : ", value);
 			_message.getHeaders.add(key,value);
 		}
 	}
 	
 	void onBody(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
+		trace("on boday, length : ", data.length);
 		_callback.onBody(_transaction,data);
 	}
 private:

@@ -37,26 +37,25 @@ class WrapBuffer : Buffer
 		len = dt.length < len ? dt.length : len;
 		if (len > 0)
 		{
-			_data[_wsize .. (_wsize + len)] = dt[0 .. len];
+			auto begin = _wsize;
+			_wsize += len;
+			_data[begin .. _wsize] = dt[0 .. len];
+
 		}
 		return len;
 	}
 
 	override void rest(size_t size = 0){
-		_rsize = _rsize;
+		_rsize = size;
 	}
 
 	override size_t readPos() {
 		return _rsize;
 	}
 
-	ubyte[] data(bool all = false)
+	ubyte[] data()
 	{
-		if (all){
-			return _data[0.._wsize];
-		}  else {
-			return _data[_rsize .. _wsize];
-		}
+		return _data[_rsize .. _wsize];
 	}
 
 	override @property size_t length() const { return _wsize; }
@@ -79,7 +78,7 @@ class WrapBuffer : Buffer
 					index = ts;
 				}
 			}
-			cback(_data[0..index]);
+			cback(tdata[0..index]);
 		}
 
 		return _rsize - size;
@@ -106,7 +105,7 @@ class WrapBuffer : Buffer
 		} else {
 			_rsize += (index + chs.length);
 			size += chs.length;
-			cback(_data[0..index]);
+			cback(tdata[0..index]);
 		}
 		return _rsize - size;
 	}
@@ -132,6 +131,10 @@ unittest
 	writeln("buffer read data =", cast(string) dt);
 
 	
-	buf.readLine((in ubyte[] data2){writeln(cast(string)data2);});
+	buf.rest();
+	string datat;
+	buf.readLine((in ubyte[] data2){datat ~= (cast(string)data2);});
+	writeln(datat);
+	assert(datat == "hello world. hello world.");	
 
 }

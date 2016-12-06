@@ -11,7 +11,7 @@ ptrdiff_t findCharByte(T)(in T[] data, in T ch) if(isCharByte!(T))
 	ptrdiff_t index = -1;
 	auto ptr = memchr(data.ptr,ch,data.length);
 	if(ptr !is null){
-		index = cast(ptrdiff_t)((cast(ubyte *) ptr) - data.ptr);
+		index = cast(ptrdiff_t)((cast(T *) ptr) - data.ptr);
 	}
 
 	return index;
@@ -28,7 +28,7 @@ ptrdiff_t findCharBytes(T)(in T[] data, in T[] chs) if(isCharByte!(T))
 		auto ptr = memchr(tdata.ptr,chs[0],tdata.length);
 		if(ptr is null) break;
 
-		size_t fistindex = (cast(ubyte *) ptr) - data.ptr;
+		size_t fistindex = (cast(T *) ptr) - data.ptr;
 		if(tdata.length - fistindex < chs.length) 
 			break;
 
@@ -78,3 +78,6 @@ template nativeToEndian(bool litte, T)
 	
 }
 
+unittest{
+
+}

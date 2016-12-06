@@ -52,9 +52,11 @@ class UbyteBuffer(Alloc) : Buffer
 		size_t len = _store.length - _rsize;
 		len = size < len ? size : len;
 		ubyte[] _data = _store.data(false);
-		if (len > 0)
-			cback(_data[_rsize .. (_rsize + len)]);
+		size = _rsize;
 		_rsize += len;
+		if (len > 0)
+			cback(_data[size .. _rsize]);
+
 		return len;
 	}
 	
@@ -66,7 +68,7 @@ class UbyteBuffer(Alloc) : Buffer
 	}
 	
 	override void rest(size_t size = 0){
-		_rsize = _rsize;
+		_rsize = size;
 	}
 	
 	override size_t readPos() {
@@ -100,11 +102,11 @@ class UbyteBuffer(Alloc) : Buffer
 			size += 1;
 			if(index > 0){
 				size_t ts = index -1;
-				if(_data[ts] == cast(ubyte)'\r') {
+				if(tdata[ts] == cast(ubyte)'\r') {
 					index = ts;
 				}
 			}
-			cback(_data[0..index]);
+			cback(tdata[0..index]);
 		}
 		
 		return _rsize - size;
@@ -133,7 +135,7 @@ class UbyteBuffer(Alloc) : Buffer
 		} else {
 			_rsize += (index + chs.length);
 			size += chs.length;
-			cback(_data[0..index]);
+			cback(tdata[0..index]);
 		}
 		return _rsize - size;
 	}
@@ -157,7 +159,9 @@ unittest
 	writeln("buffer read size =", buf.read(13,(in ubyte[] data2){dt[] = data2[];}));
 	writeln("buffer read data =", cast(string) dt);
 	
-	
-	buf.readLine((in ubyte[] data2){writeln(cast(string)data2);});
-	
+	buf.rest();
+	string datat;
+	buf.readLine((in ubyte[] data2){datat ~= (cast(string)data2);});
+	writeln("line is : ", datat);
+	assert(datat == "hello world. hello world.");	
 }

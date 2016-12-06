@@ -37,16 +37,18 @@ class HTTPForm
 	
 	this(string contype,  Buffer body_)
 	{
+		trace("contype is : ", contype);
 		if (contype.indexOf("multipart/form-data") > -1)
 		{
 			string strBoundary;
 			splitNameValue(contype,';','=',(string key,string value){
 					if(isSameIngnoreLowUp(strip(key),"boundary")) {
-						strBoundary = value;
+						strBoundary = value.idup;
 						return false;
 					}
 					return true;
 				});
+			trace("strBoundary : ", strBoundary);
 			if (strBoundary.length > 0)
 			{
 				if(strBoundary[0] == '\"')
@@ -82,8 +84,7 @@ class HTTPForm
 	
 	string getFromValue(string key)
 	{
-		StringArray aty;
-		aty = _forms.get(key, aty);
+		StringArray aty = _forms.get(key, StringArray.init);
 		if(aty.length == 0)
 			return "";
 		else
@@ -98,7 +99,7 @@ class HTTPForm
 	
 	auto getFileValue(string key) const
 	{
-		return   _files.get(key, null);
+		return _files.get(key, null);
 	}
 	
 protected:
@@ -111,22 +112,28 @@ protected:
 			});
 		ubyte[] dt = buf.data(false);
 		splitNameValue(cast(string)dt,'&','=',(string key, string value){
+				trace("_",key,"=", value);
 				if(value.length > 0)
-					_forms[key] ~= decodeComponent(value);
+					_forms[key.idup] ~= decodeComponent(value);
 				else
-					_forms[key] ~= "";
+					_forms[key.idup] ~= "";
 				return true;
 			});
 	}
 	
 	void readMultiFrom(string brand, Buffer buffer)
 	{
+		buffer.readAll((in ubyte[] data){
+				trace("data is : ", cast(string)data);
+			});
+		trace(".................");
 		buffer.rest();
 		string brony = "--" ~ brand;
 		string str;
 		do{
 			Appender!(ubyte[]) buf = appender!(ubyte[]);
 			buffer.readLine((in ubyte[] data){
+					trace("data is : ", cast(string)data);
 					buf.put(data);
 				});
 			auto sttr = cast(string)buf.data;
@@ -139,7 +146,8 @@ protected:
 				return;
 			}
 		} while(true);
-
+		trace("read to  : ", buffer.readPos);
+		trace("brony length  : ", brony.length);
 		brony = "\r\n" ~ brony;
 		bool run;
 		do
@@ -161,6 +169,7 @@ protected:
 						buf.insertBack(cast(ubyte[])data);
 					});
 				ubyte[] line = buf.data(false);
+				trace(cast(string)line);
 				if(line.length == 0)
 					break;
 				auto pos = (cast(string) line).indexOf(":");
@@ -185,6 +194,7 @@ protected:
 			pos = cd.indexOf("\"");
 			name = cd[0 .. pos];
 		}
+		trace("name : ", name);
 		string filename;
 		pos = cd.indexOf("filename=\"");
 		if (pos >= 0)
