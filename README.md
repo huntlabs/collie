@@ -8,7 +8,7 @@ An asynchronous event-driven network framework written in [dlang](http://dlang.o
 
 ##  Support
 
-function  |   epoll   |   kqueue   |   iocp    |   select 
+Feature   |   epoll   |   kqueue   |   iocp    |   select 
 ----------|-----------|------------|-----------|------------ 
 TCP       |     Y     |     Y      |     Y     |     Y
 SSL       |     Y     |     Y      |     N     |     N
