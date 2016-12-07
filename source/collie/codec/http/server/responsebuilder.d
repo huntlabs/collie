@@ -87,6 +87,7 @@ class ResponseBuilder
 				if(chunked) {
 					_headers.chunked(true);
 				} else {
+					_headers.chunked(false);
 					_headers.getHeaders.add(HTTPHeaderCode.CONTENT_LENGTH, to!string(_body.length));
 				}
 			}

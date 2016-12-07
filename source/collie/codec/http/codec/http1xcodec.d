@@ -109,6 +109,7 @@ class HTTP1XCodec : HTTPCodec
 		bool hasUpgradeHeader = false;
 		bool hasDateHeader = false;
 		bool is1xxResponse = false;
+		bool ingorebody = false;
 		_keepalive = _keepalive & msg.wantsKeepAlive;
 		if(!upstream) {
 			is1xxResponse = msg.is1xxResponse;
@@ -117,7 +118,8 @@ class HTTP1XCodec : HTTPCodec
 			appendLiteral(buffer,".");
 			appendLiteral(buffer,to!string(hversion.min));
 			appendLiteral(buffer," ");
-			int code = msg.statusCode;
+			ushort code = msg.statusCode;
+			ingorebody = responseBodyMustBeEmpty(code);
 			appendLiteral(buffer,to!string(code));
 			appendLiteral(buffer," ");
 			appendLiteral(buffer,msg.statusMessage);
@@ -129,7 +131,7 @@ class HTTP1XCodec : HTTPCodec
 			appendLiteral(buffer,to!string(hversion.maj));
 			appendLiteral(buffer,".");
 			appendLiteral(buffer,to!string(hversion.min));
-			_mayChunkEgress = msg.isHTTP1_1();
+			_mayChunkEgress = (hversion.maj == 1) && (hversion.min >= 1);
 		}
 		appendLiteral(buffer,"\r\n");
 		_egressChunked &= _mayChunkEgress;
@@ -153,7 +155,8 @@ class HTTP1XCodec : HTTPCodec
 				if(!isSameIngnoreLowUp(value,"chunked")) 
 					continue;
 				hasTransferEncodingChunked = true;
-				if(!_mayChunkEgress) continue;
+				if(!_mayChunkEgress) 
+					continue;
 			} 
 			appendLiteral(buffer,key);
 			appendLiteral(buffer,": ");
@@ -161,15 +164,19 @@ class HTTP1XCodec : HTTPCodec
 			appendLiteral(buffer,"\r\n");
 		}
 		_inChunk = false;
-		bool bodyCheck =
-			(!upstream && !_egressUpgrade) ||
+		bool bodyCheck = ((!upstream) && _keepalive && !ingorebody  && !_egressUpgrade) ||
 				// auto chunk POSTs and any request that came to us chunked
 				(upstream && ((msg.method == HTTPMethod.HTTP_POST) || _egressChunked));
 		// TODO: 400 a 1.0 POST with no content-length
 		// clear egressChunked_ if the header wasn't actually set
 		_egressChunked &= hasTransferEncodingChunked;
-		if(bodyCheck && contLen.length == 0 && _egressChunked){
-			appendLiteral(buffer,"Transfer-Encoding: chunked\r\n");
+		if(bodyCheck && contLen.length == 0 && !_egressChunked){
+			if (!hasTransferEncodingChunked && _mayChunkEgress) {
+				appendLiteral(buffer,"Transfer-Encoding: chunked\r\n");
+				_egressChunked = true;
+			} else {
+				_keepalive = false;
+			}
 		}
 		if(!is1xxResponse || upstream || hasUpgradeHeader){
 			appendLiteral(buffer,"Connection: ");
@@ -197,8 +204,9 @@ class HTTP1XCodec : HTTPCodec
 		bool eom)
 	{
 		size_t rlen = 0;
-		if(_egressChunked && !_inChunk) {
+		if(_egressChunked && _inChunk) {
 			appendLiteral(chain,"\r\n");
+			_inChunk = false;
 			rlen += 2;
 		}
 		if(eom)
@@ -211,10 +219,12 @@ class HTTP1XCodec : HTTPCodec
 		ref HVector buffer,
 		size_t length)
 	{
+		trace("_egressChunked  ", _egressChunked);
 		if (_egressChunked){
 			import std.format;
 			_inChunk = true;
-			string lent = format("%zx\r\n",length);
+			string lent = format("%x\r\n",length);
+			trace("length is : ", length, "  x is: ", lent);
 			appendLiteral(buffer,lent);
 			return lent.length;
 		}
@@ -241,10 +251,21 @@ class HTTP1XCodec : HTTPCodec
 		size_t rlen = 0;
 		if(_egressChunked) {
 			assert(!_inChunk);
-			if(!_lastChunkWritten)
+			if (_headRequest && _transportDirection == TransportDirection.DOWNSTREAM) {
 				_lastChunkWritten = true;
-			appendLiteral(buffer,"0\r\n");
-			rlen += 3;
+			} else {
+				// appending a 0\r\n only if it's not a HEAD and downstream request
+				if (!_lastChunkWritten) {
+					_lastChunkWritten = true;
+					//if (!(_headRequest &&
+					//		transportDirection_ == TransportDirection.DOWNSTREAM)) {
+					appendLiteral(buffer,"0\r\n");
+					rlen += 3;
+					//}
+				}
+				appendLiteral(buffer,"\r\n");
+			}
+			rlen += 2;
 		}
 		switch (_transportDirection) {
 			case TransportDirection.DOWNSTREAM:
@@ -294,7 +315,7 @@ protected:
 	}
 	
 	void onHeadersComplete(ref HTTPParser parser){
-		_mayChunkEgress = ((parser.major == 1) && (parser.major >= 1));
+		_mayChunkEgress = ((parser.major == 1) && (parser.minor >= 1));
 		_message.setHTTPVersion(cast(ubyte)parser.major, cast(ubyte)parser.minor);
 		_egressUpgrade = parser.isUpgrade;
 		_message.upgraded(parser.isUpgrade);
@@ -356,6 +377,12 @@ protected:
 	{
 		//trace("on Url");
 		_message.method = parser.methodCode();
+		_connectRequest = (parser.methodCode() == HTTPMethod.HTTP_CONNECT);
+		
+		// If this is a headers-only request, we shouldn't send
+		// an entity-body in the response.
+		_headRequest = (parser.methodCode() == HTTPMethod.HTTP_HEAD);
+
 		_currtKey.insertBack(data);
 		if(finish) {
 			ubyte[] tdata = _currtKey.data(true);
@@ -396,6 +423,11 @@ protected:
 	{
 		trace("on boday, length : ", data.length);
 		_callback.onBody(_transaction,data);
+	}
+
+	bool responseBodyMustBeEmpty(ushort status) {
+		return (status == 304 || status == 204 ||
+			(100 <= status && status < 200));
 	}
 private:
 	TransportDirection _transportDirection;

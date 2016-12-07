@@ -89,15 +89,13 @@ final class RequestHandlerAdaptor : ResponseHandler,HTTPTransactionHandler
 			string str = msg.getHeaders.getSingleOrEmpty(HTTPHeaderCode.EXPECT);
 			if(!isSameIngnoreLowUp(str,"100-continue")) {
 				scope HTTPMessage headers = new HTTPMessage();
-				headers.statusCode(417);
-				headers.statusMessage("Expectation Failed");
+				headers.constructDirectResponse(1,1,417,"Expectation Failed");
 				headers.wantsKeepAlive(false);
 				_txn.sendHeadersWithEOM(headers);
 				return;
 			}else {
 				scope HTTPMessage headers = new HTTPMessage();
-				headers.statusCode(100);
-				headers.statusMessage("Continue");
+				headers.constructDirectResponse(1,1,100,"Continue");
 				_txn.sendHeaders(headers);
 			}
 		}
