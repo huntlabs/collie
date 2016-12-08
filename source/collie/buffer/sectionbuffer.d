@@ -10,7 +10,6 @@
  */
 module collie.buffer.sectionbuffer;
 
-//import core.stdc.string;
 import core.memory;
 import core.stdc.string;
 import std.array;
