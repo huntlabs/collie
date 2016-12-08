@@ -27,13 +27,16 @@ protected:
 		if(handle is null)
 		{
 			try{
+				enum string _404 = "<h1>Not Found!</h1><p>the http RequestHandle is null!</p>";
 				import collie.codec.http.headers;
 				import std.typecons;
 				scope HTTPMessage rmsg = new HTTPMessage();
 				rmsg.statusCode = 404;
 				rmsg.statusMessage = HTTPMessage.statusText(404);
 				rmsg.getHeaders.add(HTTPHeaderCode.CONNECTION,"close");
-				sendHeaders(txn,rmsg,true);
+				rmsg.getHeaders.add(HTTPHeaderCode.CONTENT_LENGTH,_404.length);
+				sendHeaders(txn,rmsg,false);
+				sendBody(txn,cast(ubyte[])_404,true);
 				txn = null;
 			} catch (Exception e){
 				import collie.utils.exception;
