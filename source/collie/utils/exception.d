@@ -41,30 +41,35 @@ pragma(inline)
 
 }
 
+string buildErroCodeException(T)() if(is(T == enum))
+{
+	string str = "mixin ExceptionBuild!(\"" ~ T.stringof ~ "\");\n";
+	foreach(memberName; __traits(derivedMembers,T)){
+		str ~= "mixin ExceptionBuild!(\"" ~ memberName ~ "\", \"" ~ T.stringof ~ "\");\n";
+	}
+	return str;
+}
 
 version(unittest)
 {
-	mixin ExceptionBuild!"MyTest1";
-	mixin ExceptionBuild!"MyTest2";
+	enum Test{
+		MyTest1,
+		MyTest2,
+	}
+	//mixin ExceptionBuild!"MyTest1";
+	//mixin ExceptionBuild!"MyTest2";
+	mixin(buildErroCodeException!Test());
 	mixin ThrowExceptionBuild;
 }
 
 unittest
 {
 	import std.stdio;
-
-	try{
-		throwExceptionBuild!"MyTest1"("test Exception");
-	} catch (MyTest1Exception e)
-	{
-		writeln(e.msg);
-	}
-	
-	try{
-		throwExceptionBuild!"MyTest2"("test Exception");
-	} catch (MyTest2Exception e)
-	{
-		writeln(e.msg);
-	}
-
+	import std.exception;
+	auto e = collectException!TestException(throwExceptionBuild!"Test"("test Exception"));
+	assert(e !is null);
+	auto e1 = collectException!MyTest1Exception(throwExceptionBuild!"MyTest1"("test Exception"));
+	assert(e1 !is null);
+	auto e2 = collectException!MyTest2Exception(throwExceptionBuild!"MyTest2"("test Exception"));
+	assert(e2 !is null);
 }
