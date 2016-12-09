@@ -48,6 +48,12 @@ alias AcceptCallBack = void delegate(Socket sock);
         version (Posix)
             _socket.setOption(SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT,
                 use);
+        version(windows){
+            if(!use) {
+                import core.sys.windows.winsock2;
+                accpet.setOption(SocketOptionLevel.SOCKET, cast(SocketOption)SO_EXCLUSIVEADDRUSE,true);
+            }
+        }
     }
 
     void bind(Address addr) @trusted

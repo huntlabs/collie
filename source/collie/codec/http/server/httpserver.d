@@ -164,11 +164,19 @@ protected:
 	static if(!UsePipeline){
 		Server newTCPServer(EventLoop loop,Address address,bool ruseport, bool enableTCPFastOpen, uint fastOpenQueueSize )
 		{
-			Server ser = new Server(_mainLoop);
+			Server ser = new Server(loop);
 			ser.setNewConntionCallBack(&newConnect);
 			ser.bind(address,(Acceptor accpet){
 					if(ruseport)
 						accpet.reusePort(true);
+					else {
+						version(windows){
+							import core.sys.windows.winsock2;
+							accpet.setOption(SocketOptionLevel.SOCKET, cast(SocketOption)SO_EXCLUSIVEADDRUSE,true);
+						} else {
+							accpet.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, true);
+						}
+					}
 					version(linux) {
 						if(enableTCPFastOpen){
 							accpet.setOption(SocketOptionLevel.TCP,cast(SocketOption)23,fastOpenQueueSize);
