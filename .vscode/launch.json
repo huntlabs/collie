@@ -5,7 +5,11 @@
             "name": "Debug",
             "type": "gdb",
             "request": "launch",
+<<<<<<< HEAD
             "target": "./example/socket/http/httpserver/httpserver",
+=======
+            "target": "./bin/executable",
+>>>>>>> c280c5a14fe376add0a730072d7a3874ec2cc07c
             "cwd": "${workspaceRoot}"
         }
     ]

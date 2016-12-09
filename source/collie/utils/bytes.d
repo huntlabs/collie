@@ -1,4 +1,14 @@
-﻿module collie.utils.bytes;
+﻿/*
+ * Collie - An asynchronous event-driven network framework using Dlang development
+ *
+ * Copyright (C) 2015-2016  Shanghai Putao Technology Co., Ltd 
+ *
+ * Developer: putao's Dlang team
+ *
+ * Licensed under the Apache-2.0 License.
+ *
+ */
+module collie.utils.bytes;
 
 import core.stdc.string;
 import std.traits;
@@ -79,5 +89,7 @@ template nativeToEndian(bool litte, T)
 }
 
 unittest{
-
+	string hello = "hell worlf\r\nnext";
+	assert(findCharByte(hello,'l') == 2);
+	assert(findCharBytes(hello,"worlf") == 5);
 }
