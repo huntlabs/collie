@@ -21,9 +21,9 @@ mixin template ExceptionBuild(string name, string parent = "")
 mixin template ThrowExceptionBuild()
 {
 	pragma(inline, true)
-	void throwExceptionBuild(string name = "", string file = __FILE__, size_t line = __LINE__ )(string msg = "")
+		void throwExceptionBuild(string name = "")(string msg = "",string file = __FILE__, size_t line = __LINE__ )
 	{
-		mixin("throw new " ~ name ~ "Exception(msg,\"" ~ file ~ "\"," ~ line.stringof ~ ");");
+		mixin(str);
 	}
 }
 
