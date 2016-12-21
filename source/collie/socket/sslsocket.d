@@ -15,6 +15,7 @@ version(USE_SSL) :
 import core.stdc.errno;
 import core.stdc.string;
 
+import std.string;
 import std.socket;
 import std.exception;
 import std.experimental.logger;
@@ -23,10 +24,12 @@ import collie.socket.eventloop;
 import collie.socket.common;
 import collie.socket.transport;
 import collie.socket.tcpsocket;
+import collie.utils.exception;
 
 import deimos.openssl.ssl;
 import deimos.openssl.bio;
-import std.string;
+
+
 
 @trusted class SSLSocket : TCPSocket
 {
@@ -89,15 +92,18 @@ protected:
 			if (!alive)
 				return;
 			if(writeBIOtoSocket() || _writeQueue.empty ) return;
-	
-			auto buffer = _writeQueue.front;
-			auto len = SSL_write(_ssl, buffer.data.ptr, cast(int)buffer.length);   // data中存放了要发送的数据
-			if (len > 0) {
-				if (buffer.add(len)){
-					_writeQueue.deQueue().doCallBack();
-				}
-			} 
-			writeBIOtoSocket();
+			try{
+				auto buffer = _writeQueue.front;
+				auto len = SSL_write(_ssl, buffer.data.ptr, cast(int)buffer.length);   // data中存放了要发送的数据
+				if (len > 0) {
+					if (buffer.add(len)){
+						_writeQueue.deQueue().doCallBack();
+					}
+				} 
+				writeBIOtoSocket();
+			} catch(Exception e){
+				showException(e);
+			}
 		}
 		override void onRead(){
 			try
@@ -133,7 +139,7 @@ protected:
 			if (alive)
 				doRead();
 		}
-		bool writeBIOtoSocket(){
+		bool writeBIOtoSocket() nothrow {
 			int hasread = BIO_read(_bioOut, _wBuffer.ptr, cast(int)_wBuffer.length);
 			if (hasread > 0) {
 				_iocpWBuf.len = hasread;

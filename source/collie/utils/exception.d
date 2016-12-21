@@ -23,7 +23,7 @@ mixin template ThrowExceptionBuild()
 	pragma(inline, true)
 		void throwExceptionBuild(string name = "")(string msg = "",string file = __FILE__, size_t line = __LINE__ )
 	{
-		mixin(str);
+		mixin("throw new " ~ name ~ "Exception(msg,file,line);");
 	}
 }
 
