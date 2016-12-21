@@ -192,7 +192,7 @@ protected:
             pipe = AcceptPipeline.create();
 
         SSL_CTX* ctx = null;
-        static if(USEDSSL)
+		version(USE_SSL)
         {
             if (_sslConfig)
             {
@@ -277,7 +277,7 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
         _acceptor.setCallBack(&acceptCallBack);
         _sslctx = ctx;
 		_list = new ServerConnection!PipeLine();
-		static if(USEDSSL)
+		version(USE_SSL)
 			_sharkList = new SSLHandShark();
     }
 
@@ -293,11 +293,18 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 
     override void read(Context ctx, Socket msg)
     {
-        static if(USEDSSL)
+		version(USE_SSL)
         {
             if (_sslctx)
             {
                     auto ssl = SSL_new(_sslctx);
+				static if (IOMode == IO_MODE.iocp){
+					BIO * readBIO = BIO_new(BIO_s_mem());
+					BIO * writeBIO = BIO_new(BIO_s_mem());
+					SSL_set_bio(ssl, readBIO, writeBIO);
+					SSL_set_accept_state(ssl);
+					auto asynssl = new SSLSocket(_acceptor.eventLoop, msg, ssl,readBIO,writeBIO);
+				} else {
                     if (SSL_set_fd(ssl, msg.handle()) < 0)
                     {
                         error("SSL_set_fd error: fd = ", msg.handle());
@@ -307,6 +314,7 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
                     }
                     SSL_set_accept_state(ssl);
                     auto asynssl = new SSLSocket(_acceptor.eventLoop, msg, ssl);
+				}
                     auto shark = new SSLHandShark(asynssl, &doHandShark);
 
 					shark.next = _sharkList.next;
@@ -385,7 +393,7 @@ protected:
             _wheel.prevWheel();
     }
 
-    static if(USEDSSL)
+	version(USE_SSL)
     {
         void doHandShark(SSLHandShark shark, SSLSocket sock)
         {
@@ -428,7 +436,7 @@ private:
    // int[ServerConnection!PipeLine] _list;
 	ServerConnection!PipeLine _list;
 
-    static if(USEDSSL)
+	version(USE_SSL)
     {
 		SSLHandShark _sharkList;
     }
@@ -500,7 +508,7 @@ private:
     PipeLine _pipe;
 }
 
-static if(USEDSSL)
+version(USE_SSL)
 {
     final class SSLHandShark
     {

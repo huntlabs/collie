@@ -215,24 +215,9 @@ protected:
             auto data = buffer.data;
             _iocpWBuf.len = data.length;
             _iocpWBuf.buf = cast(char*) data.ptr;
-            DWORD dwFlags = 0;
-            DWORD dwSent = 0;
-            _iocpwrite.event = _event;
-            _iocpwrite.operationType = IOCP_OP_TYPE.write;
-            int nRet = WSASend(cast(SOCKET) _socket.handle(), &_iocpWBuf, 1,
-                &dwSent, dwFlags, &_iocpwrite.ol, cast(LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
-			//collectException(trace("do WSASend , return : ", nRet));
-            if (nRet == SOCKET_ERROR)
-            {
-                DWORD dwLastError = GetLastError();
-                if (dwLastError != ERROR_IO_PENDING)
-                {
-					collectException(error("WSASend failed with error: ", dwLastError));
-                    onClose();
-                }
-            }
-        }
-        else
+			doWrite();
+		}
+		else
         {
 			import core.stdc.string;
             while (alive && !_writeQueue.empty)
@@ -314,8 +299,12 @@ protected:
             try
             {
                 trace("read data : data.length: ", _event.readLen);
-                if (_event.readLen > 0)
+                if (_event.readLen > 0) {
                     _readCallBack(_readBuffer[0 .. _event.readLen]);
+				} else {
+					onClose();
+					return;
+				}
             }
             catch(Exception e)
             {
@@ -333,13 +322,10 @@ protected:
                 try
                 {
                     auto len = _socket.receive(_readBuffer);
-					if (len > 0)
-					{
+					if (len > 0) {
 						collectException(_readCallBack(_readBuffer[0 .. len]));
 						continue;
-					}
-					else if(len < 0)
-					{
+					} else if(len < 0) {
 						if (errno == EAGAIN || errno == EWOULDBLOCK)
 						{
 							return;
@@ -366,9 +352,7 @@ protected:
 
     static if (IOMode == IO_MODE.iocp)
     {
-        bool doRead() nothrow
-        {
-
+        bool doRead() nothrow{
             _iocpBuffer.len = TCP_READ_BUFFER_SIZE;
             _iocpBuffer.buf = cast(char*) _readBuffer.ptr;
             _iocpread.event = _event;
@@ -392,14 +376,35 @@ protected:
             }
             return true;
         }
-    }
-protected:
-    import std.experimental.allocator.gc_allocator;
 
-    Socket _socket;
+		bool doWrite() nothrow{
+			DWORD dwFlags = 0;
+			DWORD dwSent = 0;
+			_iocpwrite.event = _event;
+			_iocpwrite.operationType = IOCP_OP_TYPE.write;
+			int nRet = WSASend(cast(SOCKET) _socket.handle(), &_iocpWBuf, 1,
+				&dwSent, dwFlags, &_iocpwrite.ol, cast(LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
+			//collectException(trace("do WSASend , return : ", nRet));
+			if (nRet == SOCKET_ERROR)
+			{
+				DWORD dwLastError = GetLastError();
+				if (dwLastError != ERROR_IO_PENDING)
+				{
+					collectException(error("WSASend failed with error: ", dwLastError));
+					onClose();
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+protected:
+	import std.experimental.allocator.gc_allocator;
+	
+	Socket _socket;
 	WriteSiteQueue _writeQueue;
-    AsyncEvent* _event;
-    ubyte[] _readBuffer;
+	AsyncEvent* _event;
+	ubyte[] _readBuffer;
 
     CallBack _unActive;
     TCPReadCallBack _readCallBack;

@@ -14,9 +14,10 @@ import std.string;
 import std.experimental.logger;
 import collie.socket.common;
 
-static if(USEDSSL)
+version(USE_SSL)
 {
     public import deimos.openssl.ssl;
+	public import deimos.openssl.bio;
 }
 else
 {
@@ -41,7 +42,7 @@ class ServerSSLConfig
     SSL_CTX* generateSSLCtx()
     {
         SSL_CTX* ctx = null;
-        static if(USEDSSL)
+		version(USE_SSL)
         {
             final switch (_mode)
             {
@@ -124,7 +125,7 @@ private:
     SSLMode _mode;
 }
 
-static if(USEDSSL)
+version(USE_SSL)
 {
     import core.sync.mutex;
     import core.thread;
