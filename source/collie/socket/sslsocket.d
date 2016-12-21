@@ -28,7 +28,7 @@ import deimos.openssl.ssl;
 import deimos.openssl.bio;
 import std.string;
 
-class SSLSocket : TCPSocket
+@trusted class SSLSocket : TCPSocket
 {
 	static if (IOMode == IO_MODE.iocp){
 		this(EventLoop loop, Socket sock, SSL* ssl,BIO * bioRead, BIO * bioWrite){
