@@ -95,26 +95,23 @@ final class IOCPLoop
         DWORD bytes = 0;
         int va = GetQueuedCompletionStatus(_iocp,  & bytes,  & key,  & overlapped,
             timeout);
+		if (overlapped is null) // timeout
+			return;
         if (va == 0)
         {
-            if (overlapped is null) // timeout
-                return;
             auto erro = GetLastError();
             if (erro == WAIT_TIMEOUT)
                 return;
-            error("GetQueuedCompletionStatus erro!");
+			//error("GetQueuedCompletionStatus erro! : ", erro);
             auto ev = cast(IOCP_DATA * ) overlapped;
             if (ev && ev.event)
             {
-                error("has event , the fd is : ", ev.event.fd);
                 if (ev.event.obj)
                     ev.event.obj.onClose();
             }
             return;
 
         }
-        if (overlapped is null)
-            return;
         auto ev = cast(IOCP_DATA * ) overlapped;
         final switch (ev.operationType)
         {

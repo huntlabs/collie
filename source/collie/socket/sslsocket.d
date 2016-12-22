@@ -15,6 +15,8 @@ version(USE_SSL) :
 import core.stdc.errno;
 import core.stdc.string;
 
+import core.thread;
+
 import std.string;
 import std.socket;
 import std.exception;
@@ -56,10 +58,8 @@ import deimos.openssl.bio;
 			SSL_shutdown(_ssl);
 			SSL_free(_ssl);
 			_ssl = null;
-			static if (IOMode == IO_MODE.iocp){
-				BIO_free(_bioIn);
-				BIO_free(_bioOut);
-			}
+			_bioIn = null;
+			_bioOut = null;
 		}
 		static if (IOMode == IO_MODE.iocp){
 			import core.memory;
@@ -84,27 +84,25 @@ protected:
 			SSL_shutdown(_ssl);
 			SSL_free(_ssl);
 			_ssl = null;
-			static if (IOMode == IO_MODE.iocp){
-				BIO_free(_bioIn);
-				BIO_free(_bioOut);
-			}
+			_bioIn = null;
+			_bioOut = null;
 		}
 		super.onClose();
 	}
 	static if (IOMode == IO_MODE.iocp){
 
 		override void onWrite(){
-			if (!alive)
-				return;
-			if(writeBIOtoSocket() || _writeQueue.empty ) return;
+			if(writeBIOtoSocket() || _writeQueue.empty) return;
 			try{
-				auto buffer = _writeQueue.front;
-				auto len = SSL_write(_ssl, buffer.data.ptr, cast(int)buffer.length);   // data中存放了要发送的数据
-				if (len > 0) {
-					if (buffer.add(len)){
+				if(_lastWrite > 0){
+					auto buffer = _writeQueue.front;
+					if (buffer.add(_lastWrite)){
 						_writeQueue.deQueue().doCallBack();
 					}
-				} 
+				}
+				if(!alive || _writeQueue.empty) return;
+				auto buffer = _writeQueue.front;
+				_lastWrite = SSL_write(_ssl, buffer.data.ptr, cast(int)buffer.length);   // data中存放了要发送的数据
 				writeBIOtoSocket();
 			} catch(Exception e){
 				showException(e);
@@ -113,12 +111,14 @@ protected:
 		override void onRead(){
 			try
 			{
-				
-				trace("read data : data.length: ", _event.readLen);
+				if (!alive) return;
+				//trace("read data : data.length: ", _event.readLen);
 				if (_event.readLen > 0){
 					BIO_write(_bioIn, _readBuffer.ptr, cast(int)_event.readLen);
 					if (!_isHandshaked){
 						if (!handlshake()){
+							_event.readLen = 0;
+							doRead();
 							return;
 						}
 						onWrite();
@@ -127,9 +127,10 @@ protected:
 						int ret = SSL_read(_ssl, _rBuffer.ptr, cast(int)_rBuffer.length);
 						if (ret > 0) {
 							_readCallBack(_rBuffer[0 .. ret]);
-						}
-						if(ret < _rBuffer.length)
+							continue;
+						} else {
 							break;
+						}
 					}
 				} else {
 					onClose();
@@ -141,14 +142,18 @@ protected:
 				showException(e);
 			}
 			_event.readLen = 0;
+			//collectException(trace("alive do read : ", alive));
 			if (alive)
 				doRead();
 		}
 		bool writeBIOtoSocket() nothrow {
+			if(!alive) return true;
 			int hasread = BIO_read(_bioOut, _wBuffer.ptr, cast(int)_wBuffer.length);
+			//collectException(trace("read leng is : ", hasread));
 			if (hasread > 0) {
 				_iocpWBuf.len = hasread;
 				_iocpWBuf.buf = cast(char*) _wBuffer.ptr;
+				_event.writeLen = 0;
 				doWrite();
 				return true;
 			}
@@ -231,9 +236,8 @@ protected:
 	final bool handlshake() nothrow
 	{
 		int r = SSL_do_handshake(_ssl);
-		static if (IOMode == IO_MODE.iocp){
+		static if (IOMode == IO_MODE.iocp)
 			writeBIOtoSocket();
-		}
 		if (r == 1)
 		{
 			//collectException(trace("ssl connected fd : ", fd));
@@ -248,9 +252,8 @@ protected:
 		if (err == SSL_ERROR_WANT_WRITE)
 		{
 			//collectException(trace("return want write fd = ", fd));
-			static if (IOMode == IO_MODE.iocp){
+			static if (IOMode == IO_MODE.iocp)
 				writeBIOtoSocket();
-			}
 			return false;
 		}
 		else if (err == SSL_ERROR_WANT_READ)
@@ -260,7 +263,7 @@ protected:
 		}
 		else
 		{
-			collectException(trace("SSL_do_handshake return: ", r, "  erro :", err,
+			collectException(error("SSL_do_handshake return: ", r, "  erro :", err,
 					"  errno:", errno, "  erro string:", fromStringz(strerror(errno))));
 			onClose();
 			return false;
@@ -278,6 +281,6 @@ private:
 		BIO * _bioOut;
 		ubyte[] _rBuffer;
 		ubyte[] _wBuffer;
+		ptrdiff_t  _lastWrite = 0;
 	}
 }
-

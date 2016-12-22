@@ -358,6 +358,7 @@ protected:
             int nRet = WSARecv(cast(SOCKET) _socket.handle, &_iocpBuffer,
                 cast(uint) 1, &dwReceived, &dwFlags, &_iocpread.ol,
                 cast(LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
+			collectException(trace("do WSARecv , return : ", nRet));
             if (nRet == SOCKET_ERROR)
             {
                 DWORD dwLastError = GetLastError();
@@ -378,7 +379,7 @@ protected:
 			_iocpwrite.operationType = IOCP_OP_TYPE.write;
 			int nRet = WSASend(cast(SOCKET) _socket.handle(), &_iocpWBuf, 1,
 				&dwSent, dwFlags, &_iocpwrite.ol, cast(LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
-			//collectException(trace("do WSASend , return : ", nRet));
+			collectException(trace("do WSASend , return : ", nRet));
 			if (nRet == SOCKET_ERROR)
 			{
 				DWORD dwLastError = GetLastError();

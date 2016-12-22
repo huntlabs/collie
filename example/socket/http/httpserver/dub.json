@@ -18,7 +18,9 @@
 			"versions": ["USE_SSL"],
 			"subConfigurations": {
                 "collie": "ssl"
-            }
+            },
+			"sourceFiles-windows-x86-dmd": ["../../../lib/x86/ssl.lib","../../../lib/x86/eay.lib"],
+			"sourceFiles-windows-x86_64-dmd": ["../../../lib/x64/libeay32.lib","../../../lib/x64/ssleay32.lib"]
 		}
 	]
 }
