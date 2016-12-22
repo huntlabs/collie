@@ -10,13 +10,16 @@
  */
 module collie.codec.http.server.httpserveroptions;
 
-import collie.utils.vector;
-import collie.codec.http.httpmessage;
-import collie.codec.http.server.requesthandler;
 import collie.codec.http.codec.httpcodec;
+import collie.codec.http.httpmessage;
 import collie.codec.http.httptansaction;
-
+import collie.codec.http.server.requesthandler;
+import collie.utils.vector;
 import std.socket;
+
+version(USE_SSL){
+	import collie.bootstrap.serversslconfig;
+}
 
 
 class HTTPServerOptions
@@ -34,6 +37,10 @@ class HTTPServerOptions
 	uint listenBacklog = 1024;
 
 	size_t maxHeaderSize = 60 * 1024;
+
+	version(USE_SSL){
+		ServerSSLConfig ssLConfig;
+	}
 
 	struct IPConfig
 	{

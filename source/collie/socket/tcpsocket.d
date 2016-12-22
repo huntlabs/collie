@@ -219,11 +219,11 @@ protected:
 		}
 		else
         {
-			import core.stdc.string;
-            while (alive && !_writeQueue.empty)
-            {
-                try
-                {
+			try
+			{
+				import core.stdc.string;
+	            while (alive && !_writeQueue.empty)
+	            {
                     auto buffer = _writeQueue.front;
                     auto len = _socket.send(buffer.data);
 					if (len > 0)
@@ -254,13 +254,13 @@ protected:
 						" \n\tthe socket fd : ", fd);
 					onClose();
 					return;
-                }
-                catch (Exception e)
-                {
-					showException(e);
-                    onClose();
-                }
-            }
+	            }
+			}
+			catch (Exception e)
+			{
+				showException(e);
+				onClose();
+			}
         }
     }
 
@@ -317,36 +317,30 @@ protected:
         }
         else
         {
-            while (alive)
-            {
-                try
-                {
-                    auto len = _socket.receive(_readBuffer);
+			try{
+				import core.stdc.string;
+	            while (alive)
+	            {
+	                auto len = _socket.receive(_readBuffer);
 					if (len > 0) {
 						collectException(_readCallBack(_readBuffer[0 .. len]));
 						continue;
 					} else if(len < 0) {
-						if (errno == EAGAIN || errno == EWOULDBLOCK)
-						{
+						if (errno == EAGAIN || errno == EWOULDBLOCK){
 							return;
-						}
-						else if (errno == 4)
-						{
+						} else if (errno == 4) {
 							continue;
 						}
+						error("Do Close the erro code : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
+							" \n\tthe socket fd : ", fd);
 					}
-					import core.stdc.string;
-					error("read size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
-						" \n\tthe socket fd : ", fd);
 					onClose();
-					return;
-                }
-                catch (Exception e)
-                {
-					showException(e);
-                    onClose();
-                }
-            }
+					return;  
+	            }
+			} catch (Exception e) {
+				showException(e);
+				onClose();
+			}
         }
     }
 

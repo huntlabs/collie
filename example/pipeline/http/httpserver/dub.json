@@ -11,11 +11,14 @@
 	},
 	"configurations": [
             {
-                "name": "default",
+                "name": "default"
             },
             {
                 "name": "ssl",
-                "versions": ["SSL"]
+                "versions": ["USE_SSL"],
+                "subConfigurations": {
+                    "collie": "ssl"
+                }
             }
         ]
 }

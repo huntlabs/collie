@@ -41,46 +41,47 @@ class ServerSSLConfig
 
     SSL_CTX* generateSSLCtx()
     {
-        SSL_CTX* ctx = null;
+		if(_ctx)
+			return _ctx;
 		version(USE_SSL)
         {
             final switch (_mode)
             {
             case SSLMode.SSLv2v3:
-                ctx = SSL_CTX_new(SSLv23_method());
+					_ctx = SSL_CTX_new(SSLv23_method());
                 break;
             case SSLMode.TLSv1:
-                ctx = SSL_CTX_new(TLSv1_method());
+					_ctx = SSL_CTX_new(TLSv1_method());
                 break;
             case SSLMode.TLSv1_1:
-                ctx = SSL_CTX_new(TLSv1_1_method());
+					_ctx = SSL_CTX_new(TLSv1_1_method());
                 break;
             case SSLMode.TLSv1_2:
-                ctx = SSL_CTX_new(TLSv1_2_method());
+					_ctx = SSL_CTX_new(TLSv1_2_method());
                 break;
             }
-            if (ctx is null)
+			if (_ctx is null)
                 return null;
-            if (SSL_CTX_use_certificate_file(ctx, toStringz(_certificateFile), SSL_FILETYPE_PEM) < 0)
+			if (SSL_CTX_use_certificate_file(_ctx, toStringz(_certificateFile), SSL_FILETYPE_PEM) < 0)
             {
                 error("SSL_CTX_use_certificate_file failed ! file : ", _certificateFile);
-                SSL_CTX_free(ctx);
+				SSL_CTX_free(_ctx);
                 return null;
             }
-            if (SSL_CTX_use_PrivateKey_file(ctx, toStringz(_privateKeyFile), SSL_FILETYPE_PEM) < 0)
+			if (SSL_CTX_use_PrivateKey_file(_ctx, toStringz(_privateKeyFile), SSL_FILETYPE_PEM) < 0)
             {
                 error("SSL_CTX_use_PrivateKey_file failed! file : ", _privateKeyFile);
-                SSL_CTX_free(ctx);
+				SSL_CTX_free(_ctx);
                 return null;
             }
-            if (SSL_CTX_check_private_key(ctx) < 0)
+			if (SSL_CTX_check_private_key(_ctx) < 0)
             {
                 error("SSL_CTX_check_private_key failed");
-                SSL_CTX_free(ctx);
+				SSL_CTX_free(_ctx);
                 return null;
             }
         }
-        return ctx;
+        return _ctx;
     }
 
     @property certificateFile(string file)
@@ -123,6 +124,7 @@ private:
     string _privateKeyFile;
     string _cipherList;
     SSLMode _mode;
+	SSL_CTX* _ctx = null;
 }
 
 version(USE_SSL)

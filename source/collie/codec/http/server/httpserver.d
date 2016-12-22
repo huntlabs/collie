@@ -26,6 +26,12 @@ import collie.socket.eventloop;
 import collie.socket.eventloopgroup;
 import collie.socket.server.tcpserver;
 import collie.socket.server.connection;
+import collie.bootstrap.exception;
+import collie.bootstrap.exception;
+import collie.bootstrap.serversslconfig;
+version(USE_SSL) {
+import collie.socket.sslsocket;
+}
 
 import std.socket;
 import std.experimental.logger;
@@ -47,12 +53,20 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 
 	this(HTTPServerOptions options)
 	{
+		version(USE_SSL){
+			if(options.ssLConfig){
+				_ssl_Ctx = options.ssLConfig.generateSSLCtx();
+				if(_ssl_Ctx is null)
+					throw new SSLException("can not generate SSL_Ctx!");
+			}
+		}
 		_options = options;
 		_mainLoop = new EventLoop();
 		size_t thread = _options.threads - 1;
 		if(thread > 0) {
 			_group = new EventLoopGroup(cast(uint)thread);
 		}
+
 	}
 
 	void bind(ref IPVector addrs)
@@ -156,6 +170,10 @@ protected:
 			if(_group)
 				ser.setReusePort(true);
 			ser.group(_group).childPipeline(new shared ServerHandlerFactory(this));
+			version(USE_SSL){
+				if(_options.ssLConfig)
+					ser.setSSLConfig(_options.ssLConfig);
+			}
 			ser.pipeline(new shared ServerAccpeTFactory(ipconfig));
 			ser.heartbeatTimeOut(cast(uint)_options.timeOut);
 			ser.bind(ipconfig.address);
@@ -199,7 +217,33 @@ protected:
 
 	ServerConnection newConnect(EventLoop loop,Socket sock) @trusted 
 	{
-		return new HttpHandlerConnection(new TCPSocket(loop,sock),this,
+		TCPSocket socket;
+		version(USE_SSL){
+			if(_ssl_Ctx){
+				import collie.socket.common;
+				auto ssl = SSL_new(_ssl_Ctx);
+				static if (IOMode == IO_MODE.iocp){
+					BIO * readBIO = BIO_new(BIO_s_mem());
+					BIO * writeBIO = BIO_new(BIO_s_mem());
+					SSL_set_bio(ssl, readBIO, writeBIO);
+					SSL_set_accept_state(ssl);
+					socket = new SSLSocket(loop, sock, ssl,readBIO,writeBIO);
+				} else {
+					if (SSL_set_fd(ssl, sock.handle()) < 0)
+					{
+						error("SSL_set_fd error: fd = ", sock.handle());
+						SSL_shutdown(ssl);
+						SSL_free(ssl);
+						return null;
+					}
+					SSL_set_accept_state(ssl);
+					socket = new SSLSocket(loop, sock, ssl);
+				}
+			}
+		} else {
+			socket = new TCPSocket(loop,sock);
+		}
+		return new HttpHandlerConnection(socket,this,
 			new HTTP1XCodec(TransportDirection.DOWNSTREAM,cast(uint)_options.maxHeaderSize));
 	}
 private:
@@ -210,6 +254,7 @@ private:
 
 	HTTPServerOptions _options;
 	IPVector _ipconfigs;
+	SSL_CTX * _ssl_Ctx = null;
 
 	bool _isStart = false;
 }

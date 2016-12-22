@@ -17,6 +17,7 @@ import std.functional;
 import collie.socket;
 import collie.codec.http;
 import collie.codec.http.server;
+import collie.bootstrap.serversslconfig;
 
 debug { 
         extern(C) __gshared string[] rt_options = [ "gcopt=profile:1"];// maxPoolSize:50" ];
@@ -91,10 +92,16 @@ void main()
     writeln("Edit source/app.d to start your project.");
     globalLogLevel(LogLevel.warning);
 	trace("----------");
+
+	version(USE_SSL){
+		ServerSSLConfig ssl = new ServerSSLConfig(SSLMode.SSLv2v3);
+		ssl.certificateFile = "server.pem";
+		ssl.privateKeyFile = "server.pem";
+	}
 	HTTPServerOptions option = new HTTPServerOptions();
 	option.handlerFactories.insertBack(toDelegate(&newHandler));
 	option.threads = 2;
-
+	version(USE_SSL) option.ssLConfig = ssl;
 	HTTPServerOptions.IPConfig ipconfig ;
 	ipconfig.address = new InternetAddress("0.0.0.0", 8081);
 

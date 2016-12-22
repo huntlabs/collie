@@ -61,6 +61,11 @@ import deimos.openssl.bio;
 				BIO_free(_bioOut);
 			}
 		}
+		static if (IOMode == IO_MODE.iocp){
+			import core.memory;
+			GC.free(_rBuffer.ptr);
+			GC.free(_wBuffer.ptr);
+		}
 	}
 
 	override @property bool isAlive() @trusted nothrow
@@ -152,65 +157,54 @@ protected:
 	} else {
 		override void onWrite()
 		{
-			if (!alive)
-				return;
-			if (!_isHandshaked)
+			if (alive && !_isHandshaked)
 			{
 				if (!handlshake())
 					return;
 			}
-			while (!_writeQueue.empty)
-			{
-				try
-				{
+			try{
+				while (alive && !_writeQueue.empty) {
 					auto buffer = _writeQueue.front;
 					auto len = SSL_write(_ssl, buffer.data.ptr, cast(int) buffer.length); // _socket.send(buffer.data);
 					if (len > 0) {
 						if (buffer.add(len)){
 							_writeQueue.deQueue().doCallBack();
 						}
+						continue;
 					} else {
-						trace("write size: ",len," erro code is : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
-							"   the socket fd : ", fd);
-						if (errno == EAGAIN || errno == EWOULDBLOCK)
-						{
-							return;
-						}
-						else if (errno == 4)
-						{
+						int sslerron = SSL_get_error(_ssl, len);
+						if (sslerron == SSL_ERROR_WANT_READ || errno == EWOULDBLOCK
+							|| errno == EAGAIN)
+							break;
+						else if (errno == 4 ) // erro 4 :系统中断组织了
 							continue;
-						}
 					}
 					error("write size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
 						" \n\tthe socket fd : ", fd);
 					onClose();
 					return;
 				}
-				catch (Exception e)
-				{
-					import collie.utils.exception;
-					showException(e);
-					onClose();
-				}
+			} catch (Exception e) {
+				import collie.utils.exception;
+				showException(e);
+				onClose();
+				return;
 			}
 		}
 
 		override void onRead()
 		{
-			if (!alive)
-				return;
-			if (!_isHandshaked)
+			try
 			{
-				if (!handlshake())
-					return;
-			}
-			while (true)
-			{
-				try
-				{
+				while (alive){
+					if (!_isHandshaked){
+						if (!handlshake())
+							return;
+					}
 					auto len = SSL_read(_ssl, (_readBuffer.ptr), cast(int)(_readBuffer.length));
 					if (len > 0){
 						collectException(_readCallBack(_readBuffer[0 .. len]));
+						continue;
 					} else if(len < 0) {
 						int sslerron = SSL_get_error(_ssl, len);
 						if (sslerron == SSL_ERROR_WANT_READ || errno == EWOULDBLOCK
@@ -218,19 +212,19 @@ protected:
 							break;
 						else if (errno == 4) // erro 4 :系统中断组织了
 							continue;
+						import core.stdc.string;
+						error("Do Close the erro code : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
+							" \n\tthe socket fd : ", fd);
 					}
-					import core.stdc.string;
-					error("read size: ",len," \n\tDo Close the erro code : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
-						" \n\tthe socket fd : ", fd);
 					onClose();
 					return;
 				}
-				catch (Exception e)
-				{
-					import collie.utils.exception;
-					showException(e);
-					onClose();
-				}
+			}
+			catch (Exception e)
+			{
+				import collie.utils.exception;
+				showException(e);
+				onClose();
 			}
 		}
 	}

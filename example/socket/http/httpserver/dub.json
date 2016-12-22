@@ -8,5 +8,17 @@
             "collie" : {
                 "path" : "../../../../"
             }
-	}
+	},
+	"configurations": [
+		{
+			"name": "default"
+		},
+		{
+			"name": "ssl",
+			"versions": ["USE_SSL"],
+			"subConfigurations": {
+                "collie": "ssl"
+            }
+		}
+	]
 }
