@@ -15,6 +15,8 @@ import collie.codec.http.session.httpsession;
 import std.socket;
 import collie.socket.tcpsocket;
 import collie.socket.eventloop;
+import collie.utils.task;
+import collie.utils.memory;
 
 @trusted class PipelineSessionDown : HandlerAdapter!(ubyte[]),SessionDown
 {
@@ -114,6 +116,9 @@ protected:
 	override void onClose() nothrow {
 		if(_session)
 			collectException(_session.inActive());
+		auto sock = tcpSocket();
+		if(sock)
+			collectException(_loop.post!true(newTask!gcFree(sock)));
 	}
 
 	override  void onActive() nothrow {

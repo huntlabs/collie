@@ -13,6 +13,7 @@ module collie.channel.tcpsockethandler;
 import collie.socket;
 import collie.channel.handler;
 import collie.channel.handlercontext;
+import collie.utils.task;
 
 final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 {
@@ -47,26 +48,17 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 
     override void write(Context ctx, ubyte[] msg, TheCallBack cback)
     {
-        _loop.post((){
-            if(_socket is null)
-            {
-				if(cback)
-            		cback(msg,0);
-                return;
-            }
-            if (context.pipeline.pipelineManager)
-                        context.pipeline.pipelineManager.refreshTimeout();
-            _socket.write(msg, cback);
-        });
+		if(_loop.isInLoopThread()){
+			_postWrite(msg,cback);
+		} else {
+			_loop.post(newTask(&_postWrite,msg,cback));
+		}
 
     }
 
     override void close(Context ctx)
     {
-        _loop.post((){
-            if (_socket)
-                _socket.close();
-        });
+		_loop.post(&_postClose);
     }
 
 protected:
@@ -94,6 +86,23 @@ protected:
         context.fireRead(buf);
     }
 
+private:
+	final void _postClose(){
+		if (_socket)
+			_socket.close();
+	}
+	
+	final void _postWrite(ubyte[] msg,TCPWriteCallBack cback)
+	{
+		if(_socket is null){
+			if(cback)
+				cback(msg,0);
+			return;
+		}
+		if (context.pipeline.pipelineManager)
+			context.pipeline.pipelineManager.refreshTimeout();
+		_socket.write(msg, cback);
+	}
 private:
     bool _isAttch = false;
     TCPSocket _socket;
