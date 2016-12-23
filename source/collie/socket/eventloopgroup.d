@@ -68,11 +68,6 @@ import collie.utils.functional;
             th.start();
     }
 
-    void post(uint index, CallBack cback)
-    {
-        at(index).post(cback);
-    }
-
     EventLoop opIndex(size_t index)
     {
         return at(index);

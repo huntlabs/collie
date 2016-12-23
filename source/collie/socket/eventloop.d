@@ -25,6 +25,7 @@ import std.experimental.allocator.gc_allocator;
 
 import collie.socket.common;
 import collie.utils.queue;
+import collie.utils.task;
 
 static if (CustomTimer)
     import collie.utils.timingwheel;
@@ -36,11 +37,9 @@ static if (CustomTimer)
 
 @trusted class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
 {
-	alias CQueue = Queue!(CallBack,GCAllocator, true);
     this()
     {
         _poll = new T();
-		_callbackList = CQueue(32);
         _mutex = new Mutex();
         _run = false;
         static if (CustomTimer)
@@ -67,8 +66,8 @@ static if (CustomTimer)
             static if (CustomTimer)
                 timeout = doWheel();
             _poll.wait(timeout);
-            if (!_callbackList.empty){
-                doHandleList();
+            if (!_taskList.empty){
+				doTaskList();
             }
         }
         _thID = ThreadID.init;
@@ -114,10 +113,28 @@ static if (CustomTimer)
 		}
         synchronized (_mutex)
         {
-            _callbackList.enQueue(cback);
+			_taskList.enQueue(newTask!(CallBack)(cback));
         }
         weakUp();
     }
+
+	void post(bool MustInQueue = true)(AbstractTask task)
+	{
+		static if(!MustInQueue) {
+			if (isInLoopThread())
+			{
+				import collie.utils.memory;
+				task.job();
+				gcFree(task);
+				return;
+			}
+		}
+		synchronized (_mutex)
+		{
+			_taskList.enQueue(task);
+		}
+		weakUp();
+	}
 
     bool addEvent(AsyncEvent* event) nothrow
     {
@@ -182,33 +199,35 @@ static if (CustomTimer)
     }
 
 protected:
-    void doHandleList()
+    void doTaskList()
     {
         import std.algorithm : swap;
 
-		auto tmp = CQueue(32);
+		TaskQueue tmp;
         synchronized (_mutex){
-            swap(tmp, _callbackList);
+			swap(tmp, _taskList);
         }
         while (!tmp.empty)
         {
+			import collie.utils.memory;
+			import collie.utils.exception;
+			auto fp = tmp.deQueue();
             try
             {
-                auto fp = tmp.deQueue(null);
-                fp();
+				fp.job();
             }
             catch (Exception e)
             {
-				import collie.utils.exception;
 				showException(e);
             }
+			gcFree(fp);
         }
     }
 
 private:
     T _poll;
     Mutex _mutex;
-	CQueue _callbackList;
+	TaskQueue _taskList;
     bool _run;
     ThreadID _thID;
     static if (CustomTimer)
@@ -297,3 +316,6 @@ private:
         AsyncEvent* _event;
     }
 }
+
+
+

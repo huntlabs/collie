@@ -137,11 +137,12 @@ private:
 	final void doClose()
 	{
 		import collie.utils.memory;
+		import collie.utils.task;
 		import collie.utils.functional;
 		if(_timer)
 			_timer.stop();
 		auto client = _info.client;
-		_loop.post!true((){gcFree(client);});
+		_loop.post!true(newTask!gcFree(client));
 		_info.client = null;
 		onClose();
 	}
