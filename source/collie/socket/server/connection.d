@@ -13,6 +13,7 @@ module collie.socket.server.connection;
 import collie.utils.timingwheel;
 import collie.socket.tcpsocket;
 import collie.socket.eventloop;
+import collie.utils.task;
 
 @trusted abstract class ServerConnection : WheelTimer
 {
@@ -52,26 +53,25 @@ import collie.socket.eventloop;
 
 	final void write(ubyte[] data,TCPWriteCallBack cback = null) @trusted
 	{
-		_loop.post((){
-					if(_socket) {
-						rest();
-						_socket.write(data, cback);
-					}else if(cback)
-						cback(data,0);
-				});
+		if(_loop.isInLoopThread()){
+			_postWrite(data,cback);
+		} else {
+			_loop.post(newTask(&_postWrite,data,cback));
+		}
 	}
 
 	final void restTimeout() @trusted
 	{
-		_loop.post((){rest();});
+		if(_loop.isInLoopThread()){
+			rest();
+		} else {
+			_loop.post(newTask(&rest,0));
+		}
 	}
-
+	pragma(inline)
 	final void close() @trusted
 	{
-		_loop.post((){
-				if(_socket)
-					_socket.close();
-			});
+		_loop.post(&_postClose);
 	}
 
 	final @property tcpSocket()@safe {return _socket;}
@@ -81,6 +81,19 @@ protected:
 	void onRead(ubyte[] data) nothrow;
 
 private:
+	final void _postClose(){
+		if(_socket)
+			_socket.close();
+	}
+
+	final void _postWrite(ubyte[] data,TCPWriteCallBack cback)
+	{
+		if(_socket) {
+			rest();
+			_socket.write(data, cback);
+		}else if(cback)
+			cback(data,0);
+	}
 	final void doClose()
 	{
 		stop();

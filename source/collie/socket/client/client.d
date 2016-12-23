@@ -18,6 +18,7 @@ import collie.socket.tcpclient;
 import collie.socket.tcpsocket;
 import collie.socket.client.linkinfo;
 import collie.socket.client.exception;
+import collie.utils.task;
 
 @trusted abstract class BaseClient
 {
@@ -49,35 +50,24 @@ import collie.socket.client.exception;
 		_info.tryCount = 0;
 		_info.cback = cback;
 		_info.addr = addr;
-		_loop.post((){
-				startTimer();
-				connect();
-			});
-
+		_loop.post(&_postConnect);
 	}
 
 
 	final void write(ubyte[] data,TCPWriteCallBack cback = null) @trusted
 	{
-		if(_info.client is null){
-			if(cback) cback(data,0);
-			return;
+		if(_loop.isInLoopThread()){
+			_postWrite(data,cback);
+		} else {
+			_loop.post(newTask(&_postWrite,data,cback));
 		}
-		_loop.post((){
-				if(_info.client)
-					_info.client.write(data, cback);
-				else if(cback)
-					cback(data,0);
-			});
 	}
-	
+
+	pragma(inline)
 	final void close() @trusted
 	{
 		if(_info.client is null) return;
-		_loop.post((){
-				if(_info.client)
-					_info.client.close();
-			});
+		_loop.post(&_postClose);
 	}
 
 	final @property tcpClient() @trusted {return _info.client;}
@@ -146,6 +136,26 @@ private:
 		_info.client = null;
 		onClose();
 	}
+
+private:
+	final void _postClose(){
+		if(_info.client)
+			_info.client.close();
+	}
+
+	pragma(inline)
+	final void _postWrite(ubyte[] data,TCPWriteCallBack cback){
+		if(_info.client)
+			_info.client.write(data, cback);
+		else if(cback)
+			cback(data,0);
+	}
+
+	final void _postConnect(){
+		startTimer();
+		connect();
+	}
+
 private
 	EventLoop _loop;
 	LinkInfo _info;

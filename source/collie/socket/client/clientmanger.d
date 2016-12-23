@@ -21,6 +21,7 @@ import collie.socket.client.exception;
 
 import collie.utils.timingwheel;
 import collie.utils.memory;
+import collie.utils.task;
 
 @trusted final class TCPClientManger
 {
@@ -87,7 +88,11 @@ import collie.utils.memory;
 		_wheel = new TimingWheel(whileSize);
 		_timer = new Timer(_loop);
 		_timer.setCallBack(&onTimer);
-		_loop.post((){ _timer.start(time);});
+		if(_loop.isInLoopThread()){
+			_timer.start(time);
+		} else {
+			_loop.post(newTask(&_timer.start,time));
+		}
 	}
 
 	void connect(Address addr,ConCallBack cback = null)
@@ -98,10 +103,11 @@ import collie.utils.memory;
 		info.addr = addr;
 		info.tryCount = 0;
 		info.cback = cback;
-		_loop.post((){
-				_waitConnect.addInfo(info);
-				connect(info);
-			});
+		if(_loop.isInLoopThread()){
+			_postConmnect(info);
+		} else {
+			_loop.post(newTask(&_postConmnect,info));
+		}
 	}
 
 	void stopTimer(){
@@ -162,6 +168,12 @@ protected:
 	void onTimer(){
 		_wheel.prevWheel();
 	}
+
+private:
+	final void _postConmnect(LinkInfo * info){
+		_waitConnect.addInfo(info);
+		connect(info);
+	}
 private:
 	uint _tryCout = 1;
 	uint _timeout;
@@ -207,22 +219,27 @@ private:
 
 	final void write(ubyte[] data,TCPWriteCallBack cback = null) @trusted
 	{
-		_loop.post((){
-				if(_client)
-					_client.write(data, cback);
-				else if(cback)
-					cback(data,0);
-			});
+		if(_loop.isInLoopThread()){
+			_postWrite(data,cback);
+		} else {
+			_loop.post(newTask(&_postWrite,data,cback));
+		}
 	}
 
+	final void restTimeout() @trusted
+	{
+		if(_loop.isInLoopThread()){
+			rest();
+		} else {
+			_loop.post(newTask(&rest,0));
+		}
+	}
+
+	pragma(inline)
 	final void close() @trusted
 	{
-		_loop.post((){
-				if(_client)
-					_client.close();
-			});
+		_loop.post(&_postClose);
 	}
-
 protected:
 	void onActive() nothrow;
 	void onClose() nothrow;
@@ -233,6 +250,20 @@ private:
 	{
 		stop();
 		onClose();
+	}
+
+	final void _postClose(){
+		if(_client)
+			_client.close();
+	}
+	
+	final void _postWrite(ubyte[] data,TCPWriteCallBack cback)
+	{
+		if(_client) {
+			rest();
+			_client.write(data, cback);
+		}else if(cback)
+			cback(data,0);
 	}
 private:
 	TCPClient _client;
