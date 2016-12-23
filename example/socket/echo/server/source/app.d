@@ -58,7 +58,7 @@ protected:
 
 void main()
 {
-	ServerConnection newConnect(EventLoop lop,Socket soc)
+	@trusted ServerConnection newConnect(EventLoop lop,Socket soc)
 	{
 		return new EchoConnect(new TCPSocket(lop,soc));
 	}
