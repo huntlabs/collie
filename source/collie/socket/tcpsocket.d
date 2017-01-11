@@ -239,14 +239,13 @@ protected:
 					}
 					else 
 					{
-						trace("write size: ",len," erro code is : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
-							"   the socket fd : ", fd);
 						if (errno == EAGAIN || errno == EWOULDBLOCK)
 						{
 							return;
 						}
 						else if (errno == 4)
 						{
+							warning("Interrupted system call the socket fd : ", fd);
 							continue;
 						}
 					}
@@ -329,6 +328,7 @@ protected:
 						if (errno == EAGAIN || errno == EWOULDBLOCK){
 							return;
 						} else if (errno == 4) {
+							warning("Interrupted system call the socket fd : ", fd);
 							continue;
 						}
 						error("Do Close the erro code : ", errno, "  erro is : " ,fromStringz(strerror(errno)), 
