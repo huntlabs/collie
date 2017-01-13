@@ -16,7 +16,7 @@ import std.traits;
 import std.range;
 
 void splitNameValue(TChar, Char, bool caseSensitive = true)(TChar[] data, in Char pDelim, in Char vDelim, 
-	bool delegate(TChar[],TChar[]) callback) if(isSomeChar!(Unqual!TChar) && isSomeChar!(Unqual!Char) )
+	scope bool delegate(TChar[],TChar[]) callback) if(isSomeChar!(Unqual!TChar) && isSomeChar!(Unqual!Char) )
 {
 	enum size_t blen = 1;
 	enum size_t elen = 1;
@@ -27,7 +27,7 @@ void splitNameValue(TChar, Char, bool caseSensitive = true)(TChar[] data, in Cha
 }
 
 void splitNameValue(TChar, Char,bool caseSensitive = true)(TChar[] data, const(Char)[] pairDelim, const(Char)[] valueDelim,
-	bool delegate(TChar[],TChar[]) callback) if(isSomeChar!(Unqual!TChar) && isSomeChar!(Unqual!Char) )
+	scope bool delegate(TChar[],TChar[]) callback) if(isSomeChar!(Unqual!TChar) && isSomeChar!(Unqual!Char) )
 {
 	const size_t blen = pairDelim.length;
 	const size_t elen = valueDelim.length;

@@ -29,8 +29,8 @@ class HTTPForm
 	{
 		@property fileName(){return _fileName;}
 		@property contentType(){return _contentType;}
-		@property fileSzie(){return _length;} 
-		void read(size_t size,void delegate(in ubyte[] data) cback)
+		@property fileSize(){return _length;} 
+		void read(size_t size,scope void delegate(in ubyte[] data) cback)
 		{
 			size = size > _length ? _length : size;
 			_body.rest(_startSize);

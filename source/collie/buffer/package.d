@@ -13,7 +13,7 @@ module collie.buffer;
 interface Buffer
 {
 	@property bool eof() const;
-	size_t read(size_t size, void delegate(in ubyte[]) cback);
+	size_t read(size_t size, scope void delegate(in ubyte[]) cback);
 	size_t write(in ubyte[] data);
 	void rest(size_t size = 0);
 	@property size_t length() const;
