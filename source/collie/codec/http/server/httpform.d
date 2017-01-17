@@ -19,6 +19,11 @@ import collie.utils.string;
 import collie.utils.vector;
 import std.uri;
 
+class HTTPFormException : Exception
+{
+	mixin basicExceptionCtors;
+}
+
 class HTTPForm
 {
 	alias StringArray = string[];
@@ -260,7 +265,7 @@ protected:
 		{
 			return false;
 		}
-		enforce(ub == LRLN, "showed be \\r\\n");
+		enforce!HTTPFormException(ub == LRLN, "showed be \\r\\n");
 		return true;
 	}
 

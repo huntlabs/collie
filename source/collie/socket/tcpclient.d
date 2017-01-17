@@ -93,7 +93,7 @@ protected:
         if (_isFrist && !_isConnect && _connectBack)
         {
             _isFrist = false;
-			collectException(_connectBack(false));
+			collieCathException!false(_connectBack(false));
             return;
         }
 		_isConnect = false;
@@ -107,7 +107,7 @@ protected:
         {
             _isFrist = false;
 			_isConnect = true;
-			collectException(_connectBack(true));
+			collieCathException!false(_connectBack(true));
         }
 
         super.onWrite();

@@ -16,3 +16,4 @@ class HTTPMessageTypeException : Exception
 {
 	mixin basicExceptionCtors;
 }
+

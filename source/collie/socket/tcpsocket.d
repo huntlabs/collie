@@ -288,27 +288,22 @@ protected:
 		_readCallBack = null;
 		_unActive = null;
 		if (unActive)
-			collectException(unActive());
+			collieCathException!false(unActive());
     }
 
     override void onRead() nothrow
     {
         static if (IOMode == IO_MODE.iocp)
         {
-            try
-            {
-                trace("read data : data.length: ", _event.readLen);
-                if (_event.readLen > 0) {
-                    _readCallBack(_readBuffer[0 .. _event.readLen]);
-				} else {
-					onClose();
-					return;
-				}
-            }
-            catch(Exception e)
-            {
-				showException(e);
-            }
+			collieCathException!false({
+	                trace("read data : data.length: ", _event.readLen);
+	                if (_event.readLen > 0) {
+	                    _readCallBack(_readBuffer[0 .. _event.readLen]);
+					} else {
+						onClose();
+						return;
+					}
+				}());
 			_event.readLen = 0;
             if (alive)
                 doRead();
@@ -322,7 +317,7 @@ protected:
 	            {
 	                auto len = _socket.receive(_readBuffer);
 					if (len > 0) {
-						collectException(_readCallBack(_readBuffer[0 .. len]));
+						collieCathException!false(_readCallBack(_readBuffer[0 .. len]));
 						continue;
 					} else if(len < 0) {
 						if (errno == EAGAIN || errno == EWOULDBLOCK){
@@ -448,14 +443,7 @@ struct WriteSite
 
         if (_cback)
         {
-            try
-            {
-                _cback(_data, _site);
-            }
-            catch (Exception e)
-            {
-				showException(e);
-            }
+			collieCathException!false(_cback(_data, _site));
         }
         _cback = null;
         _data = null;

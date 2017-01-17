@@ -22,6 +22,7 @@ import collie.socket.eventloop;
 import collie.socket.transport;
 import collie.utils.queue;
 import collie.socket.tcpsocket;
+import collie.utils.exception;
 
 alias AcceptCallBack = void delegate(Socket sock);
 
@@ -121,7 +122,7 @@ alias AcceptCallBack = void delegate(Socket sock);
         {
 			collectException(error(e.toString));
             return false;
-        }
+		}
     }
 
     mixin TransportSocketOption;
@@ -136,19 +137,13 @@ protected:
     {
         static if (IO_MODE.iocp == IOMode)
         {
-            try
-            {
-                trace("new connect ,the fd is : ", _inSocket.handle());
-                SOCKET slisten = cast(SOCKET) _socket.handle;
-                SOCKET slink = cast(SOCKET) _inSocket.handle;
-                setsockopt(slink, SOL_SOCKET, 0x700B, cast(const char*)&slisten, slisten.sizeof);
-                _callBack(_inSocket);
-            }
-            catch (Exception e)
-            {
-				import collie.utils.exception;
-				showException(e);
-            }
+			collieCathException!false({
+	                trace("new connect ,the fd is : ", _inSocket.handle());
+	                SOCKET slisten = cast(SOCKET) _socket.handle;
+	                SOCKET slink = cast(SOCKET) _inSocket.handle;
+	                setsockopt(slink, SOL_SOCKET, 0x700B, cast(const char*)&slisten, slisten.sizeof);
+	                _callBack(_inSocket);
+				}());
             _inSocket = null;
             doAccept();
         }
@@ -159,16 +154,10 @@ protected:
                 socket_t fd = cast(socket_t)(.accept(_socket.handle, null, null));
                 if (fd == socket_t.init)
                     return;
-                try
-                {
-                    Socket sock = new Socket(fd, _socket.addressFamily);
-                    _callBack(sock);
-                }
-                catch (Exception e)
-                {
-					import collie.utils.exception;
-					showException(e);
-                }
+				collieCathException!false({
+	                    Socket sock = new Socket(fd, _socket.addressFamily);
+	                    _callBack(sock);
+					}());
             }
         }
     }

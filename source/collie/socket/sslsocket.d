@@ -126,7 +126,7 @@ protected:
 					while(true) {
 						int ret = SSL_read(_ssl, _rBuffer.ptr, cast(int)_rBuffer.length);
 						if (ret > 0) {
-							_readCallBack(_rBuffer[0 .. ret]);
+							collieCathException!false(_readCallBack(_rBuffer[0 .. ret]));
 							continue;
 						} else {
 							break;
@@ -140,7 +140,7 @@ protected:
 			catch(Exception e)
 			{
 				showException(e);
-			}
+			} 
 			_event.readLen = 0;
 			//collectException(trace("alive do read : ", alive));
 			if (alive)
@@ -208,7 +208,7 @@ protected:
 					}
 					auto len = SSL_read(_ssl, (_readBuffer.ptr), cast(int)(_readBuffer.length));
 					if (len > 0){
-						collectException(_readCallBack(_readBuffer[0 .. len]));
+						collieCathException!false(_readCallBack(_readBuffer[0 .. len]));
 						continue;
 					} else if(len < 0) {
 						int sslerron = SSL_get_error(_ssl, len);
@@ -244,7 +244,7 @@ protected:
 			_isHandshaked = true;
 			if (_handshakeCback)
 			{
-				collectException(_handshakeCback());
+				collieCathException!false(_handshakeCback());
 			}
 			return true;
 		}

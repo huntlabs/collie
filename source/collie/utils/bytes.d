@@ -38,7 +38,7 @@ ptrdiff_t findCharBytes(T)(in T[] data, in T[] chs) if(isCharByte!(T))
 		auto ptr = memchr(tdata.ptr,chs[0],tdata.length);
 		if(ptr is null) break;
 
-		size_t fistindex = (cast(T *) ptr) - data.ptr;
+		size_t fistindex = (cast(T *) ptr) - tdata.ptr;
 		if(tdata.length - fistindex < chs.length) 
 			break;
 
@@ -51,7 +51,7 @@ ptrdiff_t findCharBytes(T)(in T[] data, in T[] chs) if(isCharByte!(T))
 			}
 			++i; ++j;
 		}
-		index = cast(ptrdiff_t)fistindex;
+		index = cast(ptrdiff_t)(rsize + fistindex);
 		break;
 	next:
 		continue;

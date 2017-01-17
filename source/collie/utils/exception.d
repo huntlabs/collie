@@ -50,6 +50,23 @@ string buildErroCodeException(T)() if(is(T == enum))
 	return str;
 }
 
+void collieCathException(bool gcfree,E)(lazy E expression) nothrow
+{
+	import std.experimental.logger;
+	import std.exception : collectException;
+	import std.stdio;
+	try
+	{
+		expression();
+	} catch (Exception e){
+		showException!(gcfree)(e);
+	} catch (Error e){
+		collectException({error(e.toString); writeln(e.toString());}());
+		import core.stdc.stdlib;
+		exit(-1);
+	}
+}
+
 version(unittest)
 {
 	enum Test{

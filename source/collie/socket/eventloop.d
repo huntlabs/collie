@@ -219,7 +219,11 @@ protected:
             catch (Exception e)
             {
 				showException(e);
-            }
+			} catch (Error e){
+				collectException({error(e.toString); writeln(e.toString());}());
+				import core.stdc.stdlib;
+				exit(-1);
+			}
 			gcFree(fp);
         }
     }
