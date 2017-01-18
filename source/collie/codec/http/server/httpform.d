@@ -32,10 +32,10 @@ class HTTPForm
 
 	final class FormFile
 	{
-		@property fileName(){return _fileName;}
-		@property contentType(){return _contentType;}
-		@property fileSize(){return _length;} 
-		void read(size_t size,scope void delegate(in ubyte[] data) cback)
+		@property fileName() const {return _fileName;}
+		@property contentType() const {return _contentType;}
+		@property fileSize()const {return _length;} 
+		void read(size_t size,scope void delegate(in ubyte[] data) cback) 
 		{
 			size = size > _length ? _length : size;
 			_body.rest(_startSize);
@@ -112,7 +112,7 @@ class HTTPForm
 		return _forms.get(key, aty);
 	}
 	
-	auto getFileValue(string key) const
+	auto getFileValue(string key)
 	{
 		return _files.get(key, null);
 	}

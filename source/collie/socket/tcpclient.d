@@ -17,6 +17,7 @@ import collie.socket.eventloop;
 import collie.socket.common;
 import collie.socket.tcpsocket;
 import collie.socket.exception;
+import collie.utils.exception;
 
 alias ConnectCallBack = void delegate(bool connect);
 
