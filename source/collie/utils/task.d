@@ -29,7 +29,6 @@ private:
 
 @trusted final class Task(alias fun,Args...) : AbstractTask
 {
-private :
 	static if (Args.length > 0){
 		this(Args args){
 			_args = args;

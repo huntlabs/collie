@@ -28,12 +28,11 @@ class UbyteBuffer(Alloc) : Buffer
 		
 		@property allocator(){return _store.allocator;}
 		
-	}
-
-
-	this()
-	{
-		_store = BufferStore(1024);
+	} else {
+		this()
+		{
+			_store = BufferStore(1024);
+		}
 	}
 
 	~this(){

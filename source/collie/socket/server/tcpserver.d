@@ -108,7 +108,7 @@ import collie.socket.server.exception;
 	void close()
 	{
 		if(_acceptor)
-			_loop.post((){ _acceptor.close();});
+			_loop.post(&_acceptor.close);
 	}
 protected:
 	void newConnect(Socket socket)
