@@ -241,8 +241,10 @@ import core.stdc.string :  memset, memcpy;
 		this._len = s._len;
         if(_len > 0) {
             this.reserve(_len);
-                memcpy(this._data.ptr, s._data.ptr, (_len * T.sizeof));
+            memcpy(this._data.ptr, s._data.ptr, (_len * T.sizeof));
 		}
+        static if (stateSize!Allocator != 0)
+            this._alloc = s._alloc;
 	}
 
 	pragma(inline) void opAssign(T[] data)
