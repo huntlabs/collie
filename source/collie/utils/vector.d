@@ -36,44 +36,52 @@ import std.traits;
 	else
 		alias InsertT = const T;
 
-    this(size_t size) 
-    {
-		reserve(size);
-    }
-
-    this(ref T[] data, bool copy = true)
-    {
-		_len = data.length;
-		if(copy) {
-			reserve(data.length);
-			_data[0.._len] = data[];
-		} else {
-			_data = data;
-		}
-    }
-
-    static if (stateSize!Allocator != 0)
+     static if (stateSize!Allocator != 0)
     {
 		this(T[] data, Allocator alloc,bool copy = true)
         {
             this._alloc = alloc;
-            this(data,copy);
+            _len = data.length;
+            if(copy) {
+                reserve(data.length);
+                _data[0.._len] = data[];
+            } else {
+                _data = data;
+            }
         }
 
         this(size_t size, Allocator alloc)
         {
             this._alloc = alloc;
-            this(size);
+            reserve(size);
         }
 
 		@property allocator(){return _alloc;}
 
+    } else {
+        this(size_t size) 
+        {
+            reserve(size);
+        }
+
+        this(ref T[] data, bool copy = true)
+        {
+            _len = data.length;
+            if(copy) {
+                reserve(data.length);
+                _data[0.._len] = data[];
+            } else {
+                _data = data;
+            }
+        }
     }
 
     ~this()
     {
         if (_data.ptr)
         {
+            if(_len > 0)
+                _data[0.._len] = T.init;
             static if (addToGC)
                 GC.removeRange(_data.ptr);
             _alloc.deallocate(_data);
@@ -264,15 +272,15 @@ import std.traits;
 			len = _alloc.goodAllocSize(len);
 			elements = len / T.sizeof;
 		}
-		static if (hasIndirections!T)  
+		static if (hasIndirections!T || !hasMember!(IAllocator,"reallocate"))  
 		{
-			import core.stdc.string :  memset;
+			import core.stdc.string :  memset, memcpy;
 			immutable oldLength = _data.length;
 			auto ptr = cast(T *) enforce(_alloc.allocate(len).ptr);
 			T[] data = ptr[0..elements];
-			memset((ptr + _len),0,(len - _len * T.sizeof));
+			memset(ptr,0,(len * T.sizeof));
 			if(_len > 0) {
-				data[0.._len] = _data[0.._len];
+                memcpy(ptr, _data.ptr, (_len * T.sizeof));
 			}
 			static if (addToGC) {
 				GC.addRange(ptr, len);
