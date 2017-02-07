@@ -30,6 +30,12 @@ import collie.codec.http.server;
 abstract class IWebSocket : RequestHandler
 {
 	alias Buffer = Vector!(ubyte);
+	
+	this(){
+		_text = Buffer(256);
+		_binary= Buffer(256);
+	}
+	
 	pragma(inline)
 		final bool ping(ubyte[] data)
 	{

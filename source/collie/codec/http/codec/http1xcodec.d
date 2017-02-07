@@ -38,6 +38,8 @@ class HTTP1XCodec : HTTPCodec
 		_parser.onChunkComplete(&onChunkComplete);
 		_parser.onBody(&onBody);
 		_parser.onMessageComplete(&onMessageComplete);
+		_currtKey = HVector(256);
+		_currtValue = HVector(256);
 	}
 
 	override CodecProtocol getProtocol() {

@@ -102,7 +102,7 @@ static if (CustomTimer)
 
     void post(bool MustInQueue = false)(CallBack cback)
 	in{
-		assert(cback);
+	//	assert(cback);
 	}body{
 		static if(!MustInQueue) {
 	        if (isInLoopThread())

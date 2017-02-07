@@ -100,7 +100,7 @@ void main()
 	}
 	HTTPServerOptions option = new HTTPServerOptions();
 	option.handlerFactories.insertBack(toDelegate(&newHandler));
-	option.threads = 2;
+	option.threads = 1;
 	version(USE_SSL) option.ssLConfig = ssl;
 	HTTPServerOptions.IPConfig ipconfig ;
 	ipconfig.address = new InternetAddress("0.0.0.0", 8081);

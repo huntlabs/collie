@@ -16,11 +16,12 @@ import std.experimental.allocator.common;
 import std.experimental.allocator.gc_allocator;
 import collie.utils.allocator;
 import std.traits;
+import core.stdc.string :  memset, memcpy;
 
-@trusted struct Vector(T, IAllocator = T, bool addInGC = true)
+@trusted struct Vector(T, TAllocator = T, bool addInGC = true)
 {
-	static if(hasMember!(IAllocator,"allocate") && hasMember!(IAllocator,"deallocate") ){
-		alias Allocator = IAllocator;
+	static if(hasMember!(TAllocator,"allocate") && hasMember!(TAllocator,"deallocate") ){
+		alias Allocator = TAllocator;
 		enum addToGC = addInGC && hasIndirections!T && !is(Allocator == GCAllocator);
 	} else {
 		version(OSX) {
@@ -36,8 +37,9 @@ import std.traits;
 	else
 		alias InsertT = const T;
 
-     static if (stateSize!Allocator != 0)
+    static if (stateSize!Allocator != 0)
     {
+        this() @disable;
 		this(T[] data, Allocator alloc,bool copy = true)
         {
             this._alloc = alloc;
@@ -54,6 +56,10 @@ import std.traits;
         {
             this._alloc = alloc;
             reserve(size);
+        }
+
+        this(Allocator alloc){
+            this._alloc = alloc;
         }
 
 		@property allocator(){return _alloc;}
@@ -233,13 +239,19 @@ import std.traits;
 	pragma(inline) void opAssign(ref typeof(this) s)
 	{
 		this._len = s._len;
-		this._data = s._data.dup;
+        if(_len > 0) {
+            this.reserve(_len);
+                memcpy(this._data.ptr, s._data.ptr, (_len * T.sizeof));
+		}
 	}
 
 	pragma(inline) void opAssign(T[] data)
 	{
 		this._len = data.length;
-		this._data = data.dup;
+		if(_len > 0) {
+            this.reserve(_len);
+             memcpy(this._data.ptr, data.ptr, (_len * T.sizeof));
+		}
 	}
 
     pragma(inline, true) T at(size_t i) 
@@ -272,42 +284,24 @@ import std.traits;
 			len = _alloc.goodAllocSize(len);
 			elements = len / T.sizeof;
 		}
-		static if (hasIndirections!T || !hasMember!(IAllocator,"reallocate"))  
-		{
-			import core.stdc.string :  memset, memcpy;
-			immutable oldLength = _data.length;
-			auto ptr = cast(T *) enforce(_alloc.allocate(len).ptr);
-			T[] data = ptr[0..elements];
-			memset(ptr,0,(len * T.sizeof));
-			if(_len > 0) {
-                memcpy(ptr, _data.ptr, (_len * T.sizeof));
-			}
-			static if (addToGC) {
-				GC.addRange(ptr, len);
-				if(_data.ptr) {
-					GC.removeRange(_data.ptr);
-					_alloc.deallocate(_data);
-				}
-			} else {
-				if(_data.ptr) {
-					_alloc.deallocate(_data);
-				}
-			}
-			
-			_data = data;
-		}
-		else
-		{
-			if(_data.ptr is null) {
-				auto ptr = cast(T*)(enforce(_alloc.allocate(len).ptr));
-				_data = ptr[0..elements];
-			} else {
-				void[] td = cast(void[])_data;
-				enforce(_alloc.reallocate(td,len));
-				auto ptr = cast(T *)td.ptr;
-				_data = ptr[0..elements];
-			}
-		}
+        auto ptr = cast(T *) enforce(_alloc.allocate(len).ptr);
+        T[] data = ptr[0..elements];
+        memset(ptr,0,len);
+        if(_len > 0) {
+            memcpy(ptr, _data.ptr, (_len * T.sizeof));
+        }
+        static if (addToGC) {
+            GC.addRange(ptr, len);
+            if(_data.ptr) {
+                GC.removeRange(_data.ptr);
+                _alloc.deallocate(_data);
+            }
+        } else {
+            if(_data.ptr) {
+                _alloc.deallocate(_data);
+            }
+        } 
+        _data = data;
 	}
 private:
     pragma(inline, true) 
@@ -340,6 +334,7 @@ unittest
 {
     import std.stdio;
 	import std.experimental.allocator.mallocator;
+    import std.experimental.allocator;
 
     Vector!(int) vec; // = Vector!int(5);
     int[] aa = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -384,4 +379,15 @@ unittest
     assert(vec2.length == 2);
     assert(cast(string)vec2[0] == "hahaha");
     assert(cast(string)vec2[1] == "huhuhu");
+
+    Vector!(int,IAllocator) vec22 = Vector!(int,IAllocator)(processAllocator);
+    int[] aa22 = [0, 1, 2, 3, 4, 5, 6, 7];
+    vec22.insertBack(aa22);
+    assert(vec22.length == 8);
+
+    vec22.insertBack(10);
+    assert(vec22.length == 9);
+
+    vec22.insertBefore(15);
+    assert(vec22.length == 10);
 }

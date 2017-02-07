@@ -102,6 +102,7 @@ import collie.socket.server.exception;
 		_wheel = new TimingWheel(whileSize);
 		_timer = new Timer(_loop);
 		_timer.setCallBack((){_wheel.prevWheel();});
+		//_timer.start(time);
 		_loop.post((){ _timer.start(time);});
 	}
 

@@ -16,7 +16,6 @@ import std.array;
 
 import std.algorithm : swap;
 import std.experimental.allocator;
-import std.experimental.allocator.gc_allocator;
 import std.experimental.logger;
 
 import collie.buffer;
@@ -34,11 +33,11 @@ final class SectionBuffer : Buffer
 {
     alias BufferVector = Vector!(ubyte[],IAllocator,false); //Mallocator);
 
-    this(size_t sectionSize, IAllocator clloc = _processAllocator)
+    this(size_t sectionSize, IAllocator clloc = processAllocator)
     {
         _alloc = clloc;
         _sectionSize = sectionSize;
-        _buffer = BufferVector(32,_alloc);
+        _buffer = BufferVector(8,_alloc);
     }
 
     ~this()
@@ -481,7 +480,7 @@ unittest
 
     writeln("\r\nswitch \r\n");
 
-    SectionBuffer.BufferVector tary;
+    SectionBuffer.BufferVector tary = SectionBuffer.BufferVector(processAllocator);
     buf.swap(tary);
     writeln("buffer  size:", buf.length);
     writeln("buffer max size:", buf.maxSize());

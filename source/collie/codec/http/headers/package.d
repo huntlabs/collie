@@ -13,7 +13,7 @@ struct HTTPHeaders
 {
 	alias HVector = Vector!(string);
 	enum kInitialVectorReserve = 32;
-
+	
 	/**
    * Remove all instances of the given header, returning true if anything was
    * removed and false if this header didn't exist in our set.
@@ -292,8 +292,8 @@ struct HTTPHeaders
 		return false;
 	}
 private:
-	Vector!(HTTPHeaderCode) _codes;
-	HVector _headersNames;
-	HVector _headerValues;
+	Vector!(HTTPHeaderCode) _codes ;// = Vector!(HTTPHeaderCode)(2);
+	HVector _headersNames ;
+	HVector _headerValues ;
 	size_t _deletedCount = 0;
 }

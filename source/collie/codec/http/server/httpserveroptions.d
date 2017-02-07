@@ -27,6 +27,9 @@ class HTTPServerOptions
 	alias RequestHandlerFactory = RequestHandler delegate(RequestHandler,HTTPMessage);
 	alias HTTPCodecFactory = HTTPCodec delegate(string,TransportDirection);
 	alias HVector = Vector!(RequestHandlerFactory);
+	this(){
+		handlerFactories  = HVector(2);
+	}
 
 	size_t threads = 1;
 
