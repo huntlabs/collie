@@ -1,0 +1,14 @@
+﻿{
+	"name": "mqtt-test",
+	"targetType":"executable",
+	"description": "test mqtt",
+	"copyright": "Copyright (C) 2015-2016 Shanghai Putao Technology Co., Ltd",
+	"homepage": "http://www.putao.com/",
+	"license": "Apache-2.0",
+	"authors": ["gaoxincheng"],
+	"mainSourceFile": "./mqtt_test.d",
+	"dependencies": {
+		"collie": {"path":"../../"},
+	},
+}
+
