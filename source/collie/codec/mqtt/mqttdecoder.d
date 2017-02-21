@@ -43,6 +43,9 @@ import collie.codec.mqtt.mqttunsubscribemsg;
 import collie.codec.mqtt.mqttunsubscribepayload;
 import collie.codec.mqtt.mqttversion;
 
+import collie.channel.handler;
+import collie.codec.bytetomessagedecoder;
+
  final class Result(T) {
 	
 	this(T _value, int _numberOfBytesConsumed) {
@@ -54,7 +57,7 @@ private:
 	 int numberOfBytesConsumed;
 }
 
- final class MqttDecoder  {
+ class MqttDecoder :ByteToMessageDecoder!(MqttMsg[]) {
 
 public:
 	 this() {
@@ -67,8 +70,23 @@ public:
 		this.maxBytesInMessage = maxBytesInMessage;
 	}
 
-	  void decode(ByteBuf buffer, ref MqttMsg[] mqs) {
+	override void read(Context ctx, ubyte[] msg)
+	{
+		bool success = true;
+		MqttMsg[] result;
+		success = decode(ctx, msg, result);
+		if (success)
+		{
+			ctx.fireRead(result);
+		}
+	}
 
+	override bool decode(Context ctx, ubyte[] buf, ref MqttMsg[] mqs) {
+		bool res = true;
+		ByteBuf buffer = new ByteBuf(buf);
+		//writeln("new bytebuf readerindex : --> ",buffer.readerIndex()," writeindex : ",buffer.writerIndex());
+		//writeln(buffer.data);
+		//writeln("new bytebuf len :",buffer.length," buf len : ",buf.length);
 		while(1)
 		{
 			if(_curstat == DecoderState.BAD_MESSAGE || _curstat == DecoderState.DECODE_FINISH)
@@ -131,8 +149,8 @@ public:
 							break;
 					}
 
-
 					_curstat = DecoderState.READ_PAYLOAD;
+
 					// fall through
 					break;
 				case DecoderState.READ_PAYLOAD:
@@ -204,7 +222,12 @@ public:
 					variableHeader = null;
 					payload = null;
 
-					_curstat = DecoderState.DECODE_FINISH;
+					//writeln(" bytebuf readerindex : --> ",buffer.readerIndex()," writeindex : ",buffer.writerIndex(),"  len : ",buffer.length);
+					if(buffer.readerIndex == buffer.length) //解码完毕
+						_curstat = DecoderState.DECODE_FINISH;
+					else
+						_curstat = DecoderState.READ_FIXED_HEADER; //解析下条消息
+
 					break;
 					
 				case DecoderState.BAD_MESSAGE:
@@ -218,6 +241,9 @@ public:
 			}
 		}
 
+		_curstat = DecoderState.READ_FIXED_HEADER;
+
+		return res;
 	}
 
 private:
@@ -562,7 +588,14 @@ private:
 		//writeln("msbSize : ",msbSize, " lsbSize : ",lsbSize, " result : ",result);
 		return new Result!(int)(result, numberOfBytesConsumed);
 	}
-	
+
+public:
+//	MqttMsgType getMsgType()
+//	{
+//		if(mqttFixedHeader !is null)
+//			return mqttFixedHeader.messageType();
+//		return MqttMsgType.UNKNOWN;
+//	}
 
 private:
 	 static  int DEFAULT_MAX_BYTES_IN_MESSAGE = 8092;
@@ -579,7 +612,7 @@ private:
 		BAD_MESSAGE,
 		DECODE_FINISH,
 	}
-	DecoderState _curstat;
+	 DecoderState _curstat;
 	 MqttFixedHeader mqttFixedHeader;
 	 Object variableHeader;
 	 Object payload;

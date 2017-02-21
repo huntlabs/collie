@@ -15,7 +15,7 @@ import collie.codec.messagetobyteencoder;
 
 class StringEncoder : MessageToByteEncoder!string
 {
-	ubyte[] encode(ref string msg);
+	override ubyte[] encode(ref string msg)
 	{
 		return cast(ubyte[])msg.dup;
 	}

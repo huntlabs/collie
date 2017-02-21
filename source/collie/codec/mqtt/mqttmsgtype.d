@@ -28,4 +28,5 @@ enum MqttMsgType
 	PINGREQ = 12,
 	PINGRESP = 13,
 	DISCONNECT = 14,
+	UNKNOWN   = 15,
 }

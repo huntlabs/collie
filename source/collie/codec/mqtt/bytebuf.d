@@ -29,13 +29,13 @@ import core.stdc.string;
 	this(IAllocator clloc = _processAllocator)
 	{
 		_alloc = clloc;
-		_readIndex = _writeIndex = -1;
+		_readIndex = _writeIndex = 0;
 	}
 
 	this(ubyte[] data ,IAllocator clloc = _processAllocator)
 	{
 		_alloc = clloc;
-		_readIndex = _writeIndex = -1;
+		_readIndex = _writeIndex = 0;
 		writeBytes(data);
 	}
 
@@ -99,6 +99,7 @@ import core.stdc.string;
 	{
 		if(_readIndex + skipsize > _writeIndex)
 		{
+			writeln("_readInxde : ",_readIndex,"skipsize :",skipsize,"_writeIndex : ",_writeIndex);
 			throw new Exception("IndexOutOfBoundsException");
 		}
 		_readIndex += skipsize;
@@ -132,7 +133,7 @@ import core.stdc.string;
 	{
 		ubyte data = cast(ubyte)(value & 0xff);
 		writeByte(data);
-		_writeIndex++;
+	
 		if(_readIndex < 0)
 			_readIndex = 0;
 	}
@@ -151,7 +152,7 @@ import core.stdc.string;
 		writeByte(d1);
 		ubyte d2 = cast(ubyte)(value & 0xff);
 		writeByte(d2);
-		_writeIndex += 2;
+
 		if(_readIndex < 0)
 			_readIndex = 0;
 	}
@@ -200,7 +201,7 @@ import core.stdc.string;
 //			_buffer[i] = null;
 //		}
 		_buffer.clear();
-		_readIndex = _writeIndex = -1;
+		_readIndex = _writeIndex = 0;
 		//trace("\n\tclear()!!! \n");
 	}
 private:

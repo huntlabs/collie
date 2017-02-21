@@ -5,7 +5,7 @@ import collie.codec.bytetomessagedecoder;
 
 class StringDecoder : ByteToMessageDecoder!string
 {
-	bool decode(Context ctx, ubyte[] buf, ref string result)
+	override bool decode(Context ctx, ubyte[] buf, ref string result)
 	{
 		result = cast(string) buf;
 

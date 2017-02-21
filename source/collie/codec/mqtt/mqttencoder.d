@@ -42,18 +42,17 @@ import collie.codec.mqtt.mqttunsubscribemsg;
 import collie.codec.mqtt.mqttunsubscribepayload;
 import collie.codec.mqtt.mqttversion;
 
-final class MqttEncoder  {
+import collie.codec.messagetobyteencoder;
 
-	//alias ByteBuf = Vector!(ubyte, false, GCAllocator); //Mallocator);
-public:
-//	 static  MqttEncoder INSTANCE = new MqttEncoder();
-private:
-	 this() { }
+ class MqttEncoder :MessageToByteEncoder!MqttMsg{
 
-protected:
-//	 ubyte[] encode(ref MqttMsg msg){
-//	}
-	
+	 override ubyte[] encode(ref MqttMsg msg){
+		return doEncode(msg).data();
+	}
+
+	override void callBack(ubyte[] data, size_t len)
+	{
+	}
 	/**
      * This is the main encoding method.
      * It's only visible for testing.

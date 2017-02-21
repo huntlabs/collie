@@ -13,13 +13,13 @@ module collie.codec.messagetobyteencoder;
 import collie.channel.handler;
 import collie.channel;
 
-abstract class MessageToByteEncoder(M) : OutboundHandler!(M, byte[])
+abstract class MessageToByteEncoder(M) : OutboundHandler!(M, ubyte[])
 {
     ubyte[] encode(ref M msg);
 
-    void callBack(ubyte[] data, uint len);
+    void callBack(ubyte[] data, size_t len);
 
-    override void write(Context ctx, Win msg, OutboundHandlerCallBack cback = null)
+    override void write(Context ctx, win msg, OutboundHandlerCallBack cback = null)
     {
         auto buf = encode(msg);
         if (buf.ptr)
@@ -30,7 +30,7 @@ abstract class MessageToByteEncoder(M) : OutboundHandler!(M, byte[])
                 import std.traits;
 
                 static if (isArray!M)
-                    cback(msg, M.length);
+                    cback(msg, msg.length);
                 else
                     cback(msg, M.sizeof);
             }
