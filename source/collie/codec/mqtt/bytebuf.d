@@ -22,7 +22,7 @@ import core.stdc.string;
 
 //default big end
 
- class ByteBuf 
+final class ByteBuf 
 {
 	alias BufferVector = Vector!(ubyte); 
 	
@@ -180,7 +180,7 @@ import core.stdc.string;
 		return _buffer.data(false);
 	}
 
-	pragma(inline, true) const @property size_t length()
+	pragma(inline, true) final const @property size_t length()
 	{
 		return _buffer.length;
 	}
