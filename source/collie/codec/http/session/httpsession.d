@@ -155,7 +155,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		ubyte[] data,
 		bool eom)
 	{
-		HVector tdata = HVector(data,true);
+		HVector tdata = HVector(data);
 		size_t rlen = getCodec.generateBody(txn,tdata,eom);
 
 //		auto cback = eom ? bind(&closeWriteCallBack,txn) : &writeCallBack;
