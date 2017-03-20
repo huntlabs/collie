@@ -40,16 +40,10 @@ import core.stdc.string :  memset, memcpy;
     static if (stateSize!Allocator != 0)
     {
         this() @disable;
-		this(T[] data, Allocator alloc,bool copy = true)
+		this(InsertT[] data, Allocator alloc)
         {
             this._alloc = alloc;
-            _len = data.length;
-            if(copy) {
-                reserve(data.length);
-                _data[0.._len] = data[];
-            } else {
-                _data = data;
-            }
+			insertBack(data);
         }
 
         this(size_t size, Allocator alloc)
@@ -70,15 +64,9 @@ import core.stdc.string :  memset, memcpy;
             reserve(size);
         }
 
-        this(ref T[] data, bool copy = true)
+		this(InsertT[] data)
         {
-            if(copy) {
-                reserve(data.length);
-                _data[0.._len] = data[];
-				_len = data.length;
-            } else {
-                _data = data;
-            }
+			insertBack(data);
         }
     }
 
