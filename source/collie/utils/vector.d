@@ -72,10 +72,10 @@ import core.stdc.string :  memset, memcpy;
 
         this(ref T[] data, bool copy = true)
         {
-            _len = data.length;
             if(copy) {
                 reserve(data.length);
                 _data[0.._len] = data[];
+				_len = data.length;
             } else {
                 _data = data;
             }
