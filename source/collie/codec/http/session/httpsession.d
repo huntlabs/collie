@@ -290,6 +290,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	override void onHeadersComplete(HTTPTransaction txn,
 		HTTPMessage msg){
 		trace("onHeadersComplete ------");
+		msg.clientAddress = getPeerAddress();
 		setupOnHeadersComplete(txn,msg);
 	}
 
