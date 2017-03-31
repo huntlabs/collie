@@ -116,9 +116,9 @@ protected:
 	override void onClose() nothrow {
 		if(_session)
 			collectException(_session.inActive());
-		auto sock = tcpSocket();
-		if(sock)
-			collectException(_loop.post!true(newTask!gcFree(sock)));
+//		auto sock = tcpSocket();
+//		if(sock)
+//			collectException(_loop.post!true(newTask!gcFree(sock)));
 	}
 
 	override  void onActive() nothrow {
