@@ -4,7 +4,4 @@ language: d
 d:
   - dmd
   #- gdc
-  #- ldc
-
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - ldc
