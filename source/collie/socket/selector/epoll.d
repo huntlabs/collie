@@ -10,7 +10,11 @@
  */
 module collie.socket.selector.epoll;
 
-version (linux)  : import core.time;
+version (linux)  : 
+
+package(collie.socket) :
+
+import core.time;
 import core.stdc.errno;
 import core.memory;
 
@@ -34,19 +38,17 @@ import collie.socket.common;
  @authors  Putao‘s Collie Team
  @date      2016.1
  */
-final class EpollLoop
+struct EpollLoop
 {
     /** 构造函数，构建一个epoll事件
 	 */
-    this()
+    void inter()
     {
-        if ((_efd = epoll_create1(0)) < 0)
-        {
-            errnoEnforce("epoll_create1 failed");
-        }
+		_efd = epoll_create1(0);
+        errnoEnforce((_efd >= 0),"epoll_create1 failed");
 
         _event = new EventChannel();
-        addEvent(_event._event);
+        addEvent(_event.event);
     }
 
     /** 析构函数，释放epoll。
@@ -185,11 +187,10 @@ final class EventChannel : EventCallInterface
     this()
     {
         _fd = cast(socket_t) eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-        _event = AsyncEvent.create(AsynType.EVENT, this, _fd, true, false, false);
+        _event = AsyncEvent(AsynType.EVENT, this, _fd, true, false, false);
     }
     ~this()
     {
-        AsyncEvent.free(_event);
         .close(_fd);
     }
 
@@ -212,8 +213,12 @@ final class EventChannel : EventCallInterface
     {
     }
 
-    socket_t _fd;
-    AsyncEvent * _event;
+	@property AsyncEvent * event(){
+		return &_event;
+	}
+	
+	socket_t _fd;
+    AsyncEvent  _event;
 }
 
 string mixinModEvent()

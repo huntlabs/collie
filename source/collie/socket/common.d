@@ -83,117 +83,102 @@ interface EventCallInterface
     void onClose() nothrow;
 }
 
+
 struct AsyncEvent
 {
-    import std.socket;
+	import std.socket;
+	
+	this(AsynType type, EventCallInterface obj, socket_t fd = socket_t.init,
+		bool enread = true, bool enwrite = false, bool etMode = false, bool oneShot = false)
+	{
+		this._type = type;
+		this._obj = obj;
+		this._fd = fd;
+		this.enRead = enread;
+		this.enWrite = enwrite;
+		this.etMode = etMode;
+		this.oneShot = oneShot;
+	}
+	
+	@disable this();
+	@disable this(this);
+	
+	~this()
+	{
+		rmNextPrev();
+	}
+	
+	pragma(inline, true) @property obj()
+	{
+		return _obj;
+	}
+	
+	pragma(inline, true) @property type()
+	{
+		return _type;
+	}
+	
+	pragma(inline, true) @property fd()
+	{
+		return _fd;
+	}
+	
+	bool enRead = true;
+	bool enWrite = false;
+	bool etMode = false;
+	bool oneShot = false;
+	
+	pragma(inline, true) @property isActive()
+	{
+		return _isActive;
+	}
+package(collie.socket) :
+	static if (IOMode == IOMode.kqueue || CustomTimer)
+	{
+		long timeOut;
+	}
 
-    this(AsynType type, EventCallInterface obj, socket_t fd = socket_t.init,
-        bool enread = true, bool enwrite = false, bool etMode = false, bool oneShot = false)
-    {
-        this._type = type;
-        this._obj = obj;
-        this.fd = fd;
-        this.enRead = enread;
-        this.enWrite = enwrite;
-        this.etMode = etMode;
-        this.oneShot = oneShot;
-    }
+	static if (IOMode == IOMode.iocp)
+	{
+		uint readLen;
+		uint writeLen;
+	}
+	
 
-    pragma(inline, true) @property obj()
-    {
-        return _obj;
-    }
-
-    pragma(inline, true) @property type()
-    {
-        return _type;
-    }
-
-    socket_t fd;
-
-    bool enRead = true;
-    bool enWrite = false;
-    bool etMode = false;
-    bool oneShot = false;
-
-    pragma(inline) static AsyncEvent* create(AsynType type,
-        EventCallInterface obj, socket_t fd = socket_t.init, bool enread = true,
-        bool enwrite = false, bool etMode = false, bool oneShot = false)
-    {
-        import core.memory;
-
-        AsyncEvent* pevent = new AsyncEvent(type, obj, fd, enread, enwrite, etMode,
-            oneShot);
-       // GC.setAttr(pevent, GC.BlkAttr.NO_MOVE);
-        return pevent;
-    }
-
-    pragma(inline) static void free(AsyncEvent* event)
-    {
-        import core.memory;
-
-        GC.free(event);
-    }
-
-    pragma(inline, true) @property isActive()
-    {
-        return _isActive;
-    }
-
-//	static Address createAddress(AddressFamily family) //pure nothrow
-//	{
-//		Address result;
-//		switch(family)
-//		{
-//			static if (is(sockaddr_un))
-//			{
-//				case AddressFamily.UNIX:
-//				result = new UnixAddress();
-//				break;
-//			}
-//			
-//			case AddressFamily.INET:
-//				result = new InternetAddress();
-//				break;
-//				
-//			case AddressFamily.INET6:
-//				result = new Internet6Address();
-//				break;
-//				
-//			default:
-//				result = new UnknownAddress();
-//		}
-//		return result;
-//	}
-package:
-    pragma(inline) @property isActive(bool active)
-    {
-        _isActive = active;
-    }
-
-    static if (IOMode == IOMode.kqueue || CustomTimer)
-    {
-        long timeOut;
-    }
-    static if (IOMode == IOMode.iocp)
-    {
-        uint readLen;
-        uint writeLen;
-    }
-    static if (CustomTimer)
-    {
-        import collie.utils.timingwheel;
-
-        WheelTimer timer;
-    }
-
+	pragma(inline) @property isActive(bool active)
+	{
+		_isActive = active;
+	}
+	
+	static if (CustomTimer)
+	{
+		import collie.utils.timingwheel;
+		
+		WheelTimer timer;
+	}
+	
+	@trusted void rmNextPrev() @nogc nothrow
+	{
+		if(next)
+			next.prev = prev;
+		if(prev)
+			prev.next = next;
+		next = null;
+		prev = null;
+	}
+	AsyncEvent * next = null;
+	AsyncEvent * prev = null;
+	
 private:
-    EventCallInterface _obj;
-    AsynType _type;
-    bool _isActive = false;
+	EventCallInterface _obj;
+	AsynType _type;
+	socket_t _fd = socket_t.init;
+	bool _isActive = false;
 }
 
 static if (CustomTimer)
 {
     enum CustomTimer_Next_TimeOut = cast(long)(CustomTimerTimeOut * (2.0 / 3.0));
 }
+
+

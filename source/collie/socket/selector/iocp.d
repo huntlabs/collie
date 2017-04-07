@@ -13,7 +13,10 @@ module collie.socket.selector.iocp;
 import collie.socket.common;
 
 version (Windows)  : 
+
 pragma(lib, "Ws2_32");
+
+package(collie.socket) :
 
 import core.time;
 import core.memory;
@@ -35,15 +38,12 @@ enum IOCP_OP_TYPE
     event
 }
 
-final class IOCPLoop
+struct IOCPLoop
 {
-    this()
+    void inter()
     {
         _iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, null, 0, 1);
-        if (!_iocp)
-        {
-            errnoEnforce("CreateIoCompletionPort failed");
-        }
+		errnoEnforce(_iocp,"CreateIoCompletionPort failed");
         _event.operationType = IOCP_OP_TYPE.event;
         _event.event = null;
     }

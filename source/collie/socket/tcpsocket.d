@@ -47,14 +47,14 @@ alias TCPReadCallBack = void delegate(ubyte[] buffer);
         _socket = sock;
         _socket.blocking = false;
         _readBuffer = new ubyte[TCP_READ_BUFFER_SIZE];
-        _event = AsyncEvent.create(AsynType.TCP, this, _socket.handle, true, true,
+        _event = AsyncEvent(AsynType.TCP, this, _socket.handle, true, true,
             true);
         static if (IO_MODE.iocp == IOMode)
         {
             _iocpBuffer.len = TCP_READ_BUFFER_SIZE;
             _iocpBuffer.buf = cast(char*) _readBuffer.ptr;
-            _iocpread.event = _event;
-            _iocpwrite.event = _event;
+            _iocpread.event = &_event;
+            _iocpwrite.event = &_event;
             _iocpwrite.operationType = IOCP_OP_TYPE.write;
             _iocpread.operationType = IOCP_OP_TYPE.read;
         }
@@ -65,7 +65,6 @@ alias TCPReadCallBack = void delegate(ubyte[] buffer);
 		import core.memory;
         scope (exit)
         {
-            AsyncEvent.free(_event);
             _readBuffer = null;
         }
         _socket.destroy;
@@ -82,16 +81,17 @@ alias TCPReadCallBack = void delegate(ubyte[] buffer);
     {
         if (_event.isActive || !_socket.isAlive() || !_readCallBack)
             return false;
-        _event.fd = _socket.handle();
+		_event = AsyncEvent(AsynType.TCP, this, _socket.handle, true, true,
+			true);
 
         static if (IOMode == IO_MODE.iocp)
         {
-            _loop.addEvent(_event);
+            _loop.addEvent(&_event);
             return doRead();
         }
         else
         {
-            return _loop.addEvent(_event);
+            return _loop.addEvent(&_event);
         }
     }
 
@@ -267,7 +267,7 @@ protected:
     {
         if (!alive)
             return;
-        eventLoop.delEvent(_event);
+        eventLoop.delEvent(&_event);
         while (!_writeQueue.empty)
         {
             auto buf = _writeQueue.deQueue();
@@ -344,7 +344,7 @@ protected:
         bool doRead() nothrow{
             _iocpBuffer.len = TCP_READ_BUFFER_SIZE;
             _iocpBuffer.buf = cast(char*) _readBuffer.ptr;
-            _iocpread.event = _event;
+            _iocpread.event = &_event;
             _iocpread.operationType = IOCP_OP_TYPE.read;
 
             DWORD dwReceived = 0;
@@ -370,7 +370,7 @@ protected:
 		bool doWrite() nothrow{
 			DWORD dwFlags = 0;
 			DWORD dwSent = 0;
-			_iocpwrite.event = _event;
+			_iocpwrite.event = &_event;
 			_iocpwrite.operationType = IOCP_OP_TYPE.write;
 			int nRet = WSASend(cast(SOCKET) _socket.handle(), &_iocpWBuf, 1,
 				&dwSent, dwFlags, &_iocpwrite.ol, cast(LPWSAOVERLAPPED_COMPLETION_ROUTINE) null);
@@ -393,7 +393,7 @@ protected:
 	
 	Socket _socket;
 	WriteSiteQueue _writeQueue;
-	AsyncEvent* _event;
+	AsyncEvent _event;
 	ubyte[] _readBuffer;
 
     CallBack _unActive;

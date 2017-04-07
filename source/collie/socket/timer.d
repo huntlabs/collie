@@ -25,7 +25,7 @@ import collie.utils.functional;
     this(EventLoop loop)
     {
         _loop = loop;
-        _event = AsyncEvent.create(AsynType.TIMER, this);
+        _event = AsyncEvent(AsynType.TIMER, this);
     }
 
     ~this()
@@ -33,7 +33,6 @@ import collie.utils.functional;
 		if (isActive){
 			onClose();
         }
-        AsyncEvent.free(_event);
     }
 
     pragma(inline, true) @property bool isActive() nothrow
@@ -59,7 +58,8 @@ import collie.utils.functional;
             import collie.socket.selector.epoll;
 
             //  _timeout = msesc;
-            _event.fd = cast(socket_t) timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
+            auto fd = cast(socket_t) timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
+			_event = AsyncEvent(AsynType.TIMER, this,fd);
 
             itimerspec its;
             ulong sec, nsec;
@@ -78,7 +78,7 @@ import collie.utils.functional;
                 return false;
             }
         }
-        return _loop.addEvent(_event);
+        return _loop.addEvent(&_event);
     }
 
     pragma(inline) void stop()
@@ -113,19 +113,18 @@ protected:
     override void onClose() nothrow
     {
 		if(!isActive) return;
-		_loop.delEvent(_event);
+		_loop.delEvent(&_event);
 		static if (IOMode == IO_MODE.epoll)
         {
             import core.sys.posix.unistd;
             close(_event.fd);
-			_event.fd = socket_t.init;
         } 
     }
 
 private:
     // ulong _timeout;
     CallBack _callBack;
-    AsyncEvent* _event = null;
+    AsyncEvent _event;
     EventLoop _loop;
 }
 

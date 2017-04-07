@@ -25,13 +25,14 @@ import collie.socket.common;
 
 static if(IOMode == IO_MODE.select)
 {
+package(collie.socket) :
 	//TODO: Need Test
-	class SelectLoop
+	struct SelectLoop
 	{
-		this()
+		void inter()
 		{
 			_event = new EventChannel();
-			addEvent(_event._event);
+			addEvent(_event.event);
 			_readSet = new SocketSet();
 			_writeSet = new SocketSet();
 			_errorSet = new SocketSet();
@@ -128,7 +129,7 @@ static if(IOMode == IO_MODE.select)
 			_pair = socketPair();
 			_pair[0].blocking = false;
 			_pair[1].blocking = false;
-			_event = AsyncEvent.create(AsynType.EVENT, this, _pair[1].handle(), true, false,
+			_event = AsyncEvent(AsynType.EVENT, this, _pair[1].handle(), true, false,
 				false);
 		}
 
@@ -173,9 +174,11 @@ static if(IOMode == IO_MODE.select)
 		override void onClose() nothrow
 		{
 		}
-
+		@property AsyncEvent * event(){
+			return &_event;
+		}
 		Socket[2] _pair;
-		AsyncEvent* _event;
+		AsyncEvent _event;
 	}
 
 }

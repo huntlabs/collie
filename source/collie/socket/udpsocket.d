@@ -40,13 +40,13 @@ alias UDPReadCallBack = void delegate(ubyte[] buffer, Address adr);
 
 		_socket.blocking = true;
 		_readBuffer = new ubyte[UDP_READ_BUFFER_SIZE];
-		_event = AsyncEvent.create(AsynType.UDP, this, _socket.handle, true, false,
+		_event = AsyncEvent(AsynType.UDP, this, _socket.handle, true, false,
 			false);
 		static if(IO_MODE.iocp == IOMode)
 		{
 			_iocpBuffer.len = TCP_READ_BUFFER_SIZE;
 			_iocpBuffer.buf = cast(char*) _readBuffer.ptr;
-			_iocpread.event = _event;
+			_iocpread.event = &_event;
 			_iocpread.operationType = IOCP_OP_TYPE.read;
 
 			if(family == AddressFamily.INET)
@@ -62,13 +62,12 @@ alias UDPReadCallBack = void delegate(ubyte[] buffer, Address adr);
     {
         scope (exit)
         {
-            AsyncEvent.free(_event);
             _readBuffer = null;
         }
         _socket.destroy;
         if (_event.isActive)
         {
-            eventLoop.delEvent(_event);
+            eventLoop.delEvent(&_event);
         }
         import core.memory;
 
@@ -134,18 +133,19 @@ alias UDPReadCallBack = void delegate(ubyte[] buffer, Address adr);
     {
         if (_event.isActive || !_socket.isAlive() || !_readCallBack)
             return false;
-        _event.fd = _socket.handle();
+		_event = AsyncEvent(AsynType.UDP, this, _socket.handle, true, false,
+			false);
         static if (IOMode == IO_MODE.iocp)
         {
 			if(!_isBind) {
 				bind(_bindddr);
 			}
-            _loop.addEvent(_event);
+            _loop.addEvent(&_event);
             return doRead();
         }
         else
         {
-            return _loop.addEvent(_event);
+            return _loop.addEvent(&_event);
         }
     }
 
@@ -216,7 +216,7 @@ protected:
     {
         if (!isAlive)
             return;
-        eventLoop.delEvent(_event);
+        eventLoop.delEvent(&_event);
         _socket.close();
 		static if(IO_MODE.iocp == IOMode)
 			_isBind = false;
@@ -279,7 +279,7 @@ private:
     Address _connecto;
     Address _readAddr;
     UdpSocket _socket;
-    AsyncEvent* _event;
+    AsyncEvent _event;
     ubyte[] _readBuffer;
     UDPReadCallBack _readCallBack;
 }

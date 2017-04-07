@@ -38,6 +38,7 @@ alias AcceptCallBack = void delegate(Socket sock);
 	{
 		_socket = new Socket(family, SocketType.STREAM, ProtocolType.TCP);
 		_socket.blocking = false;
+		_event = AsyncEvent(AsynType.ACCEPT, this,_socket.handle);
 		super(loop, TransportType.ACCEPT);
 		static if (IOMode == IO_MODE.iocp)
 			_buffer = new ubyte[2048];
@@ -81,22 +82,22 @@ alias AcceptCallBack = void delegate(Socket sock);
 
     override bool start()
     {
-        if (_event != null || !_socket.isAlive() || !_callBack)
+        if (_event.isActive || !_socket.isAlive() || !_callBack)
         {
             warning("accept start erro!");
             return false;
         }
-        _event = AsyncEvent.create(AsynType.ACCEPT, this, _socket.handle, true, false,
+        _event = AsyncEvent(AsynType.ACCEPT, this, _socket.handle, true, false,
             false,false);
         static if (IOMode == IO_MODE.iocp)
         {
             trace("start accept : , the fd is ", _socket.handle());
-            _loop.addEvent(_event);
+            _loop.addEvent(&_event);
             return doAccept();
         }
         else
         {
-            return _loop.addEvent(_event);
+            return _loop.addEvent(&_event);
         }
     }
 
@@ -116,7 +117,7 @@ alias AcceptCallBack = void delegate(Socket sock);
     {
         try
         {
-            return (_event != null) && _socket.isAlive();
+            return _event.isActive && _socket.isAlive();
         }
         catch (Exception e)
         {
@@ -170,9 +171,7 @@ protected:
     {
         if (!isAlive)
             return;
-        eventLoop.delEvent(_event);
-        delete _event;
-        _event = null;
+        eventLoop.delEvent(&_event);
         _socket.close();
     }
 
@@ -182,7 +181,7 @@ protected:
         {
             try
             {
-                _iocp.event = _event;
+                _iocp.event = &_event;
                 _iocp.operationType = IOCP_OP_TYPE.accept;
                 if (_inSocket is null)
                 {
@@ -219,7 +218,7 @@ protected:
 
 private:
     Socket _socket;
-    AsyncEvent* _event = null;
+    AsyncEvent _event;
 
     AcceptCallBack _callBack;
 

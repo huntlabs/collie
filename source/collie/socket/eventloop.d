@@ -11,7 +11,6 @@
 module collie.socket.eventloop;
 
 import core.thread;
-import core.sync.mutex;
 import core.memory;
 
 import std.exception;
@@ -35,20 +34,19 @@ static if (CustomTimer)
  @date  2016.1
  */
 
-@trusted class EventLoopImpl(T) if (is(T == class)) //用定义别名的方式
+@trusted class EventLoopImpl(T)//用定义别名的方式
 {
     this()
     {
-        _poll = new T();
-        _mutex = new Mutex();
+		_poll.inter();
         _run = false;
         static if (CustomTimer)
             _timeWheel = new TimingWheel(CustomTimerWheelSize);
+		_evlist = AsyncEvent(AsynType.EVENT, null);
     }
 
     ~this()
     {
-        _poll.destroy;
     }
 
     /** 开始执行事件等待。
@@ -111,7 +109,7 @@ static if (CustomTimer)
 	            return;
 	        }
 		}
-        synchronized (_mutex)
+        synchronized (this)
         {
 			_taskList.enQueue(newTask!(CallBack)(cback));
         }
@@ -129,7 +127,7 @@ static if (CustomTimer)
 				return;
 			}
 		}
-		synchronized (_mutex)
+		synchronized (this)
 		{
 			_taskList.enQueue(task);
 		}
@@ -140,6 +138,7 @@ static if (CustomTimer)
     {
         if (event == null)
             return false;
+		addEventList(event);
         static if (CustomTimer)
         {
             if (event.type() == AsynType.TIMER)
@@ -166,6 +165,7 @@ static if (CustomTimer)
     {
         if (event == null)
             return false;
+		addEventList(event);
         static if (CustomTimer)
         {
             if (event.type() == AsynType.TIMER)
@@ -178,6 +178,7 @@ static if (CustomTimer)
     {
         if (event == null)
             return false;
+		event.rmNextPrev();
         static if (CustomTimer)
         {
             if (event.type() == AsynType.TIMER)
@@ -204,7 +205,7 @@ protected:
         import std.algorithm : swap;
 
 		TaskQueue tmp;
-        synchronized (_mutex){
+        synchronized (this){
 			swap(tmp, _taskList);
         }
         while (!tmp.empty)
@@ -228,12 +229,24 @@ protected:
         }
     }
 
+	pragma(inline,true)
+		void addEventList(AsyncEvent * event) nothrow
+	{
+		event.rmNextPrev();
+		if(_evlist.next){
+			_evlist.next.prev = event;
+			event.next = _evlist.next;
+		}
+		_evlist.next = event;
+		event.prev = &_evlist;
+	}
+
 private:
     T _poll;
-    Mutex _mutex;
 	TaskQueue _taskList;
     bool _run;
     ThreadID _thID;
+	AsyncEvent  _evlist;
     static if (CustomTimer)
     {
         TimingWheel _timeWheel;

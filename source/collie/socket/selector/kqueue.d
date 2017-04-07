@@ -15,6 +15,7 @@ import collie.socket.common;
 
 static if (IOMode == IO_MODE.kqueue)
 {
+	package(collie.socket) :
 
     import core.stdc.errno;
     import core.sys.posix.sys.types; // for ssize_t, size_t
@@ -28,16 +29,14 @@ static if (IOMode == IO_MODE.kqueue)
 
     import collie.utils.vector;
 
-    class KqueueLoop
+    struct KqueueLoop
     {
-        this()
+        void inter()
         {
-            if ((_efd = kqueue()) < 0)
-            {
-                errnoEnforce("kqueue failed");
-            }
+			_efd = kqueue();
+			errnoEnforce((_efd >=0),"kqueue failed");
             _event = new EventChannel();
-            addEvent(_event._event);
+            addEvent(_event.event);
         }
 
         ~this()
@@ -255,13 +254,12 @@ static if (IOMode == IO_MODE.kqueue)
             _pair = socketPair();
             _pair[0].blocking = false;
             _pair[1].blocking = false;
-            _event = AsyncEvent.create(AsynType.EVENT, this,
+            _event = AsyncEvent(AsynType.EVENT, this,
                 _pair[1].handle(), true, false, false);
         }
 
         ~this()
         {
-            AsyncEvent.free(_event);
         }
 
         void doWrite() nothrow
@@ -301,8 +299,12 @@ static if (IOMode == IO_MODE.kqueue)
         {
         }
 
+		@property AsyncEvent * event(){
+			return &_event;
+		}
+
         Socket[2] _pair;
-        AsyncEvent* _event;
+        AsyncEvent _event;
     }
 
     auto getTimerfd()
