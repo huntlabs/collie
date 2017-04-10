@@ -56,7 +56,7 @@ static if (IOMode == IO_MODE.kqueue)
             {
                 kevent_t ev;
                 event.timeOut = event.timeOut < 20 ? 20 : event.timeOut;
-                event.fd = getTimerfd();
+                event._fd = getTimerfd();
                 EV_SET(&ev, event.fd, EVFILT_TIMER,
                     EV_ADD | EV_ENABLE | EV_CLEAR, 0, event.timeOut, event); //单位毫秒
                 err = kevent(_efd, &ev, 1, null, 0, null);

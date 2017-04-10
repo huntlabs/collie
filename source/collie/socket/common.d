@@ -168,11 +168,11 @@ package(collie.socket) :
 	}
 	AsyncEvent * next = null;
 	AsyncEvent * prev = null;
-	
+
+	socket_t _fd = socket_t.init;
 private:
 	EventCallInterface _obj;
 	AsynType _type;
-	socket_t _fd = socket_t.init;
 	bool _isActive = false;
 }
 
