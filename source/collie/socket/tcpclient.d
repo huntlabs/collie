@@ -56,8 +56,8 @@ alias ConnectCallBack = void delegate(bool connect);
             else
                 throw new ConnectedException("This Address is not a network address!");
             _socket.bind(bindddr);
-            _loop.addEvent(_event);
-            _iocpread.event = _event;
+            _loop.addEvent(&_event);
+            _iocpread.event = &_event;
             _iocpread.operationType = IOCP_OP_TYPE.connect;
             int b = ConnectEx(cast(SOCKET) _socket.handle,
                 cast(SOCKADDR*) addr.name(), addr.nameLen(), null, 0, null, &_iocpread.ol);
