@@ -182,10 +182,6 @@ shared static this()
 {
     WSADATA wsaData;
     int iResult = WSAStartup(MAKEWORD(2, 2),  & wsaData);
-    if (iResult != NO_ERROR)
-    {
-        errnoEnforce("iocp init error!");
-    }
 
     SOCKET ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     scope (exit)
@@ -223,7 +219,7 @@ bool GetFunctionPointer(FuncPointer)(SOCKET sock, ref FuncPointer pfn, ref GUID 
 string GET_FUNC_POINTER(string GuidValue, string pft)
 {
     string str = " guid = " ~ GuidValue ~ ";";
-    str ~= "if( !GetFunctionPointer( ListenSocket, " ~ pft ~ ", guid ) ) { errnoEnforce(\"iocp get function error!\"); } ";
+    str ~= "if( !GetFunctionPointer( ListenSocket, " ~ pft ~ ", guid ) ) { errnoEnforce(false,\"iocp get function error!\"); } ";
     return str;
 }
 }
