@@ -18,6 +18,7 @@ import collie.socket;
 import collie.codec.http;
 import collie.codec.http.server;
 import collie.bootstrap.serversslconfig;
+import std.parallelism;
 
 debug { 
         extern(C) __gshared string[] rt_options = [ "gcopt=profile:1"];// maxPoolSize:50" ];
@@ -100,10 +101,10 @@ void main()
 	}
 	HTTPServerOptions option = new HTTPServerOptions();
 	option.handlerFactories.insertBack(toDelegate(&newHandler));
-	option.threads = 1;
+	option.threads = totalCPUs;
 	version(USE_SSL) option.ssLConfig = ssl;
 	HTTPServerOptions.IPConfig ipconfig ;
-	ipconfig.address = new InternetAddress("0.0.0.0", 8081);
+	ipconfig.address = new InternetAddress("0.0.0.0", 8083);
 
 	HttpServer server = new HttpServer(option);
 	server.addBind(ipconfig);
