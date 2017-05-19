@@ -66,7 +66,6 @@ struct EpollLoop
     bool addEvent(AsyncEvent * event) nothrow
     {
 		if (event.fd == socket_t.init){
-			collectException(warning("the fd is erro!"));
 			event.isActive = false;
 			return false;
 		}
@@ -84,7 +83,6 @@ struct EpollLoop
     bool modEvent(AsyncEvent * event) nothrow
     {
 		if (event.fd == socket_t.init){
-			collectException(warning("the fd is erro!"));
 			event.isActive = false;
 			return false;
 		}
@@ -105,14 +103,12 @@ struct EpollLoop
     bool delEvent(AsyncEvent * event) nothrow
     {
         if (event.fd == socket_t.init) {
-			collectException(warning("the fd is erro!"));
 			event.isActive = false;
             return false;
 		}
         epoll_event ev;
         if ((epoll_ctl(_efd, EPOLL_CTL_DEL, event.fd,  & ev)) != 0)
         {
-			collectException(error("EPOLL_CTL_DEL erro! ", event.fd));
             return false;
         }
         event.isActive = false;
