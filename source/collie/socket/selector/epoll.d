@@ -126,25 +126,23 @@ struct EpollLoop
 	 *    @return 返回当前获取的事件的数量。
 	 */
 
-    void wait(int timeout)
+    void wait(int timeout) nothrow
     {
-        epoll_event event;
-        if (epoll_wait(_efd,  & event, 1, timeout) < 1)
-            return;
-        AsyncEvent * asevent = cast(AsyncEvent * )(event.data.ptr);
+         epoll_event[64] events;
+        int len = epoll_wait(_efd, events.ptr, 64, timeout);
+        if(len < 1) return;
+        foreach(i;0..len){
+            AsyncEvent * ev = cast(AsyncEvent * )(events[i].data.ptr);
 
-        if (isErro(event.events))
-        {
-            asevent.obj.onClose();
-            return;
+            if (isErro(events[i].events)) {
+                ev.obj.onClose();
+                continue;
+            }
+
+            if (isWrite(events[i].events)) ev.obj.onWrite();
+
+            if (isRead(events[i].events))  ev.obj.onRead();
         }
-
-        if (isWrite(event.events))
-            asevent.obj.onWrite();
-
-        if (isRead(event.events))
-            asevent.obj.onRead();
-        return;
     }
 
     void weakUp() nothrow
@@ -152,15 +150,15 @@ struct EpollLoop
         _event.doWrite();
     }
 
-    protected : pragma(inline, true) bool isErro(uint events)
+    protected : pragma(inline, true) bool isErro(uint events) nothrow
     {
         return (events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) != 0;
     }
-    pragma(inline, true) bool isRead(uint events)
+    pragma(inline, true) bool isRead(uint events) nothrow
     {
         return (events & EPOLLIN) != 0;
     }
-    pragma(inline, true) bool isWrite(uint events)
+    pragma(inline, true) bool isWrite(uint events) nothrow
     {
         return (events & EPOLLOUT) != 0;
     }

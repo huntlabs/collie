@@ -197,35 +197,29 @@ static if (IOMode == IO_MODE.kqueue)
             *    @return 返回当前获取的事件的数量。
             */
 
-        void wait(int timeout)
+        void wait(int timeout) nothrow
         {
             auto tm = timeout % 1000;
             auto tspec = timespec(timeout / 1000, tm * 1000 * 1000);
-            kevent_t event;
-            auto num = kevent(_efd, null, 0, &event, 1, &tspec);
-            if (num <= 0)
-                return;
-            auto ev = cast(AsyncEvent*) event.udata;
+            kevent_t[64] events;
+            auto len = kevent(_efd, null, 0, event.ptr, 64, &tspec);
+            if (len < 1) return;
+            foreach(i; 0 .. len){
+                auto ev = cast(AsyncEvent*) events[i].udata;
 
-            if ((event.flags & EV_EOF) || (event.flags & EV_ERROR))
-            {
-                ev.obj.onClose();
-                return;
-            }
+                if ((events[i].flags & EV_EOF) || (events[i].flags & EV_ERROR)) {
+                    ev.obj.onClose();
+                    continue;
+                }
 
-            if (ev.type() == AsynType.TIMER)
-            {
-                ev.obj.onRead();
-                return;
-            }
+                if (ev.type() == AsynType.TIMER) {
+                    ev.obj.onRead();
+                    continue;
+                }
 
-            if (event.filter & EVFILT_WRITE)
-            {
-                ev.obj.onWrite();
-            }
-            if (event.filter & EVFILT_READ)
-            {
-                ev.obj.onRead();
+                if (events[i].filter & EVFILT_WRITE) ev.obj.onWrite();
+        
+                if (events[i].filter & EVFILT_READ) ev.obj.onRead();
             }
         }
 
