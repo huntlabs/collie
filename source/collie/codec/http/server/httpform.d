@@ -1,7 +1,7 @@
 ﻿/*
  * Collie - An asynchronous event-driven network framework using Dlang development
  *
- * Copyright (C) 2015-2016  Shanghai Putao Technology Co., Ltd 
+ * Copyright (C) 2015-2017  Shanghai Putao Technology Co., Ltd 
  *
  * Developer: putao's Dlang team
  *
@@ -14,6 +14,7 @@ import collie.buffer;
 import std.array;
 import std.string;
 import std.exception;
+import std.algorithm.searching : canFind, countUntil;
 import std.experimental.logger;
 import collie.utils.string;
 import collie.utils.vector;
@@ -26,6 +27,8 @@ class HTTPFormException : Exception
 
 class HTTPForm
 {
+	import std.experimental.allocator.mallocator;
+	alias TBuffer = Vector!(ubyte,Mallocator,false);
 	alias StringArray = string[];
 	enum ubyte[2] ENDMYITLFORM = ['-','-']; 
 	enum ubyte[2] LRLN = ['\r','\n']; 
@@ -53,7 +56,7 @@ class HTTPForm
 	this(string contype,  Buffer body_)
 	{
 		trace("contype is : ", contype);
-		if (contype.indexOf("multipart/form-data") > -1)
+		if (canFind(contype, "multipart/form-data"))
 		{
 			string strBoundary;
 			splitNameValue(contype,';','=',(string key,string value){
@@ -71,7 +74,7 @@ class HTTPForm
 				readMultiFrom(strBoundary, body_);
 			}
 		}
-		else if (contype.indexOf("application/x-www-form-urlencoded") > -1)
+		else if (canFind(contype, "application/x-www-form-urlencoded"))
 		{
 			readXform(body_);
 		}
@@ -120,8 +123,7 @@ class HTTPForm
 protected:
 	void readXform(Buffer buffer)
 	{
-		Vector!(ubyte) buf;
-		buf.reserve(buffer.length);
+		TBuffer buf = TBuffer(buffer.length);
 		buffer.readAll((in ubyte[] data){
 				buf.insertBack(cast(ubyte[])data);
 			});
@@ -138,20 +140,24 @@ protected:
 	
 	void readMultiFrom(string brand, Buffer buffer)
 	{
-		buffer.readAll((in ubyte[] data){
-				trace("data is : ", cast(string)data);
-			});
-		trace(".................");
+		// buffer.readAll((in ubyte[] data){
+		// 		trace("data is : ", cast(string)data);
+		// 	});
+		// trace(".................");
 		buffer.rest();
-		string brony = "--" ~ brand;
+		string brony = "--";
+		brony ~= brand;
 		string str;
+		TBuffer buf = TBuffer(128);
 		do{
-			Appender!(ubyte[]) buf = appender!(ubyte[]);
+			//Appender!(ubyte[]) buf = appender!(ubyte[]);
+			buf.clear();
 			buffer.readLine((in ubyte[] data){
 					trace("data is : ", cast(string)data);
-					buf.put(data);
+					buf.insertBack(data);
+					//buf.put(data);
 				});
-			auto sttr = cast(string)buf.data;
+			auto sttr = cast(string)buf.data(false);
 			str = sttr.strip;
 			if(str.length == 0){
 				continue;
@@ -174,31 +180,28 @@ protected:
 	
 	bool readMultiftomPart(Buffer buffer, ubyte[] boundary)
 	{
+		TBuffer  buf  = TBuffer(512);
 		string cd;
 		string cType;
-		{
-			Vector!(ubyte) buf;
-			do {
-				buf.clear();
-				buffer.readLine((in ubyte[] data){
-						buf.insertBack(cast(ubyte[])data);
-					});
-				ubyte[] line = buf.data(false);
-				trace(cast(string)line);
-				if(line.length == 0)
-					break;
-				auto pos = (cast(string) line).indexOf(":");
-				if (pos <= 0 || pos == (line.length - 1))
-					continue;
-				string key = cast(string)(line[0 .. pos]);
-				if(isSameIngnoreLowUp(strip(key),"content-disposition")){
-					cd = strip((cast(string)(line[pos + 1 .. $]))).idup;
-				} else if(isSameIngnoreLowUp(strip(key),"content-type")){
-					cType = strip((cast(string)(line[pos + 1 .. $]))).idup;
-				}
-			
-			} while(true);
-		}
+		do {
+			buf.clear();
+			buffer.readLine((in ubyte[] data){
+					buf.insertBack(cast(ubyte[])data);
+				});
+			ubyte[] line = buf.data(false);
+			trace(cast(string)line);
+			if(line.length == 0)
+				break;
+			auto pos = countUntil(line, cast(ubyte)':') ; //  (cast(string) line).indexOf(":");
+			if (pos <= 0 || pos == (line.length - 1))
+				continue;
+			string key = cast(string)(line[0 .. pos]);
+			if(isSameIngnoreLowUp(strip(key),"content-disposition")){
+				cd = strip((cast(string)(line[pos + 1 .. $])));
+			} else if(isSameIngnoreLowUp(strip(key),"content-type")){
+				cType = strip((cast(string)(line[pos + 1 .. $])));
+			}
+		} while(true);
 		if (cd.length == 0)
 			return false;
 		string name;
@@ -207,7 +210,7 @@ protected:
 		{
 			cd = cd[pos + 6 .. $];
 			pos = cd.indexOf("\"");
-			name = cd[0 .. pos];
+			name = cd[0 .. pos].idup;
 		}
 		trace("name : ", name);
 		string filename;
@@ -222,8 +225,8 @@ protected:
 		{
 			import std.array;
 			FormFile fp = new FormFile;
-			fp._fileName = filename;
-			fp._contentType = cType;
+			fp._fileName = filename.idup;
+			fp._contentType = cType.idup;
 			fp._startSize = buffer.readPos();
 			fp._body = buffer;
 			buffer.readUtil(boundary,(in ubyte[] rdata) {

@@ -1,7 +1,7 @@
 /*
  * Collie - An asynchronous event-driven network framework using Dlang development
  *
- * Copyright (C) 2015-2016  Shanghai Putao Technology Co., Ltd 
+ * Copyright (C) 2015-2017  Shanghai Putao Technology Co., Ltd 
  *
  * Developer: putao's Dlang team
  *
@@ -31,7 +31,7 @@ import core.stdc.string :  memset, memcpy;
 		}
 		enum addToGC = false;
 	}
-	
+	enum shouldInit = hasIndirections!T || hasElaborateDestructor!T;
 	static if(hasIndirections!T)
 		alias InsertT = T;
 	else
@@ -68,6 +68,14 @@ import core.stdc.string :  memset, memcpy;
 		{
 			insertBack(data);
 		}
+	}
+
+	this(this)
+	{
+        auto dt = _data;
+        _data = null;
+        _len = 0;
+        insertBack(dt);
 	}
 	
 	~this()
@@ -261,8 +269,10 @@ import core.stdc.string :  memset, memcpy;
 	
 	pragma(inline, true) void clear()
 	{
-		if(_len > 0)
-			_data[0.._len] = T.init;
+		static if(shouldInit) {
+			if(_len > 0)
+				_data[0.._len] = T.init;
+		}
 		_len = 0;
 	}
 	
