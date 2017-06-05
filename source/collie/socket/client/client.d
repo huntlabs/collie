@@ -63,6 +63,15 @@ import collie.utils.task;
 		}
 	}
 
+    final void write(TCPWriteBuffer buffer) @trusted
+    {
+        if (_loop.isInLoopThread()) {
+            _postWriteBuffer(buffer);
+        } else {
+            _loop.post(newTask(&_postWriteBuffer, buffer));
+        }
+    }
+
 	pragma(inline)
 	final void close() @trusted
 	{
@@ -142,6 +151,14 @@ private:
 		if(_info.client)
 			_info.client.close();
 	}
+
+	final void _postWriteBuffer(TCPWriteBuffer buffer)
+    {
+        if (_info.client) {
+            _info.client.write(buffer);
+        } else
+            buffer.doFinish();
+    }
 
 	pragma(inline)
 	final void _postWrite(ubyte[] data,TCPWriteCallBack cback){
