@@ -44,7 +44,7 @@ alias UDPReadCallBack = void delegate(ubyte[] buffer, Address adr);
 			false);
 		static if(IO_MODE.iocp == IOMode)
 		{
-			_iocpBuffer.len = TCP_READ_BUFFER_SIZE;
+			_iocpBuffer.len = cast(uint)TCP_READ_BUFFER_SIZE;
 			_iocpBuffer.buf = cast(char*) _readBuffer.ptr;
 			_iocpread.event = &_event;
 			_iocpread.operationType = IOCP_OP_TYPE.read;
@@ -240,7 +240,7 @@ package:
 		bool doRead() nothrow
 		{
 			
-			_iocpBuffer.len = TCP_READ_BUFFER_SIZE;
+			_iocpBuffer.len = cast(uint)TCP_READ_BUFFER_SIZE;
 			_iocpBuffer.buf = cast(char*) _readBuffer.ptr;
 			_iocpread.event = _event;
 			_iocpread.operationType = IOCP_OP_TYPE.read;

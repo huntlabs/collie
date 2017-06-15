@@ -63,7 +63,7 @@ private:
             true);
         static if (IO_MODE.iocp == IOMode)
         {
-            _iocpBuffer.len = TCP_READ_BUFFER_SIZE;
+            _iocpBuffer.len = cast(uint)TCP_READ_BUFFER_SIZE;
             _iocpBuffer.buf = cast(char*) _readBuffer.ptr;
             _iocpread.event = &_event;
             _iocpwrite.event = &_event;
@@ -226,7 +226,7 @@ protected:
             }
             _event.writeLen = 0;
             auto data = buffer.data();
-            _iocpWBuf.len = data.length;
+            _iocpWBuf.len = cast(uint)data.length;
             _iocpWBuf.buf = cast(char*) data.ptr;
 			doWrite();
 		}
@@ -346,7 +346,7 @@ protected:
     static if (IOMode == IO_MODE.iocp)
     {
         bool doRead() nothrow{
-            _iocpBuffer.len = TCP_READ_BUFFER_SIZE;
+            _iocpBuffer.len = cast(uint)TCP_READ_BUFFER_SIZE;
             _iocpBuffer.buf = cast(char*) _readBuffer.ptr;
             _iocpread.event = &_event;
             _iocpread.operationType = IOCP_OP_TYPE.read;
