@@ -202,7 +202,7 @@ static if (IOMode == IO_MODE.kqueue)
             auto tm = timeout % 1000;
             auto tspec = timespec(timeout / 1000, tm * 1000 * 1000);
             kevent_t[64] events;
-            auto len = kevent(_efd, null, 0, event.ptr, 64, &tspec);
+            auto len = kevent(_efd, null, 0, events.ptr, 64, &tspec);
             if (len < 1) return;
             foreach(i; 0 .. len){
                 auto ev = cast(AsyncEvent*) events[i].udata;
