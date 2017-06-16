@@ -242,7 +242,7 @@ package:
 			
 			_iocpBuffer.len = cast(uint)TCP_READ_BUFFER_SIZE;
 			_iocpBuffer.buf = cast(char*) _readBuffer.ptr;
-			_iocpread.event = _event;
+			_iocpread.event = &_event;
 			_iocpread.operationType = IOCP_OP_TYPE.read;
 			remoteAddrLen = cast(int)_bindddr.nameLen();
 			

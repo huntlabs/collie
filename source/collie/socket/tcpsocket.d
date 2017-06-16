@@ -213,7 +213,7 @@ protected:
             TCPWriteBuffer buffer = _writeQueue.front;
             if (_event.writeLen > 0)
             {
-                    trace("writed data length is : ", _event.writeLen);
+                    //trace("writed data length is : ", _event.writeLen);
                     if (buffer.popSize(_event.writeLen))
                     {
                         _writeQueue.deQueue();
