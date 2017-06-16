@@ -1,7 +1,12 @@
  
 language: d
+sudo: false
+os:
+ - linux
+ - osx
 
 d:
   - dmd
   #- gdc
   - ldc
+
