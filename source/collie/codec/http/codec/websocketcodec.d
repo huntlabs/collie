@@ -178,7 +178,7 @@ class WebsocketCodec : HTTPCodec
 				buffer.insertBack(mask[]);
 				buffer.insertBack(data);
 				auto tdata = buffer.data(false);
-				for (size_t j = tdata.length - payloadLength; j < tdata.length; i++)
+				for (size_t j = tdata.length - payloadLength; j < tdata.length; j++)
 				{
 					tdata[j] ^= mask[j % 4];
 				}
