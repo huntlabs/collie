@@ -170,23 +170,23 @@ class WebsocketCodec : HTTPCodec
 			
 			const size_t payloadLength = bytesLeft < FRAME_SIZE_IN_BYTES ? bytesLeft
 				: FRAME_SIZE_IN_BYTES;
-			
-			getFrameHeader(opcode, payloadLength, isLastFrame, buffer);
-			if (doMask)
-			{
-				ubyte[4] mask = generateMaskingKey(); //TODO：生成mask
-				buffer.insertBack(mask[]);
-				buffer.insertBack(data);
-				auto tdata = buffer.data(false);
-				for (size_t j = tdata.length - payloadLength; j < tdata.length; j++)
-				{
-					tdata[j] ^= mask[j % 4];
-				}
-			}
-			else
-			{
-				buffer.insertBack(data);
-			}
+            ubyte[] send = data[bytesWritten .. (bytesWritten + payloadLength)];
+            getFrameHeader(opcode, payloadLength, isLastFrame, buffer);
+            if (doMask())
+            {
+                ubyte[4] mask = generateMaskingKey(); 
+                buffer.put(mask[]);
+                buffer.put(send);
+                auto tdata = buffer.data(false);
+                for (size_t j = tdata.length - payloadLength; j < tdata.length; i++)
+                {
+                    tdata[j] ^= mask[j % 4];
+                }
+            }
+            else
+            {
+                buffer.put(send);
+            }
 			bytesLeft -= payloadLength;
 			bytesWritten += payloadLength;
 		}
@@ -195,8 +195,10 @@ class WebsocketCodec : HTTPCodec
 
 	ubyte[4] generateMaskingKey() // Client will used
 	{
-		ubyte[4] code = [0, 0, 0, 0];
-		return code; //TODO：生成mask
+        import std.datetime;
+        import std.bitmanip;
+        uint key = cast(uint)(Clock.currTime.toUnixTime!long());
+        return nativeToBigEndian(key);
 	}
 
 protected:
