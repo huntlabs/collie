@@ -124,6 +124,7 @@ private:
 			_info.client = null;
 			if(_info.tryCount < _tryCount){
 				_info.tryCount ++;
+				connect();
 			} else {
 				_info.cback = null;
 				if(_timer)
