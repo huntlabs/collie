@@ -14,8 +14,6 @@ import std.stdio;
 import std.conv;
 import core.memory;
 import std.algorithm : swap;
-import std.experimental.allocator;
-import std.experimental.allocator.gc_allocator;
 import collie.utils.vector;
 import std.experimental.logger;
 import core.stdc.string;
@@ -26,15 +24,13 @@ final class ByteBuf
 {
 	alias BufferVector = Vector!(ubyte); 
 	
-	this(IAllocator clloc = _processAllocator)
+    this()
 	{
-		_alloc = clloc;
 		_readIndex = _writeIndex = 0;
 	}
 
-	this(ubyte[] data ,IAllocator clloc = _processAllocator)
+    this(ubyte[] data )
 	{
-		_alloc = clloc;
 		_readIndex = _writeIndex = 0;
 		writeBytes(data);
 	}
@@ -195,18 +191,12 @@ final class ByteBuf
 		
 	@property void clear()
 	{
-//		for (size_t i = 0; i < _buffer.length; ++i)
-//		{
-//			_alloc.deallocate(_buffer[i]);
-//			_buffer[i] = null;
-//		}
 		_buffer.clear();
 		_readIndex = _writeIndex = 0;
 		//trace("\n\tclear()!!! \n");
 	}
 private:
 	BufferVector _buffer ;
-	IAllocator _alloc;
 	int _readIndex;
 	int _writeIndex;
 }
