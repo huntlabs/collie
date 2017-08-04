@@ -123,6 +123,7 @@ class HTTPForm
 protected:
 	void readXform(Buffer buffer)
 	{
+		buffer.rest(0);
 		TBuffer buf = TBuffer(buffer.length);
 		buffer.readAll((in ubyte[] data){
 				buf.insertBack(cast(ubyte[])data);
@@ -144,7 +145,7 @@ protected:
 		// 		trace("data is : ", cast(string)data);
 		// 	});
 		// trace(".................");
-		buffer.rest();
+		buffer.rest(0);
 		string brony = "--";
 		brony ~= brand;
 		string str;
