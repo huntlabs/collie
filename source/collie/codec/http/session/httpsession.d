@@ -296,6 +296,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 	override void onNativeProtocolUpgrade(HTTPTransaction txn,CodecProtocol protocol,string protocolString,HTTPMessage msg)
 	{
+        msg.clientAddress = getPeerAddress();
 		setupProtocolUpgrade(txn,protocol,protocolString,msg);
 	}
 
