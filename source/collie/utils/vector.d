@@ -380,7 +380,7 @@ unittest
     assert(cast(string)vec2[0] == "hahaha");
     assert(cast(string)vec2[1] == "huhuhu");
 
-    Vector!(int,IAllocator) vec22 = Vector!(int,IAllocator)(processAllocator);
+    Vector!(int,IAllocator) vec22 = Vector!(int,IAllocator)(theAllocator);
     int[] aa22 = [0, 1, 2, 3, 4, 5, 6, 7];
     vec22.insertBack(aa22);
     assert(vec22.length == 8);
