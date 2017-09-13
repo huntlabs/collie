@@ -194,34 +194,48 @@ protected:
 			if(line.length == 0)
 				break;
 			auto pos = countUntil(line, cast(ubyte)':') ; //  (cast(string) line).indexOf(":");
-			if (pos <= 0 || pos == (line.length - 1))
+			++pos;
+			if (pos <= 0 || pos >= line.length)
 				continue;
 			string key = cast(string)(line[0 .. pos]);
 			if(isSameIngnoreLowUp(strip(key),"content-disposition")){
-				cd = strip((cast(string)(line[pos + 1 .. $])));
+				line = line[pos .. $];
+				pos = countUntil(line, cast(ubyte)';');
+				++pos;
+				if (pos <= 0 || pos >= line.length)
+					continue;
+				cd = cast(string)line[pos + 1 .. $];
 			} else if(isSameIngnoreLowUp(strip(key),"content-type")){
 				cType = strip((cast(string)(line[pos + 1 .. $])));
 			}
 		} while(true);
 		if (cd.length == 0)
 			return false;
+		
 		string name;
-		auto pos = cd.indexOf("name=\"");
-		if (pos >= 0)
-		{
-			cd = cd[pos + 6 .. $];
-			pos = cd.indexOf("\"");
-			name = cd[0 .. pos].idup;
-		}
-		trace("name : ", name);
 		string filename;
-		pos = cd.indexOf("filename=\"");
-		if (pos >= 0)
-		{
-			cd = cd[pos + 10 .. $];
-			pos = cd.indexOf("\"");
-			filename = cd[0 .. pos];
-		}
+		splitNameValue(cd, ';' , '=' , (string key, string value){
+			string tkey = strip(key);
+			//string tvalue = strip(value);
+			string handleValue(string rv){
+				if(rv.length > 0) 
+					if(rv[0] == '\"') rv = rv[1 .. $];
+				if(rv.length > 0) 
+					if(rv[$-1] == '\"') rv = rv[0 .. $ - 1];
+				return rv;
+			}
+			switch(tkey){
+				case "name":
+					name = handleValue(strip(value));
+				break;
+				case "filename":
+					filename = handleValue(strip(value));
+				break;
+				default:
+				break;
+			}
+			return true;
+		});
 		if (filename.length > 0)
 		{
 			import std.array;
