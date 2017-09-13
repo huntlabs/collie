@@ -200,11 +200,13 @@ protected:
 			string key = cast(string)(line[0 .. pos - 1]);
 			if(isSameIngnoreLowUp(strip(key),"content-disposition")){
 				line = line[pos .. $];
+				trace("line is : ", cast(string)line);
 				pos = countUntil(line, cast(ubyte)';');
 				++pos;
 				if (pos <= 0 || pos >= line.length)
 					continue;
-				cd = cast(string)line[pos + 1 .. $];
+				trace("po is : tttt ", pos);
+				cd = cast(string)line[pos + 1 .. $].idup;
 			} else if(isSameIngnoreLowUp(strip(key),"content-type")){
 				cType = strip((cast(string)(line[pos + 1 .. $])));
 			}
@@ -214,6 +216,7 @@ protected:
 		
 		string name;
 		string filename;
+		trace("cd ====       ", cd);
 		splitNameValue(cd, ';' , '=' , (string key, string value){
 			trace("key :  ", key, "   value: ", value);
 			string tkey = strip(key);
