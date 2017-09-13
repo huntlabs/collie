@@ -223,7 +223,7 @@ protected:
 					if(rv[0] == '\"') rv = rv[1 .. $];
 				if(rv.length > 0) 
 					if(rv[$-1] == '\"') rv = rv[0 .. $ - 1];
-				return rv;
+				return rv.idup;
 			}
 			switch(tkey){
 				case "name":
@@ -258,7 +258,11 @@ protected:
 					value.put(cast(string) rdata);
 				});
 			string stdr = value.data;
+			trace("name == ", name);
+			trace("value == ", stdr);
+			
 			_forms[name] ~= stdr;
+			trace("form : ", _forms);
 			
 		}
 		ubyte[2] ub;
