@@ -197,7 +197,7 @@ protected:
 			++pos;
 			if (pos <= 0 || pos >= line.length)
 				continue;
-			string key = cast(string)(line[0 .. pos]);
+			string key = cast(string)(line[0 .. pos - 1]);
 			if(isSameIngnoreLowUp(strip(key),"content-disposition")){
 				line = line[pos .. $];
 				pos = countUntil(line, cast(ubyte)';');
@@ -215,6 +215,7 @@ protected:
 		string name;
 		string filename;
 		splitNameValue(cd, ';' , '=' , (string key, string value){
+			trace("key :  ", key, "   value: ", value);
 			string tkey = strip(key);
 			//string tvalue = strip(value);
 			string handleValue(string rv){
