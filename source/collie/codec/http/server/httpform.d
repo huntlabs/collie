@@ -200,15 +200,13 @@ protected:
 			string key = cast(string)(line[0 .. pos - 1]);
 			if(isSameIngnoreLowUp(strip(key),"content-disposition")){
 				line = line[pos .. $];
-				trace("line is : ", cast(string)line);
 				pos = countUntil(line, cast(ubyte)';');
 				++pos;
 				if (pos <= 0 || pos >= line.length)
 					continue;
-				trace("po is : tttt ", pos);
 				cd = cast(string)line[pos + 1 .. $].idup;
 			} else if(isSameIngnoreLowUp(strip(key),"content-type")){
-				cType = strip((cast(string)(line[pos + 1 .. $])));
+				cType = strip((cast(string)(line[pos + 1 .. $]))).idup;
 			}
 		} while(true);
 		if (cd.length == 0)
@@ -244,8 +242,8 @@ protected:
 		{
 			import std.array;
 			FormFile fp = new FormFile;
-			fp._fileName = filename.idup;
-			fp._contentType = cType.idup;
+			fp._fileName = filename;
+			fp._contentType = cType;
 			fp._startSize = buffer.readPos();
 			fp._body = buffer;
 			buffer.readUtil(boundary,(in ubyte[] rdata) {
