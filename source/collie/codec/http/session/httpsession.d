@@ -25,7 +25,7 @@ import std.socket;
 import std.experimental.allocator.mallocator;
 import collie.codec.http.httpwritebuffer;
 
-
+alias HTTPBuffer =  HTTPByteBuffer!(Mallocator);
 abstract class HTTPSessionController
 {
 	HTTPTransactionHandler getRequestHandler(HTTPTransaction txn, HTTPMessage msg);
@@ -124,17 +124,16 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		HTTPMessage headers,
 		bool eom)
 	{
-		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
+		auto tdata = new HTTPBuffer();
 		_codec.generateHeader(txn,headers,tdata,eom);
 
 		//auto cback = eom ? bind(&closeWriteCallBack,txn) : &writeCallBack;
 		//_down.httpWrite(tdata.data(true),cback);
 		if(eom){
-			tdata.setFinalTask(newTask(&closeWriteCallBack));
-			_down.post(&txn.onDelayedDestroy);
-		} else {
-			_down.httpWrite(tdata);
-		}
+			tdata.setFinalTask(newTask((){closeWriteCallBack();txn.onDelayedDestroy();}));
+		} 
+		_down.httpWrite(tdata);
+		
 
 	}
 
@@ -143,25 +142,21 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		bool eom)
 	{
 
-		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
-		size_t rlen = getCodec.generateBody(txn,tdata,eom);
+		auto tdata = new HTTPBuffer();
+		size_t rlen = getCodec.generateBody(txn,tdata,data,eom);
 
-//		auto cback = eom ? bind(&closeWriteCallBack,txn) : &writeCallBack;
-//		_down.httpWrite(tdata.data(true),cback);
 		if(eom){
-			tdata.setFinalTask(newTask(&closeWriteCallBack));
-			_down.httpWrite(tdata);
-			_down.post(&txn.onDelayedDestroy);
-		} else {
-			_down.httpWrite(tdata);
-		}
-
+			tdata.setFinalTask(newTask((){closeWriteCallBack();txn.onDelayedDestroy();}));
+		} 
+		_down.httpWrite(tdata);
+		
+		trace("send length : ", rlen);
 		return rlen;
 	}
 	
 	override size_t sendChunkHeader(HTTPTransaction txn,size_t length)
 	{
-		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
+		auto tdata = new HTTPByteBuffer!Mallocator();
 		size_t rlen = getCodec.generateChunkHeader(txn,tdata,length);
 		_down.httpWrite(tdata);
 		return rlen;
@@ -170,14 +165,11 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	
 	override size_t sendChunkTerminator(HTTPTransaction txn)
 	{
-		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
+		auto tdata = new HTTPByteBuffer!Mallocator();
 		size_t rlen = getCodec.generateChunkTerminator(txn,tdata);
 
-//		auto cback = bind(&closeWriteCallBack,txn);
-//		_down.httpWrite(tdata.data(true),cback);
-			tdata.setFinalTask(newTask(&closeWriteCallBack));
-			_down.httpWrite(tdata);
-			_down.post(&txn.onDelayedDestroy);
+		tdata.setFinalTask(newTask((){closeWriteCallBack();txn.onDelayedDestroy();}));
+		_down.httpWrite(tdata);
 
 		return rlen;
 	}
@@ -191,16 +183,12 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		//if(rlen) 
 			//_down.httpWrite(tdata.data(true),bind(&closeWriteCallBack,txn));
 		if(rlen){
-			tdata.setFinalTask(newTask(&closeWriteCallBack));
+			tdata.setFinalTask(newTask((){closeWriteCallBack();txn.onDelayedDestroy();}));
 			_down.httpWrite(tdata);
-			_down.post(&txn.onDelayedDestroy);
 		} else {
 			_down.post((){
+					closeWriteCallBack();
 					txn.onDelayedDestroy();
-					if(_codec is null || _codec.shouldClose()) {
-						trace("\t\t --------do close!!!");
-						_down.httpClose();
-					}
 				});
 		}
 		return rlen;
@@ -216,19 +204,16 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 	override size_t sendWsData(HTTPTransaction txn,OpCode code,ubyte[] data)
 	{
-		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
+		auto tdata = new HTTPByteBuffer!Mallocator();
 		size_t rlen = getCodec.generateWsFrame(txn,tdata,code,data);
 		if(rlen) {
 			bool eom = getCodec.shouldClose();
 //			auto cback = eom ? bind(&closeWriteCallBack,txn) : &writeCallBack;
 //			_down.httpWrite(tdata.data(true),cback);
 			if(eom){
-				tdata.setFinalTask(newTask(&closeWriteCallBack));
-				_down.httpWrite(tdata);
-				_down.post(&txn.onDelayedDestroy);
-			} else {
-				_down.httpWrite(tdata);
-			}
+				tdata.setFinalTask(newTask((){closeWriteCallBack();txn.onDelayedDestroy();}));
+			} 
+			_down.httpWrite(tdata);
 		}
 		return rlen;
 	}
@@ -341,6 +326,7 @@ protected:
 	void setupProtocolUpgrade(ref HTTPTransaction txn,CodecProtocol protocol,string protocolString,HTTPMessage msg);
 protected:
 	final void closeWriteCallBack(){
+		trace("shodle close!????????????");
 		//txn.onDelayedDestroy();
 		if(_codec is null || _codec.shouldClose()) {
 			trace("\t\t --------do close!!!");

@@ -25,6 +25,7 @@ class ResponseBuilder
 	this(ResponseHandler txn)
 	{
 		setResponseHandler(txn);
+		_body = new ByteBuffer!Mallocator();
 	}
 
 	final ResponseBuilder promise(string url, string host)
@@ -110,7 +111,7 @@ class ResponseBuilder
 				}
 			}
 		}
-		if(!(_body.length == 0) && _txn) {
+		if((_body.length > 0) && _txn) {
 			trace("body len = ", _body.length);
 			if(chunked) {
 				_txn.sendChunkHeader(_body.length);

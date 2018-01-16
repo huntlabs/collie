@@ -57,20 +57,14 @@ protected:
 
 	override void onError(HTTPErrorCode code) nothrow {
 		collectException({
-				//writeln("on erro : ", code);
-				import collie.utils.memory;
-				gcFree(_header);
-				gcFree(this);
+				writeln("on erro : ", code);
 			}());
 	}
 
 	override void requestComplete() nothrow
 	{
 		collectException({
-				//writeln("requestComplete : ");
-				import collie.utils.memory;
-				gcFree(_header);
-				gcFree(this);
+				writeln("requestComplete : ");
 			}());
 	}
 
@@ -91,7 +85,7 @@ void main()
 {
     
     writeln("Edit source/app.d to start your project.");
-    globalLogLevel(LogLevel.warning);
+   // globalLogLevel(LogLevel.warning);
 	trace("----------");
 
 	version(USE_SSL){
@@ -100,7 +94,7 @@ void main()
 		ssl.privateKeyFile = "server.pem";
 	}
 	HTTPServerOptions option = new HTTPServerOptions();
-	option.handlerFactories.insertBack(toDelegate(&newHandler));
+	option.handlerFactories ~= (toDelegate(&newHandler));
 	option.threads = totalCPUs;
 	version(USE_SSL) option.ssLConfig = ssl;
 	HTTPServerOptions.IPConfig ipconfig ;

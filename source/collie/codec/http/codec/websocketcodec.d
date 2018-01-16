@@ -109,7 +109,7 @@ class WebsocketCodec : HTTPCodec
 	}
 	
 	override size_t generateBody(HTTPTransaction txn,
-		HttpWriteBuffer chain,
+		HttpWriteBuffer chain,in ubyte[] data,
 		bool eom)
 	{
 		return 0;

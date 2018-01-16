@@ -210,10 +210,10 @@ class HTTP1XCodec : HTTPCodec
 	}
 
 	override size_t generateBody(HTTPTransaction txn,
-		HttpWriteBuffer chain,
+		HttpWriteBuffer chain,in ubyte[] data,
 		bool eom)
 	{
-		size_t rlen = 0;
+		size_t rlen = chain.write(data);
 		if(_egressChunked && _inChunk) {
 			appendLiteral(chain,"\r\n");
 			_inChunk = false;

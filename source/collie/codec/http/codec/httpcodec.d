@@ -366,7 +366,7 @@ abstract class HTTPCodec
    * @return number of bytes written
    */
 	size_t generateBody(HTTPTransaction txn,
-		HttpWriteBuffer chain,
+		HttpWriteBuffer chain,in ubyte[] data,
 		bool eom);
 
 	/**

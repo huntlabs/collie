@@ -6,24 +6,25 @@ import kiss.event.task;
 
 @trusted abstract class HttpWriteBuffer : StreamWriteBuffer, WriteBuffer
 {
-	override size_t write(in ubyte[] data);
+	override abstract size_t write(in ubyte[] data);
 
-	override size_t set(size_t pos, in ubyte[] data);
+	override abstract size_t set(size_t pos, in ubyte[] data);
 
-	override @property size_t length() const;
+	override abstract @property size_t length() const;
 
     void setFinalTask(AbstractTask task){
         _task = task;
     }
 
     override void doFinish() nothrow{
-        _task.job();
+		if(_task !is null)
+        	_task.job();
     }
 private:
     AbstractTask _task;
 }
 
-@trusted class HTTPByteBuffer(Alloc) : HttpWriteBuffer
+class HTTPByteBuffer(Alloc) : HttpWriteBuffer
 {
     import kiss.bytes;
     import kiss.container.Vector;
@@ -54,7 +55,7 @@ private:
     override size_t write(in ubyte[] data)
 	{
 		size_t len = _store.length;
-		_store.insertBack(cast(ubyte[])data);
+		()@trusted{_store.insertBack(cast(ubyte[])data);}();
 		return _store.length - len;
 	}
 
@@ -64,8 +65,11 @@ private:
 		if(pos >= _store.length || data.length == 0) return 0;
 		size_t len = _store.length - pos;
 		len = len > data.length ? data.length : len;
-		ubyte * ptr = cast(ubyte *)(_store.ptr + pos);
-		memcpy(ptr, data.ptr, len);
+		()@trusted{
+			ubyte *	ptr = cast(ubyte *)(_store.ptr + pos);
+			memcpy(ptr, data.ptr, len);
+		}();
+		
 		return len;
 	}
 
@@ -91,6 +95,10 @@ private:
         _store.clear();
         super.doFinish();
     }
+
+	override size_t length() const{
+		return _store.length;
+	}
 private:
 	BufferStore _store;
 	size_t _rsize = 0;
