@@ -67,7 +67,7 @@ void main()
     //globalLogLevel(LogLevel.warning);
 	trace("----------");
 	HTTPServerOptions option = new HTTPServerOptions();
-	option.handlerFactories.insertBack(toDelegate(&newHandler));
+	option.handlerFactories ~= (toDelegate(&newHandler));
 	option.threads = 2;
 
 	HTTPServerOptions.IPConfig ipconfig ;

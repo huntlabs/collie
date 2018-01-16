@@ -31,7 +31,7 @@ import collie.net.server.tcpserver;
 protected:
 	override void onActive() nothrow
 	{
-		collectException(writeln("new client connected : ",tcpSocket.remoteAddress.toString()));
+		collectException(writeln("new client connected : ",tcpStream.remoteAddress.toString()));
 	}
 
 	override void onClose() nothrow
@@ -39,7 +39,7 @@ protected:
 		collectException(writeln("client disconnect"));
 	}
 
-	override void onRead(ubyte[] data) nothrow
+	override void onRead(in ubyte[] data) nothrow
 	{
 		collectException({
 				writeln("read data : ", cast(string)data);
@@ -50,7 +50,7 @@ protected:
 	override void onTimeOut() nothrow
 	{
 		collectException({
-				writeln("client timeout : ",tcpSocket.remoteAddress.toString());
+				writeln("client timeout : ",tcpStream.remoteAddress.toString());
 				close();
 			}());
 	}

@@ -17,6 +17,7 @@ import std.stdio;
 import std.functional;
 import std.exception;
 
+import kiss.net.TcpStreamClient;
 import collie.net;
 import collie.net.client.clientmanger;
 
@@ -37,7 +38,7 @@ protected:
 	{
 		collectException(writeln(_id," client disconnect!"));
 	}
-	override void onRead(ubyte[] data) nothrow
+	override void onRead(in ubyte[] data) nothrow
 	{
 		collectException({
 				writeln(_id," . read data : ", cast(string)data);

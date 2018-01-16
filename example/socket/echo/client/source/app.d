@@ -18,6 +18,7 @@ import std.functional;
 import std.exception;
 
 import collie.net;
+import kiss.net.TcpStreamClient;
 import collie.net.client.client;
 
 import core.thread;
@@ -72,7 +73,7 @@ protected:
 		collectException(writeln("connect close!"));
 	}
 
-	override void onRead(ubyte[] data) nothrow {
+	override void onRead(in ubyte[] data) nothrow {
 		collectException(writeln("read data : ", cast(string)data));
 	}
 
@@ -89,7 +90,7 @@ protected:
 	void onCreate(TcpStreamClient client)
 	{
 		// set client;
-		client.setKeepAlive(1200,2);
+		//client.setKeepAlive(1200,2);
 		writeln("create a tcp client!");
 	}
 private:
