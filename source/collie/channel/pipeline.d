@@ -278,7 +278,7 @@ final class Pipeline(R, W = void) : PipelineBase
         static if (!is(R == void))
         {
             if (_front)
-                _front.read(forward!(msg));
+                _front.read(msg);
             else
 				throw new NotHasInBoundException("read(): not have inbound handler in Pipeline");
         }
@@ -328,7 +328,7 @@ final class Pipeline(R, W = void) : PipelineBase
         {
 
             if (_back)
-                _back.write(forward!(msg, cback));
+                _back.write(msg, cback);
             else
 				throw new NotHasOutBoundException("close(): no outbound handler in Pipeline");
         }

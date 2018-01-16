@@ -100,7 +100,7 @@ void main()
 		ssl.privateKeyFile = "./server.pem";
 	}
 	HTTPServerOptions option = new HTTPServerOptions();
-	option.handlerFactories.insertBack(toDelegate(&newHandler));
+	option.handlerFactories ~= (toDelegate(&newHandler));
 	option.threads = 8;
 	version(USE_SSL) option.ssLConfig = ssl;
 	HTTPServerOptions.IPConfig ipconfig ;

@@ -31,15 +31,13 @@ import collie.net.server.connection;
 import collie.bootstrap.exception;
 import collie.bootstrap.exception;
 import collie.bootstrap.serversslconfig;
-version(USE_SSL) {
-import collie.net.sslsocket;
-}
+import kiss.net.struct_;
 
 import std.socket;
 import std.experimental.logger;
 
 
-alias HTTPPipeline = Pipeline!(ubyte[],ubyte[]);
+alias HTTPPipeline = Pipeline!(const(ubyte[]), StreamWriteBuffer);
 alias HTTPServer = HTTPServerImpl!true;
 alias HttpServer = HTTPServerImpl!false;
 

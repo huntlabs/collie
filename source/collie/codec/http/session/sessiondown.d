@@ -18,7 +18,7 @@ import collie.net;
 import kiss.event.task;
 import collie.utils.memory;
 
-@trusted class PipelineSessionDown : HandlerAdapter!(ubyte[],StreamWriteBuffer),SessionDown
+@trusted class PipelineSessionDown : HandlerAdapter!(const(ubyte[]), StreamWriteBuffer),SessionDown
 {
 	@property httpSession(){return _session;}
 	@property httpSession(HTTPSession session){_session = session;}
@@ -42,9 +42,9 @@ import collie.utils.memory;
 			_session.inActive();
 	}
 
-	override void read(Context ctx,ubyte[] msg) {
+	override void read(Context ctx,const(ubyte[]) msg) {
 		if(_session)
-			_session.onRead(msg);
+			_session.onRead(cast(ubyte[])msg);
 	}
 
 	override void httpClose() {

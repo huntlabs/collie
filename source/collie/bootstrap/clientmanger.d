@@ -20,6 +20,8 @@ import collie.utils.exception;
 import collie.net.client.linkinfo;
 import std.exception;
 import std.experimental.logger;
+public import kiss.net.TcpStreamClient;
+import kiss.event.task;
 
 final class ClientManger(PipeLine)
 {
@@ -58,10 +60,10 @@ final class ClientManger(PipeLine)
 		tinfo.addr = to;
 		tinfo.tryCount = 0;
 		tinfo.cback = cback;
-		_loop.post((){
+		_loop.postTask(newTask((){
 				_waitConnect.addInfo(tinfo);
 				connect(tinfo);
-			});
+			}));
 	}
 
 	void close()
@@ -96,20 +98,20 @@ protected:
 		info.client = new TcpStreamClient(_loop);
 		if(_oncreator)
 			_oncreator(info.client);
-		info.client.setCloseCallBack(&tmpCloseCallBack);
-		info.client.setConnectCallBack(bind(&connectCallBack,info));
-		info.client.setReadCallBack(&tmpReadCallBack);
+		info.client.setCloseHandle(&tmpCloseCallBack);
+		info.client.setConnectHandle(bind(&connectCallBack,info));
+		info.client.setReadHandle(&tmpReadCallBack);
 		info.client.connect(info.addr);
 	}
 
-	void connectCallBack(LinkInfo * tinfo,bool isconnect)
+	void connectCallBack(LinkInfo * tinfo,bool isconnect) nothrow @trusted
 	{
+		catchAndLogException((){
 		import std.exception;
 		if(tinfo is null)return;
 		if(isconnect){
 			scope(exit){
 				_waitConnect.rmInfo(tinfo);
-				gcFree(tinfo);
 			}
 			PipeLine pipe = null;
 			collectException(_factory.newPipeline(tinfo.client),pipe);
@@ -128,7 +130,7 @@ protected:
 			con.initialize();
 
 		} else {// 重试一次，失败就释放资源
-			gcFree(tinfo.client);
+			tinfo.client = null;
 			if(tinfo.tryCount < _tryCount) {
 				tinfo.tryCount ++;
 				connect(tinfo);
@@ -140,11 +142,12 @@ protected:
 					cback(null);
 			}
 		}
+		}());
 	}
 
-	void tmpCloseCallBack(){}
+	void tmpCloseCallBack() nothrow{}
 
-	void tmpReadCallBack(ubyte[] buffer){}
+	void tmpReadCallBack(in ubyte[] buffer) nothrow{}
 
 	void remove(ClientConnection con)
 	{
@@ -188,7 +191,7 @@ protected:
 			return false;
 		_timer = new Timer(_loop);
 		_wheel = new TimingWheel(whileSize);
-		_timer.setCallBack((){_wheel.prevWheel();});
+		_timer.setTimerHandle(()nothrow{_wheel.prevWheel();});
 		return _timer.start(time);
 	}
 
