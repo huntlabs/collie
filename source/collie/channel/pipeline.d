@@ -13,12 +13,14 @@ module collie.channel.pipeline;
 import std.typecons;
 import std.variant;
 import std.functional;
+import std.range.primitives;
 
-import collie.utils.vector;
+import kiss.container.Vector;
 import collie.channel.handler;
 import collie.channel.handlercontext;
 import collie.channel.exception;
-import collie.socket;
+import collie.net;
+import kiss.event;
 
 interface PipelineManager
 {
@@ -30,9 +32,6 @@ abstract class PipelineBase
 {
     this()
     {
-        _ctxs = 		Vector!(PipelineContext)(8);
-        _inCtxs = 	Vector!(PipelineContext)(8);
-        _outCtxs = 	Vector!(PipelineContext)(8);
     }
 
     ~this()
@@ -61,7 +60,7 @@ abstract class PipelineBase
     }
 
     pragma(inline)
-    @property final void transport(AsyncTransport transport)
+    @property final void transport(BaseTransport transport)
     {
         _transport = transport;
     }
@@ -158,33 +157,42 @@ abstract class PipelineBase
     {
         foreach (i; 0 .. _ctxs.length)
         {
-            auto ctx = _ctxs.at(i);
+            auto ctx = _ctxs[i];
             ctx.detachPipeline();
         }
     }
 
 protected:
-    Vector!(PipelineContext) _ctxs = void;
-    Vector!(PipelineContext) _inCtxs = void;
-    Vector!(PipelineContext) _outCtxs = void;
+    PipelineContext[] _ctxs;
+    PipelineContext[] _inCtxs;
+    PipelineContext[] _outCtxs;
 
     bool _isFinalize = true;
 private:
     PipelineManager _manager = null;
-    AsyncTransport _transport;
+    BaseTransport _transport;
     //	AsynTransportInfo _transportInfo;
 
     final PipelineBase addHelper(Context)(Context ctx, bool front)
     {
+        PipelineContext[] addBefore(PipelineContext[] ctxs, Context ctx){
+            auto tctxs = new PipelineContext[ctxs.length + 1];
+            tctxs[0] = ctx;
+            tctxs[1..$] = ctxs[0..$];
+            return tctxs;
+
+        }
         _isFinalize = false;
-        front ? _ctxs.insertBefore(ctx) : _ctxs.insertBack(ctx);
+        front ? _ctxs = addBefore(_ctxs,ctx) : _ctxs ~= ctx;
         if (Context.dir == HandlerDir.BOTH || Context.dir == HandlerDir.IN)
         {
-            front ? _inCtxs.insertBefore(ctx) : _inCtxs.insertBack(ctx);
+            front ? _inCtxs = addBefore(_inCtxs,ctx) : _inCtxs ~= ctx;
+            //front ? _inCtxs.insertBefore(ctx) : _inCtxs.insertBack(ctx);
         }
         if (Context.dir == HandlerDir.BOTH || Context.dir == HandlerDir.OUT)
         {
-            front ? _outCtxs.insertBefore(ctx) : _outCtxs.insertBack(ctx);
+            front ? _outCtxs = addBefore(_outCtxs,ctx) : _outCtxs ~= ctx;
+            //front ? _outCtxs.insertBefore(ctx) : _outCtxs.insertBack(ctx);
         }
         return this;
     }
@@ -214,22 +222,26 @@ private:
 
     final void removeAt(size_t site)
     {
+        import kiss.array;
         _isFinalize = false;
         PipelineContext rctx = _ctxs[site];
         rctx.detachPipeline();
-        _ctxs.removeSite(site);
+        removeSite(_ctxs,site);
+        //_ctxs.removeSite(site);
 
         import std.algorithm.searching;
 
         const auto dir = rctx.getDirection();
         if (dir == HandlerDir.BOTH || dir == HandlerDir.IN)
         {
-            _inCtxs.removeOne(rctx);
+            arrayRemove(_inCtxs,rctx,true);
+           // _inCtxs.removeOne(rctx);
         }
 
         if (dir == HandlerDir.BOTH || dir == HandlerDir.OUT)
         {
-            _outCtxs.removeOne(rctx);
+            arrayRemove(_inCtxs,rctx,true);
+            //_outCtxs.removeOne(rctx);
         }
     }
 }
@@ -367,7 +379,7 @@ final class Pipeline(R, W = void) : PipelineBase
             }
         }
 
-        for (int i = 0; i < _ctxs.length(); ++i)
+        for (int i = 0; i < _ctxs.length; ++i)
         {
             _ctxs[i].attachPipeline();
         }
@@ -414,11 +426,11 @@ private:
 
 abstract shared class PipelineFactory(PipeLine)
 {
-    PipeLine newPipeline(TCPSocket transport);
+    PipeLine newPipeline(TcpStream transport);
 }
 
 alias AcceptPipeline = Pipeline!(Socket, uint);
 abstract shared class AcceptPipelineFactory
 {
-    AcceptPipeline newPipeline(Acceptor acceptor);
+    AcceptPipeline newPipeline(TcpListener acceptor);
 }

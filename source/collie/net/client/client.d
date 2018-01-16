@@ -8,21 +8,21 @@
  * Licensed under the Apache-2.0 License.
  *
  */
-module collie.socket.client.client;
+module collie.net.client.client;
 
 import std.socket;
 
-import collie.socket.eventloop;
-import collie.socket.timer;
-import collie.socket.tcpclient;
-import collie.socket.tcpsocket;
-import collie.socket.client.linkinfo;
-import collie.socket.client.exception;
-import collie.utils.task;
+import kiss.event;
+import kiss.net.Timer;
+import kiss.net.TcpStreamClient;
+import kiss.net.TcpStream;
+import collie.net.client.linkinfo;
+import collie.net.client.exception;
+import kiss.event.task;
 
 @trusted abstract class BaseClient
 {
-	alias ClientCreatorCallBack = void delegate(TCPClient);
+	alias ClientCreatorCallBack = void delegate(TcpStreamClient);
 	alias LinkInfo = TLinkInfo!ClientCreatorCallBack;
 
 	this(EventLoop loop) 
@@ -32,7 +32,7 @@ import collie.utils.task;
 
 	final bool isAlive() @trusted
 	{
-		return _info.client && _info.client.isAlive;
+		return _info.client && _info.client.watched;
 	}
 
 	final void setTimeout(uint s) @safe
@@ -50,25 +50,21 @@ import collie.utils.task;
 		_info.tryCount = 0;
 		_info.cback = cback;
 		_info.addr = addr;
-		_loop.post(&_postConnect);
+		_loop.postTask(newTask(&_postConnect));
 	}
 
 
 	final void write(ubyte[] data,TCPWriteCallBack cback = null) @trusted
 	{
-		if(_loop.isInLoopThread()){
-			_postWrite(data,cback);
-		} else {
-			_loop.post(newTask(&_postWrite,data,cback));
-		}
+		write(new WarpStreamBuffer(data,cback));
 	}
 
-    final void write(TCPWriteBuffer buffer) @trusted
+    final void write(StreamWriteBuffer buffer) @trusted
     {
         if (_loop.isInLoopThread()) {
             _postWriteBuffer(buffer);
         } else {
-            _loop.post(newTask(&_postWriteBuffer, buffer));
+            _loop.postTask(newTask(&_postWriteBuffer, buffer));
         }
     }
 
@@ -76,10 +72,10 @@ import collie.utils.task;
 	final void close() @trusted
 	{
 		if(_info.client is null) return;
-		_loop.post(&_postClose);
+		_loop.postTask(newTask(&_postClose));
 	}
 
-	final @property tcpClient() @trusted {return _info.client;}
+	final @property tcpStreamClient() @trusted {return _info.client;}
 	final @property timer() @trusted {return _timer;}
 	final @property timeout() @safe {return _timeout;}
 	final @property eventLoop() @trusted {return _loop;}
@@ -87,7 +83,7 @@ protected:
 	void onActive() nothrow;
 	void onFailure() nothrow;
 	void onClose() nothrow;
-	void onRead(ubyte[] data) nothrow;
+	void onRead(in ubyte[] data) nothrow;
 	void onTimeout() nothrow;
 
 	final startTimer()
@@ -98,53 +94,51 @@ protected:
 			_timer.stop();
 		else {
 			_timer = new Timer(_loop);
-			_timer.setCallBack(&onTimeout);
+			_timer.setTimerHandle(&onTimeout);
 		}
 		_timer.start(_timeout * 1000);
 	}
 private:
 	final void connect()
 	{
-		_info.client = new TCPClient(_loop);
+		_info.client = new TcpStreamClient(_loop);
 		if(_info.cback)
 			_info.cback(_info.client);
-		_info.client.setConnectCallBack(&connectCallBack);
-		_info.client.setCloseCallBack(&doClose);
-		_info.client.setReadCallBack(&onRead);
+		_info.client.setConnectHandle(&connectCallBack);
+		_info.client.setCloseHandle(&doClose);
+		_info.client.setReadHandle(&onRead);
 		_info.client.connect(_info.addr);
 	}
 
-	final void connectCallBack(bool state){
-		if(state){
-			_info.cback = null;
-			onActive();
-		} else {
-			import collie.utils.memory;
-			gcFree(_info.client);
-			_info.client = null;
-			if(_info.tryCount < _tryCount){
-				_info.tryCount ++;
-				connect();
-			} else {
+	final void connectCallBack(bool state) nothrow{
+		catchAndLogException((){
+			if(state){
 				_info.cback = null;
-				if(_timer)
-					_timer.stop();
-				onFailure();
+				onActive();
+			} else {
+				_info.client = null;
+				if(_info.tryCount < _tryCount){
+					_info.tryCount ++;
+					connect();
+				} else {
+					_info.cback = null;
+					if(_timer)
+						_timer.stop();
+					onFailure();
+				}
 			}
-		}
+		}());
 
 	}
-	final void doClose()
+	final void doClose() nothrow
 	{
-		import collie.utils.memory;
-		import collie.utils.task;
-		import collie.utils.functional;
+		catchAndLogException((){
 		if(_timer)
 			_timer.stop();
-		auto client = _info.client;
-		_loop.post!true(newTask!gcFree(client));
+		// auto client = _info.client;
 		_info.client = null;
 		onClose();
+		}());
 	}
 
 private:
@@ -153,22 +147,14 @@ private:
 			_info.client.close();
 	}
 
-	final void _postWriteBuffer(TCPWriteBuffer buffer)
+	final void _postWriteBuffer(StreamWriteBuffer buffer)
     {
         if (_info.client) {
             _info.client.write(buffer);
         } else
             buffer.doFinish();
     }
-
-	pragma(inline)
-	final void _postWrite(ubyte[] data,TCPWriteCallBack cback){
-		if(_info.client)
-			_info.client.write(data, cback);
-		else if(cback)
-			cback(data,0);
-	}
-
+	
 	final void _postConnect(){
 		startTimer();
 		connect();

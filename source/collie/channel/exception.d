@@ -1,8 +1,10 @@
 ﻿module collie.channel.exception;
 
 public import collie.exception;
+public import std.experimental.logger;
 
 import collie.utils.exception;
+
 
 /// CollieChannelException : CollieExceotion
 mixin ExceptionBuild!("CollieChannel", "Collie");

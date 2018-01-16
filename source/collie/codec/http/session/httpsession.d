@@ -17,9 +17,13 @@ import collie.codec.http.codec.httpcodec;
 import collie.codec.http.codec.wsframe;
 import collie.codec.http.errocode;
 
-import collie.socket.tcpsocket;
-import collie.utils.functional;
+import kiss.net.TcpStream;
+import kiss.functional;
+public import kiss.net.struct_;
+import kiss.event.task;
 import std.socket;
+import std.experimental.allocator.mallocator;
+import collie.codec.http.httpwritebuffer;
 
 
 abstract class HTTPSessionController
@@ -41,7 +45,7 @@ abstract class HTTPSessionController
 
 interface SessionDown
 {
-	void httpWrite(ubyte[],void delegate(ubyte[],size_t));
+	void httpWrite(StreamWriteBuffer buffer);
 	void httpClose();
 	void post(void delegate());
 	Address localAddress();
@@ -52,7 +56,6 @@ interface SessionDown
 abstract class HTTPSession : HTTPTransaction.Transport,
 	HTTPCodec.CallBack
 {
-	alias HVector = HTTPCodec.HVector;
 	alias StreamID = HTTPCodec.StreamID;
 	interface InfoCallback {
 		// Note: you must not start any asynchronous work from onCreate()
@@ -121,50 +124,36 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		HTTPMessage headers,
 		bool eom)
 	{
-		HVector tdata;
+		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
 		_codec.generateHeader(txn,headers,tdata,eom);
 
 		//auto cback = eom ? bind(&closeWriteCallBack,txn) : &writeCallBack;
 		//_down.httpWrite(tdata.data(true),cback);
 		if(eom){
-			_down.httpWrite(tdata.data(true),&closeWriteCallBack);
+			tdata.setFinalTask(newTask(&closeWriteCallBack));
 			_down.post(&txn.onDelayedDestroy);
 		} else {
-			_down.httpWrite(tdata.data(true),&writeCallBack);
+			_down.httpWrite(tdata);
 		}
 
-	}
-
-	override size_t sendBody(HTTPTransaction txn,ref HVector body_,bool eom) {
-		size_t rlen = getCodec.generateBody(txn,body_,eom);
-		trace("sendBody!! ",rlen);
-
-//		auto cback = eom ? bind(&closeWriteCallBack,txn) : &writeCallBack;
-//		_down.httpWrite(body_.data(true),cback);
-		if(eom){
-			_down.httpWrite(body_.data(true),&closeWriteCallBack);
-			_down.post(&txn.onDelayedDestroy);
-		} else {
-			_down.httpWrite(body_.data(true),&writeCallBack);
-		}
-
-		return rlen;
 	}
 
 	override size_t sendBody(HTTPTransaction txn,
-		ubyte[] data,
+		in ubyte[] data,
 		bool eom)
 	{
-		HVector tdata = HVector(data);
+
+		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
 		size_t rlen = getCodec.generateBody(txn,tdata,eom);
 
 //		auto cback = eom ? bind(&closeWriteCallBack,txn) : &writeCallBack;
 //		_down.httpWrite(tdata.data(true),cback);
 		if(eom){
-			_down.httpWrite(tdata.data(true),&closeWriteCallBack);
+			tdata.setFinalTask(newTask(&closeWriteCallBack));
+			_down.httpWrite(tdata);
 			_down.post(&txn.onDelayedDestroy);
 		} else {
-			_down.httpWrite(tdata.data(true),&writeCallBack);
+			_down.httpWrite(tdata);
 		}
 
 		return rlen;
@@ -172,21 +161,22 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	
 	override size_t sendChunkHeader(HTTPTransaction txn,size_t length)
 	{
-		HVector tdata;
+		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
 		size_t rlen = getCodec.generateChunkHeader(txn,tdata,length);
-		_down.httpWrite(tdata.data(true),&writeCallBack);
+		_down.httpWrite(tdata);
 		return rlen;
 	}
 
 	
 	override size_t sendChunkTerminator(HTTPTransaction txn)
 	{
-		HVector tdata;
+		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
 		size_t rlen = getCodec.generateChunkTerminator(txn,tdata);
 
 //		auto cback = bind(&closeWriteCallBack,txn);
 //		_down.httpWrite(tdata.data(true),cback);
-			_down.httpWrite(tdata.data(true),&closeWriteCallBack);
+			tdata.setFinalTask(newTask(&closeWriteCallBack));
+			_down.httpWrite(tdata);
 			_down.post(&txn.onDelayedDestroy);
 
 		return rlen;
@@ -195,13 +185,14 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 	override size_t sendEOM(HTTPTransaction txn)
 	{
-		HVector tdata;
+		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
 		size_t rlen = getCodec.generateEOM(txn,tdata);
 		trace("send eom!! ",rlen);
 		//if(rlen) 
 			//_down.httpWrite(tdata.data(true),bind(&closeWriteCallBack,txn));
 		if(rlen){
-			_down.httpWrite(tdata.data(true),&closeWriteCallBack);
+			tdata.setFinalTask(newTask(&closeWriteCallBack));
+			_down.httpWrite(tdata);
 			_down.post(&txn.onDelayedDestroy);
 		} else {
 			_down.post((){
@@ -218,24 +209,25 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	//		size_t sendAbort(HTTPTransaction txn,
 	//			HTTPErrorCode statusCode);
 
-	override void socketWrite(HTTPTransaction txn,ubyte[] data,HTTPTransaction.Transport.SocketWriteCallBack cback) {
-		_down.httpWrite(data,cback);
+	override void socketWrite(HTTPTransaction txn,StreamWriteBuffer buffer) {
+		_down.httpWrite(buffer);
 	}
 
 
 	override size_t sendWsData(HTTPTransaction txn,OpCode code,ubyte[] data)
 	{
-		HVector tdata;
+		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
 		size_t rlen = getCodec.generateWsFrame(txn,tdata,code,data);
 		if(rlen) {
 			bool eom = getCodec.shouldClose();
 //			auto cback = eom ? bind(&closeWriteCallBack,txn) : &writeCallBack;
 //			_down.httpWrite(tdata.data(true),cback);
 			if(eom){
-				_down.httpWrite(tdata.data(true),&closeWriteCallBack);
+				tdata.setFinalTask(newTask(&closeWriteCallBack));
+				_down.httpWrite(tdata);
 				_down.post(&txn.onDelayedDestroy);
 			} else {
-				_down.httpWrite(tdata.data(true),&writeCallBack);
+				_down.httpWrite(tdata);
 			}
 		}
 		return rlen;
@@ -348,15 +340,7 @@ protected:
 
 	void setupProtocolUpgrade(ref HTTPTransaction txn,CodecProtocol protocol,string protocolString,HTTPMessage msg);
 protected:
-	final void writeCallBack(ubyte[] data,size_t size)
-	{
-		import collie.utils.memory;
-		gcFree(data);
-	}
-
-	final void closeWriteCallBack(/*HTTPTransaction txn,*/ubyte[] data,size_t size){
-		import collie.utils.memory;
-		gcFree(data);
+	final void closeWriteCallBack(){
 		//txn.onDelayedDestroy();
 		if(_codec is null || _codec.shouldClose()) {
 			trace("\t\t --------do close!!!");

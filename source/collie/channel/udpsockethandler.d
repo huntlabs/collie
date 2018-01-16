@@ -8,12 +8,13 @@
  * Licensed under the Apache-2.0 License.
  *
  */
+
 module collie.channel.udpsockethandler;
 
-
+/*
 import std.socket;
 
-import collie.socket;
+import collie.net;
 import collie.channel;
 
 struct UdpData
@@ -59,3 +60,4 @@ protected:
 private:
 	UDPSocket _socket;
 }
+*/

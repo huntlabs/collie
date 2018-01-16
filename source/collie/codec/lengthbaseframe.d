@@ -6,7 +6,7 @@ import std.experimental.logger;
 
 import collie.channel;
 import collie.codec.exception;
-import collie.utils.bytes;
+import kiss.bytes;
 
 /// The Pack format
 /// header: ubytes 4 "00 00 00 00" -> uint 
@@ -168,8 +168,8 @@ private:
 
 unittest
 {
-	import collie.socket.common;
-	import collie.socket.transport;
+	import collie.net.common;
+	import collie.net.transport;
 	import collie.channel.handlercontext;
 	import std.stdio;
 	
@@ -209,7 +209,7 @@ unittest
 			return null;
 		}
 		
-		override @property AsyncTransport transport()
+		override @property Transport transport()
 		{
 			return null;
 		}

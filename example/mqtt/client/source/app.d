@@ -17,16 +17,16 @@ import std.stdio;
 import std.functional;
 import std.exception;
 
-import collie.socket;
+import collie.net;
 import collie.channel;
 import collie.bootstrap.client;
 
 import collie.codec.mqtt;
-import collie.utils.vector;
+import kiss.container.Vector;
 import std.conv;
 
-import collie.socket.common;
-import collie.socket.transport;
+import collie.net.common;
+import collie.net.transport;
 import collie.channel.pipeline;
 import collie.channel.handlercontext;
 
@@ -48,7 +48,7 @@ MqttClientPipeline pipe;
 class MqttClientPipelineFactory : PipelineFactory!MqttClientPipeline
 {
 public:
-    override MqttClientPipeline newPipeline(TCPSocket sock){
+    override MqttClientPipeline newPipeline(TcpStream sock){
         auto pipeline = MqttClientPipeline.create();
         pipeline.addBack(new TCPSocketHandler(sock));
 		pipeline.addBack(new MqttEncoder());

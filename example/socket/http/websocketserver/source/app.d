@@ -14,7 +14,7 @@ import std.exception;
 import std.typecons;
 import std.functional;
 
-import collie.socket;
+import collie.net;
 import collie.codec.http;
 import collie.codec.http.server;
 import collie.codec.http.server.websocket;

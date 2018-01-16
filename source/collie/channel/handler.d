@@ -11,10 +11,10 @@
 module collie.channel.handler;
 
 import std.traits;
-import std.functional;
 
 import collie.channel.pipeline;
 import collie.channel.handlercontext;
+public import kiss.net.struct_;
 
 abstract class HandlerBase(Context)
 {
@@ -150,12 +150,12 @@ class HandlerAdapter(R, W = R) : Handler!(R, R, W, W)
 
     override void read(Context ctx, R msg)
     {
-        ctx.fireRead(forward!(msg));
+        ctx.fireRead((msg));
     }
 
     override void write(Context ctx, W msg, TheCallBack cback)
     {
-        ctx.fireWrite(forward!(msg, cback));
+        ctx.fireWrite(msg, cback);
     }
 }
 

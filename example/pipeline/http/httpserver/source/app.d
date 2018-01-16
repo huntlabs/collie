@@ -17,7 +17,7 @@ import std.functional;
 import collie.channel;
 import collie.bootstrap.server;
 import collie.bootstrap.serversslconfig;
-import collie.socket;
+import collie.net;
 import collie.codec.http;
 import collie.codec.http.server;
 

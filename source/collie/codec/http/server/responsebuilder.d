@@ -14,14 +14,14 @@ import collie.codec.http.server.responsehandler;
 import collie.codec.http.httpmessage;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.headers;
+import kiss.buffer.ByteBuffer;
+import std.experimental.allocator.mallocator;
 
 import std.conv;
 
 
 class ResponseBuilder
 {
-	alias HVector = HTTPCodec.HVector;
-
 	this(ResponseHandler txn)
 	{
 		setResponseHandler(txn);
@@ -67,7 +67,7 @@ class ResponseBuilder
 	final ResponseBuilder setBody(ubyte[] data)
 	{
 		if(_txn)
-			_body.insertBack(data);
+			_body.write(data);
 		return this;
 	}
 
@@ -102,7 +102,7 @@ class ResponseBuilder
 				}
 			}
 			if(_txn) {
-				if(_body.empty && _sendEOM) {
+				if((_body.length == 0) && _sendEOM) {
 					_txn.sendHeadersWithEOM(_headers);
 					return;
 				}else {
@@ -110,15 +110,16 @@ class ResponseBuilder
 				}
 			}
 		}
-		if(!_body.empty && _txn) {
+		if(!(_body.length == 0) && _txn) {
 			trace("body len = ", _body.length);
 			if(chunked) {
 				_txn.sendChunkHeader(_body.length);
-				_txn.sendBody(_body.data(true));
+				_txn.sendBody(_body.allData.data());
 			} else {
-				_txn.sendBody(_body,_sendEOM);
+				_txn.sendBody(_body.allData.data(),_sendEOM);
 				return;
 			}
+			_body.clear();
 		}
 		if(_sendEOM && _txn) {
 			_txn.sendEOM();
@@ -133,7 +134,7 @@ protected:
 private:
 	ResponseHandler _txn;
 	HTTPMessage _headers;
-	HVector _body;
+	ByteBuffer!Mallocator _body;
 
 	bool _sendEOM = false;
 }

@@ -8,14 +8,12 @@
  * Licensed under the Apache-2.0 License.
  *
  */
-module collie.socket.eventloopgroup;
+module collie.net.eventloopgroup;
 
 import core.thread;
 import std.parallelism;
 
-import collie.socket.eventloop;
-import collie.socket.common;
-import collie.utils.functional;
+import kiss.event;
 
 @trusted final class EventLoopGroup
 {
@@ -25,11 +23,10 @@ import collie.utils.functional;
         foreach (i; 0 .. size)
         {
             auto loop = new GroupMember(new EventLoop);
-            loop.waiteTime = waitTime;
             _loops[loop] = new Thread(&loop.start);
         }
     }
-
+ 
     void start()
     {
         if (_started)
@@ -61,7 +58,6 @@ import collie.utils.functional;
     void addEventLoop(EventLoop lop, int waitTime = 2000)
     {
         auto loop = new GroupMember(lop);
-        loop.waiteTime = waitTime;
         auto th = new Thread(&loop.start);
         _loops[loop] = th;
         if (_started)
@@ -116,7 +112,7 @@ final class GroupMember
 
     void start()
     {
-        _loop.run(_waitTime);
+        _loop.join();
     }
 
     alias eventLoop this;
@@ -126,17 +122,6 @@ final class GroupMember
         return _loop;
     }
 
-    @property waitTime()
-    {
-        return _waitTime;
-    }
-
-    @property waiteTime(int time)
-    {
-        _waitTime = time;
-    }
-
 private:
     EventLoop _loop;
-    int _waitTime = 5000;
 }

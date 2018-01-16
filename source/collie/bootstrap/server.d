@@ -10,10 +10,11 @@
  */
 module collie.bootstrap.server;
 
-import collie.socket;
+import collie.net;
 import collie.channel;
 import collie.bootstrap.serversslconfig;
 public import collie.bootstrap.exception;
+import std.experimental.logger;
 
 import std.exception;
 
@@ -127,7 +128,7 @@ final class ServerBootstrap(PipeLine)
 		_isLoopWait = true;
 		if(_group)
 			_group.start();
-		_loop.run();
+		_loop.join();
     }
 
 	void startListening()
@@ -167,7 +168,7 @@ final class ServerBootstrap(PipeLine)
 protected:
     auto creatorAcceptor(EventLoop loop)
     {
-        auto acceptor = new Acceptor(loop, _address.addressFamily == AddressFamily.INET6);
+        auto acceptor = new TcpListener(loop, _address.addressFamily);
 		if(_rusePort)
         	acceptor.reusePort = _rusePort;
         acceptor.bind(_address);
@@ -253,12 +254,13 @@ private:
 private:
 
 import std.functional;
-import collie.utils.timingwheel;
+import kiss.timingwheel;
 import collie.utils.memory;
+import collie.net;
 
-final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
+final @trusted class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 {
-    this(Acceptor acceptor, AcceptPipeline pipe,
+    this(TcpListener acceptor, AcceptPipeline pipe,
         shared PipelineFactory!PipeLine clientPipeFactory, SSL_CTX* ctx = null)
     {
         _acceptor = acceptor;
@@ -267,7 +269,7 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
         pipe.finalize();
         _pipe = pipe;
         _pipe.transport(_acceptor);
-        _acceptor.setCallBack(&acceptCallBack);
+        _acceptor.setReadHandle(&acceptCallBack);
         _sslctx = ctx;
 		_list = new ServerConnection!PipeLine();
 		version(USE_SSL)
@@ -319,12 +321,12 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
             }
             else
             {
-                auto asyntcp = new TCPSocket(_acceptor.eventLoop, msg);
+                auto asyntcp = new TcpStream(_acceptor.eventLoop, msg);
                 startSocket(asyntcp);
             }
         } else
         {
-            auto asyntcp = new TCPSocket(_acceptor.eventLoop, msg);
+            auto asyntcp = new TcpStream(_acceptor.eventLoop, msg);
             startSocket(asyntcp);
         }
     }
@@ -332,7 +334,7 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
     override void transportActive(Context ctx)
     {
         trace("acept transportActive");
-        if (!_acceptor.start())
+        if (!_acceptor.watch())
         {
             error("acceptor start error!");
         }
@@ -360,9 +362,9 @@ protected:
         gcFree(conn);
     }
 
-    void acceptCallBack(Socket soct)
+    void acceptCallBack(EventLoop loop, Socket socket)  nothrow 
     {
-        _pipe.read(soct);
+        catchAndLogException(_pipe.read(socket));
     }
 
     pragma(inline, true) @property acceptor()
@@ -375,12 +377,12 @@ protected:
         if (_timer)
             return;
         _timer = new Timer(_acceptor.eventLoop);
-        _timer.setCallBack(&doWheel);
+        _timer.setTimerHandle(&doWheel);
         _wheel = new TimingWheel(whileSize);
         _timer.start(time);
     }
 
-    void doWheel()
+    void doWheel() nothrow
     {
         if (_wheel)
             _wheel.prevWheel();
@@ -402,7 +404,7 @@ protected:
         }
     }
 
-    void startSocket(TCPSocket sock)
+    void startSocket(TcpStream sock)
     {
         auto pipe = _pipeFactory.newPipeline(sock);
         if (!pipe)
@@ -434,7 +436,7 @@ private:
 		SSLHandShark _sharkList;
     }
 
-    Acceptor _acceptor;
+    TcpListener _acceptor;
     Timer _timer;
     TimingWheel _wheel;
     AcceptPipeline _pipe;

@@ -8,14 +8,14 @@
  * Licensed under the Apache-2.0 License.
  *
  */
-module collie.socket.client.linkinfo;
+module collie.net.client.linkinfo;
 
 import std.socket;
-import collie.socket.tcpclient;
+import kiss.net.TcpStreamClient;
 
 struct TLinkInfo(TCallBack) if(is(TCallBack == delegate))
 {
-	TCPClient client;
+	TcpStreamClient client;
 	Address addr;
 	uint tryCount = 0;
 	TCallBack cback;

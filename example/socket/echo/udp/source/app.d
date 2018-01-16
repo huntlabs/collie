@@ -3,8 +3,8 @@ import std.stdio;
 import std.socket;
 import std.conv;
 
-import collie.socket.udpsocket;
-import collie.socket.eventloop;
+import collie.net.udpsocket;
+import collie.net.eventloop;
 
 void main()
 {

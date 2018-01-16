@@ -8,14 +8,13 @@
  * Licensed under the Apache-2.0 License.
  *
  */
-module collie.socket.server.exception;
+module collie.net.server.exception;
 
 public import collie.exception;
-import collie.socket.exception;
 import collie.utils.exception;
 
 /// CollieSocketException : CollieExceotion
-mixin ExceptionBuild!("SocketServer", "CollieSocket");
+mixin ExceptionBuild!("SocketServer");
 
 /// ConnectedException : CollieSocketExceotion
 mixin ExceptionBuild!("SocketBind", "SocketServer");

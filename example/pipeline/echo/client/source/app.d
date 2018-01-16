@@ -17,7 +17,7 @@ import std.stdio;
 import std.functional;
 import std.exception;
 
-import collie.socket;
+import collie.net;
 import collie.channel;
 import collie.bootstrap.client;
 
@@ -49,7 +49,7 @@ public:
 class EchoPipelineFactory : PipelineFactory!EchoPipeline
 {
 public:
-    override EchoPipeline newPipeline(TCPSocket sock){
+    override EchoPipeline newPipeline(TcpStream sock){
         auto pipeline = EchoPipeline.create();
         pipeline.addBack(new TCPSocketHandler(sock));
         pipeline.addBack(new EchoHandler());

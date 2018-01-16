@@ -11,17 +11,17 @@
 module collie.bootstrap.client;
 
 import collie.channel;
-import collie.socket;
+import collie.net;
 import collie.utils.memory;
 
 import collie.bootstrap.exception;
-import collie.socket.client.linkinfo;
+import collie.net.client.linkinfo;
 
 final class ClientBootstrap(PipeLine) : PipelineManager
 {
 	alias ConnCallBack = void delegate(PipeLine);
 	alias LinkInfo = TLinkInfo!ConnCallBack;
-	alias ClientCreatorCallBack = void delegate(TCPClient);
+	alias ClientCreatorCallBack = void delegate(TcpStreamClient);
 
 	this(EventLoop loop)
 	{
@@ -92,7 +92,7 @@ final class ClientBootstrap(PipeLine) : PipelineManager
 protected:
 	void connect()
 	{
-		_info.client = new TCPClient(_loop,_info.addr.addressFamily);
+		_info.client = new TcpStreamClient(_loop,_info.addr.addressFamily);
 		if(_oncreator)
 			_oncreator(_info.client);
 		_info.client.setCloseCallBack(&closeCallBack);

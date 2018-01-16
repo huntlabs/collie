@@ -18,13 +18,13 @@ import std.functional;
 import std.exception;
 import std.experimental.logger;
 
-import collie.socket;
-import collie.socket.server.connection;
-import collie.socket.server.tcpserver;
+import collie.net;
+import collie.net.server.connection;
+import collie.net.server.tcpserver;
 
 @trusted class EchoConnect : ServerConnection
 {
-	this(TCPSocket sock){
+	this(TcpStream sock){
 		super(sock);
 	}
 
@@ -60,7 +60,7 @@ void main()
 {
 	@trusted ServerConnection newConnect(EventLoop lop,Socket soc)
 	{
-		return new EchoConnect(new TCPSocket(lop,soc));
+		return new EchoConnect(new TcpStream(lop,soc));
 	}
 
 	EventLoop loop = new EventLoop();
@@ -68,7 +68,7 @@ void main()
 	TCPServer server = new TCPServer(loop);
 	server.setNewConntionCallBack(&newConnect);
 	server.startTimeout(120);
-	server.bind(new InternetAddress("127.0.0.1",8094),(Acceptor accept){
+	server.bind(new InternetAddress("127.0.0.1",8094),(TcpListener accept){
 			accept.reusePort(true);
 		});
 	server.listen(1024);

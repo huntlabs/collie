@@ -16,7 +16,8 @@ import std.functional;
 import collie.channel.pipeline;
 import collie.channel.handler;
 import collie.channel.exception;
-import collie.socket;
+import collie.net;
+import kiss.net.struct_;
 
 interface HandlerContext(In, Out)
 {
@@ -34,7 +35,7 @@ interface HandlerContext(In, Out)
 
     @property PipelineBase pipeline();
 
-    @property AsyncTransport transport();
+    @property BaseTransport transport();
 
 }
 
@@ -48,7 +49,7 @@ interface InboundHandlerContext(In)
 
     @property PipelineBase pipeline();
 
-    @property AsyncTransport transport();
+    @property BaseTransport transport();
 }
 
 interface OutboundHandlerContext(Out)
@@ -60,7 +61,7 @@ interface OutboundHandlerContext(Out)
 
     @property PipelineBase pipeline();
 
-    @property AsyncTransport transport();
+    @property BaseTransport transport();
 }
 
 enum HandlerDir
@@ -181,7 +182,7 @@ mixin template CommonContextImpl()
     }
 
     pragma(inline)
-    final override @property AsyncTransport transport()
+    final override @property  BaseTransport transport()
     {
         return _pipeline is null ? null : pipeline.transport();
     }
@@ -200,7 +201,7 @@ mixin template ReadContextImpl()
     {
         if (this._nextIn)
         {
-            this._nextIn.read(forward!(msg));
+            this._nextIn.read(msg);
         }
         else
         {
@@ -235,7 +236,7 @@ mixin template ReadContextImpl()
     // InboundLink overrides
     override void read(Rin msg)
     {
-        _handler.read(this, forward!(msg));
+        _handler.read(this, (msg));
     }
 
     override void timeOut()
@@ -263,7 +264,7 @@ mixin template WriteContextImpl()
     {
         if (_nextOut)
         {
-            _nextOut.write(forward!(msg, cback));
+            _nextOut.write(msg, cback);
         }
         else
         {
@@ -291,7 +292,7 @@ mixin template WriteContextImpl()
     pragma(inline)
     override void write(Win msg, ThisCallBack cback = null)
     {
-        _handler.write(this, forward!(msg, cback));
+        _handler.write(this, msg, cback);
     }
 
     pragma(inline)

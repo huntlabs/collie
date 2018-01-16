@@ -10,14 +10,14 @@
  */
 module collie.bootstrap.clientmanger;
 
-import collie.socket;
+import collie.net;
 import collie.channel;
-import collie.utils.timingwheel;
+import kiss.timingwheel;
 import collie.utils.memory;
-import collie.utils.functional;
+import kiss.functional;
 import collie.exception;
 import collie.utils.exception;
-import collie.socket.client.linkinfo;
+import collie.net.client.linkinfo;
 import std.exception;
 import std.experimental.logger;
 
@@ -25,7 +25,7 @@ final class ClientManger(PipeLine)
 {
 	alias ClientConnection = ClientLink!PipeLine;
 	alias PipeLineFactory = PipelineFactory!PipeLine;
-	alias ClientCreatorCallBack = void delegate(TCPClient);
+	alias ClientCreatorCallBack = void delegate(TcpStreamClient);
 	alias ConnCallBack = void delegate(PipeLine);
 	alias LinkManger = TLinkManger!ConnCallBack;
 	alias LinkInfo = LinkManger.LinkInfo;
@@ -93,7 +93,7 @@ final class ClientManger(PipeLine)
 protected:
 	void connect(LinkInfo * info)
 	{
-		info.client = new TCPClient(_loop);
+		info.client = new TcpStreamClient(_loop);
 		if(_oncreator)
 			_oncreator(info.client);
 		info.client.setCloseCallBack(&tmpCloseCallBack);
@@ -263,7 +263,7 @@ private:
 package:
 struct TLinkInfo(TCallBack) if(is(TCallBack == delegate))
 {
-	TCPClient client;
+	TcpStreamClient client;
 	Address addr;
 	uint tryCount = 0;
 	TCallBack cback;

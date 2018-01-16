@@ -18,19 +18,21 @@ import collie.codec.http.server.requesthandler;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.httptansaction;
 import collie.bootstrap.server;
-import collie.utils.vector;
+import kiss.container.Vector;
 import collie.channel;
-import collie.socket.tcpsocket;
-import collie.socket.acceptor;
-import collie.socket.eventloop;
-import collie.socket.eventloopgroup;
-import collie.socket.server.tcpserver;
-import collie.socket.server.connection;
+import kiss.net.TcpStream;
+import kiss.event;
+import kiss.net.TcpListener;
+// import collie.net.acceptor;
+// import collie.net.eventloop;
+import collie.net.eventloopgroup;
+import collie.net.server.tcpserver;
+import collie.net.server.connection;
 import collie.bootstrap.exception;
 import collie.bootstrap.exception;
 import collie.bootstrap.serversslconfig;
 version(USE_SSL) {
-import collie.socket.sslsocket;
+import collie.net.sslsocket;
 }
 
 import std.socket;
@@ -153,7 +155,7 @@ protected:
 	uint maxHeaderSize() const shared {return cast(uint)_options.maxHeaderSize;}
 
 	static if(UsePipeline){
-		static void setAcceptorConfig(ref shared(HTTPServerOptions.IPConfig) config,Acceptor acceptor)
+		static void setAcceptorConfig(ref shared(HTTPServerOptions.IPConfig) config,TcpListener acceptor)
 		{
 			version(linux) {
 				if(config.enableTCPFastOpen){
@@ -163,7 +165,7 @@ protected:
 		}
 	}
 
-	void newServer(ref HTTPServerOptions.IPConfig ipconfig )
+	void newServer(HTTPServerOptions.IPConfig ipconfig )
 	{
 		static if(UsePipeline){
 			Server ser = new Server(_mainLoop);
@@ -194,7 +196,7 @@ protected:
 		{
 			Server ser = new Server(loop);
 			ser.setNewConntionCallBack(&newConnect);
-			ser.bind(address,(Acceptor accpet){
+			ser.bind(address,(TcpListener accpet){
 					if(ruseport)
 						accpet.reusePort(true);
 					else {
@@ -217,10 +219,10 @@ protected:
 
 	ServerConnection newConnect(EventLoop loop,Socket sock) @trusted 
 	{
-		TCPSocket socket;
+		TcpStream socket;
 		version(USE_SSL){
 			if(_ssl_Ctx){
-				import collie.socket.common;
+				import collie.net.common;
 				auto ssl = SSL_new(_ssl_Ctx);
 				static if (IOMode == IO_MODE.iocp){
 					BIO * readBIO = BIO_new(BIO_s_mem());
@@ -241,7 +243,7 @@ protected:
 				}
 			}
 		} else {
-			socket = new TCPSocket(loop,sock);
+			socket = new TcpStream(loop,sock);
 		}
 		return new HttpHandlerConnection(socket,this,
 			new HTTP1XCodec(TransportDirection.DOWNSTREAM,cast(uint)_options.maxHeaderSize));
@@ -268,7 +270,7 @@ import collie.codec.http.session.sessiondown;
 
 class HttpHandlerConnection : HTTPConnection
 {
-	this(TCPSocket sock,HTTPSessionController controller,HTTPCodec codec)
+	this(TcpStream sock,HTTPSessionController controller,HTTPCodec codec)
 	{
 		super(sock);
 		httpSession = new HTTPDownstreamSession(controller,codec,this);
@@ -289,7 +291,7 @@ class ServerHandlerFactory : PipelineFactory!HTTPPipeline
 	{
 		_server = cast(typeof(_server))server;
 	}
-	override HTTPPipeline newPipeline(TCPSocket transport) {
+	override HTTPPipeline newPipeline(TcpStream transport) {
 		auto pipe = HTTPPipeline.create();
 		pipe.addBack(new TCPSocketHandler(transport));
 		pipe.addBack(new HttpHandlerPipeline(cast(HTTPServer)_server,
@@ -309,7 +311,7 @@ class ServerAccpeTFactory : AcceptPipelineFactory
 		_conf = cast(typeof(_conf))config;
 	}
 
-	override AcceptPipeline newPipeline(Acceptor acceptor) {
+	override AcceptPipeline newPipeline(TcpListener acceptor) {
 		trace("--new accpetPipeLine");
 		AcceptPipeline pipe = AcceptPipeline.create();
 		HTTPServer.setAcceptorConfig(_conf,acceptor);

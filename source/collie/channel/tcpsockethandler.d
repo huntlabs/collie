@@ -10,21 +10,23 @@
  */
 module collie.channel.tcpsockethandler;
 
-import collie.socket;
+import collie.net;
 import collie.channel.handler;
 import collie.channel.handlercontext;
-import collie.utils.task;
+import kiss.net.struct_;
+import kiss.net.TcpStream;
+import kiss.event.task;
 
-final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
+final @trusted class TCPSocketHandler : HandlerAdapter!(const(ubyte[]), StreamWriteBuffer)
 {
-    this(TCPSocket sock)
+    this(TcpStream sock)
     {
 		restSocket(sock);
     }
 
 	@property tcpSocket(){return _socket;}
 
-	void restSocket(TCPSocket sock)
+	void restSocket(TcpStream sock)
 	{
 		_socket = sock;
 		_loop = sock.eventLoop();
@@ -33,7 +35,7 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
     override void transportActive(Context ctx)
     {
         attachReadCallback();
-        _socket.start();
+        _socket.watch();
         ctx.fireTransportActive();
     }
 
@@ -46,44 +48,48 @@ final class TCPSocketHandler : HandlerAdapter!(ubyte[], ubyte[])
 		}
     }
 
-    override void write(Context ctx, ubyte[] msg, TheCallBack cback)
+    override void write(Context ctx, StreamWriteBuffer buffer, TheCallBack cback = null)
     {
 		if(_loop.isInLoopThread()){
-			_postWrite(msg,cback);
+			_postWrite(buffer);
 		} else {
-			_loop.post(newTask(&_postWrite,msg,cback));
+			_loop.postTask(newTask(&_postWrite,buffer));
 		}
 
     }
 
     override void close(Context ctx)
     {
-		_loop.post(&_postClose);
+		_loop.postTask(newTask(&_postClose));
     }
 
 protected:
     void attachReadCallback()
     {
         _isAttch = true;
-        _socket.setReadCallBack(&readCallBack);
-        _socket.setCloseCallBack(&closeCallBack);
+        _socket.setReadHandle(&readCallBack);
+        _socket.setCloseHandle(&closeCallBack);
         context.pipeline.transport(_socket);
     }
 
-    void closeCallBack()
+    void closeCallBack() nothrow
     {
         _isAttch = false;
-        context.fireTransportInactive();
-        context.pipeline.transport(null);
-        _socket.setReadCallBack(null);
-        _socket.setCloseCallBack(null);
-        _socket = null;
-        context.pipeline.deletePipeline();
+        catchAndLogException((){
+            context.fireTransportInactive();
+            context.pipeline.transport(null);
+            _socket.setReadHandle(null);
+            _socket.setCloseHandle(null);
+            _socket = null;
+            context.pipeline.deletePipeline();
+        }());
     }
 
-    void readCallBack(ubyte[] buf)
+    void readCallBack(in ubyte[] buf) nothrow
     {
-        context.fireRead(buf);
+        catchAndLogException(
+            context.fireRead(buf)
+        );
     }
 
 private:
@@ -92,19 +98,18 @@ private:
 			_socket.close();
 	}
 	
-	final void _postWrite(ubyte[] msg,TCPWriteCallBack cback)
+	final void _postWrite(StreamWriteBuffer buffer)
 	{
 		if(_socket is null){
-			if(cback)
-				cback(msg,0);
+			buffer.doFinish();
 			return;
 		}
 		if (context.pipeline.pipelineManager)
 			context.pipeline.pipelineManager.refreshTimeout();
-		_socket.write(msg, cback);
+		_socket.write(buffer);
 	}
 private:
     bool _isAttch = false;
-    TCPSocket _socket;
+    TcpStream _socket;
     EventLoop _loop;
 }

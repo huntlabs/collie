@@ -17,8 +17,8 @@ import std.stdio;
 import std.functional;
 import std.exception;
 
-import collie.socket;
-import collie.socket.client.client;
+import collie.net;
+import collie.net.client.client;
 
 import core.thread;
 import core.sync.semaphore;
@@ -86,7 +86,7 @@ protected:
 			}());
 	}
 
-	void onCreate(TCPClient client)
+	void onCreate(TcpStreamClient client)
 	{
 		// set client;
 		client.setKeepAlive(1200,2);

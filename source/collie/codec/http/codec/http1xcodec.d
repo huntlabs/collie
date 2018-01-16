@@ -38,8 +38,6 @@ class HTTP1XCodec : HTTPCodec
 		_parser.onChunkComplete(&onChunkComplete);
 		_parser.onBody(&onBody);
 		_parser.onMessageComplete(&onMessageComplete);
-		_currtKey = HVector(256);
-		_currtValue = HVector(256);
 	}
 
 	override CodecProtocol getProtocol() {
@@ -109,7 +107,7 @@ class HTTP1XCodec : HTTPCodec
 	override size_t generateHeader(
 		HTTPTransaction txn,
 		HTTPMessage msg,
-		ref HVector buffer,
+		HttpWriteBuffer buffer,
 		bool eom = false)
 	{
 		const bool upstream = (_transportDirection == TransportDirection.UPSTREAM);
@@ -212,7 +210,7 @@ class HTTP1XCodec : HTTPCodec
 	}
 
 	override size_t generateBody(HTTPTransaction txn,
-		ref HVector chain,
+		HttpWriteBuffer chain,
 		bool eom)
 	{
 		size_t rlen = 0;
@@ -228,7 +226,7 @@ class HTTP1XCodec : HTTPCodec
 
 	override size_t generateChunkHeader(
 		HTTPTransaction txn,
-		ref HVector buffer,
+		HttpWriteBuffer buffer,
 		size_t length)
 	{
 		trace("_egressChunked  ", _egressChunked);
@@ -246,7 +244,7 @@ class HTTP1XCodec : HTTPCodec
 
 	override size_t generateChunkTerminator(
 		HTTPTransaction txn,
-		ref HVector buffer)
+		HttpWriteBuffer buffer)
 	{
 		if(_egressChunked && _inChunk)
 		{
@@ -258,7 +256,7 @@ class HTTP1XCodec : HTTPCodec
 	}
 
 	override size_t generateEOM(HTTPTransaction txn,
-		ref HVector buffer)
+		HttpWriteBuffer buffer)
 	{
 		size_t rlen = 0;
 		if(_egressChunked) {
@@ -293,15 +291,15 @@ class HTTP1XCodec : HTTPCodec
 	}
 
 	override size_t  generateRstStream(HTTPTransaction txn,
-		ref HVector buffer,HTTPErrorCode code)
+		HttpWriteBuffer buffer,HTTPErrorCode code)
 	{
 		return 0;
 	}
 protected:
 
-	final void appendLiteral(T)(ref HVector buffer, T[] data) if(isSomeChar!(Unqual!T) || is(Unqual!T == byte) || is(Unqual!T == ubyte))
+	final void appendLiteral(T)(HttpWriteBuffer buffer, T[] data) if(isSomeChar!(Unqual!T) || is(Unqual!T == byte) || is(Unqual!T == ubyte))
 	{
-		buffer.insertBack(cast(ubyte[])data);
+		buffer.write(cast(const (ubyte[]))data);
 	}
 
 	void onMessageBegin(ref HTTPParser){
@@ -322,8 +320,8 @@ protected:
 		_transaction = new HTTPTransaction(_transportDirection,0,0);
 		if(_callback)
 			_callback.onMessageBegin(_transaction, _message);
-		_currtKey.clear();
-		_currtValue.clear();
+		_currtKey = (ubyte[]).init;
+		_currtValue = (ubyte[]).init;
 	}
 	
 	void onHeadersComplete(ref HTTPParser parser){
@@ -395,19 +393,20 @@ protected:
 		// an entity-body in the response.
 		_headRequest = (parser.methodCode() == HTTPMethod.HTTP_HEAD);
 
-		_currtKey.insertBack(data);
+		_currtKey ~= data;
 		if(finish) {
-			ubyte[] tdata = _currtKey.data(true);
-			_message.url = cast(string)tdata;
+			_message.url = cast(string)(_currtKey);
+			_currtKey = (ubyte[]).init;
 		}
 	}
 	
 	void onStatus(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
 
-		_currtKey.insertBack(data);
+		_currtKey ~= data;
 		if(finish) {
-			string sdata = cast(string)_currtKey.data(true);
+			string sdata = cast(string)_currtKey;
+			_currtKey = (ubyte[]).init;
 			_message.statusCode(cast(ushort)parser.statusCode);
 			_message.statusMessage(sdata);
 		}
@@ -416,16 +415,18 @@ protected:
 	void onHeaderField(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
 		//trace("on onHeaderField");
-		_currtKey.insertBack(data);
+		_currtKey ~= data;
 	}
 	
 	void onHeaderValue(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
 	//	trace("on onHeaderField");
-		_currtValue.insertBack(data);
+		_currtValue ~= data;
 		if(finish){
-			string key = cast(string)_currtKey.data(true);
-			string value = cast(string)_currtValue.data(true);
+			string key = cast(string)_currtKey;
+			_currtKey = (ubyte[]).init;
+			string value = cast(string)_currtValue;
+			_currtValue  = (ubyte[]).init;
 			trace("http header: \t", key, " : ", value);
 			_message.getHeaders.add(key,value);
 		}
@@ -446,8 +447,8 @@ private:
 	CallBack _callback;
 	HTTPTransaction _transaction;
 	HTTPMessage _message;
-	HVector _currtKey;
-	HVector _currtValue;
+	ubyte[] _currtKey;
+	ubyte[] _currtValue;
 	HTTPParser _parser;
 
 	uint _maxHeaderSize;

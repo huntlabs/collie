@@ -13,7 +13,9 @@ module collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.httpmessage;
 import collie.codec.http.errocode;
-import collie.socket.tcpsocket;
+import collie.codec.http.httpwritebuffer;
+// import kiss.net.TcpStream;
+import kiss.net.TcpStream;
 
 import std.socket;
 public import std.experimental.logger;
@@ -121,7 +123,6 @@ interface HTTPTransactionHandler
 
 class HTTPTransaction
 {
-	alias HVector = HTTPCodec.HVector;
 	interface Transport
 	{
 		alias SocketWriteCallBack = TCPWriteCallBack;
@@ -137,10 +138,7 @@ class HTTPTransaction
 			bool eom);
 		
 		size_t sendBody(HTTPTransaction txn,
-			ubyte[],
-			bool eom);
-		size_t sendBody(HTTPTransaction txn,
-			ref HVector,
+			in ubyte[],
 			bool eom);
 		
 		size_t sendChunkHeader(HTTPTransaction txn,
@@ -151,7 +149,7 @@ class HTTPTransaction
 		
 		size_t sendEOM(HTTPTransaction txn);
 
-		void socketWrite(HTTPTransaction txn,ubyte[] data,SocketWriteCallBack cback);
+		void socketWrite(HTTPTransaction txn,StreamWriteBuffer buffer);
 
 //		size_t sendAbort(HTTPTransaction txn,
 //			HTTPErrorCode statusCode);
@@ -315,12 +313,7 @@ class HTTPTransaction
    *             applying any necessary protocol framing, such as
    *             chunk headers.
    */
-	void sendBody(ubyte[] body_, bool iseom = false){
-		if(transport)
-			if(transport)transport.sendBody(this,body_, iseom);
-	}
-
-	void sendBody(ref HVector body_, bool iseom = false){
+	void sendBody(in ubyte[] body_, bool iseom = false){
 		if(transport)
 			if(transport)transport.sendBody(this,body_, iseom);
 	}
@@ -337,9 +330,9 @@ class HTTPTransaction
 			transport.sendChunkHeader(this,length);
 	}
 
-	void socketWrite(ubyte[] data, Transport.SocketWriteCallBack cback){
+	void socketWrite(StreamWriteBuffer buffer){
 		if(transport)
-			transport.socketWrite(this,data, cback);
+			transport.socketWrite(this,buffer);
 	}
 	
 	/**

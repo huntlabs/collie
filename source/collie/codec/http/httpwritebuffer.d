@@ -1,0 +1,97 @@
+module collie.codec.http.httpwritebuffer;
+
+import kiss.buffer;
+import kiss.net.struct_;
+import kiss.event.task;
+
+@trusted abstract class HttpWriteBuffer : StreamWriteBuffer, WriteBuffer
+{
+	override size_t write(in ubyte[] data);
+
+	override size_t set(size_t pos, in ubyte[] data);
+
+	override @property size_t length() const;
+
+    void setFinalTask(AbstractTask task){
+        _task = task;
+    }
+
+    override void doFinish() nothrow{
+        _task.job();
+    }
+private:
+    AbstractTask _task;
+}
+
+@trusted class HTTPByteBuffer(Alloc) : HttpWriteBuffer
+{
+    import kiss.bytes;
+    import kiss.container.Vector;
+    import std.experimental.allocator.common;
+
+    alias BufferStore = Vector!(ubyte,Alloc); 
+
+    static if (stateSize!(Alloc) != 0)
+	{
+		this(Alloc alloc)
+		{
+			_store = BufferStore(1024,alloc);
+		}
+		
+		@property allocator(){return _store.allocator;}
+		
+	} else {
+		this()
+		{
+			_store = BufferStore(1024);
+		}
+	}
+
+	~this(){
+		destroy(_store);
+	}
+
+    override size_t write(in ubyte[] data)
+	{
+		size_t len = _store.length;
+		_store.insertBack(cast(ubyte[])data);
+		return _store.length - len;
+	}
+
+	override size_t set(size_t pos, in ubyte[] data)
+	{
+		import core.stdc.string : memcpy;
+		if(pos >= _store.length || data.length == 0) return 0;
+		size_t len = _store.length - pos;
+		len = len > data.length ? data.length : len;
+		ubyte * ptr = cast(ubyte *)(_store.ptr + pos);
+		memcpy(ptr, data.ptr, len);
+		return len;
+	}
+
+    void rest(size_t size){
+		_rsize = size;
+	}
+
+    override const(ubyte)[] sendData() nothrow 
+    {
+        size_t len = _rsize + 4096;// 一次最大发送4K
+		len = _store.length < len ? _store.length : len;
+		auto _data = _store.data();
+		return _data[_rsize .. len];
+    }
+
+    override bool popSize(size_t size) nothrow
+    {
+        _rsize += size;
+        return _rsize >= _store.length;
+    }
+
+    override void doFinish() nothrow{
+        _store.clear();
+        super.doFinish();
+    }
+private:
+	BufferStore _store;
+	size_t _rsize = 0;
+}

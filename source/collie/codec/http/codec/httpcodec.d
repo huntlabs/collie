@@ -10,11 +10,12 @@
  */
 module collie.codec.http.codec.httpcodec;
 
-import collie.codec.http.httpmessage;
-import collie.codec.http.errocode;
-import collie.codec.http.codec.wsframe;
-import collie.codec.http.httptansaction;
-import collie.utils.vector;
+public import collie.codec.http.httpmessage;
+public import collie.codec.http.errocode;
+public import collie.codec.http.codec.wsframe;
+public import collie.codec.http.httptansaction;
+public import collie.codec.http.httpwritebuffer;
+import kiss.container.Vector;
 
 import std.experimental.allocator.gc_allocator;
 
@@ -42,7 +43,6 @@ abstract class HTTPCodec
    * StreamID.
    */
 	alias StreamID = uint;
-	alias HVector = Vector!(ubyte);
 
 	this()
 	{}
@@ -349,7 +349,7 @@ abstract class HTTPCodec
 	size_t generateHeader(
 		HTTPTransaction txn,
 		HTTPMessage msg,
-		ref HVector buffer,
+		HttpWriteBuffer buffer,
 		bool eom = false);
 		//HTTPHeaderSize* size = nullptr);
 	
@@ -366,7 +366,7 @@ abstract class HTTPCodec
    * @return number of bytes written
    */
 	size_t generateBody(HTTPTransaction txn,
-		ref HVector chain,
+		HttpWriteBuffer chain,
 		bool eom);
 
 	/**
@@ -374,7 +374,7 @@ abstract class HTTPCodec
    */
 	size_t generateChunkHeader(
 		HTTPTransaction txn,
-		ref HVector buffer,
+		HttpWriteBuffer buffer,
 		size_t length);
 	
 	/**
@@ -382,7 +382,7 @@ abstract class HTTPCodec
    */
 	size_t generateChunkTerminator(
 		HTTPTransaction txn,
-		ref HVector buffer);
+		HttpWriteBuffer buffer);
 
 	/**
    * Generate any protocol framing needed to finalize an egress
@@ -391,18 +391,18 @@ abstract class HTTPCodec
    * @return number of bytes written
    */
 	size_t generateEOM(HTTPTransaction txn,
-		ref HVector buffer);
+		HttpWriteBuffer buffer);
 	
 	/**
    * Generate any protocol framing needed to abort a connection.
    * @return number of bytes written
    */
 	size_t generateRstStream(HTTPTransaction txn,
-		ref HVector buffer,HTTPErrorCode code);
+		HttpWriteBuffer buffer,HTTPErrorCode code);
 
 
 	size_t generateWsFrame(HTTPTransaction txn,
-		ref HVector buffer,OpCode code, ubyte[] data)
+		HttpWriteBuffer buffer,OpCode code, ubyte[] data)
 	{
 		return 0;
 	}

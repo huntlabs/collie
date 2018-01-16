@@ -22,18 +22,14 @@ import collie.codec.http.codec.wsframe;
 import collie.codec.http.headers;
 import collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
-import collie.utils.vector;
+import kiss.container.Vector;
 import collie.utils.memory;
 import collie.codec.http.server;
 
 
 abstract class IWebSocket : RequestHandler
-{
-	alias Buffer = Vector!(ubyte);
-	
+{	
 	this(){
-		_text = Buffer(256);
-		_binary= Buffer(256);
 	}
 	
 	pragma(inline)
@@ -106,18 +102,20 @@ protected:
 			}
 		} else {
 			if(wsf.parentCode == OpCode.OpCodeText){
-				collectException((){_text.insertBack(wsf.data);
-				gcFree(wsf.data);
-				if(wsf.isFinalFrame){
-					onText(cast(string)(_text.data(true)));
-				}
+				collectException((){
+					_text ~= wsf.data;
+					if(wsf.isFinalFrame){
+						onText(cast(string)(_text));
+						_text = null;
+					}
 					}());
 			} else {
-				collectException((){_binary.insertBack(wsf.data);
-				gcFree(wsf.data);
-				if(wsf.isFinalFrame){
-					onBinary(_text.data(true));
-				}
+				collectException((){
+					_binary ~= wsf.data;
+					if(wsf.isFinalFrame){
+						onBinary(_binary);
+						_binary = null;
+					}
 					}());
 			}
 		}
@@ -131,7 +129,7 @@ protected:
 	}
 
 package:
-	Buffer _text;
-	Buffer _binary;
+	ubyte[] _text;
+	ubyte[] _binary;
     Address _addr;
 }

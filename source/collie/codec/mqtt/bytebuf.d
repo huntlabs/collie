@@ -14,7 +14,7 @@ import std.stdio;
 import std.conv;
 import core.memory;
 import std.algorithm : swap;
-import collie.utils.vector;
+import kiss.container.Vector;
 import std.experimental.logger;
 import core.stdc.string;
 
@@ -173,7 +173,7 @@ final class ByteBuf
 
 	ubyte[] data()
 	{
-		return _buffer.data(false);
+		return _buffer.data().dup;
 	}
 
 	pragma(inline, true) final const @property size_t length()

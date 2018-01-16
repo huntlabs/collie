@@ -10,14 +10,15 @@
  */
 module collie.codec.http.server.httpform;
 
-import collie.buffer;
+import kiss.buffer;
 import std.array;
 import std.string;
 import std.exception;
 import std.algorithm.searching : canFind, countUntil;
 import std.experimental.logger;
 import collie.utils.string;
-import collie.utils.vector;
+import kiss.container.Vector;
+import std.experimental.allocator.mallocator;
 import std.uri;
 
 class HTTPFormException : Exception
@@ -124,12 +125,11 @@ protected:
 	void readXform(Buffer buffer)
 	{
 		buffer.rest(0);
-		TBuffer buf = TBuffer(buffer.length);
+		ubyte[] str;
 		buffer.readAll((in ubyte[] data){
-				buf.insertBack(cast(ubyte[])data);
+				str ~= data;
 			});
-		ubyte[] dt = buf.data(false);
-		splitNameValue(cast(string)dt,'&','=',(string key, string value){
+		splitNameValue(cast(string)str,'&','=',(string key, string value){
 				trace("_",key,"=", value);
 				if(value.length > 0)
 					_forms[key.idup] ~= decodeComponent(value);
@@ -149,7 +149,7 @@ protected:
 		string brony = "--";
 		brony ~= brand;
 		string str;
-		TBuffer buf = TBuffer(128);
+		auto buf = Vector!(ubyte,Mallocator)();
 		do{
 			//Appender!(ubyte[]) buf = appender!(ubyte[]);
 			buf.clear();
@@ -158,7 +158,7 @@ protected:
 					buf.insertBack(data);
 					//buf.put(data);
 				});
-			auto sttr = cast(string)buf.data(false);
+			auto sttr = cast(string)buf.data();
 			str = sttr.strip;
 			if(str.length == 0){
 				continue;
@@ -181,15 +181,15 @@ protected:
 	
 	bool readMultiftomPart(Buffer buffer, ubyte[] boundary)
 	{
-		TBuffer  buf  = TBuffer(512);
+		auto buf = Vector!(ubyte,Mallocator)();
 		string cd;
 		string cType;
 		do {
 			buf.clear();
 			buffer.readLine((in ubyte[] data){
-					buf.insertBack(cast(ubyte[])data);
+					buf.insertBack(data);
 				});
-			ubyte[] line = buf.data(false);
+			auto line = buf.data();
 			trace(cast(string)line);
 			if(line.length == 0)
 				break;

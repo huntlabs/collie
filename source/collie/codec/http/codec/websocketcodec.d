@@ -102,14 +102,14 @@ class WebsocketCodec : HTTPCodec
 	override size_t generateHeader(
 		HTTPTransaction txn,
 		HTTPMessage msg,
-		ref HVector buffer,
+		HttpWriteBuffer buffer,
 		bool eom = false)
 	{
 		return 0;
 	}
 	
 	override size_t generateBody(HTTPTransaction txn,
-		ref HVector chain,
+		HttpWriteBuffer chain,
 		bool eom)
 	{
 		return 0;
@@ -117,7 +117,7 @@ class WebsocketCodec : HTTPCodec
 	
 	override size_t generateChunkHeader(
 		HTTPTransaction txn,
-		ref HVector buffer,
+		HttpWriteBuffer buffer,
 		size_t length)
 	{
 		return 0;
@@ -126,27 +126,26 @@ class WebsocketCodec : HTTPCodec
 	
 	override size_t generateChunkTerminator(
 		HTTPTransaction txn,
-		ref HVector buffer)
+		HttpWriteBuffer buffer)
 	{
 		return 0;
 	}
 	
 	override size_t generateEOM(HTTPTransaction txn,
-		ref HVector buffer)
+		HttpWriteBuffer buffer)
 	{
 		return 0;
 	}
 
 	override size_t  generateRstStream(HTTPTransaction txn,
-		ref HVector buffer,HTTPErrorCode code)
+		HttpWriteBuffer buffer,HTTPErrorCode code)
 	{
 		return 0;
 	}
 
 	override size_t generateWsFrame(HTTPTransaction txn,
-		ref HVector buffer,OpCode code, ubyte[] data)
+		HttpWriteBuffer buffer,OpCode code, ubyte[] data)
 	{
-		buffer.clear();
 		if((code & 0x08) == 0x08 && (data.length > 125))
 				data = data[0 .. 125];
 		if(code == OpCode.OpCodeClose)
@@ -175,9 +174,9 @@ class WebsocketCodec : HTTPCodec
             if (doMask())
             {
                 ubyte[4] mask = generateMaskingKey(); 
-                buffer.put(mask[]);
-                buffer.put(send);
-                auto tdata = buffer.data(false);
+                buffer.write(mask[]);
+                buffer.write(send);
+                auto tdata = cast(ubyte[])buffer.sendData;
                 for (size_t j = tdata.length - payloadLength; j < tdata.length; i++)
                 {
                     tdata[j] ^= mask[j % 4];
@@ -185,7 +184,7 @@ class WebsocketCodec : HTTPCodec
             }
             else
             {
-                buffer.put(send);
+                buffer.write(send);
             }
 			bytesLeft -= payloadLength;
 			bytesWritten += payloadLength;
@@ -204,7 +203,7 @@ class WebsocketCodec : HTTPCodec
 protected:
 	bool doMask(){return _transportDirection ==  TransportDirection.UPSTREAM;}
 
-	void getFrameHeader(OpCode code, size_t payloadLength, bool lastFrame, ref HVector buffer)
+	void getFrameHeader(OpCode code, size_t payloadLength, bool lastFrame, HttpWriteBuffer buffer)
 	{
 		ubyte[2] wdata = [0, 0];
 		wdata[0] = cast(ubyte)((code & 0x0F) | (lastFrame ? 0x80 : 0x00));
@@ -212,17 +211,17 @@ protected:
 			wdata[1] = 0x80;
 		if (payloadLength <= 125){
 			wdata[1] |= to!ubyte(payloadLength);
-			buffer.insertBack(wdata[]);
+			buffer.write(wdata[]);
 		} else if (payloadLength <= ushort.max) {
 			wdata[1] |= 126;
-			buffer.insertBack(wdata[]);
+			buffer.write(wdata[]);
 			ubyte[2] length = nativeToBigEndian(to!ushort(payloadLength));
-			buffer.insertBack(length[]);
+			buffer.write(length[]);
 		} else {
 			wdata[1] |= 127;
-			buffer.insertBack(wdata[]);
+			buffer.write(wdata[]);
 			auto length = nativeToBigEndian(payloadLength);
-			buffer.insertBack(length[]);
+			buffer.write(length[]);
 		}
 	}
 

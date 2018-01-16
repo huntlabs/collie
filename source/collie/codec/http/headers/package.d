@@ -1,7 +1,7 @@
 ﻿module collie.codec.http.headers;
 
 import collie.utils.string;
-import collie.utils.vector;
+import kiss.container.Vector;
 import core.stdc.string;
 import std.string;
 import std.array;
@@ -11,7 +11,6 @@ public import collie.codec.http.headers.httpmethod;
 
 struct HTTPHeaders
 {
-	alias HVector = Vector!(string);
 	enum kInitialVectorReserve = 32;
 	
 	/**
@@ -38,7 +37,7 @@ struct HTTPHeaders
 
 	bool remove(HTTPHeaderCode code){
 		bool removed = false;
-		HTTPHeaderCode[] codes = _codes.data(false);
+		HTTPHeaderCode[] codes = _codes;
 		HTTPHeaderCode * ptr = codes.ptr;
 		const size_t len = codes.length;
 		while(true)
@@ -64,18 +63,18 @@ struct HTTPHeaders
 	}
 	body{
 		HTTPHeaderCode code = headersHash(name);
-		_codes.insertBack(code);
-		_headersNames.insertBack((code == HTTPHeaderCode.OTHER) ? name : HTTPHeaderCodeName[code]);
-		_headerValues.insertBack(value);
+		_codes ~= (code);
+		_headersNames ~= ((code == HTTPHeaderCode.OTHER) ? name : HTTPHeaderCodeName[code]);
+		_headerValues~= value;
 
 	}
 	void add(HTTPHeaderCode code, string value)
 	{
 		if(code == HTTPHeaderCode.OTHER || code > HTTPHeaderCode.SEC_WEBSOCKET_ACCEPT)
 			return;
-		_codes.insertBack(code);
-		_headersNames.insertBack(HTTPHeaderCodeName[code]);
-		_headerValues.insertBack(value);
+		_codes ~= code;
+		_headersNames ~= HTTPHeaderCodeName[code];
+		_headerValues~= value;
 	}
 
 	void set(string name,string value)
@@ -106,15 +105,15 @@ struct HTTPHeaders
 
 	bool exists(HTTPHeaderCode code)
 	{
-		HTTPHeaderCode[] codes = _codes.data(false);
+		HTTPHeaderCode[] codes = _codes;
 		return memchr(codes.ptr,code,codes.length) != null;
 	}
 
 	void removeAll()
 	{
-		_codes.clear();
-		_headersNames.clear();
-		_headerValues.clear();
+		_codes = (HTTPHeaderCode[]).init;
+		_headersNames = (string[]).init;
+		_headerValues = (string[]).init;
 		_deletedCount = 0;
 	}
 
@@ -205,7 +204,7 @@ struct HTTPHeaders
 	size_t getNumberOfValues(HTTPHeaderCode code)
 	{
 		size_t index = 0;
-		HTTPHeaderCode[] codes = _codes.data(false);
+		HTTPHeaderCode[] codes = _codes;
 		HTTPHeaderCode * ptr = codes.ptr;
 		const size_t len = codes.length;
 		while(true)
@@ -234,7 +233,7 @@ struct HTTPHeaders
 	}
 
 	string getSingleOrEmpty(HTTPHeaderCode code)  {
-		HTTPHeaderCode[] codes = _codes.data(false);
+		HTTPHeaderCode[] codes = _codes;
 		HTTPHeaderCode * ptr = cast(HTTPHeaderCode *)memchr(codes.ptr,code,codes.length);
 		if(ptr !is null){
 			size_t index = ptr - codes.ptr;
@@ -275,7 +274,7 @@ struct HTTPHeaders
 	bool forEachValueOfHeader(HTTPHeaderCode code,scope LAMBDA func)
 	{
 		size_t index = 0;
-		HTTPHeaderCode[] codes = _codes.data(false);
+		HTTPHeaderCode[] codes = _codes;
 		HTTPHeaderCode * ptr = codes.ptr;
 		const size_t len = codes.length;
 		while(true)
@@ -292,8 +291,8 @@ struct HTTPHeaders
 		return false;
 	}
 private:
-	Vector!(HTTPHeaderCode) _codes ;// = Vector!(HTTPHeaderCode)(2);
-	HVector _headersNames ;
-	HVector _headerValues ;
+	HTTPHeaderCode[]  _codes ;// = Vector!(HTTPHeaderCode)(2);
+	string[] _headersNames ;
+	string[] _headerValues ;
 	size_t _deletedCount = 0;
 }

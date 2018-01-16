@@ -15,11 +15,11 @@ import collie.codec.http.server.requesthandler;
 import collie.codec.http.errocode;
 import collie.codec.http.codec.wsframe;
 import collie.codec.http.httptansaction;
+public import kiss.net.struct_;
 
 abstract class ResponseHandler
 {
 	alias SocketWriteCallBack = HTTPTransaction.Transport.SocketWriteCallBack;
-	alias HVector = HTTPTransaction.HVector;
 
 	this(RequestHandler handle)
 	{
@@ -32,9 +32,7 @@ abstract class ResponseHandler
 
 	void sendChunkHeader(size_t len);
 
-	void sendBody(ubyte[] data,bool iseom = false);
-
-	void sendBody(ref HVector data,bool iseom = false);
+	void sendBody(in ubyte[] data,bool iseom = false);
 
 	void sendChunkTerminator();
 
@@ -42,7 +40,12 @@ abstract class ResponseHandler
 
 	void sendTimeOut();
 
-	void socketWrite(ubyte[],SocketWriteCallBack);
+	final void socketWrite(ubyte[] data,SocketWriteCallBack cback)
+	{
+		socketWrite(new WarpStreamBuffer(data,cback));
+	}
+
+	void socketWrite(StreamWriteBuffer buffer);
 
 	void sendWsData(OpCode code,ubyte[] data);
 

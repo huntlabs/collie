@@ -13,12 +13,12 @@ module collie.codec.http.session.sessiondown;
 import collie.channel;
 import collie.codec.http.session.httpsession;
 import std.socket;
-import collie.socket.tcpsocket;
-import collie.socket.eventloop;
-import collie.utils.task;
+import kiss.net.TcpStream;
+import collie.net;
+import kiss.event.task;
 import collie.utils.memory;
 
-@trusted class PipelineSessionDown : HandlerAdapter!(ubyte[]),SessionDown
+@trusted class PipelineSessionDown : HandlerAdapter!(ubyte[],StreamWriteBuffer),SessionDown
 {
 	@property httpSession(){return _session;}
 	@property httpSession(HTTPSession session){_session = session;}
@@ -29,7 +29,7 @@ import collie.utils.memory;
 	}
 
 	override void transportActive(Context ctx) {
-		TCPSocket sock = cast(TCPSocket)context.pipeline.transport;
+		TcpStream sock = cast(TcpStream)context.pipeline.transport;
 		_local = sock.localAddress;
 		_remote = sock.remoteAddress;
 		_loop = sock.eventLoop();
@@ -51,8 +51,8 @@ import collie.utils.memory;
 		close(context);
 	}
 
-	override void httpWrite(ubyte[] data,void delegate(ubyte[], size_t) cback) {
-		write(context,data,cback);
+	override void httpWrite(StreamWriteBuffer buffer) {
+		write(context,buffer,null);
 	}
 
 	override Address localAddress() {
@@ -64,7 +64,7 @@ import collie.utils.memory;
 	}
 
 	override  void post(void delegate() call){
-		_loop.post(call);
+		_loop.postTask(newTask(call));
 	}
 
 private:
@@ -75,13 +75,13 @@ private:
 }
 
 
-import collie.socket.server.tcpserver;
-import collie.socket.server.connection;
+import collie.net.server.tcpserver;
+import collie.net.server.connection;
 import std.exception;
 
 @trusted class HTTPConnection : ServerConnection,SessionDown
 {
-	this(TCPSocket sock)
+	this(TcpStream sock)
 	{
 		super(sock);
 		_loop = sock.eventLoop();
@@ -93,19 +93,19 @@ import std.exception;
 	override void httpClose() {
 		close();
 	}
-	override void httpWrite(ubyte[] data,void delegate(ubyte[], size_t) cback) {
-		write(data,cback);
+	override void httpWrite(StreamWriteBuffer data) {
+		write(data);
 	}
 	override Address localAddress() {
-		return tcpSocket.localAddress;
+		return tcpStream.localAddress;
 	}
 
 	override Address remoteAddress() {
-		return tcpSocket.remoteAddress;
+		return tcpStream.remoteAddress;
 	}
 
 	override  void post(void delegate() call){
-		_loop.post(call);
+		_loop.postTask(newTask(call));
 	}
 protected:
 	override void onTimeOut() nothrow {
@@ -126,9 +126,9 @@ protected:
 			collectException(_session.onActive());
 	}
 
-	override  void onRead(ubyte[] data) nothrow {
+	override  void onRead(in ubyte[] data) nothrow {
 		if(_session)
-			collectException(_session.onRead(data));
+			collectException(_session.onRead(cast(ubyte[])data));
 	}
 
 
