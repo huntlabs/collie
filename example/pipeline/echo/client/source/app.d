@@ -23,22 +23,24 @@ import collie.bootstrap.client;
 
 EventLoopGroup group;
 
-alias Pipeline!(ubyte[], ubyte[]) EchoPipeline;
-class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
+alias EchoPipeline = Pipeline!(const(ubyte[]), StreamWriteBuffer);
+class EchoHandler : HandlerAdapter!(const(ubyte[]), StreamWriteBuffer)
 {
 public:
-    override void read(Context ctx, ubyte[] msg){
+    override void read(Context ctx, const(ubyte[]) msg){
          writeln("Read data : ", cast(string) msg.dup, "   the length is ", msg.length);
     }
 
-    void callBack(ubyte[] data, size_t len){
-        writeln("\t writed data : ", cast(string) data, "   the length is ", len);
+    void callBack(const(ubyte[]) data, size_t len) @trusted nothrow{
+        catchAndLogException((){
+             writeln("writed data : ", cast(string) data, "   the length is ", len);
+        }());
     }
 
     override void timeOut(Context ctx){
         writeln("clent beat time Out!");
         string data = Clock.currTime().toSimpleString();
-        write(ctx, cast(ubyte[])data , &callBack);
+        write(ctx,new WarpStreamBuffer(cast(const(ubyte)[])(data.dup),&callBack),null);
     }
     
     override void transportInactive(Context ctx){
@@ -89,6 +91,6 @@ void main()
 	{
 		writeln("write to send server: ");
 		string data = readln();
-		pipe.write(cast(ubyte[])data,null);
+		pipe.write(new WarpStreamBuffer(cast(const(ubyte)[])(data),null),null);
 	}
 }

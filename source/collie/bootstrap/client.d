@@ -16,6 +16,8 @@ import collie.utils.memory;
 
 import collie.bootstrap.exception;
 import collie.net.client.linkinfo;
+public import kiss.net.TcpStreamClient;
+import kiss.event.task;
 
 final class ClientBootstrap(PipeLine) : PipelineManager
 {
@@ -64,7 +66,7 @@ final class ClientBootstrap(PipeLine) : PipelineManager
 		_info.addr = to;
 		_info.tryCount = 0;
 		_info.cback = cback;
-		_loop.post(&connect);
+		_loop.postTask(newTask(&doConnect));
 	}
 	
 	void close()
@@ -90,75 +92,79 @@ final class ClientBootstrap(PipeLine) : PipelineManager
 	@property tryCount(uint count){_tryCount = count;}
 
 protected:
-	void connect()
+	void doConnect()
 	{
 		_info.client = new TcpStreamClient(_loop,_info.addr.addressFamily);
 		if(_oncreator)
 			_oncreator(_info.client);
-		_info.client.setCloseCallBack(&closeCallBack);
-		_info.client.setConnectCallBack(&connectCallBack);
-		_info.client.setReadCallBack(&readCallBack);
+		_info.client.setCloseHandle(&closeCallBack);
+		_info.client.setConnectHandle(&connectCallBack);
+		_info.client.setReadHandle(&readCallBack);
 		_info.client.connect(_info.addr);
 	}
 
-	void closeCallBack()
+	void closeCallBack() nothrow @trusted
 	{
-		if (_timer)
-			_timer.stop();
-		if(_pipe)
-			_pipe.transportInactive();
+		catchAndLogException((){
+				if (_timer)
+					_timer.stop();
+				if(_pipe)
+					_pipe.transportInactive();
+			}());
 	}
 	
-	void connectCallBack(bool isconnect)
+	void connectCallBack(bool isconnect) nothrow @trusted
 	{
-		if (isconnect)
-		{
-			if (_timeOut > 0)
+		catchAndLogException((){
+			if (isconnect)
 			{
-				if (_timer is null)
+				if (_timeOut > 0)
 				{
-					trace("new timer!");
-					_timer = new Timer(_loop);
-					_timer.setCallBack(&onTimeOut);
-				}
-				if(!_timer.isActive()) {
+					if (_timer is null)
+					{
+						trace("new timer!");
+						_timer = new Timer(_loop);
+						_timer.setTimerHandle(&onTimeOut);
+					}
+					if(!_timer.watched) {
 
-					bool rv = _timer.start(_timeOut);
-					trace("start timer!   : ", rv);
+						bool rv = _timer.start(_timeOut);
+						trace("start timer!   : ", rv);
+					}
 				}
+				_info.tryCount = 0;
+				_pipe = _pipelineFactory.newPipeline(_info.client);
+				if(_info.cback)
+					_info.cback(_pipe);
+				_pipe.finalize();
+				_pipe.pipelineManager(this);
+				_pipe.transportActive();
+			}else if(_info.tryCount < _tryCount){
+				_info.client = null;
+				_info.tryCount ++;
+				doConnect();
+			} else {
+				if(_info.cback)
+					_info.cback(null);
+				_info.client = null;
+				_info.cback = null;
+				_info.addr = null;
+				_pipe = null;
 			}
-			_info.tryCount = 0;
-			_pipe = _pipelineFactory.newPipeline(_info.client);
-			if(_info.cback)
-				_info.cback(_pipe);
-			_pipe.finalize();
-			_pipe.pipelineManager(this);
-			_pipe.transportActive();
-		}else if(_info.tryCount < _tryCount){
-			gcFree(_info.client);
-			_info.client = null;
-			_info.tryCount ++;
-			connect();
-		} else {
-			if(_info.cback)
-				_info.cback(null);
-			gcFree(_info.client);
-			_info.client = null;
-			_info.cback = null;
-			_info.addr = null;
-			_pipe = null;
-		}
+		}());
 	}
 	
-	void readCallBack(ubyte[] buffer)
+	void readCallBack(in ubyte[] buffer) nothrow @trusted
 	{
-		_pipe.read(buffer);
+		catchAndLogException(_pipe.read(cast(ubyte[])buffer));
 	}
 	/// Client Time out is not refresh!
-	void onTimeOut()
+	void onTimeOut() nothrow @trusted
 	{
+		catchAndLogException((){
 		if(_pipe)
 			_pipe.timeOut();
+			}());
 	}
 	
 	override void deletePipeline(PipelineBase pipeline)

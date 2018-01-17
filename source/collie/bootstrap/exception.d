@@ -26,7 +26,8 @@ mixin ExceptionBuild!("ServerIsRuning", "CollieBoost");
 /// ServerIsListeningException : CollieBoostExceotion
 mixin ExceptionBuild!("ServerIsListening", "CollieBoost");
 
-
+//ConnectedException : CollieBoostExceotion
+mixin ExceptionBuild!("Connected", "CollieBoost");
 /// ServerStartException : CollieBoostExceotion
 mixin ExceptionBuild!("ServerStart", "CollieBoost");
 

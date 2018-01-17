@@ -20,14 +20,14 @@ import collie.net;
 import collie.channel;
 import collie.bootstrap.clientmanger;
 
-alias Pipeline!(ubyte[], ubyte[]) EchoPipeline;
+alias EchoPipeline = Pipeline!(const(ubyte[]), StreamWriteBuffer);
 
 ClientManger!EchoPipeline client;
 EventLoop loop;
 
 int num = 0;
 
-class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
+class EchoHandler : HandlerAdapter!(const(ubyte[]), StreamWriteBuffer)
 {
 public:
 	this(int nm)
@@ -35,21 +35,24 @@ public:
 		import std.conv;
 		_nm = to!string(nm);
 	}
-    override void read(Context ctx, ubyte[] msg)
+
+    override void read(Context ctx, const(ubyte[]) msg)
     {
          writeln("Read data : ", cast(string) msg.dup, "   the length is ", msg.length);
     }
 
-    void callBack(ubyte[] data, size_t len)
+    void callBack(const(ubyte[]) data, size_t len) @trusted nothrow
     {
-        writeln("\t writed data : ", cast(string) data, "   the length is ", len);
+        catchAndLogException((){
+             writeln("writed data : ", cast(string) data, "   the length is ", len);
+        }());
     }
 
     override void timeOut(Context ctx)
     {
         writeln("clent beat time Out!");
         string data = "NO." ~ _nm ~ "   \t" ~ Clock.currTime().toSimpleString();
-        write(ctx, cast(ubyte[])data , &callBack);
+        write(ctx,new WarpStreamBuffer(cast(const(ubyte)[])(data.dup),&callBack),null);
     }
     
     override void transportInactive(Context ctx)

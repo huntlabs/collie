@@ -21,19 +21,21 @@ import collie.net;
 import collie.channel;
 import collie.bootstrap.server;
 
-alias Pipeline!(ubyte[], ubyte[]) EchoPipeline;
+alias Pipeline!(const(ubyte[]), StreamWriteBuffer) EchoPipeline;
 
 ServerBootstrap!EchoPipeline ser;
 
-class EchoHandler : HandlerAdapter!(ubyte[], ubyte[])
+class EchoHandler : HandlerAdapter!(const(ubyte[]), StreamWriteBuffer)
 {
 public:
-    override void read(Context ctx, ubyte[] msg){
-        write(ctx,msg.dup, &callBack);
+    override void read(Context ctx, const(ubyte[]) msg){
+        write(ctx,new WarpStreamBuffer(msg.dup,&callBack),null);
     }
 
-    void callBack(ubyte[] data, size_t len){
-        writeln("writed data : ", cast(string) data, "   the length is ", len);
+    void callBack(const(ubyte[]) data, size_t len) @trusted nothrow{
+        catchAndLogException((){
+             writeln("writed data : ", cast(string) data, "   the length is ", len);
+        }());
     }
 
     override void timeOut(Context ctx){
