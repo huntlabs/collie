@@ -21,7 +21,7 @@ class MsgLengthTooBig : CollieCodecException
 	}
 }
 
-class LengthBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[])
+class LengthBasedFrame(bool littleEndian = false) : Handler!(const(ubyte[]),ubyte[],ubyte[],StreamWriteBuffer)
 {
 	this(uint max, ubyte compressType = 0x00)
 	{
@@ -30,7 +30,7 @@ class LengthBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[])
 		//    clear();
 	}
 
-	final override void read(Context ctx, ubyte[] msg)
+	final override void read(Context ctx, const(ubyte[]) msg)
 	{
 
 		void doFireRead()
@@ -45,7 +45,7 @@ class LengthBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[])
 		size_t len = msg.length;
 		for(size_t i = 0; i < len; ++i)
 		{
-			ubyte ch = msg[i];
+			const ubyte ch = msg[i];
 			final switch(_pos)
 			{
 				case ReadPOS.Length_Begin:
@@ -115,7 +115,7 @@ class LengthBasedFrame(bool littleEndian = false) : HandlerAdapter!(ubyte[])
 			data[0 .. 4] = length[];
 			data[4] = ctype;
 			data[5 .. $] = tmsg[];
-			ctx.fireWrite(data,&callBack);
+			ctx.fireWrite(new WarpStreamBuffer(data,null),null);
 			if (cback)
 				cback(msg, size);
 		}
@@ -138,9 +138,6 @@ protected:
 	{
 		return data;
 	}
-	
-	void callBack(ubyte[] data,size_t size)
-	{}
 
 private:
 	enum ReadPOS : ubyte
@@ -168,14 +165,14 @@ private:
 
 unittest
 {
-	import collie.net.common;
-	import collie.net.transport;
+	import collie.net;
+	import kiss.net.TcpStream;
 	import collie.channel.handlercontext;
 	import std.stdio;
 	
 	ubyte[] gloaData;
 	
-	class Contex : HandlerContext!(ubyte[], ubyte[])
+	class Contex : HandlerContext!(ubyte[],StreamWriteBuffer)
 	{
 		override void fireRead(ubyte[] msg)
 		{
@@ -194,10 +191,11 @@ unittest
 		{
 		}
 		
-		override void fireWrite(ubyte[] msg, void delegate(ubyte[], size_t) cback = null)
+		override void fireWrite(StreamWriteBuffer msg, void delegate(StreamWriteBuffer, size_t) cback = null)
 		{
-			gloaData ~= msg;
-			writeln("length is : ", msg[0 .. 4], " \n the data is : ", cast(string)(msg[4 .. $]));
+			auto data = msg.sendData;
+			gloaData ~= data;
+			writeln("length is : ", data[0 .. 4], " \n the data is : ", cast(string)(data[4 .. $]));
 		}
 		
 		override void fireClose()
