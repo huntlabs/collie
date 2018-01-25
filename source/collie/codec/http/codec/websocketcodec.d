@@ -177,7 +177,7 @@ class WebsocketCodec : HTTPCodec
                 buffer.write(mask[]);
                 buffer.write(send);
                 auto tdata = cast(ubyte[])buffer.sendData;
-                for (size_t j = tdata.length - payloadLength; j < tdata.length; i++)
+                for (size_t j = tdata.length - payloadLength; j < tdata.length; j++)
                 {
                     tdata[j] ^= mask[j % 4];
                 }
@@ -282,8 +282,7 @@ protected:
 	}
 
 	void readFrame(in ubyte[] data)
-	{
-		
+	{		
 		void resultOne()
 		{
 			if (frame.isValid && frame.isDataFrame())
@@ -468,7 +467,7 @@ protected:
 					break;
 				case ProcessingState.PS_READ_PAYLOAD:
 				{
-					trace("\n\t_length = ", _length);
+					if(_length>0) tracef("_length = %d / %d", _length, len);
 					auto llen = len - i;
 					auto rlen = _length - _readLen;
 					if (llen >= rlen)
