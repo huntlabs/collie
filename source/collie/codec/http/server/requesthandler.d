@@ -30,7 +30,18 @@ abstract class RequestHandler
    * Invoked when we have successfully fetched headers from client. This will
    * always be the first callback invoked on your handler.
    */
-	void onResquest(HTTPMessage headers) nothrow;
+	void onRequest(HTTPMessage headers) nothrow
+	{
+	}
+
+	/**
+	deprecated("Incorrect spelling. Using onRequest instead.")
+	*/
+	void onResquest(HTTPMessage headers) nothrow
+	{
+		onRequest(headers);
+	}
+
 
 	/**
    * Invoked when we get part of body for the request.

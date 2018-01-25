@@ -35,25 +35,25 @@ abstract class IWebSocket : RequestHandler
 	pragma(inline)
 		final bool ping(ubyte[] data)
 	{
-		return sendFarme(OpCode.OpCodePing,data);
+		return sendFrame(OpCode.OpCodePing,data);
 	}
 	
 	pragma(inline)
 		final bool sendText(string text)
 	{
-		return sendFarme(OpCode.OpCodeText,cast(ubyte[])text);
+		return sendFrame(OpCode.OpCodeText,cast(ubyte[])text);
 	}
 	
 	pragma(inline)
 		final bool sendBinary(ubyte[] data)
 	{
-		return sendFarme(OpCode.OpCodeBinary,data);
+		return sendFrame(OpCode.OpCodeBinary,data);
 	}
 	
 	pragma(inline)
 		final bool close(ubyte[] data = null)
 	{
-		return sendFarme(OpCode.OpCodeClose,data);
+		return sendFrame(OpCode.OpCodeClose,data);
 	}
 	
 	pragma(inline,true)
@@ -88,13 +88,13 @@ protected:
 		if(wsf.isControlFrame){
 			switch(wsf.opCode){
 				case OpCode.OpCodePing:
-					collectException(sendFarme(OpCode.OpCodePong,wsf.data));
+					collectException(sendFrame(OpCode.OpCodePong,wsf.data));
 					break;
 				case OpCode.OpCodePong:
 					collectException(onPong(wsf.data));
 					break;
 				case OpCode.OpCodeClose:
-					collectException((){sendFarme(OpCode.OpCodeClose,wsf.data);
+					collectException((){sendFrame(OpCode.OpCodeClose,wsf.data);
 							onClose(wsf.data);}());
 					break;
 				default:
@@ -121,11 +121,17 @@ protected:
 		}
 	}
 
-	bool sendFarme(OpCode code,ubyte[] data)
+	bool sendFrame(OpCode code,ubyte[] data)
 	{
 		if(!_downstream) return false;
 			_downstream.sendWsData(code,data);
 		return true;
+	}
+
+	deprecated("Incorrect spelling. Using sendFrame instead.")
+ 	bool sendFarme(OpCode code,ubyte[] data)
+ 	{
+		return sendFrame(code, data);
 	}
 
 package:
