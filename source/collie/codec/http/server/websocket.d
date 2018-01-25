@@ -73,7 +73,8 @@ protected:
 	final override void onEOM() nothrow{}
 	final override void requestComplete() nothrow{}
 	final override void onError(HTTPErrorCode code) nothrow {
-		_downstream = null;
+        if(code != HTTPErrorCode.TIME_OUT)
+		    _downstream = null;
 		collectException(onErro(code));
 	}
 	override bool onUpgtade(CodecProtocol protocol,HTTPMessage msg) nothrow{
