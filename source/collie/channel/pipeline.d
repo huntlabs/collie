@@ -15,7 +15,6 @@ import std.variant;
 import std.functional;
 import std.range.primitives;
 
-import kiss.container.Vector;
 import collie.channel.handler;
 import collie.channel.handlercontext;
 import collie.channel.exception;

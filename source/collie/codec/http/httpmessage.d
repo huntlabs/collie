@@ -196,6 +196,11 @@ final class HTTPMessage
 		return response()._status;
 	}
 
+	@property string host()
+	{
+		return _headers.getSingleOrEmpty(HTTPHeaderCode.HOST);
+	}
+
 	/**
    * Access the headers (fpreq, fpres)
    */

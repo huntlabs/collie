@@ -249,7 +249,7 @@ public:
 			trace("_httpErrno eror : ", _httpErrno);
             return 0;
         }
-		trace("data.lengt : ",data.length, "   _state = ", _state);
+		trace("data.length : ",data.length, "   _state = ", _state);
         if (data.length == 0)
         {
             switch (_state)
