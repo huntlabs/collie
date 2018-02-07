@@ -213,7 +213,7 @@ class HTTPTransaction
    */
 	void onIngressHeadersComplete(HTTPMessage msg)
 	{
-		trace("onIngressHeadersComplete handle is ", (handler is null));
+		// trace("onIngressHeadersComplete handle is ", (handler is null));
 		if(isUpstream() && msg.isResponse()) {
 			_lastResponseStatus = msg.statusCode;
 		}
@@ -409,7 +409,7 @@ class HTTPTransaction
 package:
 	void onDelayedDestroy()
 	{
-		trace("deleting is ", deleting);
+		// trace("deleting is ", deleting);
 		if(deleting) return;
 		deleting = true;
 		if(_handler) {

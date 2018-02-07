@@ -434,7 +434,7 @@ protected:
 	
 	void onBody(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
-		trace("on boday, length : ", data.length);
+		// trace("on boday, length : ", data.length);
 		_callback.onBody(_transaction,data);
 	}
 

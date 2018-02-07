@@ -249,7 +249,7 @@ public:
 			trace("_httpErrno eror : ", _httpErrno);
             return 0;
         }
-		trace("data.length : ",data.length, "   _state = ", _state);
+		// trace("data.length : ",data.length, "   _state = ", _state);
         if (data.length == 0)
         {
             switch (_state)
@@ -2393,7 +2393,7 @@ enum NEW_MESSAGE = "httpShouldKeepAlive() ? (type == HTTPParserType.HTTP_REQUEST
 string CALLBACK_NOTIFY(string code)
 {
     string _s = " {if (_on" ~ code ~ " !is null){
-               trace(\" CALLBACK_NOTIFY : " ~ code ~ "\");
+               //trace(\" CALLBACK_NOTIFY : " ~ code ~ "\");
                _on" ~ code ~ "(this); if(!handleIng){
                 _httpErrno = HTTPParserErrno.HPE_CB_" ~ code ~ ";
                 return  p + 1;}} }";
@@ -2416,7 +2416,7 @@ string CALLBACK_DATA(string code)
                 ulong len = (p - m" ~ code ~ "Mark) ;
                 
                 if(len > 0) {  
-                trace(\"CALLBACK_DATA at  \",__LINE__, \"  " ~ code ~ "\");
+                //trace(\"CALLBACK_DATA at  \",__LINE__, \"  " ~ code ~ "\");
                 ubyte[]  _data =  data[m" ~ code ~ "Mark..p];
                 _on" ~ code ~ "(this,_data,true);
                 if (!handleIng){

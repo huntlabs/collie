@@ -56,7 +56,7 @@ class HTTPForm
 	
 	this(string contype,  Buffer body_)
 	{
-		trace("contype is : ", contype);
+		// trace("contype is : ", contype);
 		if (canFind(contype, "multipart/form-data"))
 		{
 			string strBoundary;
@@ -130,7 +130,7 @@ protected:
 				str ~= data;
 			});
 		splitNameValue(cast(string)str,'&','=',(string key, string value){
-				trace("_",key,"=", value);
+				trace("recv: ",key," ", value);
 				if(value.length > 0)
 					_forms[key.idup] ~= decodeComponent(value);
 				else

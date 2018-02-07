@@ -150,7 +150,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		} 
 		_down.httpWrite(tdata);
 		
-		trace("send length : ", rlen);
+		// trace("send length : ", rlen);
 		return rlen;
 	}
 	
@@ -326,7 +326,7 @@ protected:
 	void setupProtocolUpgrade(ref HTTPTransaction txn,CodecProtocol protocol,string protocolString,HTTPMessage msg);
 protected:
 	final void closeWriteCallBack(){
-		trace("shodle close!????????????");
+		// trace("shodle close!????????????");
 		//txn.onDelayedDestroy();
 		if(_codec is null || _codec.shouldClose()) {
 			trace("\t\t --------do close!!!");

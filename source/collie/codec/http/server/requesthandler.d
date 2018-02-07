@@ -104,7 +104,7 @@ final class RequestHandlerAdaptor : ResponseHandler,HTTPTransactionHandler
 	}
 	
 	override void onHeadersComplete(HTTPMessage msg) {
-		trace("onHeadersComplete , erro is : ", _erro , " _upstream is ", cast(void *)_upstream);
+		// trace("onHeadersComplete , erro is : ", _erro , " _upstream is ", cast(void *)_upstream);
 		if(msg.getHeaders.exists(HTTPHeaderCode.EXPECT)) {
 			trace("has header EXPECT--------");
 			string str = msg.getHeaders.getSingleOrEmpty(HTTPHeaderCode.EXPECT);
