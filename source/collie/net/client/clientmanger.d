@@ -201,7 +201,7 @@ private:
 		}
 	}
 
-	final void write(ubyte[] data,TCPWriteCallBack cback = null) @trusted
+	final void write(in ubyte[] data,TCPWriteCallBack cback = null) @trusted
 	{
 		write(new WarpStreamBuffer(data,cback));
 	}
