@@ -18,13 +18,10 @@ import collie.codec.http.server.requesthandler;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.httptansaction;
 import collie.bootstrap.server;
-import kiss.container.Vector;
 import collie.channel;
 import kiss.net.TcpStream;
 import kiss.event;
 import kiss.net.TcpListener;
-// import collie.net.acceptor;
-// import collie.net.eventloop;
 import collie.net.eventloopgroup;
 import collie.net.server.tcpserver;
 import collie.net.server.connection;
@@ -35,11 +32,13 @@ import kiss.net.struct_;
 
 import std.socket;
 import std.experimental.logger;
-
+import std.array;
 
 alias HTTPPipeline = Pipeline!(const(ubyte[]), StreamWriteBuffer);
 alias HTTPServer = HTTPServerImpl!true;
 alias HttpServer = HTTPServerImpl!false;
+
+
 
 final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 {
@@ -48,8 +47,9 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 	} else {
 		alias Server = TCPServer;
 	}
-	alias SVector = Vector!(Server);
-	alias IPVector = Vector!(HTTPServerOptions.IPConfig);
+	
+	alias SVector = Appender!(Server[]);
+	alias IPVector = Appender!(HTTPServerOptions.IPConfig[]);
 
 	this(HTTPServerOptions options)
 	{
@@ -73,27 +73,27 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 	{
 		if(_isStart) return;
 		_ipconfigs = addrs;
-		for(size_t i = 0; i < _servers.length; ++i)
+		
+		foreach(Server ser; _servers.data)
 		{
 			trace("start listen!!!");
 			static if(UsePipeline)
-				_servers[i].stopListening();
+				ser.stopListening();
 			else
-				_servers[i].close();
+				ser.close();
 		}
 		_servers.clear();
-		for(size_t i = 0; i < _ipconfigs.length; ++i)
+		foreach(ref HTTPServerOptions.IPConfig config; _ipconfigs.data )
 		{
-			newServer(_ipconfigs[i]);
+			newServer(config);
 		}
 	}
 
 	void addBind(ref HTTPServerOptions.IPConfig addr)
 	{
-		trace("",_isStart);
 		if(_isStart) return;
 		newServer(addr);
-		_ipconfigs.insertBack(addr);
+		_ipconfigs.put(addr);
 	}
 
 	void start()
@@ -101,13 +101,12 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 		trace("start ",_isStart);
 		if(_isStart) return;
 		_isStart = true;
-		for(size_t i = 0; i < _servers.length; ++i)
+		foreach(Server ser; _servers.data)
 		{
 			trace("start listen ---");
 			static if(UsePipeline)
-				_servers[i].startListening();
+				ser.startListening();
 			else {
-				Server ser = _servers[i];
 				ser.startTimeout(cast(uint)_options.timeOut);
 				ser.listen(1024);
 			}
@@ -125,10 +124,10 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 		_mainLoop.stop();
 	}
 
-	ref const(IPVector) addresses() const{ return _ipconfigs;}
+	const(IPVector) addresses() const{ return _ipconfigs;}
 	EventLoop eventLoop(){return _mainLoop;}
 	EventLoopGroup group(){return _group;}
-	ref const(SVector) servers(){return _servers;}
+	const(SVector) servers(){return _servers;}
 protected:
 	override HTTPTransactionHandler getRequestHandler(HTTPTransaction txn, HTTPMessage msg)
 	{/*  will run  in Multi-thread */
@@ -163,7 +162,7 @@ protected:
 		}
 	}
 
-	void newServer(HTTPServerOptions.IPConfig ipconfig )
+	void newServer(ref HTTPServerOptions.IPConfig ipconfig )
 	{
 		static if(UsePipeline){
 			Server ser = new Server(_mainLoop);
@@ -177,25 +176,26 @@ protected:
 			ser.pipeline(new shared ServerAccpeTFactory(ipconfig));
 			ser.heartbeatTimeOut(cast(uint)_options.timeOut);
 			ser.bind(ipconfig.address);
-			_servers.insertBack(ser);
+			_servers.put(ser);
 		} else {
-			bool ruseport = _group !is null;
-			_servers.insertBack(newTCPServer(_mainLoop,ipconfig.address,ruseport,ipconfig.enableTCPFastOpen,ipconfig.fastOpenQueueSize));
-			if(ruseport){
-				foreach(EventLoop loop; _group){
-					_servers.insertBack(newTCPServer(loop,ipconfig.address,ruseport,ipconfig.enableTCPFastOpen,ipconfig.fastOpenQueueSize));
-				}
-			}
+			bool reuseport = _group !is null;
+			_servers.put(newTCPServer(_mainLoop,ipconfig.address,reuseport,ipconfig.enableTCPFastOpen,ipconfig.fastOpenQueueSize));
+			// if(reuseport){
+			// 	foreach(EventLoop loop; _group){
+			// 		_servers.put(newTCPServer(loop,ipconfig.address,true,ipconfig.enableTCPFastOpen,ipconfig.fastOpenQueueSize));
+			// 	}
+			// }
 
 		}
 	}
 	static if(!UsePipeline){
-		Server newTCPServer(EventLoop loop,Address address,bool ruseport, bool enableTCPFastOpen, uint fastOpenQueueSize )
+		Server newTCPServer(EventLoop loop,Address address,bool reuseport, bool enableTCPFastOpen, uint fastOpenQueueSize )
 		{
 			Server ser = new Server(loop);
 			ser.setNewConntionCallBack(&newConnect);
-			ser.bind(address,(TcpListener accpet){
-					if(ruseport)
+			// ser.bind(address);
+			ser.bind(address, (TcpListener accpet) @trusted{
+					if(reuseport)
 						accpet.reusePort(true);
 					else {
 						version(windows){
@@ -258,7 +258,6 @@ private:
 
 	bool _isStart = false;
 }
-
 
 private:
 

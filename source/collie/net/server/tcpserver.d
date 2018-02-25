@@ -22,6 +22,8 @@ import kiss.event.task;
 import collie.net.server.connection;
 import collie.net.server.exception;
 
+/**
+*/
 @trusted final class TCPServer
 {
 	alias NewConnection = ServerConnection delegate(EventLoop,Socket);
@@ -55,6 +57,7 @@ import collie.net.server.exception;
 			throw new SocketServerException("Please set CallBack frist!");
 
 		_TcpListener.setReadHandle(&newConnect);
+		// _TcpListener.listen(block).watch;
 		_loop.postTask(newTask((){
 				_TcpListener.listen(block).watch;
 			}));
@@ -94,18 +97,18 @@ import collie.net.server.exception;
 		if(_TcpListener)
 			_loop.postTask(newTask(&_TcpListener.close));
 	}
+
 protected:
-	void newConnect(EventLoop loop, Socket socket) nothrow
+	void newConnect(EventLoop loop, Socket socket)  @trusted  nothrow
 	{
-		catchAndLogException((){
-			import std.exception;
-			ServerConnection connection;
-			collectException(_cback(loop,socket),connection);
+		catchAndLogException((){			
+			ServerConnection connection = _cback(loop,socket);
 			if(connection is null) return;
 			if(connection.active() && _wheel)
 				_wheel.addNewTimer(connection);
 		}());
 	}
+
 
 private:
 	kiss.net.TcpListener.TcpListener _TcpListener;
@@ -113,9 +116,7 @@ private:
 	Address _bind;
 private:
 	NewConnection _cback;
-private:
 	TimingWheel _wheel;
 	Timer _timer;
 	uint _timeout;
 }
-

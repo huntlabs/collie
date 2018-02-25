@@ -95,7 +95,7 @@ private:
 
  	final void _postWriteBuffer(StreamWriteBuffer buffer)
     {
-		// trace("post send dara!  ", _socket is null);
+		// trace("post send data!  ", _socket is null);
         if (_socket) {
             rest();
             _socket.write(buffer);

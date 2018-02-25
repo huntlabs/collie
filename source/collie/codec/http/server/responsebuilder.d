@@ -14,7 +14,6 @@ import collie.codec.http.server.responsehandler;
 import collie.codec.http.httpmessage;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.headers;
-import kiss.buffer.ByteBuffer;
 import std.experimental.allocator.mallocator;
 
 import std.conv;
@@ -25,7 +24,7 @@ class ResponseBuilder
 	this(ResponseHandler txn)
 	{
 		setResponseHandler(txn);
-		_body = new ByteBuffer!Mallocator();
+		_body = new HTTPByteBuffer();
 	}
 
 	final ResponseBuilder promise(string url, string host)
@@ -115,12 +114,12 @@ class ResponseBuilder
 			// trace("body len = ", _body.length);
 			if(chunked) {
 				_txn.sendChunkHeader(_body.length);
-				_txn.sendBody(_body.allData.data());
+				_txn.sendBody(_body.allData);
 			} else {
-				_txn.sendBody(_body.allData.data(),_sendEOM);
+				_txn.sendBody(_body.allData,_sendEOM);
 				return;
 			}
-			_body.clear();
+			// _body.clear();
 		}
 		if(_sendEOM && _txn) {
 			_txn.sendEOM();
@@ -135,7 +134,7 @@ protected:
 private:
 	ResponseHandler _txn;
 	HTTPMessage _headers;
-	ByteBuffer!Mallocator _body;
+	HTTPByteBuffer _body;
 
 	bool _sendEOM = false;
 }

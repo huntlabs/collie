@@ -24,181 +24,154 @@ struct HTTPParser
 {
     this(HTTPParserType ty, uint maxHeaderSize = 4096)
     {
-		rest(ty, maxHeaderSize);
+        rest(ty, maxHeaderSize);
     }
 
-    pragma(inline,true)
-    @property type()
+    pragma(inline, true) @property type()
     {
         return _type;
     }
 
-    pragma(inline,true)
-    @property isUpgrade()
+    pragma(inline, true) @property isUpgrade()
     {
         return _upgrade;
     }
 
-    pragma(inline,true)
-    @property contentLength()
+    pragma(inline, true) @property contentLength()
     {
         return _contentLength;
     }
 
-    pragma(inline,true)
-    @property isChunked()
+    pragma(inline, true) @property isChunked()
     {
         return (_flags & HTTPParserFlags.F_CHUNKED) == 0 ? false : true;
     }
     //@property status() {return _statusCode;}
-    pragma(inline,true)
-    @property error()
+    pragma(inline, true) @property error()
     {
         return _httpErrno;
     }
 
-    pragma(inline,true)
-    @property errorString()
+    pragma(inline, true) @property errorString()
     {
         return error_string[_httpErrno];
     }
 
-    pragma(inline,true)
-    @property methodCode()
+    pragma(inline, true) @property methodCode()
     {
         return _method;
     }
 
-    pragma(inline,true)
-    @property methodString()
+    pragma(inline, true) @property methodString()
     {
         return method_strings[_method];
     }
 
-	pragma(inline,true)
-	@property statusCode()
-	{
-		return _statusCode;
-	}
-    pragma(inline,true)
-    @property major()
+    pragma(inline, true) @property statusCode()
+    {
+        return _statusCode;
+    }
+
+    pragma(inline, true) @property major()
     {
         return _httpMajor;
     }
 
     //版本号首位
-    pragma(inline,true)
-    @property minor()
+    pragma(inline, true) @property minor()
     {
         return _httpMinor;
     }
 
     //版本号末尾
-    pragma(inline,true)
-    @property handleIng()
+    pragma(inline, true) @property handleIng()
     {
         return _isHandle;
     }
 
-    pragma(inline)
-    @property handleIng(bool handle)
+    pragma(inline) @property handleIng(bool handle)
     {
         _isHandle = handle;
     }
 
-    pragma(inline,true)
-    @property skipBody()
+    pragma(inline, true) @property skipBody()
     {
         return _skipBody;
     }
 
-    pragma(inline)
-    @property skipBody(bool skip)
+    pragma(inline) @property skipBody(bool skip)
     {
         return _skipBody = skip;
     }
-    
-    pragma(inline,true)
-    @property keepalive()
+
+    pragma(inline, true) @property keepalive()
     {
-		return _keepAlive;
+        return _keepAlive;
     }
 
     /** 回调函数指定 */
-    pragma(inline)
-    @property onMessageBegin(CallBackNotify cback)
+    pragma(inline) @property onMessageBegin(CallBackNotify cback)
     {
         _onMessageBegin = cback;
     }
 
-    pragma(inline)
-    @property onMessageComplete(CallBackNotify cback)
+    pragma(inline) @property onMessageComplete(CallBackNotify cback)
     {
         _onMessageComplete = cback;
     }
 
-    pragma(inline)
-    @property onHeaderComplete(CallBackNotify cback)
+    pragma(inline) @property onHeaderComplete(CallBackNotify cback)
     {
         _onHeadersComplete = cback;
     }
 
-    pragma(inline)
-    @property onChunkHeader(CallBackNotify cback)
+    pragma(inline) @property onChunkHeader(CallBackNotify cback)
     {
         _onChunkHeader = cback;
     }
 
-    pragma(inline)
-    @property onChunkComplete(CallBackNotify cback)
+    pragma(inline) @property onChunkComplete(CallBackNotify cback)
     {
         _onChunkComplete = cback;
     }
 
-    pragma(inline)
-    @property onUrl(CallBackData cback)
+    pragma(inline) @property onUrl(CallBackData cback)
     {
         _onUrl = cback;
     }
 
-    pragma(inline)
-    @property onStatus(CallBackData cback)
+    pragma(inline) @property onStatus(CallBackData cback)
     {
         _onStatus = cback;
     }
 
-    pragma(inline)
-    @property onHeaderField(CallBackData cback)
+    pragma(inline) @property onHeaderField(CallBackData cback)
     {
         _onHeaderField = cback;
     }
 
-    pragma(inline)
-    @property onHeaderValue(CallBackData cback)
+    pragma(inline) @property onHeaderValue(CallBackData cback)
     {
         _onHeaderValue = cback;
     }
 
-    pragma(inline)
-    @property onBody(CallBackData cback)
+    pragma(inline) @property onBody(CallBackData cback)
     {
         _onBody = cback;
     }
 
-    pragma(inline)
-		void rest(HTTPParserType ty, uint maxHeaderSize = 4096)
+    pragma(inline) void rest(HTTPParserType ty, uint maxHeaderSize = 4096)
     {
         type = ty;
-		_maxHeaderSize = maxHeaderSize;
-        _state = (
-            type == HTTPParserType.HTTP_REQUEST ? HTTPParserState.s_start_req : (
-            type == HTTPParserType.HTTP_RESPONSE ? HTTPParserState.s_start_res
-            : HTTPParserState.s_start_req_or_res));
+        _maxHeaderSize = maxHeaderSize;
+        _state = (type == HTTPParserType.HTTP_REQUEST ? HTTPParserState.s_start_req
+                : (type == HTTPParserType.HTTP_RESPONSE
+                    ? HTTPParserState.s_start_res : HTTPParserState.s_start_req_or_res));
         _httpErrno = HTTPParserErrno.HPE_OK;
         _flags = HTTPParserFlags.F_ZERO;
-		_isHandle = false;
-		_skipBody = false;
-		_keepAlive = 0x00;
+        _isHandle = false;
+        _skipBody = false;
+        _keepAlive = 0x00;
     }
 
 protected:
@@ -224,8 +197,7 @@ protected:
 
 public:
 
-    pragma(inline)
-    bool bodyIsFinal()
+    pragma(inline) bool bodyIsFinal()
     {
         return _state == HTTPParserState.s_message_done;
     }
@@ -246,10 +218,11 @@ public:
         size_t p = 0;
         if (_httpErrno != HTTPParserErrno.HPE_OK)
         {
-			trace("_httpErrno eror : ", _httpErrno);
+            trace("_httpErrno eror : ", _httpErrno);
             return 0;
         }
-		// trace("data.length : ",data.length, "   _state = ", _state);
+        debug trace("data.length : ", data.length, "   _state = ", _state);
+
         if (data.length == 0)
         {
             switch (_state)
@@ -258,8 +231,7 @@ public:
                 /* Use of CALLBACK_NOTIFY() here would erroneously return 1 byte read if
 					 * we got paused.
 					 */
-                mixin(
-                    CALLBACK_NOTIFY_NOADVANCE("MessageComplete"));
+                mixin(CALLBACK_NOTIFY_NOADVANCE("MessageComplete"));
                 return 0;
 
             case HTTPParserState.s_dead:
@@ -1098,23 +1070,23 @@ public:
                     switch (c)
                     {
                     case 'c':
-                         _headerState = HTTPParserHeaderstates.h_C;
+                        _headerState = HTTPParserHeaderstates.h_C;
                         break;
 
                     case 'p':
-                         _headerState = HTTPParserHeaderstates.h_matching_proxy_connection;
+                        _headerState = HTTPParserHeaderstates.h_matching_proxy_connection;
                         break;
 
                     case 't':
-                         _headerState = HTTPParserHeaderstates.h_matching_transfer_encoding;
+                        _headerState = HTTPParserHeaderstates.h_matching_transfer_encoding;
                         break;
 
                     case 'u':
-                         _headerState = HTTPParserHeaderstates.h_matching_upgrade;
+                        _headerState = HTTPParserHeaderstates.h_matching_upgrade;
                         break;
 
                     default:
-                         _headerState = HTTPParserHeaderstates.h_general;
+                        _headerState = HTTPParserHeaderstates.h_general;
                         break;
                     }
                     break;
@@ -1131,23 +1103,21 @@ public:
                         if (!c)
                             break;
 
-                        switch ( _headerState)
+                        switch (_headerState)
                         {
                         case HTTPParserHeaderstates.h_general:
                             break;
 
                         case HTTPParserHeaderstates.h_C:
                             _index++;
-                             _headerState = (
-                                c == 'o' ? HTTPParserHeaderstates.h_CO
-                                : HTTPParserHeaderstates.h_general);
+                            _headerState = (c == 'o' ? HTTPParserHeaderstates.h_CO
+                                    : HTTPParserHeaderstates.h_general);
                             break;
 
                         case HTTPParserHeaderstates.h_CO:
                             _index++;
-                             _headerState = (
-                                c == 'n' ? HTTPParserHeaderstates.h_CON
-                                : HTTPParserHeaderstates.h_general);
+                            _headerState = (c == 'n' ? HTTPParserHeaderstates.h_CON
+                                    : HTTPParserHeaderstates.h_general);
                             break;
 
                         case HTTPParserHeaderstates.h_CON:
@@ -1155,13 +1125,13 @@ public:
                             switch (c)
                             {
                             case 'n':
-                                 _headerState = HTTPParserHeaderstates.h_matching_connection;
+                                _headerState = HTTPParserHeaderstates.h_matching_connection;
                                 break;
                             case 't':
-                                 _headerState = HTTPParserHeaderstates.h_matching_content_length;
+                                _headerState = HTTPParserHeaderstates.h_matching_content_length;
                                 break;
                             default:
-                                 _headerState = HTTPParserHeaderstates.h_general;
+                                _headerState = HTTPParserHeaderstates.h_general;
                                 break;
                             }
                             break;
@@ -1172,11 +1142,11 @@ public:
                             _index++;
                             if (_index > CONNECTION.length || c != CONNECTION[_index])
                             {
-                                 _headerState = HTTPParserHeaderstates.h_general;
+                                _headerState = HTTPParserHeaderstates.h_general;
                             }
                             else if (_index == CONNECTION.length - 1)
                             {
-                                 _headerState = HTTPParserHeaderstates.h_connection;
+                                _headerState = HTTPParserHeaderstates.h_connection;
                             }
                             break;
 
@@ -1186,11 +1156,11 @@ public:
                             _index++;
                             if (_index > PROXY_CONNECTION.length || c != PROXY_CONNECTION[_index])
                             {
-                                 _headerState = HTTPParserHeaderstates.h_general;
+                                _headerState = HTTPParserHeaderstates.h_general;
                             }
                             else if (_index == PROXY_CONNECTION.length)
                             {
-                                 _headerState = HTTPParserHeaderstates.h_connection;
+                                _headerState = HTTPParserHeaderstates.h_connection;
                             }
                             break;
 
@@ -1198,18 +1168,18 @@ public:
 
                         case HTTPParserHeaderstates.h_matching_content_length:
                             _index++;
-							if (_index > CONTENT_LENGTH.length || c != CONTENT_LENGTH[_index])
+                            if (_index > CONTENT_LENGTH.length || c != CONTENT_LENGTH[_index])
                             {
-                                 _headerState = HTTPParserHeaderstates.h_general;
+                                _headerState = HTTPParserHeaderstates.h_general;
                             }
-							else if (_index == CONTENT_LENGTH.length - 1)
+                            else if (_index == CONTENT_LENGTH.length - 1)
                             {
                                 if (_flags & HTTPParserFlags.F_CONTENTLENGTH)
                                 {
                                     _httpErrno = HTTPParserErrno.HPE_UNEXPECTED_CONTENT_LENGTH;
                                     goto error;
                                 }
-                                 _headerState = HTTPParserHeaderstates.h_content_length;
+                                _headerState = HTTPParserHeaderstates.h_content_length;
                                 _flags |= HTTPParserFlags.F_CONTENTLENGTH;
                             }
                             break;
@@ -1220,11 +1190,11 @@ public:
                             _index++;
                             if (_index > TRANSFER_ENCODING.length || c != TRANSFER_ENCODING[_index])
                             {
-                                 _headerState = HTTPParserHeaderstates.h_general;
+                                _headerState = HTTPParserHeaderstates.h_general;
                             }
                             else if (_index == TRANSFER_ENCODING.length - 1)
                             {
-                                 _headerState = HTTPParserHeaderstates.h_transfer_encoding;
+                                _headerState = HTTPParserHeaderstates.h_transfer_encoding;
                             }
                             break;
 
@@ -1234,11 +1204,11 @@ public:
                             _index++;
                             if (_index > UPGRADE.length || c != UPGRADE[_index])
                             {
-                                 _headerState = HTTPParserHeaderstates.h_general;
+                                _headerState = HTTPParserHeaderstates.h_general;
                             }
                             else if (_index == UPGRADE.length - 1)
                             {
-                                 _headerState = HTTPParserHeaderstates.h_upgrade;
+                                _headerState = HTTPParserHeaderstates.h_upgrade;
                             }
                             break;
 
@@ -1246,9 +1216,8 @@ public:
                         case HTTPParserHeaderstates.h_content_length:
                         case HTTPParserHeaderstates.h_transfer_encoding:
                         case HTTPParserHeaderstates.h_upgrade:
-                            if (
-                                    ch != ' ')
-                                 _headerState = HTTPParserHeaderstates.h_general;
+                            if (ch != ' ')
+                                _headerState = HTTPParserHeaderstates.h_general;
                             break;
 
                         default:
@@ -1312,23 +1281,23 @@ public:
 
                     c = ch | 0x20; //LOWER(ch);
 
-                    switch ( _headerState)
+                    switch (_headerState)
                     {
                     case HTTPParserHeaderstates.h_upgrade:
                         _flags |= HTTPParserFlags.F_UPGRADE;
-                         _headerState = HTTPParserHeaderstates.h_general;
+                        _headerState = HTTPParserHeaderstates.h_general;
                         break;
 
                     case HTTPParserHeaderstates.h_transfer_encoding:
                         /* looking for 'Transfer-Encoding: chunked' */
                         if ('c' == c)
                         {
-                             _headerState = HTTPParserHeaderstates
+                            _headerState = HTTPParserHeaderstates
                                 .h_matching_transfer_encoding_chunked;
                         }
                         else
                         {
-                             _headerState = HTTPParserHeaderstates.h_general;
+                            _headerState = HTTPParserHeaderstates.h_general;
                         }
                         break;
 
@@ -1346,24 +1315,24 @@ public:
                         /* looking for 'Connection: keep-alive' */
                         if (c == 'k')
                         {
-                             _headerState = HTTPParserHeaderstates.h_matching_connection_keep_alive;
+                            _headerState = HTTPParserHeaderstates.h_matching_connection_keep_alive;
                             _keepAlive = 0x01;
                             /* looking for 'Connection: close' */
                         }
                         else if (c == 'c')
                         {
-                             _headerState = HTTPParserHeaderstates.h_matching_connection_close;
-							_keepAlive = 0x02;
+                            _headerState = HTTPParserHeaderstates.h_matching_connection_close;
+                            _keepAlive = 0x02;
                         }
                         else if (c == 'u')
                         {
-                             _headerState = HTTPParserHeaderstates.h_matching_connection_upgrade;
-							_keepAlive = 0x03;
+                            _headerState = HTTPParserHeaderstates.h_matching_connection_upgrade;
+                            _keepAlive = 0x03;
                         }
                         else
                         {
-                             _headerState = HTTPParserHeaderstates.h_matching_connection_token;
-							_keepAlive = 0x04;
+                            _headerState = HTTPParserHeaderstates.h_matching_connection_token;
+                            _keepAlive = 0x04;
                         }
                         break;
 
@@ -1372,7 +1341,7 @@ public:
                         break;
 
                     default:
-                         _headerState = HTTPParserHeaderstates.h_general;
+                        _headerState = HTTPParserHeaderstates.h_general;
                         break;
                     }
                     break;
@@ -1381,14 +1350,14 @@ public:
             case HTTPParserState.s_header_value: //BUG，找不到结束
             {
                     const long start = p;
-                    auto h_state =  _headerState;
+                    auto h_state = _headerState;
                     for (; p < maxP; p++)
                     {
                         ch = data[p];
                         if (ch == CR)
                         {
                             _state = HTTPParserState.s_header_almost_done;
-                             _headerState = h_state;
+                            _headerState = h_state;
                             mixin(CALLBACK_DATA("HeaderValue"));
                             break;
                         }
@@ -1403,7 +1372,7 @@ public:
                                 _httpErrno = HTTPParserErrno.HPE_HEADER_OVERFLOW;
                                 goto error;
                             }
-                             _headerState = h_state;
+                            _headerState = h_state;
                             mixin(CALLBACK_DATA_NOADVANCE("HeaderValue"));
                             goto reexecute;
                         }
@@ -1427,11 +1396,11 @@ public:
                                 size_t limit = maxP - p;
 
                                 limit = (limit < _maxHeaderSize ? limit : _maxHeaderSize); //MIN(limit, TTPConfig.instance.MaxHeaderSize);
-                                auto str =  data[p .. maxP];
-                                auto tptr = cast(ubyte *)memchr(str.ptr, CR, str.length);
-                                auto p_cr = tptr - str.ptr;//str._indexOf(CR); // memchr(p, CR, limit);
-                                tptr = cast(ubyte *)memchr(str.ptr, LF, str.length);
-                                auto p_lf = tptr - str.ptr ;//str._indexOf(LF); // memchr(p, LF, limit);
+                                auto str = data[p .. maxP];
+                                auto tptr = cast(ubyte*) memchr(str.ptr, CR, str.length);
+                                auto p_cr = tptr - str.ptr; //str._indexOf(CR); // memchr(p, CR, limit);
+                                tptr = cast(ubyte*) memchr(str.ptr, LF, str.length);
+                                auto p_lf = tptr - str.ptr; //str._indexOf(LF); // memchr(p, LF, limit);
                                 ++p_cr;
                                 ++p_lf;
                                 if (p_cr > 0)
@@ -1456,8 +1425,7 @@ public:
 
                         case HTTPParserHeaderstates.h_connection:
                         case HTTPParserHeaderstates.h_transfer_encoding:
-                            assert(0,
-                                "Shouldn't get here.");
+                            assert(0, "Shouldn't get here.");
                             //break;
 
                         case HTTPParserHeaderstates.h_content_length:
@@ -1470,7 +1438,7 @@ public:
                                 if (!mixin(IS_NUM("ch")))
                                 {
                                     _httpErrno = HTTPParserErrno.HPE_INVALID_CONTENT_LENGTH;
-                                     _headerState = h_state;
+                                    _headerState = h_state;
                                     goto error;
                                 }
 
@@ -1482,7 +1450,7 @@ public:
                                 if ((ulong.max - 10) / 10 < _contentLength)
                                 {
                                     _httpErrno = HTTPParserErrno.HPE_INVALID_CONTENT_LENGTH;
-                                     _headerState = h_state;
+                                    _headerState = h_state;
                                     goto error;
                                 }
 
@@ -1580,8 +1548,7 @@ public:
                             break;
 
                         case HTTPParserHeaderstates.h_transfer_encoding_chunked:
-                            if (
-                                    ch != ' ')
+                            if (ch != ' ')
                                 h_state = HTTPParserHeaderstates.h_general;
                             break;
 
@@ -1618,7 +1585,7 @@ public:
                         }
                     }
 
-                     _headerState = h_state;
+                    _headerState = h_state;
 
                     //COUNT_HEADER_SIZE(p - start);
                     _nread += (p - start);
@@ -1654,7 +1621,7 @@ public:
                     }
 
                     /* finished the header */
-                    switch ( _headerState)
+                    switch (_headerState)
                     {
                     case HTTPParserHeaderstates.h_connection_keep_alive:
                         _flags |= HTTPParserFlags.F_CONNECTION_KEEP_ALIVE;
@@ -1692,7 +1659,7 @@ public:
                     }
                     else
                     {
-                        switch ( _headerState)
+                        switch (_headerState)
                         {
                         case HTTPParserHeaderstates.h_connection_keep_alive:
                             _flags |= HTTPParserFlags.F_CONNECTION_KEEP_ALIVE;
@@ -1746,16 +1713,18 @@ public:
                     _state = HTTPParserState.s_headers_done;
 
                     /* Set this here so that on_headers_complete() callbacks can see it */
-                    _upgrade = (
-                        (_flags & (HTTPParserFlags.F_UPGRADE | HTTPParserFlags.F_CONNECTION_UPGRADE)) == (
-                        HTTPParserFlags.F_UPGRADE | HTTPParserFlags.F_CONNECTION_UPGRADE)
-                        || _method == HTTPMethod.HTTP_CONNECT);
+                    _upgrade = ((_flags & (HTTPParserFlags.F_UPGRADE | HTTPParserFlags.F_CONNECTION_UPGRADE)) == (
+                            HTTPParserFlags.F_UPGRADE | HTTPParserFlags.F_CONNECTION_UPGRADE)
+                            || _method == HTTPMethod.HTTP_CONNECT);
                     {
-						if(_keepAlive == 0x00 && _httpMinor == 0 && _httpMajor == 1){
-							_keepAlive = 0x02;
-						}else {
-							_keepAlive = 0x01;
-						}
+                        if (_keepAlive == 0x00 && _httpMinor == 0 && _httpMajor == 1)
+                        {
+                            _keepAlive = 0x02;
+                        }
+                        else
+                        {
+                            _keepAlive = 0x01;
+                        }
                         if (_onHeadersComplete !is null)
                         {
                             _onHeadersComplete(this);
@@ -1800,7 +1769,7 @@ public:
                     if (_flags & HTTPParserFlags.F_SKIPBODY)
                     {
                         _state = mixin(NEW_MESSAGE);
-						mixin(CALLBACK_NOTIFY("MessageComplete"));
+                        mixin(CALLBACK_NOTIFY("MessageComplete"));
                     }
                     else if (_flags & HTTPParserFlags.F_CHUNKED)
                     {
@@ -1813,7 +1782,7 @@ public:
                         {
                             /* Content-Length header given but zero: Content-Length: 0\r\n */
                             _state = mixin(NEW_MESSAGE);
-							mixin(CALLBACK_NOTIFY("MessageComplete"));
+                            mixin(CALLBACK_NOTIFY("MessageComplete"));
                         }
                         else if (_contentLength != ULLONG_MAX)
                         {
@@ -1826,7 +1795,7 @@ public:
                             {
                                 /* Assume content-length 0 - read the next */
                                 _state = mixin(NEW_MESSAGE);
-								mixin(CALLBACK_NOTIFY("MessageComplete"));
+                                mixin(CALLBACK_NOTIFY("MessageComplete"));
                             }
                             else
                             {
@@ -1841,8 +1810,8 @@ public:
 
             case HTTPParserState.s_body_identity:
                 {
-                    ulong to_read = _contentLength < cast(ulong)(maxP - p) ? _contentLength : cast(
-                        ulong)(maxP - p);
+                    ulong to_read = _contentLength < cast(ulong)(maxP - p) ? _contentLength
+                        : cast(ulong)(maxP - p);
 
                     assert(_contentLength != 0 && _contentLength != ULLONG_MAX);
 
@@ -1904,7 +1873,7 @@ public:
 
             case HTTPParserState.s_message_done:
                 _state = mixin(NEW_MESSAGE);
-				mixin(CALLBACK_NOTIFY("MessageComplete"));
+                mixin(CALLBACK_NOTIFY("MessageComplete"));
                 if (_upgrade)
                 {
                     /* Exit, the rest of the message is in a different protocol. */
@@ -2004,8 +1973,8 @@ public:
 
             case HTTPParserState.s_chunk_data:
                 {
-                    ulong to_read = _contentLength < cast(ulong)(maxP - p) ? _contentLength : cast(
-                        ulong)(maxP - p);
+                    ulong to_read = _contentLength < cast(ulong)(maxP - p) ? _contentLength
+                        : cast(ulong)(maxP - p);
 
                     assert(_flags & HTTPParserFlags.F_CHUNKED);
                     assert(_contentLength != 0 && _contentLength != ULLONG_MAX);
@@ -2052,11 +2021,10 @@ public:
             }
         }
 
-        assert(
-            (
-            (mHeaderFieldMark != size_t.max ? 1 : 0) + (mHeaderValueMark != size_t.max ? 1 : 0) + (
-            mUrlMark != size_t.max ? 1 : 0) + (mBodyMark != size_t.max ? 1 : 0) + (
-            mStatusMark != size_t.max ? 1 : 0)) <= 1);
+        assert(((mHeaderFieldMark != size_t.max ? 1
+                : 0) + (mHeaderValueMark != size_t.max ? 1
+                : 0) + (mUrlMark != size_t.max ? 1 : 0) + (mBodyMark != size_t.max
+                ? 1 : 0) + (mStatusMark != size_t.max ? 1 : 0)) <= 1);
 
         mixin(CALLBACK_DATA_NOADVANCE("HeaderField")); //最后没找到
         mixin(CALLBACK_DATA_NOADVANCE("HeaderValue"));
@@ -2078,8 +2046,8 @@ public:
 private:
     HTTPParserType _type = HTTPParserType.HTTP_BOTH;
     HTTPParserFlags _flags = HTTPParserFlags.F_ZERO;
-	HTTPParserState _state = HTTPParserState.s_start_req_or_res;
-    HTTPParserHeaderstates  _headerState;
+    HTTPParserState _state = HTTPParserState.s_start_req_or_res;
+    HTTPParserHeaderstates _headerState;
     uint _index;
     uint _lenientHttpHeaders;
     uint _nread;
@@ -2100,7 +2068,7 @@ private:
 
     bool _skipBody = false;
 
-	ubyte _keepAlive = 0x00;
+    ubyte _keepAlive = 0x00;
 
     uint _maxHeaderSize = 4096;
 
@@ -2110,8 +2078,7 @@ protected:
         _type = ty;
     }
 
-    pragma(inline)
-    bool httpMessageNeedsEof()
+    pragma(inline) bool httpMessageNeedsEof()
     {
         if (type == HTTPParserType.HTTP_REQUEST)
         {
@@ -2136,8 +2103,7 @@ protected:
         return true;
     }
 
-    pragma(inline)
-    bool httpShouldKeepAlive()
+    pragma(inline) bool httpShouldKeepAlive()
     {
         if (_httpMajor > 0 && _httpMinor > 0)
         {
@@ -2345,21 +2311,24 @@ protected:
 
 private:
 
-pragma(inline,true)
-bool IS_USERINFO_CHAR2(ubyte c)
+pragma(inline, true) bool IS_USERINFO_CHAR2(ubyte c)
 {
     bool alpha = mixin(IS_ALPHA("c"));
     bool sum = mixin(IS_NUM("c"));
     bool b1 = (c == '%' || c == ';' || c == ':' || c == '&' || c == '='
-        || c == '+' || c == '$' || c == ',');
+            || c == '+' || c == '$' || c == ',');
     bool b2 = (c == '-' || '_' == c || '.' == c || '!' == c || '~' == c || '*' == c
-        || '\'' == c || '(' == c || ')' == c);
+            || '\'' == c || '(' == c || ')' == c);
     return (b2 || b1 || sum || alpha);
 }
 
 string IS_USERINFO_CHAR(string c)
 {
-    return "( " ~ IS_ALPHA(c) ~ " || " ~ IS_NUM(c) ~ " || " ~ c ~ " == '%' || " ~ c ~ " == ';' || " ~ c ~ " == ':' || " ~ c ~ " == '&' || " ~ c ~ " == '=' ||  " ~ c ~ " == '+' || " ~ c ~ " == '$' || " ~ c ~ " == ','" ~ c ~ " == '-' || '_' == " ~ c ~ "|| '.' == " ~ c ~ "|| '!' == " ~ c ~ "|| '~' == " ~ c ~ "|| '*' == " ~ c ~ "|| '\'' == " ~ c ~ "|| '(' == " ~ c ~ "|| ')' == " ~ c ~ ")";
+    return "( " ~ IS_ALPHA(c) ~ " || " ~ IS_NUM(c) ~ " || " ~ c ~ " == '%' || " ~ c
+        ~ " == ';' || " ~ c ~ " == ':' || " ~ c ~ " == '&' || " ~ c ~ " == '=' ||  " ~ c ~ " == '+' || " ~ c
+        ~ " == '$' || " ~ c ~ " == ','" ~ c ~ " == '-' || '_' == " ~ c ~ "|| '.' == " ~ c
+        ~ "|| '!' == " ~ c ~ "|| '~' == " ~ c ~ "|| '*' == " ~ c ~ "|| '\'' == " ~ c
+        ~ "|| '(' == " ~ c ~ "|| ')' == " ~ c ~ ")";
 }
 
 string STRICT_CHECK(string cond)
@@ -2385,7 +2354,8 @@ string IS_ALPHA(string c)
 
 string IS_URL_CHAR(string c)
 {
-    return "(!!(cast(uint) (normal_url_char[cast(uint) (" ~ c ~ ") >> 3] ) &                  
+    return "(!!(cast(uint) (normal_url_char[cast(uint) (" ~ c
+        ~ ") >> 3] ) &                  
 				(1 << (cast(uint)" ~ c ~ " & 7))))";
 }
 
@@ -2393,8 +2363,9 @@ enum NEW_MESSAGE = "httpShouldKeepAlive() ? (type == HTTPParserType.HTTP_REQUEST
 string CALLBACK_NOTIFY(string code)
 {
     string _s = " {if (_on" ~ code ~ " !is null){
-               //trace(\" CALLBACK_NOTIFY : " ~ code ~ "\");
-               _on" ~ code ~ "(this); if(!handleIng){
+               trace(\" CALLBACK_NOTIFY : " ~ code ~ "\");
+               _on" ~ code
+        ~ "(this); if(!handleIng){
                 _httpErrno = HTTPParserErrno.HPE_CB_" ~ code ~ ";
                 return  p + 1;}} }";
     return _s;
@@ -2404,7 +2375,8 @@ string CALLBACK_NOTIFY_NOADVANCE(string code)
 {
     string _s = " {if (_on" ~ code ~ " != null){
                    trace(\" CALLBACK_NOTIFY_NOADVANCE : " ~ code ~ "\");
-	               _on" ~ code ~ "(this); if(!handleIng){
+	               _on" ~ code
+        ~ "(this); if(!handleIng){
 	                _httpErrno = HTTPParserErrno.HPE_CB_" ~ code ~ ";
 	                return  p;} }}";
     return _s;
@@ -2416,25 +2388,29 @@ string CALLBACK_DATA(string code)
                 ulong len = (p - m" ~ code ~ "Mark) ;
                 
                 if(len > 0) {  
-                //trace(\"CALLBACK_DATA at  \",__LINE__, \"  " ~ code ~ "\");
-                ubyte[]  _data =  data[m" ~ code ~ "Mark..p];
+                trace(\"CALLBACK_DATA at  \",__LINE__, \"  " ~ code ~ "\");
+                ubyte[]  _data =  data[m" ~ code
+        ~ "Mark..p];
                 _on" ~ code ~ "(this,_data,true);
                 if (!handleIng){
-                    _httpErrno = HTTPParserErrno.HPE_CB_" ~ code ~ ";
+                    _httpErrno = HTTPParserErrno.HPE_CB_"
+        ~ code ~ ";
                     return  p + 1;}} } m" ~ code ~ "Mark = size_t.max;}";
     return _s;
 }
 
 string CALLBACK_DATA_NOADVANCE(string code)
 {
-	string _s = "{ if(m" ~ code ~ "Mark != size_t.max && _on" ~ code ~ " !is null){
+    string _s = "{ if(m" ~ code ~ "Mark != size_t.max && _on" ~ code ~ " !is null){
                 ulong len = (p - m" ~ code ~ "Mark) ;
                 if(len > 0) {  
                 trace(\"CALLBACK_DATA_NOADVANCE at  \",__LINE__, \"  " ~ code ~ "\");
-                ubyte[]  _data = data[m" ~ code ~ "Mark..p];
+                ubyte[]  _data = data[m" ~ code
+        ~ "Mark..p];
                 _on" ~ code ~ "(this,_data,false);
                 if (!handleIng){
-                    _httpErrno = HTTPParserErrno.HPE_CB_" ~ code ~ ";
+                    _httpErrno = HTTPParserErrno.HPE_CB_"
+        ~ code ~ ";
                 return  p;} }}m" ~ code ~ "Mark = size_t.max;}";
     return _s;
 }
@@ -2452,7 +2428,7 @@ unittest
         writeln(" ");
     }
 
-	void on_url(ref HTTPParser par, ubyte[] data, bool adv)
+    void on_url(ref HTTPParser par, ubyte[] data, bool adv)
     {
         writeln("_onUrl, is NOADVANCE = ", adv);
         writeln("\" ", cast(string) data, " \"");
@@ -2460,14 +2436,14 @@ unittest
         writeln(" ");
     }
 
-	void on_status(ref HTTPParser par, ubyte[] data, bool adv)
+    void on_status(ref HTTPParser par, ubyte[] data, bool adv)
     {
         writeln("_onStatus, is NOADVANCE = ", adv);
         writeln("\" ", cast(string) data, " \"");
         writeln(" ");
     }
 
-	void on_header_field(ref HTTPParser par, ubyte[] data, bool adv)
+    void on_header_field(ref HTTPParser par, ubyte[] data, bool adv)
     {
         static bool frist = true;
         writeln("_onHeaderField, is NOADVANCE = ", adv);
@@ -2482,39 +2458,39 @@ unittest
         writeln(" ");
     }
 
-	void on_header_value(ref HTTPParser par, ubyte[] data, bool adv)
+    void on_header_value(ref HTTPParser par, ubyte[] data, bool adv)
     {
         writeln("_onHeaderValue, is NOADVANCE = ", adv);
         writeln("\" ", cast(string) data, " \"");
         writeln(" ");
     }
 
-	void on_headers_complete(ref HTTPParser par)
+    void on_headers_complete(ref HTTPParser par)
     {
         writeln("_onHeadersComplete");
         writeln(" ");
     }
 
-	void on_body(ref HTTPParser par, ubyte[] data, bool adv)
+    void on_body(ref HTTPParser par, ubyte[] data, bool adv)
     {
         writeln("_onBody, is NOADVANCE = ", adv);
         writeln("\" ", cast(string) data, " \"");
         writeln(" ");
     }
 
-	void on_message_complete(ref HTTPParser par)
+    void on_message_complete(ref HTTPParser par)
     {
         writeln("_onMessageComplete");
         writeln(" ");
     }
 
-	void on_chunk_header(ref HTTPParser par)
+    void on_chunk_header(ref HTTPParser par)
     {
         writeln("_onChunkHeader");
         writeln(" ");
     }
 
-	void on_chunk_complete(ref HTTPParser par)
+    void on_chunk_complete(ref HTTPParser par)
     {
         writeln("_onChunkComplete");
         writeln(" ");

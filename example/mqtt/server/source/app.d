@@ -22,7 +22,6 @@ import collie.channel;
 import collie.bootstrap.server;
 
 import collie.codec.mqtt;
-import kiss.container.Vector;
 import std.conv;
 
 import collie.net.common;

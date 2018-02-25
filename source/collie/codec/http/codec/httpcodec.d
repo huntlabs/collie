@@ -15,7 +15,6 @@ public import collie.codec.http.errocode;
 public import collie.codec.http.codec.wsframe;
 public import collie.codec.http.httptansaction;
 public import collie.codec.http.httpwritebuffer;
-import kiss.container.Vector;
 
 import std.experimental.allocator.gc_allocator;
 

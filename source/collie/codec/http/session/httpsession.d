@@ -25,7 +25,6 @@ import std.socket;
 import std.experimental.allocator.mallocator;
 import collie.codec.http.httpwritebuffer;
 
-alias HTTPBuffer =  HTTPByteBuffer!(Mallocator);
 abstract class HTTPSessionController
 {
 	HTTPTransactionHandler getRequestHandler(HTTPTransaction txn, HTTPMessage msg);
@@ -124,7 +123,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		HTTPMessage headers,
 		bool eom)
 	{
-		auto tdata = new HTTPBuffer();
+		auto tdata = new HTTPByteBuffer();
 		_codec.generateHeader(txn,headers,tdata,eom);
 
 		//auto cback = eom ? bind(&closeWriteCallBack,txn) : &writeCallBack;
@@ -142,7 +141,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		bool eom)
 	{
 
-		auto tdata = new HTTPBuffer();
+		auto tdata = new HTTPByteBuffer();
 		size_t rlen = getCodec.generateBody(txn,tdata,data,eom);
 
 		if(eom){
@@ -156,7 +155,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	
 	override size_t sendChunkHeader(HTTPTransaction txn,size_t length)
 	{
-		auto tdata = new HTTPByteBuffer!Mallocator();
+		auto tdata = new HTTPByteBuffer();
 		size_t rlen = getCodec.generateChunkHeader(txn,tdata,length);
 		_down.httpWrite(tdata);
 		return rlen;
@@ -165,7 +164,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	
 	override size_t sendChunkTerminator(HTTPTransaction txn)
 	{
-		auto tdata = new HTTPByteBuffer!Mallocator();
+		auto tdata = new HTTPByteBuffer();
 		size_t rlen = getCodec.generateChunkTerminator(txn,tdata);
 
 		tdata.setFinalTask(newTask((){closeWriteCallBack();txn.onDelayedDestroy();}));
@@ -177,7 +176,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 	override size_t sendEOM(HTTPTransaction txn)
 	{
-		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
+		HttpWriteBuffer tdata = new HTTPByteBuffer();
 		size_t rlen = getCodec.generateEOM(txn,tdata);
 		trace("send eom!! ",rlen);
 		//if(rlen) 
@@ -204,7 +203,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 	override size_t sendWsData(HTTPTransaction txn,OpCode code,ubyte[] data)
 	{
-		auto tdata = new HTTPByteBuffer!Mallocator();
+		auto tdata = new HTTPByteBuffer();
 		size_t rlen = getCodec.generateWsFrame(txn,tdata,code,data);
 		if(rlen) {
 			bool eom = getCodec.shouldClose();

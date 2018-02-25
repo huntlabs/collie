@@ -1,7 +1,6 @@
 ﻿module collie.codec.http.headers;
 
 import collie.utils.string;
-import kiss.container.Vector;
 import core.stdc.string;
 import std.string;
 import std.array;
@@ -291,7 +290,7 @@ struct HTTPHeaders
 		return false;
 	}
 private:
-	HTTPHeaderCode[]  _codes ;// = Vector!(HTTPHeaderCode)(2);
+	HTTPHeaderCode[]  _codes ;
 	string[] _headersNames ;
 	string[] _headerValues ;
 	size_t _deletedCount = 0;

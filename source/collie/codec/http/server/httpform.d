@@ -17,8 +17,6 @@ import std.exception;
 import std.algorithm.searching : canFind, countUntil;
 import std.experimental.logger;
 import collie.utils.string;
-import kiss.container.Vector;
-import std.experimental.allocator.mallocator;
 import std.uri;
 
 class HTTPFormException : Exception
@@ -29,7 +27,7 @@ class HTTPFormException : Exception
 class HTTPForm
 {
 	import std.experimental.allocator.mallocator;
-	alias TBuffer = Vector!(ubyte,Mallocator,false);
+	alias TBuffer = Appender!(ubyte[]);
 	alias StringArray = string[];
 	enum ubyte[2] ENDMYITLFORM = ['-','-']; 
 	enum ubyte[2] LRLN = ['\r','\n']; 
@@ -149,13 +147,12 @@ protected:
 		string brony = "--";
 		brony ~= brand;
 		string str;
-		auto buf = Vector!(ubyte,Mallocator)();
+		Appender!(ubyte[]) buf;
 		do{
-			//Appender!(ubyte[]) buf = appender!(ubyte[]);
 			buf.clear();
 			buffer.readLine((in ubyte[] data){
 					trace("data is : ", cast(string)data);
-					buf.insertBack(data);
+					buf.put(data);
 					//buf.put(data);
 				});
 			auto sttr = cast(string)buf.data();
@@ -181,13 +178,13 @@ protected:
 	
 	bool readMultiftomPart(Buffer buffer, ubyte[] boundary)
 	{
-		auto buf = Vector!(ubyte,Mallocator)();
+		Appender!(ubyte[]) buf;
 		string cd;
 		string cType;
 		do {
 			buf.clear();
 			buffer.readLine((in ubyte[] data){
-					buf.insertBack(data);
+					buf.put(data);
 				});
 			auto line = buf.data();
 			trace(cast(string)line);

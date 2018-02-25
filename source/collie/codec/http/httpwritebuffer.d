@@ -4,6 +4,9 @@ import kiss.buffer;
 import kiss.net.struct_;
 import kiss.event.task;
 
+import std.experimental.logger;
+import std.array;
+
 @trusted abstract class HttpWriteBuffer : StreamWriteBuffer, WriteBuffer
 {
 	override abstract size_t write(in ubyte[] data);
@@ -24,52 +27,30 @@ private:
     AbstractTask _task;
 }
 
-class HTTPByteBuffer(Alloc) : HttpWriteBuffer
+class HTTPByteBuffer : HttpWriteBuffer
 {
-    import kiss.bytes;
-    import kiss.container.Vector;
-    import std.experimental.allocator.common;
-
-    alias BufferStore = Vector!(ubyte,Alloc); 
-
-    static if (stateSize!(Alloc) != 0)
+	alias BufferStore = Appender!(ubyte[]);
+	this()
 	{
-		this(Alloc alloc)
-		{
-			_store = BufferStore(1024,alloc);
-		}
-		
-		@property allocator(){return _store.allocator;}
-		
-	} else {
-		this()
-		{
-			_store = BufferStore(1024);
-		}
+		// _store = BufferStore(1024);
 	}
 
-	~this(){
-		destroy(_store);
-	}
 
     override size_t write(in ubyte[] data)
 	{
-		size_t len = _store.length;
-		()@trusted{_store.insertBack(cast(ubyte[])data);}();
-		return _store.length - len;
+		size_t len = _store.data.length;
+		_store.put(data);
+		return data.length;
 	}
 
 	override size_t set(size_t pos, in ubyte[] data)
 	{
 		import core.stdc.string : memcpy;
-		if(pos >= _store.length || data.length == 0) return 0;
-		size_t len = _store.length - pos;
+		if(pos >= _store.data.length || data.length == 0) return 0;
+
+		size_t len = _store.data.length - pos;
 		len = len > data.length ? data.length : len;
-		()@trusted{
-			ubyte *	ptr = cast(ubyte *)(_store.ptr + pos);
-			memcpy(ptr, data.ptr, len);
-		}();
-		
+		_store.data[pos..len] = data[0..len];
 		return len;
 	}
 
@@ -80,15 +61,20 @@ class HTTPByteBuffer(Alloc) : HttpWriteBuffer
     override const(ubyte)[] sendData() nothrow 
     {
         size_t len = _rsize + 4096;// 一次最大发送4K
-		len = _store.length < len ? _store.length : len;
-		auto _data = _store.data();
-		return _data[_rsize .. len];
+		ubyte[] buffer = _store.data();
+		len = buffer.length < len ? buffer.length : len;
+		return buffer[_rsize .. len];
+    }
+
+	const(ubyte)[] allData() nothrow 
+    {
+		return _store.data();
     }
 
     override bool popSize(size_t size) nothrow
     {
         _rsize += size;
-        return _rsize >= _store.length;
+        return _rsize >= _store.data.length;
     }
 
     override void doFinish() nothrow{
@@ -97,7 +83,7 @@ class HTTPByteBuffer(Alloc) : HttpWriteBuffer
     }
 
 	override size_t length() const{
-		return _store.length;
+		return _store.data.length;
 	}
 private:
 	BufferStore _store;

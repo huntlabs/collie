@@ -22,7 +22,6 @@ import collie.codec.http.codec.wsframe;
 import collie.codec.http.headers;
 import collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
-import kiss.container.Vector;
 import collie.utils.memory;
 import collie.codec.http.server;
 

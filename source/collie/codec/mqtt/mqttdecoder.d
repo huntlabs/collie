@@ -16,7 +16,6 @@ import std.conv;
 import std.experimental.allocator;
 import std.experimental.allocator.gc_allocator;
 import collie.codec.messagetobyteencoder;
-import kiss.container.Vector;
 import collie.codec.mqtt.bytebuf;
 import collie.codec.mqtt.mqttcodecutil;
 import collie.codec.mqtt.mqttconnackmessage;

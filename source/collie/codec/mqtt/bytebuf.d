@@ -13,16 +13,16 @@ module collie.codec.mqtt.bytebuf;
 import std.stdio;
 import std.conv;
 import core.memory;
-import std.algorithm : swap;
-import kiss.container.Vector;
-import std.experimental.logger;
 import core.stdc.string;
+import std.array;
+import std.algorithm : swap;
+import std.experimental.logger;
 
 //default big end
 
 final class ByteBuf 
 {
-	alias BufferVector = Vector!(ubyte); 
+	alias BufferVector = Appender!(ubyte[]);
 	
     this()
 	{
@@ -42,23 +42,23 @@ final class ByteBuf
 
 	void reset()
 	{
-		if(_buffer.length > 0)
+		if(_buffer.data.length > 0)
 		{
 			_readIndex = 0;
-			_writeIndex = cast(int)_buffer.length;
+			_writeIndex = cast(int)_buffer.data.length;
 		}
 	}
 
 	ByteBuf readSlice(int len)
 	{
-		if(len > _buffer.length || len + _readIndex > _buffer.length)
+		if(len > _buffer.data.length || len + _readIndex > _buffer.data.length)
 		{
 			throw new Exception("IndexOutOfBoundsException");
 		}
 		ubyte[] da;
 		for(int i= 0 ; i < len;i++)
 		{
-			da ~= _buffer[_readIndex+i];
+			da ~= _buffer.data[_readIndex+i];
 		}
 		_readIndex += len;
 		return new ByteBuf(da);
@@ -77,15 +77,15 @@ final class ByteBuf
 	// to utf-8 string
 	string toString(int index,int len)
 	{
-		if(len > _buffer.length || index + len > _buffer.length)
+		if(len > _buffer.data.length || index + len > _buffer.data.length)
 		{
-			writeln("IndexOutOfBoundsException -->readindex:  ",index,"read len : ",len,"buf len :",_buffer.length);
+			writeln("IndexOutOfBoundsException -->readindex:  ",index,"read len : ",len,"buf len :",_buffer.data.length);
 			throw new Exception("IndexOutOfBoundsException");
 		}
 		ubyte[] da;
 		for(int i= 0 ; i < len;i++)
 		{
-			da ~= _buffer[index+i];
+			da ~= _buffer.data[index+i];
 		}
 		//writeln("bytebuf tostring----> ",da," ",cast(string)(cast(byte[])da));
 		return cast(string)(da);
@@ -108,7 +108,7 @@ final class ByteBuf
 			throw new Exception("buf cannot read");
 		}
 
-		short va = cast(short)(_buffer[_readIndex] & 0xff);
+		short va = cast(short)(_buffer.data[_readIndex] & 0xff);
 		_readIndex++;
 		return va;
 	}
@@ -120,7 +120,7 @@ final class ByteBuf
 			throw new Exception("buf cannot read");
 		}
 		
-		ubyte va = cast(ubyte)_buffer[_readIndex];
+		ubyte va = cast(ubyte)_buffer.data[_readIndex];
 		_readIndex++;
 		return va;
 	}
@@ -136,7 +136,7 @@ final class ByteBuf
 
 	void writeByte(ubyte value)
 	{
-		_buffer.insertBack(value);
+		_buffer.put(value);
 		_writeIndex++;
 		if(_readIndex < 0)
 			_readIndex = 0;
@@ -155,7 +155,7 @@ final class ByteBuf
 
 	void writeBytes(ubyte[] value)
 	{
-		_buffer.insertBack(value);
+		_buffer.put(value);
 		_writeIndex += value.length;
 		if(_readIndex < 0)
 			_readIndex = 0;
@@ -165,7 +165,7 @@ final class ByteBuf
 	{
 		ubyte[] data = value[srcIndex .. srcIndex+length];
 		//writeln("writeBytes ---> : ",data);
-		_buffer.insertBack(data);
+		_buffer.put(data);
 		_writeIndex += length;
 		if(_readIndex < 0)
 			_readIndex = 0;
@@ -178,7 +178,7 @@ final class ByteBuf
 
 	pragma(inline, true) final const @property size_t length()
 	{
-		return _buffer.length;
+		return _buffer.data.length;
 	}
 
 //	pragma(inline) void opAssign( ByteBuf s)
