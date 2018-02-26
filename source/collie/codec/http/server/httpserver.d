@@ -194,7 +194,7 @@ protected:
 		{
 			Server ser = new Server(loop);
 			ser.setNewConntionCallBack(&newConnect);
-			ser.bind(address,(TcpListener accpet){
+			ser.bind(address,(TcpListener accpet) @trusted {
 					if(ruseport)
 						accpet.reusePort(true);
 					else {
