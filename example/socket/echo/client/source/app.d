@@ -18,7 +18,7 @@ import std.functional;
 import std.exception;
 
 import collie.net;
-import kiss.net.TcpStreamClient;
+import kiss.net.TcpStream;
 import collie.net.client.client;
 
 import core.thread;
@@ -87,7 +87,7 @@ protected:
 			}());
 	}
 
-	void onCreate(TcpStreamClient client)
+	void onCreate(TcpStream client)
 	{
 		// set client;
 		//client.setKeepAlive(1200,2);

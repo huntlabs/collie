@@ -17,14 +17,14 @@ import std.stdio;
 import std.functional;
 import std.exception;
 
-import kiss.net.TcpStreamClient;
+import kiss.net.TcpStream;
 import collie.net;
 import collie.net.client.clientmanger;
 
 
 @trusted class EchoConnect : ClientConnection
 {
-	this(TcpStreamClient sock, int id){
+	this(TcpStream sock, int id){
 		super(sock);
 		_id = id;
 	}
@@ -63,12 +63,12 @@ __gshared _id = 10000;
 
 void main()
 {
-	ClientConnection newConnect(TcpStreamClient client) @trusted 
+	ClientConnection newConnect(TcpStream client) @trusted 
 	{
 		return new EchoConnect(client,++_id);
 	}
 
-	void createClient(TcpStreamClient client) @trusted 
+	void createClient(TcpStream client) @trusted 
 	{
 		writeln("new client!");
 	}

@@ -20,14 +20,14 @@ import collie.utils.exception;
 import collie.net.client.linkinfo;
 import std.exception;
 import std.experimental.logger;
-public import kiss.net.TcpStreamClient;
+public import kiss.net.TcpStream;
 import kiss.event.task;
 
 final class ClientManger(PipeLine)
 {
 	alias ClientConnection = ClientLink!PipeLine;
 	alias PipeLineFactory = PipelineFactory!PipeLine;
-	alias ClientCreatorCallBack = void delegate(TcpStreamClient);
+	alias ClientCreatorCallBack = void delegate(TcpStream);
 	alias ConnCallBack = void delegate(PipeLine);
 	alias LinkManger = TLinkManger!ConnCallBack;
 	alias LinkInfo = LinkManger.LinkInfo;
@@ -95,7 +95,7 @@ final class ClientManger(PipeLine)
 protected:
 	void connect(LinkInfo * info)
 	{
-		info.client = new TcpStreamClient(_loop);
+		info.client = new TcpStream(_loop);
 		if(_oncreator)
 			_oncreator(info.client);
 		info.client.setCloseHandle(&tmpCloseCallBack);
@@ -266,7 +266,7 @@ private:
 package:
 struct TLinkInfo(TCallBack) if(is(TCallBack == delegate))
 {
-	TcpStreamClient client;
+	TcpStream client;
 	Address addr;
 	uint tryCount = 0;
 	TCallBack cback;

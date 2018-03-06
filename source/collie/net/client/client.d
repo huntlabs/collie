@@ -14,7 +14,7 @@ import std.socket;
 
 import kiss.event;
 import kiss.net.Timer;
-import kiss.net.TcpStreamClient;
+import kiss.net.TcpStream;
 import kiss.net.TcpStream;
 import collie.net.client.linkinfo;
 import collie.net.client.exception;
@@ -22,7 +22,7 @@ import kiss.event.task;
 
 @trusted abstract class BaseClient
 {
-	alias ClientCreatorCallBack = void delegate(TcpStreamClient);
+	alias ClientCreatorCallBack = void delegate(TcpStream);
 	alias LinkInfo = TLinkInfo!ClientCreatorCallBack;
 
 	this(EventLoop loop) 
@@ -101,7 +101,7 @@ protected:
 private:
 	final void connect()
 	{
-		_info.client = new TcpStreamClient(_loop);
+		_info.client = new TcpStream(_loop);
 		if(_info.cback)
 			_info.cback(_info.client);
 		_info.client.setConnectHandle(&connectCallBack);

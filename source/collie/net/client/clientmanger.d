@@ -12,10 +12,9 @@ module collie.net.client.clientmanger;
 
 import std.socket;
 
-import kiss.event;//collie.net.eventloop;
+import kiss.event;
 import kiss.net.Timer;
-import kiss.net.TcpStreamClient;//collie.net.tcpclient;
-import kiss.net.TcpStream;//collie.net.tcpsocket;
+import kiss.net.TcpStream;
 import collie.net.client.linkinfo;
 import collie.net.client.exception;
 
@@ -25,10 +24,10 @@ import kiss.event.task;
 
 @trusted final class TCPClientManger
 {
-	alias ClientCreatorCallBack = void delegate(TcpStreamClient);
+	alias ClientCreatorCallBack = void delegate(TcpStream);
 	alias ConCallBack = void delegate(ClientConnection);
 	alias LinkInfo = TLinkInfo!ConCallBack;
-	alias NewConnection = ClientConnection delegate(TcpStreamClient);
+	alias NewConnection = ClientConnection delegate(TcpStream);
 
 	this(EventLoop loop)
 	{
@@ -105,7 +104,7 @@ protected:
 	void connect(LinkInfo * info)
 	{
 		import collie.utils.functional;
-		info.client = new TcpStreamClient(_loop);
+		info.client = new TcpStream(_loop);
 		if(_oncreator)
 			_oncreator(info.client);
 		info.client.setCloseHandle(&tmpCloseCallBack);
@@ -173,7 +172,7 @@ private:
 
 @trusted abstract class ClientConnection : WheelTimer
 {
-	this(TcpStreamClient client)
+	this(TcpStream client)
 	{
 		restClient(client);
 	}
@@ -184,7 +183,7 @@ private:
 
 	final @property tcpClient()@safe {return _client;}
 
-	final void restClient(TcpStreamClient client) @trusted
+	final void restClient(TcpStream client) @trusted
 	{
 		if(_client !is null){
 			_client.setCloseHandle(null);
@@ -258,6 +257,6 @@ private:
     }
 
 private:
-	TcpStreamClient _client;
+	TcpStream _client;
 	EventLoop _loop;
 }

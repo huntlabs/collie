@@ -16,14 +16,14 @@ import collie.utils.memory;
 
 import collie.bootstrap.exception;
 import collie.net.client.linkinfo;
-public import kiss.net.TcpStreamClient;
+public import kiss.net.TcpStream;
 import kiss.event.task;
 
 final class ClientBootstrap(PipeLine) : PipelineManager
 {
 	alias ConnCallBack = void delegate(PipeLine);
 	alias LinkInfo = TLinkInfo!ConnCallBack;
-	alias ClientCreatorCallBack = void delegate(TcpStreamClient);
+	alias ClientCreatorCallBack = void delegate(TcpStream);
 
 	this(EventLoop loop)
 	{
@@ -94,7 +94,7 @@ final class ClientBootstrap(PipeLine) : PipelineManager
 protected:
 	void doConnect()
 	{
-		_info.client = new TcpStreamClient(_loop,_info.addr.addressFamily);
+		_info.client = new TcpStream(_loop,_info.addr.addressFamily);
 		if(_oncreator)
 			_oncreator(_info.client);
 		_info.client.setCloseHandle(&closeCallBack);

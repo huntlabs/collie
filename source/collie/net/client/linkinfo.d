@@ -11,11 +11,11 @@
 module collie.net.client.linkinfo;
 
 import std.socket;
-import kiss.net.TcpStreamClient;
+import kiss.net.TcpStream;
 
 struct TLinkInfo(TCallBack) if(is(TCallBack == delegate))
 {
-	TcpStreamClient client;
+	TcpStream client;
 	Address addr;
 	uint tryCount = 0;
 	TCallBack cback;
