@@ -17,9 +17,9 @@ import collie.utils.memory;
 import kiss.functional;
 import collie.exception;
 import collie.utils.exception;
-import collie.net.client.linkinfo;
+import collie.net.client.linklogInfo;
 import std.exception;
-import std.experimental.logger;
+
 public import kiss.net.TcpStream;
 import kiss.event.task;
 
@@ -30,7 +30,7 @@ final class ClientManger(PipeLine)
 	alias ClientCreatorCallBack = void delegate(TcpStream);
 	alias ConnCallBack = void delegate(PipeLine);
 	alias LinkManger = TLinkManger!ConnCallBack;
-	alias LinkInfo = LinkManger.LinkInfo;
+	alias LinklogInfo = LinkManger.LinklogInfo;
 
 	this(EventLoop loop)
 	{
@@ -56,13 +56,13 @@ final class ClientManger(PipeLine)
 
 	void connect(Address to, ConnCallBack cback = null)
 	{
-		LinkInfo * tinfo = new LinkInfo();
-		tinfo.addr = to;
-		tinfo.tryCount = 0;
-		tinfo.cback = cback;
+		LinklogInfo * tlogInfo = new LinklogInfo();
+		tlogInfo.addr = to;
+		tlogInfo.tryCount = 0;
+		tlogInfo.cback = cback;
 		_loop.postTask(newTask((){
-				_waitConnect.addInfo(tinfo);
-				connect(tinfo);
+				_waitConnect.addlogInfo(tlogInfo);
+				connect(tlogInfo);
 			}));
 	}
 
@@ -93,30 +93,30 @@ final class ClientManger(PipeLine)
 	}
 
 protected:
-	void connect(LinkInfo * info)
+	void connect(LinklogInfo * logInfo)
 	{
-		info.client = new TcpStream(_loop);
+		logInfo.client = new TcpStream(_loop);
 		if(_oncreator)
-			_oncreator(info.client);
-		info.client.setCloseHandle(&tmpCloseCallBack);
-		info.client.setConnectHandle(bind(&connectCallBack,info));
-		info.client.setReadHandle(&tmpReadCallBack);
-		info.client.connect(info.addr);
+			_oncreator(logInfo.client);
+		logInfo.client.setCloseHandle(&tmpCloseCallBack);
+		logInfo.client.setConnectHandle(bind(&connectCallBack,logInfo));
+		logInfo.client.setReadHandle(&tmpReadCallBack);
+		logInfo.client.connect(logInfo.addr);
 	}
 
-	void connectCallBack(LinkInfo * tinfo,bool isconnect) nothrow @trusted
+	void connectCallBack(LinklogInfo * tlogInfo,bool isconnect) nothrow @trusted
 	{
 		catchAndLogException((){
 		import std.exception;
-		if(tinfo is null)return;
+		if(tlogInfo is null)return;
 		if(isconnect){
 			scope(exit){
-				_waitConnect.rmInfo(tinfo);
+				_waitConnect.rmlogInfo(tlogInfo);
 			}
 			PipeLine pipe = null;
-			collectException(_factory.newPipeline(tinfo.client),pipe);
-			if(tinfo.cback)
-				tinfo.cback(pipe);
+			collectException(_factory.newPipeline(tlogInfo.client),pipe);
+			if(tlogInfo.cback)
+				tlogInfo.cback(pipe);
 			if(pipe is null)return;
 			ClientConnection con = new ClientConnection(this,pipe);
 			_wheel.addNewTimer(con);
@@ -130,14 +130,14 @@ protected:
 			con.initialize();
 
 		} else {// 重试一次，失败就释放资源
-			tinfo.client = null;
-			if(tinfo.tryCount < _tryCount) {
-				tinfo.tryCount ++;
-				connect(tinfo);
+			tlogInfo.client = null;
+			if(tlogInfo.tryCount < _tryCount) {
+				tlogInfo.tryCount ++;
+				connect(tlogInfo);
 			}else{
-				auto cback = tinfo.cback;
-				_waitConnect.rmInfo(tinfo);
-				gcFree(tinfo);
+				auto cback = tlogInfo.cback;
+				_waitConnect.rmlogInfo(tlogInfo);
+				gcFree(tlogInfo);
 				if(cback)
 					cback(null);
 			}
@@ -264,7 +264,7 @@ private:
 }
 
 package:
-struct TLinkInfo(TCallBack) if(is(TCallBack == delegate))
+struct TLinklogInfo(TCallBack) if(is(TCallBack == delegate))
 {
 	TcpStream client;
 	Address addr;

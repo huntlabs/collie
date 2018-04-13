@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.server.httpserver;
-
+import kiss.log;
 import collie.codec.http.session.httpsession;
 import collie.codec.http.httptansaction;
 import collie.codec.http.server.httpserveroptions;
@@ -34,7 +34,7 @@ import collie.bootstrap.serversslconfig;
 import kiss.net.struct_;
 
 import std.socket;
-import std.experimental.logger;
+
 
 
 alias HTTPPipeline = Pipeline!(const(ubyte[]), StreamWriteBuffer);
@@ -75,7 +75,7 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 		_ipconfigs = addrs;
 		for(size_t i = 0; i < _servers.length; ++i)
 		{
-			trace("start listen!!!");
+			logDebug("start listen!!!");
 			static if(UsePipeline)
 				_servers[i].stopListening();
 			else
@@ -90,7 +90,7 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 
 	void addBind(ref HTTPServerOptions.IPConfig addr)
 	{
-		trace("",_isStart);
+		logDebug("",_isStart);
 		if(_isStart) return;
 		newServer(addr);
 		_ipconfigs.insertBack(addr);
@@ -98,12 +98,12 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 
 	void start()
 	{
-		trace("start ",_isStart);
+		logDebug("start ",_isStart);
 		if(_isStart) return;
 		_isStart = true;
 		for(size_t i = 0; i < _servers.length; ++i)
 		{
-			trace("start listen ---");
+			logDebug("start listen ---");
 			static if(UsePipeline)
 				_servers[i].startListening();
 			else {
@@ -310,7 +310,7 @@ class ServerAccpeTFactory : AcceptPipelineFactory
 	}
 
 	override AcceptPipeline newPipeline(TcpListener acceptor) {
-		trace("--new accpetPipeLine");
+		logDebug("--new accpetPipeLine");
 		AcceptPipeline pipe = AcceptPipeline.create();
 		HTTPServer.setAcceptorConfig(_conf,acceptor);
 		return pipe;

@@ -15,7 +15,7 @@ import std.socket;
 import kiss.event;
 import kiss.net.Timer;
 import kiss.net.TcpStream;
-import collie.net.client.linkinfo;
+import collie.net.client.linklogInfo;
 import collie.net.client.exception;
 
 import kiss.timingwheel;
@@ -26,7 +26,7 @@ import kiss.event.task;
 {
 	alias ClientCreatorCallBack = void delegate(TcpStream);
 	alias ConCallBack = void delegate(ClientConnection);
-	alias LinkInfo = TLinkInfo!ConCallBack;
+	alias LinklogInfo = TLinklogInfo!ConCallBack;
 	alias NewConnection = ClientConnection delegate(TcpStream);
 
 	this(EventLoop loop)
@@ -82,14 +82,14 @@ import kiss.event.task;
 	{
 		if(_cback is null)
 			throw new SocketClientException("must set NewConnection callback ");
-		LinkInfo * info = new LinkInfo();
-		info.addr = addr;
-		info.tryCount = 0;
-		info.cback = cback;
+		LinklogInfo * logInfo = new LinklogInfo();
+		logInfo.addr = addr;
+		logInfo.tryCount = 0;
+		logInfo.cback = cback;
 		if(_loop.isInLoopThread()){
-			_postConmnect(info);
+			_postConmnect(logInfo);
 		} else {
-			_loop.postTask(newTask(&_postConmnect,info));
+			_loop.postTask(newTask(&_postConmnect,logInfo));
 		}
 	}
 
@@ -101,46 +101,46 @@ import kiss.event.task;
 	}
 
 protected:
-	void connect(LinkInfo * info)
+	void connect(LinklogInfo * logInfo)
 	{
 		import collie.utils.functional;
-		info.client = new TcpStream(_loop);
+		logInfo.client = new TcpStream(_loop);
 		if(_oncreator)
-			_oncreator(info.client);
-		info.client.setCloseHandle(&tmpCloseCallBack);
-		info.client.setConnectHandle(bind(&connectCallBack,info));
-		info.client.setReadHandle(&tmpReadCallBack);
-		info.client.connect(info.addr);
+			_oncreator(logInfo.client);
+		logInfo.client.setCloseHandle(&tmpCloseCallBack);
+		logInfo.client.setConnectHandle(bind(&connectCallBack,logInfo));
+		logInfo.client.setReadHandle(&tmpReadCallBack);
+		logInfo.client.connect(logInfo.addr);
 	}
 
 	void tmpReadCallBack(in ubyte[]) nothrow {}
 	void tmpCloseCallBack() nothrow {}
 
-	void connectCallBack(LinkInfo * info,bool state) nothrow
+	void connectCallBack(LinklogInfo * logInfo,bool state) nothrow
 	{
 		catchAndLogException((){
 			import std.exception;
-			if(info is null)return;
+			if(logInfo is null)return;
 			if(state) {
 				scope(exit){
-					_waitConnect.rmInfo(info);
+					_waitConnect.rmlogInfo(logInfo);
 				}
 				ClientConnection con;
-				collectException(_cback(info.client),con);
-				if(info.cback)
-					info.cback(con);
+				collectException(_cback(logInfo.client),con);
+				if(logInfo.cback)
+					logInfo.cback(con);
 				if(con is null) return;
 				if(_wheel)
 					_wheel.addNewTimer(con);
 				con.onActive();
 			} else {
-				info.client = null;
-				if(info.tryCount < _tryCout) {
-					info.tryCount ++;
-					connect(info);
+				logInfo.client = null;
+				if(logInfo.tryCount < _tryCout) {
+					logInfo.tryCount ++;
+					connect(logInfo);
 				} else {
-					auto cback = info.cback;
-					_waitConnect.rmInfo(info);
+					auto cback = logInfo.cback;
+					_waitConnect.rmlogInfo(logInfo);
 					if(cback)
 						cback(null);
 				}
@@ -153,9 +153,9 @@ protected:
 	}
 
 private:
-	final void _postConmnect(LinkInfo * info){
-		_waitConnect.addInfo(info);
-		connect(info);
+	final void _postConmnect(LinklogInfo * logInfo){
+		_waitConnect.addlogInfo(logInfo);
+		connect(logInfo);
 	}
 private:
 	uint _tryCout = 1;

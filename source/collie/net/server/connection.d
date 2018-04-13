@@ -15,7 +15,7 @@ import kiss.timingwheel;
 import kiss.net.Timer;
 import kiss.event;
 import kiss.event.task;
-import std.experimental.logger;
+
 
 @trusted abstract class ServerConnection : WheelTimer
 {
@@ -95,7 +95,7 @@ private:
 
  	final void _postWriteBuffer(StreamWriteBuffer buffer)
     {
-		// trace("post send dara!  ", _socket is null);
+		// logDebug("post send dara!  ", _socket is null);
         if (_socket) {
             rest();
             _socket.write(buffer);

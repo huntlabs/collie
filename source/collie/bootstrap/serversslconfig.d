@@ -12,7 +12,7 @@
 module collie.bootstrap.serversslconfig;
 
 import std.string;
-import std.experimental.logger;
+
 //import kiss.net;
 
 version(USE_SSL)

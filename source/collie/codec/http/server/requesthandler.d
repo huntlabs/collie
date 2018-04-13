@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.server.requesthandler;
-
+import kiss.log;
 import collie.codec.http.httpmessage;
 import collie.codec.http.server.responsehandler;
 import collie.codec.http.errocode;
@@ -104,9 +104,9 @@ final class RequestHandlerAdaptor : ResponseHandler,HTTPTransactionHandler
 	}
 	
 	override void onHeadersComplete(HTTPMessage msg) {
-		// trace("onHeadersComplete , erro is : ", _erro , " _upstream is ", cast(void *)_upstream);
+		// logDebug("onHeadersComplete , erro is : ", _erro , " _upstream is ", cast(void *)_upstream);
 		if(msg.getHeaders.exists(HTTPHeaderCode.EXPECT)) {
-			trace("has header EXPECT--------");
+			logDebug("has header EXPECT--------");
 			string str = msg.getHeaders.getSingleOrEmpty(HTTPHeaderCode.EXPECT);
 			if(!isSameIngnoreLowUp(str,"100-continue")) {
 				scope HTTPMessage headers = new HTTPMessage();

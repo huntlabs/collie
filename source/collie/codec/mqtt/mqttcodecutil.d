@@ -10,6 +10,7 @@
  */
 module collie.codec.mqtt.mqttcodecutil;
 
+import kiss.log;
 import std.conv;
 import std.stdio;
 import std.string;
@@ -45,8 +46,8 @@ class MqttCodecUtil
 			// that contain more than 23 encoded bytes. And, The Server MAY allow zero-length ClientId.
 			return clientId != null;
 		}
-		import std.experimental.logger;
-		log(LogLevel.error,to!string(mqttVersion) ~ " is unknown mqtt version");
+
+		logDebug(to!string(mqttVersion) ~ " is unknown mqtt version");
 		return false;
 	}
 	
@@ -56,7 +57,7 @@ class MqttCodecUtil
 			case MqttMsgType.SUBSCRIBE:
 			case MqttMsgType.UNSUBSCRIBE:
 				if (mqttFixedHeader.qosLevel() != MqttQoS.AT_LEAST_ONCE) {
-					import std.experimental.logger;
+					
 					throw new Exception(to!string(mqttFixedHeader.messageType()) ~ " message must have QoS 1");
 				}
 				return mqttFixedHeader;

@@ -20,7 +20,7 @@ enum HTTPMethod
 	/* pathological */
 	HTTP_CONNECT = 5,
 	HTTP_OPTIONS = 6,
-	HTTP_TRACE = 7,
+	HTTP_logDebug = 7,
 	/* WebDAV */
 	HTTP_COPY = 8,
 	HTTP_LOCK = 9,
@@ -57,7 +57,7 @@ enum HTTPMethod
 
 enum string[34] method_strings = [
 	"DELETE", "GET", "HEAD", "POST", "PUT", /* pathological */
-	"CONNECT", "OPTIONS", "TRACE",
+	"CONNECT", "OPTIONS", "logDebug",
 	/* WebDAV */
 	"COPY", "LOCK", "MKCOL", "MOVE", "PROPFIND", "PROPPATCH", "SEARCH",
 	"UNLOCK", "BIND", "REBIND", "UNBIND", "ACL", /* subversion */

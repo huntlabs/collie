@@ -15,7 +15,7 @@ import std.array;
 import std.string;
 import std.exception;
 import std.algorithm.searching : canFind, countUntil;
-import std.experimental.logger;
+import kiss.log;
 import collie.utils.string;
 import kiss.container.Vector;
 import std.experimental.allocator.mallocator;
@@ -56,7 +56,7 @@ class HTTPForm
 	
 	this(string contype,  Buffer body_)
 	{
-		// trace("contype is : ", contype);
+		// logDebug("contype is : ", contype);
 		if (canFind(contype, "multipart/form-data"))
 		{
 			string strBoundary;
@@ -67,7 +67,7 @@ class HTTPForm
 					}
 					return true;
 				});
-			trace("strBoundary : ", strBoundary);
+			logDebug("strBoundary : ", strBoundary);
 			if (strBoundary.length > 0)
 			{
 				if(strBoundary[0] == '\"')
@@ -130,7 +130,7 @@ protected:
 				str ~= data;
 			});
 		splitNameValue(cast(string)str,'&','=',(string key, string value){
-				trace("recv: ",key," ", value);
+				logDebug("recv: ",key," ", value);
 				if(value.length > 0)
 					_forms[key.idup] ~= decodeComponent(value);
 				else
@@ -142,9 +142,9 @@ protected:
 	void readMultiFrom(string brand, Buffer buffer)
 	{
 		// buffer.readAll((in ubyte[] data){
-		// 		trace("data is : ", cast(string)data);
+		// 		logDebug("data is : ", cast(string)data);
 		// 	});
-		// trace(".................");
+		// logDebug(".................");
 		buffer.rest(0);
 		string brony = "--";
 		brony ~= brand;
@@ -154,7 +154,7 @@ protected:
 			//Appender!(ubyte[]) buf = appender!(ubyte[]);
 			buf.clear();
 			buffer.readLine((in ubyte[] data){
-					trace("data is : ", cast(string)data);
+					logDebug("data is : ", cast(string)data);
 					buf.insertBack(data);
 					//buf.put(data);
 				});
@@ -168,8 +168,8 @@ protected:
 				return;
 			}
 		} while(true);
-		trace("read to  : ", buffer.readPos);
-		trace("brony length  : ", brony.length);
+		logDebug("read to  : ", buffer.readPos);
+		logDebug("brony length  : ", brony.length);
 		brony = "\r\n" ~ brony;
 		bool run;
 		do
@@ -190,7 +190,7 @@ protected:
 					buf.insertBack(data);
 				});
 			auto line = buf.data();
-			trace(cast(string)line);
+			logDebug(cast(string)line);
 			if(line.length == 0)
 				break;
 			auto pos = countUntil(line, cast(ubyte)':') ; //  (cast(string) line).indexOf(":");
@@ -214,9 +214,9 @@ protected:
 		
 		string name;
 		string filename;
-		trace("cd ====       ", cd);
+		logDebug("cd ====       ", cd);
 		splitNameValue(cd, ';' , '=' , (string key, string value){
-			trace("key :  ", key, "   value: ", value);
+			logDebug("key :  ", key, "   value: ", value);
 			string tkey = strip(key);
 			//string tvalue = strip(value);
 			string handleValue(string rv){
@@ -259,11 +259,11 @@ protected:
 					value.put(cast(string) rdata);
 				});
 			string stdr = value.data;
-			trace("name == ", name);
-			trace("value == ", stdr);
+			logDebug("name == ", name);
+			logDebug("value == ", stdr);
 			
 			_forms[name] ~= stdr;
-			trace("form : ", _forms);
+			logDebug("form : ", _forms);
 			
 		}
 		ubyte[2] ub;

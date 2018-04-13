@@ -16,14 +16,14 @@ import kiss.event;
 import kiss.net.Timer;
 import kiss.net.TcpStream;
 import kiss.net.TcpStream;
-import collie.net.client.linkinfo;
+import collie.net.client.linklogInfo;
 import collie.net.client.exception;
 import kiss.event.task;
 
 @trusted abstract class BaseClient
 {
 	alias ClientCreatorCallBack = void delegate(TcpStream);
-	alias LinkInfo = TLinkInfo!ClientCreatorCallBack;
+	alias LinklogInfo = TLinklogInfo!ClientCreatorCallBack;
 
 	this(EventLoop loop) 
 	{
@@ -32,7 +32,7 @@ import kiss.event.task;
 
 	final bool isAlive() @trusted
 	{
-		return _info.client && _info.client.watched;
+		return _logInfo.client && _logInfo.client.watched;
 	}
 
 	final void setTimeout(uint s) @safe
@@ -47,9 +47,9 @@ import kiss.event.task;
 	{
 		if(isAlive)
 			throw new SocketClientException("must set NewConnection callback ");
-		_info.tryCount = 0;
-		_info.cback = cback;
-		_info.addr = addr;
+		_logInfo.tryCount = 0;
+		_logInfo.cback = cback;
+		_logInfo.addr = addr;
 		_loop.postTask(newTask(&_postConnect));
 	}
 
@@ -71,11 +71,11 @@ import kiss.event.task;
 	pragma(inline)
 	final void close() @trusted
 	{
-		if(_info.client is null) return;
+		if(_logInfo.client is null) return;
 		_loop.postTask(newTask(&_postClose));
 	}
 
-	final @property tcpStreamClient() @trusted {return _info.client;}
+	final @property tcpStreamClient() @trusted {return _logInfo.client;}
 	final @property timer() @trusted {return _timer;}
 	final @property timeout() @safe {return _timeout;}
 	final @property eventLoop() @trusted {return _loop;}
@@ -101,27 +101,27 @@ protected:
 private:
 	final void connect()
 	{
-		_info.client = new TcpStream(_loop);
-		if(_info.cback)
-			_info.cback(_info.client);
-		_info.client.setConnectHandle(&connectCallBack);
-		_info.client.setCloseHandle(&doClose);
-		_info.client.setReadHandle(&onRead);
-		_info.client.connect(_info.addr);
+		_logInfo.client = new TcpStream(_loop);
+		if(_logInfo.cback)
+			_logInfo.cback(_logInfo.client);
+		_logInfo.client.setConnectHandle(&connectCallBack);
+		_logInfo.client.setCloseHandle(&doClose);
+		_logInfo.client.setReadHandle(&onRead);
+		_logInfo.client.connect(_logInfo.addr);
 	}
 
 	final void connectCallBack(bool state) nothrow{
 		catchAndLogException((){
 			if(state){
-				_info.cback = null;
+				_logInfo.cback = null;
 				onActive();
 			} else {
-				_info.client = null;
-				if(_info.tryCount < _tryCount){
-					_info.tryCount ++;
+				_logInfo.client = null;
+				if(_logInfo.tryCount < _tryCount){
+					_logInfo.tryCount ++;
 					connect();
 				} else {
-					_info.cback = null;
+					_logInfo.cback = null;
 					if(_timer)
 						_timer.stop();
 					onFailure();
@@ -135,22 +135,22 @@ private:
 		catchAndLogException((){
 		if(_timer)
 			_timer.stop();
-		// auto client = _info.client;
-		_info.client = null;
+		// auto client = _logInfo.client;
+		_logInfo.client = null;
 		onClose();
 		}());
 	}
 
 private:
 	final void _postClose(){
-		if(_info.client)
-			_info.client.close();
+		if(_logInfo.client)
+			_logInfo.client.close();
 	}
 
 	final void _postWriteBuffer(StreamWriteBuffer buffer)
     {
-        if (_info.client) {
-            _info.client.write(buffer);
+        if (_logInfo.client) {
+            _logInfo.client.write(buffer);
         } else
             buffer.doFinish();
     }
@@ -162,7 +162,7 @@ private:
 
 private
 	EventLoop _loop;
-	LinkInfo _info;
+	LinklogInfo _logInfo;
 	uint _tryCount = 1;
 	Timer _timer;
 	uint _timeout;

@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.codec.websocketcodec;
-
+import kiss.log;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.httptansaction;
 import std.bitmanip;
@@ -467,7 +467,7 @@ protected:
 					break;
 				case ProcessingState.PS_READ_PAYLOAD:
 				{
-					if(_length>0) tracef("_length = %d / %d", _length, len);
+					if(_length>0) logDebugf("_length = %d / %d", _length, len);
 					auto llen = len - i;
 					auto rlen = _length - _readLen;
 					if (llen >= rlen)

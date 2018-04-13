@@ -170,7 +170,7 @@ protected:
 private:
     PipelineManager _manager = null;
     BaseTransport _transport;
-    //	AsynTransportInfo _transportInfo;
+    //	AsynTransportlogInfo _transportlogInfo;
 
     final PipelineBase addHelper(Context)(Context ctx, bool front)
     {

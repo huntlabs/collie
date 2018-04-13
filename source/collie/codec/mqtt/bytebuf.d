@@ -15,7 +15,7 @@ import std.conv;
 import core.memory;
 import std.algorithm : swap;
 import kiss.container.Vector;
-import std.experimental.logger;
+
 import core.stdc.string;
 
 //default big end
@@ -193,7 +193,7 @@ final class ByteBuf
 	{
 		_buffer.clear();
 		_readIndex = _writeIndex = 0;
-		//trace("\n\tclear()!!! \n");
+		//logDebug("\n\tclear()!!! \n");
 	}
 private:
 	BufferVector _buffer ;

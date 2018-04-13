@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.codec.http1xcodec;
-
+import kiss.log;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.errocode;
 import collie.codec.http.headers;
@@ -70,7 +70,7 @@ class HTTP1XCodec : HTTPCodec
 
 	override size_t onIngress(ubyte[] buf)
 	{
-		trace("on Ingress!!");
+		logDebug("on Ingress!!");
 		if(_finished) {
 			_parser.rest(HTTPParserType.HTTP_BOTH,_maxHeaderSize);
 		}
@@ -229,12 +229,12 @@ class HTTP1XCodec : HTTPCodec
 		HttpWriteBuffer buffer,
 		size_t length)
 	{
-		trace("_egressChunked  ", _egressChunked);
+		logDebug("_egressChunked  ", _egressChunked);
 		if (_egressChunked){
 			import std.format;
 			_inChunk = true;
 			string lent = format("%x\r\n",length);
-			trace("length is : ", length, "  x is: ", lent);
+			logDebug("length is : ", length, "  x is: ", lent);
 			appendLiteral(buffer,lent);
 			return lent.length;
 		}
@@ -330,7 +330,7 @@ protected:
 		_egressUpgrade = parser.isUpgrade;
 		_message.upgraded(parser.isUpgrade);
 		int klive = parser.keepalive;
-		trace("++++++++++klive : ", klive);
+		logDebug("++++++++++klive : ", klive);
 		switch(klive){
 			case 1:
 				_keepalive = true;
@@ -385,7 +385,7 @@ protected:
 	
 	void onUrl(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
-		//trace("on Url");
+		//logDebug("on Url");
 		_message.method = parser.methodCode();
 		_connectRequest = (parser.methodCode() == HTTPMethod.HTTP_CONNECT);
 		
@@ -414,27 +414,27 @@ protected:
 	
 	void onHeaderField(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
-		//trace("on onHeaderField");
+		//logDebug("on onHeaderField");
 		_currtKey ~= data;
 	}
 	
 	void onHeaderValue(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
-	//	trace("on onHeaderField");
+	//	logDebug("on onHeaderField");
 		_currtValue ~= data;
 		if(finish){
 			string key = cast(string)_currtKey;
 			_currtKey = (ubyte[]).init;
 			string value = cast(string)_currtValue;
 			_currtValue  = (ubyte[]).init;
-			trace("http header: \t", key, " : ", value);
+			logDebug("http header: \t", key, " : ", value);
 			_message.getHeaders.add(key,value);
 		}
 	}
 	
 	void onBody(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
-		// trace("on boday, length : ", data.length);
+		// logDebug("on boday, length : ", data.length);
 		_callback.onBody(_transaction,data);
 	}
 

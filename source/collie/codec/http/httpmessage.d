@@ -20,7 +20,7 @@ import std.variant;
 import std.conv;
 import std.exception;
 import std.string;
-public import std.experimental.logger;
+public 
 
 final class HTTPMessage
 {
@@ -207,14 +207,14 @@ final class HTTPMessage
 	ref HTTPHeaders getHeaders(){ return _headers; }
 
 	/**
-   * Decrements Max-Forwards header, when present on OPTIONS or TRACE methods.
+   * Decrements Max-Forwards header, when present on OPTIONS or logDebug methods.
    *
    * Returns HTTP status code.
    */
 	int processMaxForwards()
 	{
 		auto m = method();
-		if (m == HTTPMethod.HTTP_TRACE || m  == HTTPMethod.HTTP_OPTIONS) {
+		if (m == HTTPMethod.HTTP_logDebug || m  == HTTPMethod.HTTP_OPTIONS) {
 			string value = _headers.getSingleOrEmpty(HTTPHeaderCode.MAX_FORWARDS);
 			if (value.length > 0) {
 				long max_forwards = -1;
@@ -398,7 +398,7 @@ final class HTTPMessage
 			case 202:
 				return "Accepted";
 			case 203:
-				return "Non-Authoritative Information";
+				return "Non-Authoritative logInformation";
 			case 204:
 				return "No Content";
 			case 205:

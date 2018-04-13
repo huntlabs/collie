@@ -7,7 +7,7 @@
     ],
     "license": "Apache-2.0",
     "dependencies": {
-        "kiss": "~>0.2.0"
+        "kiss": "~>0.2.5"
     },
     "buildTypes": {
         "debug": {

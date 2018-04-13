@@ -16,7 +16,7 @@ import collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.codec.wsframe;
 import collie.codec.http.errocode;
-
+import kiss.log;
 import kiss.net.TcpStream;
 import kiss.functional;
 public import kiss.net.struct_;
@@ -33,12 +33,12 @@ abstract class HTTPSessionController
 	void attachSession(HTTPSession session){}
 	
 	/**
-   * Informed at the end when the given HTTPSession is going away.
+   * logInformed at the end when the given HTTPSession is going away.
    */
 	void detachSession(HTTPSession session){}
 	
 	/**
-   * Inform the controller that the session's codec changed
+   * logInform the controller that the session's codec changed
    */
 	void onSessionCodecChange(HTTPSession session) {}
 }
@@ -57,7 +57,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	HTTPCodec.CallBack
 {
 	alias StreamID = HTTPCodec.StreamID;
-	interface InfoCallback {
+	interface logInfoCallback {
 		// Note: you must not start any asynchronous work from onCreate()
 		void onCreate(HTTPSession);
 		//void onIngressError(const HTTPSession, ProxygenError);
@@ -93,7 +93,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 	//HandlerAdapter {
 	void onRead(ubyte[] msg) {
-		//trace("on read: ", cast(string)msg);
+		//logDebug("on read: ", cast(string)msg);
 		_codec.onIngress(msg);
 	}
 
@@ -104,7 +104,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 	void inActive() {
 		getCodec.onConnectClose();
-		trace("connect closed!");
+		logDebug("connect closed!");
 	}
 
 	void onTimeout() @trusted {
@@ -150,7 +150,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		} 
 		_down.httpWrite(tdata);
 		
-		// trace("send length : ", rlen);
+		// logDebug("send length : ", rlen);
 		return rlen;
 	}
 	
@@ -179,7 +179,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	{
 		HttpWriteBuffer tdata = new HTTPByteBuffer!Mallocator();
 		size_t rlen = getCodec.generateEOM(txn,tdata);
-		trace("send eom!! ",rlen);
+		logDebug("send eom!! ",rlen);
 		//if(rlen) 
 			//_down.httpWrite(tdata.data(true),bind(&closeWriteCallBack,txn));
 		if(rlen){
@@ -261,12 +261,12 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		if(txn){
 			txn.transport = this;
 		}
-		trace("begin a http requst or reaponse!");
+		logDebug("begin a http requst or reaponse!");
 	}
 
 	override void onHeadersComplete(HTTPTransaction txn,
 		HTTPMessage msg){
-		trace("onHeadersComplete ------url: ", msg.url);
+		logDebug("onHeadersComplete ------url: ", msg.url);
 		msg.clientAddress = getPeerAddress();
 		setupOnHeadersComplete(txn,msg);
 	}
@@ -298,7 +298,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	}
 
 	override void onError(HTTPTransaction txn,HTTPErrorCode code){
-		trace("ERRO : ", code);
+		logDebug("ERRO : ", code);
 		_down.httpClose();
 	}
 
@@ -308,7 +308,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 	}
 	
 	override void onWsFrame(HTTPTransaction txn,ref WSFrame wsf){
-		trace(".....");
+		logDebug(".....");
 		if(txn)
 			txn.onWsFrame(wsf);
 	}
@@ -326,10 +326,10 @@ protected:
 	void setupProtocolUpgrade(ref HTTPTransaction txn,CodecProtocol protocol,string protocolString,HTTPMessage msg);
 protected:
 	final void closeWriteCallBack(){
-		// trace("shodle close!????????????");
+		// logDebug("shodle close!????????????");
 		//txn.onDelayedDestroy();
 		if(_codec is null || _codec.shouldClose()) {
-			trace("\t\t --------do close!!!");
+			logDebug("\t\t --------do close!!!");
 			_down.httpClose();
 		}
 	}

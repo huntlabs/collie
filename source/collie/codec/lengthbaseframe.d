@@ -2,7 +2,7 @@
 
 import std.bitmanip;
 import std.conv;
-import std.experimental.logger;
+import kiss.log;
 
 import collie.channel;
 import collie.codec.exception;
@@ -81,7 +81,7 @@ class LengthBasedFrame(bool littleEndian = false) : Handler!(const(ubyte[]),ubyt
 				{
 					const size_t needLen = _msgLen - _readLen;
 					const size_t canRead = len - i;
-					trace();
+					logDebug();
 					if(canRead >= needLen){
 						auto tlen = i + needLen;
 						_data[_readLen.._msgLen] = msg[i..tlen];
@@ -101,7 +101,7 @@ class LengthBasedFrame(bool littleEndian = false) : Handler!(const(ubyte[]),ubyt
 
 	final override void write(Context ctx, ubyte[] msg, TheCallBack cback = null)
 	{
-		trace("writeln data!");
+		logDebug("writeln data!");
 		try 
 		{
 			ubyte ctype = _compressType;

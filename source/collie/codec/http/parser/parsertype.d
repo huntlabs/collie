@@ -145,7 +145,7 @@ enum HTTPParserURLFields
     UF_PATH = 3,
     UF_QUERY = 4,
     UF_FRAGMENT = 5,
-    UF_USERINFO = 6,
+    UF_USERlogInfo = 6,
     UF_MAX = 7
 }
 
@@ -319,8 +319,8 @@ enum HTTPParserHeaderstates
 enum HTTPParserHostState
 {
     s_http_host_dead = 1,
-    s_http_userinfo_start,
-    s_http_userinfo,
+    s_http_userlogInfo_start,
+    s_http_userlogInfo,
     s_http_host_start,
     s_http_host_v6_start,
     s_http_host,

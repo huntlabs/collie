@@ -12,7 +12,7 @@ module collie.codec.http.server.websocket;
 
 import std.socket;
 import std.exception;
-import std.experimental.logger;
+
 import std.experimental.allocator.gc_allocator;
 
 

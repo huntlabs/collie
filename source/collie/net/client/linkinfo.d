@@ -8,12 +8,12 @@
  * Licensed under the Apache-2.0 License.
  *
  */
-module collie.net.client.linkinfo;
+module collie.net.client.linklogInfo;
 
 import std.socket;
 import kiss.net.TcpStream;
 
-struct TLinkInfo(TCallBack) if(is(TCallBack == delegate))
+struct TLinklogInfo(TCallBack) if(is(TCallBack == delegate))
 {
 	TcpStream client;
 	Address addr;
@@ -21,35 +21,35 @@ struct TLinkInfo(TCallBack) if(is(TCallBack == delegate))
 	TCallBack cback;
 
 private:
-	TLinkInfo!(TCallBack) * prev;
-	TLinkInfo!(TCallBack) * next;
+	TLinklogInfo!(TCallBack) * prev;
+	TLinklogInfo!(TCallBack) * next;
 }
 
 struct TLinkManger(TCallBack) if(is(TCallBack == delegate))
 {
-	alias LinkInfo = TLinkInfo!TCallBack;
+	alias LinklogInfo = TLinklogInfo!TCallBack;
 
-	void addInfo(LinkInfo * info)
+	void addlogInfo(LinklogInfo * logInfo)
 	{
-		if(info){
-			info.next = _info.next;
-			if(info.next){
-				info.next.prev = info;
+		if(logInfo){
+			logInfo.next = _logInfo.next;
+			if(logInfo.next){
+				logInfo.next.prev = logInfo;
 			}
-			info.prev = &_info;
-			_info.next = info;
+			logInfo.prev = &_logInfo;
+			_logInfo.next = logInfo;
 		}
 	}
 
-	void rmInfo(LinkInfo * info)
+	void rmlogInfo(LinklogInfo * logInfo)
 	{
-		info.prev.next = info.next;
-		if (info.next)
-			info.next.prev = info.prev;
-		info.next = null;
-		info.prev = null;
+		logInfo.prev.next = logInfo.next;
+		if (logInfo.next)
+			logInfo.next.prev = logInfo.prev;
+		logInfo.next = null;
+		logInfo.prev = null;
 	}
 
 private:
-	LinkInfo _info;
+	LinklogInfo _logInfo;
 }

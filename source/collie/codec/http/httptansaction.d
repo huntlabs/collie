@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.httptansaction;
-
+import kiss.log;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.httpmessage;
 import collie.codec.http.errocode;
@@ -18,7 +18,7 @@ import collie.codec.http.httpwritebuffer;
 import kiss.net.TcpStream;
 
 import std.socket;
-public import std.experimental.logger;
+public 
 import collie.codec.http.codec.wsframe;
 
 enum TransportDirection : ubyte {
@@ -213,7 +213,7 @@ class HTTPTransaction
    */
 	void onIngressHeadersComplete(HTTPMessage msg)
 	{
-		// trace("onIngressHeadersComplete handle is ", (handler is null));
+		// logDebug("onIngressHeadersComplete handle is ", (handler is null));
 		if(isUpstream() && msg.isResponse()) {
 			_lastResponseStatus = msg.statusCode;
 		}
@@ -394,7 +394,7 @@ class HTTPTransaction
 	}
 
 	void onWsFrame(ref WSFrame wsf){
-		trace(".....");
+		logDebug(".....");
 		if(_handler)
 			_handler.onWsFrame(wsf);
 	}
@@ -409,7 +409,7 @@ class HTTPTransaction
 package:
 	void onDelayedDestroy()
 	{
-		// trace("deleting is ", deleting);
+		// logDebug("deleting is ", deleting);
 		if(deleting) return;
 		deleting = true;
 		if(_handler) {

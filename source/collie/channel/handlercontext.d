@@ -12,7 +12,7 @@ module collie.channel.handlercontext;
 
 import std.conv;
 import std.functional;
-
+import kiss.log;
 import collie.channel.pipeline;
 import collie.channel.handler;
 import collie.channel.exception;
@@ -205,7 +205,7 @@ mixin template ReadContextImpl()
         }
         else
         {
-            info("read reached end of pipeline");
+            logInfo("read reached end of pipeline");
         }
     }
 
@@ -268,7 +268,7 @@ mixin template WriteContextImpl()
         }
         else
         {
-            info("write reached end of pipeline");
+            logInfo("write reached end of pipeline");
 			if(cback !is null)
 				cback(msg,0);
         }
@@ -283,7 +283,7 @@ mixin template WriteContextImpl()
         }
         else
         {
-            info("close reached end of pipeline");
+            logInfo("close reached end of pipeline");
         }
     }
 

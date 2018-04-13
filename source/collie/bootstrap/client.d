@@ -15,14 +15,14 @@ import collie.net;
 import collie.utils.memory;
 
 import collie.bootstrap.exception;
-import collie.net.client.linkinfo;
+import collie.net.client.linklogInfo;
 public import kiss.net.TcpStream;
 import kiss.event.task;
 
 final class ClientBootstrap(PipeLine) : PipelineManager
 {
 	alias ConnCallBack = void delegate(PipeLine);
-	alias LinkInfo = TLinkInfo!ConnCallBack;
+	alias LinklogInfo = TLinklogInfo!ConnCallBack;
 	alias ClientCreatorCallBack = void delegate(TcpStream);
 
 	this(EventLoop loop)
@@ -34,8 +34,8 @@ final class ClientBootstrap(PipeLine) : PipelineManager
 	{
 		if (_timer)
 			_timer.destroy;
-		if(_info.client)
-			_info.client.destroy;
+		if(_logInfo.client)
+			_logInfo.client.destroy;
 	}
 
 	void setClientCreatorCallBack(ClientCreatorCallBack cback)
@@ -61,19 +61,19 @@ final class ClientBootstrap(PipeLine) : PipelineManager
 		if (_pipelineFactory is null)
 			throw new NeedPipeFactoryException(
 				"Pipeline must be not null! Please set Pipeline frist!");
-		if (_info.client)
+		if (_logInfo.client)
 			throw new ConnectedException("This Socket is Connected! Please close before connect!");
-		_info.addr = to;
-		_info.tryCount = 0;
-		_info.cback = cback;
+		_logInfo.addr = to;
+		_logInfo.tryCount = 0;
+		_logInfo.cback = cback;
 		_loop.postTask(newTask(&doConnect));
 	}
 	
 	void close()
 	{
-		if (_info.client is null)
+		if (_logInfo.client is null)
 			return;
-		_info.client.close();
+		_logInfo.client.close();
 	}
 	
 	@property EventLoop eventLoop()
@@ -83,7 +83,7 @@ final class ClientBootstrap(PipeLine) : PipelineManager
 	
 	@property auto pipeLine()
 	{
-		if(_info.client is null)
+		if(_logInfo.client is null)
 			return null;
 		return _pipe;
 	}
@@ -94,13 +94,13 @@ final class ClientBootstrap(PipeLine) : PipelineManager
 protected:
 	void doConnect()
 	{
-		_info.client = new TcpStream(_loop,_info.addr.addressFamily);
+		_logInfo.client = new TcpStream(_loop,_logInfo.addr.addressFamily);
 		if(_oncreator)
-			_oncreator(_info.client);
-		_info.client.setCloseHandle(&closeCallBack);
-		_info.client.setConnectHandle(&connectCallBack);
-		_info.client.setReadHandle(&readCallBack);
-		_info.client.connect(_info.addr);
+			_oncreator(_logInfo.client);
+		_logInfo.client.setCloseHandle(&closeCallBack);
+		_logInfo.client.setConnectHandle(&connectCallBack);
+		_logInfo.client.setReadHandle(&readCallBack);
+		_logInfo.client.connect(_logInfo.addr);
 	}
 
 	void closeCallBack() nothrow @trusted
@@ -122,33 +122,33 @@ protected:
 				{
 					if (_timer is null)
 					{
-						trace("new timer!");
+						logDebug("new timer!");
 						_timer = new Timer(_loop);
 						_timer.setTimerHandle(&onTimeOut);
 					}
 					if(!_timer.watched) {
 
 						bool rv = _timer.start(_timeOut);
-						trace("start timer!   : ", rv);
+						logDebug("start timer!   : ", rv);
 					}
 				}
-				_info.tryCount = 0;
-				_pipe = _pipelineFactory.newPipeline(_info.client);
-				if(_info.cback)
-					_info.cback(_pipe);
+				_logInfo.tryCount = 0;
+				_pipe = _pipelineFactory.newPipeline(_logInfo.client);
+				if(_logInfo.cback)
+					_logInfo.cback(_pipe);
 				_pipe.finalize();
 				_pipe.pipelineManager(this);
 				_pipe.transportActive();
-			}else if(_info.tryCount < _tryCount){
-				_info.client = null;
-				_info.tryCount ++;
+			}else if(_logInfo.tryCount < _tryCount){
+				_logInfo.client = null;
+				_logInfo.tryCount ++;
 				doConnect();
 			} else {
-				if(_info.cback)
-					_info.cback(null);
-				_info.client = null;
-				_info.cback = null;
-				_info.addr = null;
+				if(_logInfo.cback)
+					_logInfo.cback(null);
+				_logInfo.client = null;
+				_logInfo.cback = null;
+				_logInfo.addr = null;
 				_pipe = null;
 			}
 		}());
@@ -171,8 +171,8 @@ protected:
 	{
 		if (_timer)
 			_timer.stop();
-		gcFree(_info.client);
-		_info.client = null;
+		gcFree(_logInfo.client);
+		_logInfo.client = null;
 		pipeline.pipelineManager(null);
 		_pipe = null;
 	}
@@ -189,6 +189,6 @@ private:
 	uint _timeOut = 0;
 	uint _tryCount;
 
-	LinkInfo _info;
+	LinklogInfo _logInfo;
 	ClientCreatorCallBack _oncreator;
 }

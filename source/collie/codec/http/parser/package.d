@@ -10,7 +10,7 @@
  */
 module collie.codec.http.parser;
 
-import std.experimental.logger;
+import kiss.log;
 import collie.codec.http.headers.httpmethod;
 public import collie.codec.http.parser.parsertype;
 
@@ -246,10 +246,10 @@ public:
         size_t p = 0;
         if (_httpErrno != HTTPParserErrno.HPE_OK)
         {
-			trace("_httpErrno eror : ", _httpErrno);
+			logDebug("_httpErrno eror : ", _httpErrno);
             return 0;
         }
-		// trace("data.length : ",data.length, "   _state = ", _state);
+		// logDebug("data.length : ",data.length, "   _state = ", _state);
         if (data.length == 0)
         {
             switch (_state)
@@ -642,7 +642,7 @@ public:
                     case 'S':
                         _method = HTTPMethod.HTTP_SUBSCRIBE; /* or SEARCH */ break;
                     case 'T':
-                        _method = HTTPMethod.HTTP_TRACE;
+                        _method = HTTPMethod.HTTP_logDebug;
                         break;
                     case 'U':
                         _method = HTTPMethod.HTTP_UNLOCK; /* or UNSUBSCRIBE, UNBIND, UNLINK */ break;
@@ -2247,7 +2247,7 @@ protected:
                     return HTTPParserState.s_req_server_with_at;
                 }
 
-                if (IS_USERINFO_CHAR2(ch) || ch == '[' || ch == ']')
+                if (IS_USERlogInfo_CHAR2(ch) || ch == '[' || ch == ']')
                 {
                     return HTTPParserState.s_req_server;
                 }
@@ -2346,7 +2346,7 @@ protected:
 private:
 
 pragma(inline,true)
-bool IS_USERINFO_CHAR2(ubyte c)
+bool IS_USERlogInfo_CHAR2(ubyte c)
 {
     bool alpha = mixin(IS_ALPHA("c"));
     bool sum = mixin(IS_NUM("c"));
@@ -2357,7 +2357,7 @@ bool IS_USERINFO_CHAR2(ubyte c)
     return (b2 || b1 || sum || alpha);
 }
 
-string IS_USERINFO_CHAR(string c)
+string IS_USERlogInfo_CHAR(string c)
 {
     return "( " ~ IS_ALPHA(c) ~ " || " ~ IS_NUM(c) ~ " || " ~ c ~ " == '%' || " ~ c ~ " == ';' || " ~ c ~ " == ':' || " ~ c ~ " == '&' || " ~ c ~ " == '=' ||  " ~ c ~ " == '+' || " ~ c ~ " == '$' || " ~ c ~ " == ','" ~ c ~ " == '-' || '_' == " ~ c ~ "|| '.' == " ~ c ~ "|| '!' == " ~ c ~ "|| '~' == " ~ c ~ "|| '*' == " ~ c ~ "|| '\'' == " ~ c ~ "|| '(' == " ~ c ~ "|| ')' == " ~ c ~ ")";
 }
@@ -2393,7 +2393,7 @@ enum NEW_MESSAGE = "httpShouldKeepAlive() ? (type == HTTPParserType.HTTP_REQUEST
 string CALLBACK_NOTIFY(string code)
 {
     string _s = " {if (_on" ~ code ~ " !is null){
-               //trace(\" CALLBACK_NOTIFY : " ~ code ~ "\");
+               //logDebug(\" CALLBACK_NOTIFY : " ~ code ~ "\");
                _on" ~ code ~ "(this); if(!handleIng){
                 _httpErrno = HTTPParserErrno.HPE_CB_" ~ code ~ ";
                 return  p + 1;}} }";
@@ -2403,7 +2403,7 @@ string CALLBACK_NOTIFY(string code)
 string CALLBACK_NOTIFY_NOADVANCE(string code)
 {
     string _s = " {if (_on" ~ code ~ " != null){
-                   trace(\" CALLBACK_NOTIFY_NOADVANCE : " ~ code ~ "\");
+                   logDebug(\" CALLBACK_NOTIFY_NOADVANCE : " ~ code ~ "\");
 	               _on" ~ code ~ "(this); if(!handleIng){
 	                _httpErrno = HTTPParserErrno.HPE_CB_" ~ code ~ ";
 	                return  p;} }}";
@@ -2416,7 +2416,7 @@ string CALLBACK_DATA(string code)
                 ulong len = (p - m" ~ code ~ "Mark) ;
                 
                 if(len > 0) {  
-                //trace(\"CALLBACK_DATA at  \",__LINE__, \"  " ~ code ~ "\");
+                //logDebug(\"CALLBACK_DATA at  \",__LINE__, \"  " ~ code ~ "\");
                 ubyte[]  _data =  data[m" ~ code ~ "Mark..p];
                 _on" ~ code ~ "(this,_data,true);
                 if (!handleIng){
@@ -2430,7 +2430,7 @@ string CALLBACK_DATA_NOADVANCE(string code)
 	string _s = "{ if(m" ~ code ~ "Mark != size_t.max && _on" ~ code ~ " !is null){
                 ulong len = (p - m" ~ code ~ "Mark) ;
                 if(len > 0) {  
-                trace(\"CALLBACK_DATA_NOADVANCE at  \",__LINE__, \"  " ~ code ~ "\");
+                logDebug(\"CALLBACK_DATA_NOADVANCE at  \",__LINE__, \"  " ~ code ~ "\");
                 ubyte[]  _data = data[m" ~ code ~ "Mark..p];
                 _on" ~ code ~ "(this,_data,false);
                 if (!handleIng){

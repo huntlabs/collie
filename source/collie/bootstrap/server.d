@@ -9,12 +9,12 @@
  *
  */
 module collie.bootstrap.server;
-
+import kiss.log;
 import collie.net;
 import collie.channel;
 import collie.bootstrap.serversslconfig;
 public import collie.bootstrap.exception;
-import std.experimental.logger;
+
 
 import std.exception;
 
@@ -156,7 +156,7 @@ final class ServerBootstrap(PipeLine)
 					acceptor.startTimingWhile(wheel, time);
 			}
 		}
-		trace("server _listening!");
+		logDebug("server _listening!");
 	}
 
 	EventLoopGroup group(){return _group;}
@@ -164,7 +164,7 @@ final class ServerBootstrap(PipeLine)
 	@property EventLoop eventLoop(){return _loop;}
 
 	@property Address address(){return _address;}
-	
+
 protected:
     auto creatorAcceptor(EventLoop loop)
     {
@@ -333,10 +333,10 @@ final @trusted class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 
     override void transportActive(Context ctx)
     {
-        trace("acept transportActive");
+        logDebug("acept transportActive");
         if (!_acceptor.watch())
         {
-            error("acceptor start error!");
+            logError("acceptor start error!");
         }
     }
 
@@ -524,7 +524,7 @@ version(USE_SSL)
     protected:
         void handSharkCallBack()
         {
-            trace("the ssl handshark over");
+            logDebug("the ssl handshark over");
             _cback(this, _socket);
             _socket = null;
         }
@@ -535,7 +535,7 @@ version(USE_SSL)
 
         void onClose()
         {
-            trace("the ssl handshark fail");
+            logDebug("the ssl handshark fail");
             _socket.setCloseCallBack(null);
             _socket.setReadCallBack(null);
             _socket.setHandshakeCallBack(null);
