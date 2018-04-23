@@ -215,7 +215,7 @@ protected:
 		}
 	}
 
-	ServerConnection newConnect(EventLoop loop,Socket sock) @trusted 
+	ServerConnection newConnect(Selector loop,Socket sock) 
 	{
 		TcpStream socket;
 		version(USE_SSL){
@@ -227,7 +227,7 @@ protected:
 					BIO * writeBIO = BIO_new(BIO_s_mem());
 					SSL_set_bio(ssl, readBIO, writeBIO);
 					SSL_set_accept_state(ssl);
-					socket = new SSLSocket(loop, sock, ssl,readBIO,writeBIO);
+					socket = new SSLSocket(cast(EventLoop) loop, sock, ssl,readBIO,writeBIO);
 				} else {
 					if (SSL_set_fd(ssl, sock.handle()) < 0)
 					{
@@ -237,7 +237,7 @@ protected:
 						return null;
 					}
 					SSL_set_accept_state(ssl);
-					socket = new SSLSocket(loop, sock, ssl);
+					socket = new SSLSocket(cast(EventLoop) loop, sock, ssl);
 				}
 			}
 		} else {

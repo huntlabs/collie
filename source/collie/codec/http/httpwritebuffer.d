@@ -1,7 +1,8 @@
 module collie.codec.http.httpwritebuffer;
 
 import kiss.buffer;
-import kiss.net.struct_;
+import kiss.net;
+import kiss.event.core;
 import kiss.event.task;
 
 @trusted abstract class HttpWriteBuffer : StreamWriteBuffer, WriteBuffer
@@ -20,7 +21,11 @@ import kiss.event.task;
 		if(_task !is null)
         	_task.job();
     }
+    StreamWriteBuffer next(){ return _next; }
+    void next(StreamWriteBuffer v) { _next = v; }
+
 private:
+    StreamWriteBuffer _next;
     AbstractTask _task;
 }
 
@@ -77,7 +82,7 @@ class HTTPByteBuffer(Alloc) : HttpWriteBuffer
 		_rsize = size;
 	}
 
-    override const(ubyte)[] sendData() nothrow 
+    const(ubyte)[] sendData()  
     {
         size_t len = _rsize + 4096;// 一次最大发送4K
 		len = _store.length < len ? _store.length : len;
@@ -85,13 +90,13 @@ class HTTPByteBuffer(Alloc) : HttpWriteBuffer
 		return _data[_rsize .. len];
     }
 
-    override bool popSize(size_t size) nothrow
+    bool popSize(size_t size) 
     {
         _rsize += size;
         return _rsize >= _store.length;
     }
 
-    override void doFinish() nothrow{
+    override void doFinish() {
         _store.clear();
         super.doFinish();
     }

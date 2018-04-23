@@ -115,7 +115,7 @@ class LengthBasedFrame(bool littleEndian = false) : Handler!(const(ubyte[]),ubyt
 			data[0 .. 4] = length[];
 			data[4] = ctype;
 			data[5 .. $] = tmsg[];
-			ctx.fireWrite(new WarpStreamBuffer(data,null),null);
+			ctx.fireWrite(new SocketStreamBuffer(data,null),null);
 			if (cback)
 				cback(msg, size);
 		}

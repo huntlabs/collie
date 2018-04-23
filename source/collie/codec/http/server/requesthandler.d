@@ -19,6 +19,7 @@ import collie.codec.http.httptansaction;
 import collie.codec.http.server.responsebuilder;
 import collie.codec.http.codec.httpcodec;
 import collie.utils.string;
+import kiss.event;
 
 abstract class RequestHandler
 {

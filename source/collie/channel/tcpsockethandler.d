@@ -13,7 +13,7 @@ module collie.channel.tcpsockethandler;
 import collie.net;
 import collie.channel.handler;
 import collie.channel.handlercontext;
-import kiss.net.struct_;
+import kiss.net;
 import kiss.net.TcpStream;
 import kiss.event.task;
 
@@ -29,7 +29,7 @@ final @trusted class TCPSocketHandler : HandlerAdapter!(const(ubyte[]), StreamWr
 	void restSocket(TcpStream sock)
 	{
 		_socket = sock;
-		_loop = sock.eventLoop();
+		_loop = cast(EventLoop) sock.eventLoop();
 	}
 
     override void transportActive(Context ctx)

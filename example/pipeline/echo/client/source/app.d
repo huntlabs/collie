@@ -40,7 +40,7 @@ public:
     override void timeOut(Context ctx){
         writeln("clent beat time Out!");
         string data = Clock.currTime().toSimpleString();
-        write(ctx,new WarpStreamBuffer(cast(const(ubyte)[])(data.dup),&callBack),null);
+        write(ctx,new SocketStreamBuffer(cast(const(ubyte)[])(data.dup),&callBack),null);
     }
     
     override void transportInactive(Context ctx){
@@ -91,6 +91,6 @@ void main()
 	{
 		writeln("write to send server: ");
 		string data = readln();
-		pipe.write(new WarpStreamBuffer(cast(const(ubyte)[])(data),null),null);
+		pipe.write(new SocketStreamBuffer(cast(const(ubyte)[])(data),null),null);
 	}
 }

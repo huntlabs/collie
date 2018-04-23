@@ -29,7 +29,7 @@ class EchoHandler : HandlerAdapter!(const(ubyte[]), StreamWriteBuffer)
 {
 public:
     override void read(Context ctx, const(ubyte[]) msg){
-        write(ctx,new WarpStreamBuffer(msg.dup,&callBack),null);
+        write(ctx,new SocketStreamBuffer(msg.dup,&callBack),null);
     }
 
     void callBack(const(ubyte[]) data, size_t len) @trusted nothrow{

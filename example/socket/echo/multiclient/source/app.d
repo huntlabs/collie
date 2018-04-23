@@ -63,7 +63,7 @@ __gshared _id = 10000;
 
 void main()
 {
-	ClientConnection newConnect(TcpStream client) @trusted 
+	ClientConnection newConnect(TcpStream client)
 	{
 		return new EchoConnect(client,++_id);
 	}

@@ -58,9 +58,9 @@ protected:
 
 void main()
 {
-	@trusted ServerConnection newConnect(EventLoop lop,Socket soc)
+	ServerConnection newConnect(Selector loop, Socket socket)
 	{
-		return new EchoConnect(new TcpStream(lop,soc));
+		return new EchoConnect(new TcpStream(loop, socket) );
 	}
 
 	EventLoop loop = new EventLoop();

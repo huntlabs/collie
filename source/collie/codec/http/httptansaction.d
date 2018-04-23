@@ -14,8 +14,8 @@ import collie.codec.http.codec.httpcodec;
 import collie.codec.http.httpmessage;
 import collie.codec.http.errocode;
 import collie.codec.http.httpwritebuffer;
-// import kiss.net.TcpStream;
-import kiss.net.TcpStream;
+import kiss.net;
+import kiss.event;
 
 import std.socket;
 public 
@@ -190,7 +190,7 @@ class HTTPTransaction
 
 	@property streamID(){return _id;}
 	@property transport(Transport port){_transport = port;}
-	@property transport(){return _transport;}
+	@property Transport transport(){return _transport;}
 
 	bool isUpstream() const {
 		return _direction == TransportDirection.UPSTREAM;
@@ -315,7 +315,7 @@ class HTTPTransaction
    */
 	void sendBody(in ubyte[] body_, bool iseom = false){
 		if(transport)
-			if(transport)transport.sendBody(this,body_, iseom);
+			transport.sendBody(this,body_, iseom);
 	}
 	
 	/**

@@ -83,7 +83,7 @@ class ResponseBuilder
 
 	final void send()
 	{
-		// logDebug("_txn is ", cast(void *)_txn);
+		debug logDebug("_txn is ", cast(void *)_txn);
 		scope(exit){
 			_headers = null;
 		}
@@ -91,10 +91,10 @@ class ResponseBuilder
 		if(_headers && _sendEOM) chunked = false;
 
 		if(_headers){
-			// logDebug("is isResponse : ",_headers.isResponse());
-			// logDebug("_headers.statusCode : ", _headers.statusCode);
+			debug logDebug("is isResponse : ",_headers.isResponse());
+			debug logDebug("_headers.statusCode : ", _headers.statusCode);
 			if(_headers.isResponse() && (_headers.statusCode >= 200)) {
-				// logDebug("is chanlk , ", chunked);
+				debug logDebug("is chanlk , ", chunked);
 				if(chunked) {
 					_headers.chunked(true);
 				} else {
@@ -112,7 +112,7 @@ class ResponseBuilder
 			}
 		}
 		if((_body.length > 0) && _txn) {
-			// logDebug("body len = ", _body.length);
+			debug logDebug("body len = ", _body.length);
 			if(chunked) {
 				_txn.sendChunkHeader(_body.length);
 				_txn.sendBody(_body.allData.data());

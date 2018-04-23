@@ -17,7 +17,7 @@ import collie.channel.pipeline;
 import collie.channel.handler;
 import collie.channel.exception;
 import collie.net;
-import kiss.net.struct_;
+import kiss.event.socket;
 
 interface HandlerContext(In, Out)
 {

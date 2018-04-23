@@ -52,7 +52,7 @@ public:
     {
         writeln("clent beat time Out!");
         string data = "NO." ~ _nm ~ "   \t" ~ Clock.currTime().toSimpleString();
-        write(ctx,new WarpStreamBuffer(cast(const(ubyte)[])(data.dup),&callBack),null);
+        write(ctx,new SocketStreamBuffer(cast(const(ubyte)[])(data.dup),&callBack),null);
     }
     
     override void transportInactive(Context ctx)

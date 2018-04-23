@@ -15,7 +15,8 @@ import collie.codec.http.server.requesthandler;
 import collie.codec.http.errocode;
 import collie.codec.http.codec.wsframe;
 import collie.codec.http.httptansaction;
-public import kiss.net.struct_;
+import kiss.net;
+import kiss.event;
 
 abstract class ResponseHandler
 {
@@ -42,7 +43,7 @@ abstract class ResponseHandler
 
 	final void socketWrite(ubyte[] data,SocketWriteCallBack cback)
 	{
-		socketWrite(new WarpStreamBuffer(data,cback));
+		socketWrite(new SocketStreamBuffer(data,cback));
 	}
 
 	void socketWrite(StreamWriteBuffer buffer);

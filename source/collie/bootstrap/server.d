@@ -258,7 +258,7 @@ import kiss.timingwheel;
 import collie.utils.memory;
 import collie.net;
 
-final @trusted class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
+final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 {
     this(TcpListener acceptor, AcceptPipeline pipe,
         shared PipelineFactory!PipeLine clientPipeFactory, SSL_CTX* ctx = null)
@@ -334,7 +334,11 @@ final @trusted class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
     override void transportActive(Context ctx)
     {
         logDebug("acept transportActive");
-        if (!_acceptor.watch())
+        try
+        {
+            _acceptor.start();
+        }
+        catch (Exception)
         {
             logError("acceptor start error!");
         }
@@ -362,7 +366,7 @@ protected:
         gcFree(conn);
     }
 
-    void acceptCallBack(EventLoop loop, Socket socket)  nothrow 
+    void acceptCallBack(Selector loop, Socket socket)   
     {
         catchAndLogException(_pipe.read(socket));
     }
@@ -376,13 +380,13 @@ protected:
     {
         if (_timer)
             return;
-        _timer = new Timer(_acceptor.eventLoop);
-        _timer.setTimerHandle(&doWheel);
+        _timer = new Timer(_acceptor.eventLoop, time);
+        _timer.onTick(&doWheel);
         _wheel = new TimingWheel(whileSize);
-        _timer.start(time);
+        _timer.start();
     }
 
-    void doWheel() nothrow
+    void doWheel(Object) 
     {
         if (_wheel)
             _wheel.prevWheel();

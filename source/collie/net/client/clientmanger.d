@@ -22,7 +22,7 @@ import kiss.timingwheel;
 //import collie.utils.memory;
 import kiss.event.task;
 
-@trusted final class TCPClientManger
+final class TCPClientManger
 {
 	alias ClientCreatorCallBack = void delegate(TcpStream);
 	alias ConCallBack = void delegate(ClientConnection);
@@ -69,12 +69,12 @@ import kiss.event.task;
 		}
 		
 		_wheel = new TimingWheel(whileSize);
-		_timer = new Timer(_loop);
-		_timer.setTimerHandle(&onTimer);
+		_timer = new KissTimer(_loop, time);
+		_timer.onTick(&onTimer);
 		if(_loop.isInLoopThread()){
-			_timer.start(time);
+			_timer.start();
 		} else {
-			_loop.postTask(newTask(&_timer.start,time));
+			_loop.postTask(newTask(&_timer.start, false, false));
 		}
 	}
 
@@ -103,20 +103,21 @@ import kiss.event.task;
 protected:
 	void connect(LinklogInfo * logInfo)
 	{
-		import collie.utils.functional;
+		// import collie.utils.functional;
 		logInfo.client = new TcpStream(_loop);
 		if(_oncreator)
 			_oncreator(logInfo.client);
-		logInfo.client.setCloseHandle(&tmpCloseCallBack);
-		logInfo.client.setConnectHandle(bind(&connectCallBack,logInfo));
-		logInfo.client.setReadHandle(&tmpReadCallBack);
-		logInfo.client.connect(logInfo.addr);
+		logInfo.client.onClosed(&tmpCloseCallBack);
+		// logInfo.client.setConnectHandle(bind(&connectCallBack,logInfo));
+		assert(false, "Improvement needed for bind");
+		// logInfo.client.setReadHandle(&tmpReadCallBack);
+		// logInfo.client.connect(logInfo.addr);
 	}
 
 	void tmpReadCallBack(in ubyte[]) nothrow {}
-	void tmpCloseCallBack() nothrow {}
+	void tmpCloseCallBack() {}
 
-	void connectCallBack(LinklogInfo * logInfo,bool state) nothrow
+	void connectCallBack(LinklogInfo * logInfo,bool state) 
 	{
 		catchAndLogException((){
 			import std.exception;
@@ -148,7 +149,7 @@ protected:
 		}());
 	}
 
-	void onTimer() nothrow{
+	void onTimer(Object ){
 		_wheel.prevWheel();
 	}
 
@@ -174,16 +175,18 @@ private:
 {
 	this(TcpStream client)
 	{
-		restClient(client);
+		resetClient(client);
 	}
 
 	final bool isAlive() @trusted {
-		return _client && _client.watched;
+		return _client && _client.isRegistered;
 	}
 
 	final @property tcpClient()@safe {return _client;}
 
-	final void restClient(TcpStream client) @trusted
+	alias restClient = resetClient;
+
+	final void resetClient(TcpStream client) @trusted
 	{
 		if(_client !is null){
 			_client.setCloseHandle(null);
@@ -193,7 +196,7 @@ private:
 		}
 		if(client !is null){
 			_client = client;
-			_loop = client.eventLoop;
+			_loop = cast(EventLoop) client.eventLoop;
 			_client.setCloseHandle(&doClose);
 			_client.setReadHandle(&onRead);
 			_client.setConnectHandle(&tmpConnectCallBack);
@@ -202,7 +205,7 @@ private:
 
 	final void write(in ubyte[] data,TCPWriteCallBack cback = null) @trusted
 	{
-		write(new WarpStreamBuffer(data,cback));
+		write(new SocketStreamBuffer(data,cback));
 	}
 
 	final void write(StreamWriteBuffer buffer) @trusted

@@ -14,7 +14,7 @@ import std.traits;
 
 import collie.channel.pipeline;
 import collie.channel.handlercontext;
-public import kiss.net.struct_;
+import kiss.event.socket;
 
 abstract class HandlerBase(Context)
 {

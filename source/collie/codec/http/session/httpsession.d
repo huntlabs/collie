@@ -17,9 +17,11 @@ import collie.codec.http.codec.httpcodec;
 import collie.codec.http.codec.wsframe;
 import collie.codec.http.errocode;
 import kiss.log;
+
 import kiss.net.TcpStream;
 import kiss.functional;
-public import kiss.net.struct_;
+import kiss.net;
+import kiss.event.core;
 import kiss.event.task;
 import std.socket;
 import std.experimental.allocator.mallocator;

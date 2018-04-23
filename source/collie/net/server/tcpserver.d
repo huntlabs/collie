@@ -22,9 +22,9 @@ import kiss.event.task;
 import collie.net.server.connection;
 import collie.net.server.exception;
 
-@trusted final class TCPServer
+final class TCPServer
 {
-	alias NewConnection = ServerConnection delegate(EventLoop,Socket);
+	alias NewConnection = ServerConnection delegate(Selector loop, Socket socket);
 	alias OnAceptorCreator = void delegate(kiss.net.TcpListener.TcpListener);
 
 	this(EventLoop loop)
@@ -83,10 +83,10 @@ import collie.net.server.exception;
 			}
 		}
 		_wheel = new TimingWheel(whileSize);
-		_timer = new Timer(_loop);
-		_timer.setTimerHandle(() nothrow {_wheel.prevWheel();});
+		_timer = new Timer(_loop, time);
+		_timer.setTimerHandle((Object) {_wheel.prevWheel();});
 		//_timer.start(time);
-		_loop.postTask(newTask((){ _timer.start(time);}));
+		_loop.postTask(newTask((){ _timer.start();}));
 	}
 
 	void close()
@@ -95,11 +95,13 @@ import collie.net.server.exception;
 			_loop.postTask(newTask(&_TcpListener.close));
 	}
 protected:
-	void newConnect(EventLoop loop, Socket socket) nothrow
+	void newConnect(Selector loop, Socket socket)
+	// void newConnect(TcpListener sender, TcpStream stream) 
 	{
 		catchAndLogException((){
 			import std.exception;
 			ServerConnection connection;
+			// connection = _cback( loop,socket );
 			collectException(_cback(loop,socket),connection);
 			if(connection is null) return;
 			if(connection.active() && _wheel)

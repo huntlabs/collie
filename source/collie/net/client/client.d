@@ -32,7 +32,7 @@ import kiss.event.task;
 
 	final bool isAlive() @trusted
 	{
-		return _logInfo.client && _logInfo.client.watched;
+		return _logInfo.client && _logInfo.client.isRegistered;
 	}
 
 	final void setTimeout(uint s) @safe
@@ -56,7 +56,7 @@ import kiss.event.task;
 
 	final void write(ubyte[] data,TCPWriteCallBack cback = null) @trusted
 	{
-		write(new WarpStreamBuffer(data,cback));
+		write(new SocketStreamBuffer(data,cback));
 	}
 
     final void write(StreamWriteBuffer buffer) @trusted
@@ -84,7 +84,7 @@ protected:
 	void onFailure() nothrow;
 	void onClose() nothrow;
 	void onRead(in ubyte[] data) nothrow;
-	void onTimeout() nothrow;
+	void onTimeout(Object sender);
 
 	final startTimer()
 	{
@@ -93,8 +93,8 @@ protected:
 		if(_timer)
 			_timer.stop();
 		else {
-			_timer = new Timer(_loop);
-			_timer.setTimerHandle(&onTimeout);
+			_timer = new KissTimer(_loop);
+			_timer.onTick(&onTimeout);
 		}
 		_timer.start(_timeout * 1000);
 	}

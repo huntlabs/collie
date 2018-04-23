@@ -32,7 +32,7 @@ import collie.utils.memory;
 		TcpStream sock = cast(TcpStream)context.pipeline.transport;
 		_local = sock.localAddress;
 		_remote = sock.remoteAddress;
-		_loop = sock.eventLoop();
+		_loop = cast(EventLoop) sock.eventLoop();
 		if(_session)
 			_session.onActive();
 	}
@@ -84,7 +84,7 @@ import std.exception;
 	this(TcpStream sock)
 	{
 		super(sock);
-		_loop = sock.eventLoop();
+		_loop = cast(EventLoop)sock.eventLoop();
 	}
 
 	@property httpSession(){return _session;}
@@ -94,7 +94,7 @@ import std.exception;
 		close();
 	}
 	override void httpWrite(StreamWriteBuffer data) {
-		write(data);
+		write(data); 
 	}
 	override Address localAddress() {
 		return tcpStream.localAddress;

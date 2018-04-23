@@ -15,9 +15,10 @@ import kiss.timingwheel;
 import kiss.net.Timer;
 import kiss.event;
 import kiss.event.task;
+import kiss.log;
 
 
-@trusted abstract class ServerConnection : WheelTimer
+abstract class ServerConnection : WheelTimer
 {
 	this(TcpStream socket)
 	{
@@ -33,8 +34,8 @@ import kiss.event.task;
 		}
 		if(socket !is null){
 			_socket = socket;
-			_loop = socket.eventLoop;
-			_socket.setCloseHandle(&doClose);
+			_loop = cast(EventLoop) socket.eventLoop;
+			_socket.onClosed(&doClose);
 			_socket.setReadHandle(&onRead);
 		}
 	}
@@ -55,7 +56,7 @@ import kiss.event.task;
 
 	final void write(ubyte[] data,TCPWriteCallBack cback = null) @trusted
 	{
-		write(new WarpStreamBuffer(data,cback));
+		write(new SocketStreamBuffer(data,cback));
 	}
 
 	final void write(StreamWriteBuffer buffer) @trusted
@@ -95,15 +96,18 @@ private:
 
  	final void _postWriteBuffer(StreamWriteBuffer buffer)
     {
-		// logDebug("post send dara!  ", _socket is null);
         if (_socket) {
+		debug logDebug("posting data...  ");
             rest();
             _socket.write(buffer);
         } else
+		{
+			debug logDebug("post done.");
             buffer.doFinish();
+		}
     }
 
-	final void doClose() nothrow
+	final void doClose() 
 	{
 		stop();
 		onClose();

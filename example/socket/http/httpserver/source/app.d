@@ -39,9 +39,9 @@ protected:
 
 	override void onBody(const ubyte[] data) nothrow
 	{
-//		collectException({
-//				writeln("body is : ", cast(string) data);
-//			}());
+		collectException({
+				writeln("body is : ", cast(string) data);
+			}());
 	}
 
 	override void onEOM() nothrow
@@ -83,8 +83,6 @@ RequestHandler newHandler(RequestHandler,HTTPMessage)
 
 void main()
 {
-    
-    writeln("Edit source/app.d to start your project.");
    // globalLogLevel(LogLevel.warning);
 	trace("----------");
 
@@ -98,7 +96,7 @@ void main()
 	option.threads = totalCPUs;
 	version(USE_SSL) option.ssLConfig = ssl;
 	HTTPServerOptions.IPConfig ipconfig ;
-	ipconfig.address = new InternetAddress("0.0.0.0", 8083);
+	ipconfig.address = new InternetAddress("0.0.0.0", 8090);
 
 	HttpServer server = new HttpServer(option);
 	server.addBind(ipconfig);
