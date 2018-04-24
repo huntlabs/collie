@@ -35,7 +35,7 @@ final @trusted class TCPSocketHandler : HandlerAdapter!(const(ubyte[]), StreamWr
     override void transportActive(Context ctx)
     {
         attachReadCallback();
-        _socket.watch();
+        _socket.start();
         ctx.fireTransportActive();
     }
 
@@ -67,8 +67,8 @@ protected:
     void attachReadCallback()
     {
         _isAttch = true;
-        _socket.setReadHandle(&readCallBack);
-        _socket.setCloseHandle(&closeCallBack);
+        _socket.onDataReceived(&readCallBack);
+        _socket.onClosed(&closeCallBack);
         context.pipeline.transport(_socket);
     }
 
@@ -78,8 +78,8 @@ protected:
         catchAndLogException((){
             context.fireTransportInactive();
             context.pipeline.transport(null);
-            _socket.setReadHandle(null);
-            _socket.setCloseHandle(null);
+            _socket.onDataReceived(null);
+            _socket.onClosed(null);
             _socket = null;
             context.pipeline.deletePipeline();
         }());

@@ -1,6 +1,6 @@
 module collie.codec.http.httpwritebuffer;
 
-import kiss.buffer;
+import kiss.container.ByteBuffer;
 import kiss.net;
 import kiss.event.core;
 import kiss.event.task;
@@ -31,7 +31,7 @@ private:
 
 class HTTPByteBuffer(Alloc) : HttpWriteBuffer
 {
-    import kiss.bytes;
+    import kiss.container.ByteBuffer;
     import kiss.container.Vector;
     import std.experimental.allocator.common;
 

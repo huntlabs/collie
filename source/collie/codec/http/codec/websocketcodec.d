@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.codec.websocketcodec;
-import kiss.log;
+import kiss.util.logger;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.httptansaction;
 import std.bitmanip;

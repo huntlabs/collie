@@ -10,12 +10,12 @@
  */
 module collie.codec.http.server.httpform;
 
-import kiss.buffer;
+import kiss.container.ByteBuffer;
 import std.array;
 import std.string;
 import std.exception;
 import std.algorithm.searching : canFind, countUntil;
-import kiss.log;
+import kiss.util.logger;
 import collie.utils.string;
 import kiss.container.Vector;
 import std.experimental.allocator.mallocator;

@@ -9,7 +9,7 @@
  *
  */
 module collie.utils.exception;
-import kiss.log;
+import kiss.util.logger;
 public import std.exception : basicExceptionCtors;
 
 mixin template ExceptionBuild(string name, string parent = "")

@@ -123,7 +123,7 @@ protected:
 					if (_timer is null)
 					{
 						logDebug("new timer!");
-						_timer = new Timer(_loop);
+						_timer = new KissTimer(_loop);
 						_timer.setTimerHandle(&onTimeOut);
 					}
 					if(!_timer.watched) {
@@ -185,7 +185,7 @@ private:
 	EventLoop _loop;
 	PipeLine _pipe;
 	shared PipelineFactory!PipeLine _pipelineFactory;
-	Timer _timer = null;
+	KissTimer _timer = null;
 	uint _timeOut = 0;
 	uint _tryCount;
 

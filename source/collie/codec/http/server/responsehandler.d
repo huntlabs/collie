@@ -20,8 +20,6 @@ import kiss.event;
 
 abstract class ResponseHandler
 {
-	alias SocketWriteCallBack = HTTPTransaction.Transport.SocketWriteCallBack;
-
 	this(RequestHandler handle)
 	{
 		_upstream = handle;
@@ -41,7 +39,7 @@ abstract class ResponseHandler
 
 	void sendTimeOut();
 
-	final void socketWrite(ubyte[] data,SocketWriteCallBack cback)
+	final void socketWrite(ubyte[] data, DataWrittenHandler cback)
 	{
 		socketWrite(new SocketStreamBuffer(data,cback));
 	}

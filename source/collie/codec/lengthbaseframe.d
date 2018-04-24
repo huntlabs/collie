@@ -2,11 +2,11 @@
 
 import std.bitmanip;
 import std.conv;
-import kiss.log;
+import kiss.util.logger;
 
 import collie.channel;
 import collie.codec.exception;
-import kiss.bytes;
+import kiss.container.ByteBuffer;
 
 /// The Pack format
 /// header: ubytes 4 "00 00 00 00" -> uint 

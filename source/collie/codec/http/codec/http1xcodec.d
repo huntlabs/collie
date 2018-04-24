@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.codec.http1xcodec;
-import kiss.log;
+import kiss.util.logger;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.errocode;
 import collie.codec.http.headers;
@@ -70,7 +70,7 @@ class HTTP1XCodec : HTTPCodec
 
 	override size_t onIngress(ubyte[] buf)
 	{
-		logDebug("on Ingress!!");
+		version(CollieDebugMode) logDebug("on Ingress!!");
 		if(_finished) {
 			_parser.rest(HTTPParserType.HTTP_BOTH,_maxHeaderSize);
 		}
@@ -330,7 +330,7 @@ protected:
 		_egressUpgrade = parser.isUpgrade;
 		_message.upgraded(parser.isUpgrade);
 		int klive = parser.keepalive;
-		logDebug("++++++++++klive : ", klive);
+		version(CollieDebugMode) logDebug("++++++++++klive : ", klive);
 		switch(klive){
 			case 1:
 				_keepalive = true;
@@ -427,14 +427,14 @@ protected:
 			_currtKey = (ubyte[]).init;
 			string value = cast(string)_currtValue;
 			_currtValue  = (ubyte[]).init;
-			logDebug("http header: \t", key, " : ", value);
+			version(CollieDebugMode) logDebug("http header: \t", key, " : ", value);
 			_message.getHeaders.add(key,value);
 		}
 	}
 	
 	void onBody(ref HTTPParser parser, ubyte[] data, bool finish)
 	{
-		// logDebug("on boday, length : ", data.length);
+		version(CollieDebugMode) debug logDebug("on boday, length : ", data.length);
 		_callback.onBody(_transaction,data);
 	}
 

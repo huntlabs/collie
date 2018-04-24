@@ -9,6 +9,9 @@
                 "path" : "../../../../"
             }
 	},
+	"subConfigurations": {
+		"collie" : "debug-mode"
+	},
 	"configurations": [
 		{
 			"name": "default"

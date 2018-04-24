@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.httptansaction;
-import kiss.log;
+import kiss.util.logger;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.httpmessage;
 import collie.codec.http.errocode;
@@ -125,8 +125,6 @@ class HTTPTransaction
 {
 	interface Transport
 	{
-		alias SocketWriteCallBack = TCPWriteCallBack;
-
 		void pauseIngress(HTTPTransaction txn);
 		
 		void resumeIngress(HTTPTransaction txn);

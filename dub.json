@@ -11,6 +11,20 @@
 			"path" : "../kiss"
 		}
     },
+    "configurations":[
+        {
+            "name": "default"
+        },
+        {
+            "name": "debug-mode",
+            "versions": [
+                "CollieDebugMode"
+            ],
+            "subConfigurations": {
+                "kiss" : "debug-mode"
+            }
+        }
+    ],
     "buildTypes": {
         "debug": {
             "buildOptions": [

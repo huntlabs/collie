@@ -9,12 +9,12 @@
  *
  */
 module collie.codec.http.server.responsebuilder;
-import kiss.log;
+import kiss.util.logger;
 import collie.codec.http.server.responsehandler;
 import collie.codec.http.httpmessage;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.headers;
-import kiss.buffer.ByteBuffer;
+import kiss.container.ByteBuffer;
 import std.experimental.allocator.mallocator;
 
 import std.conv;
@@ -83,7 +83,7 @@ class ResponseBuilder
 
 	final void send()
 	{
-		debug logDebug("_txn is ", cast(void *)_txn);
+		// version(CollieDebugMode) logDebug("_txn is ", cast(void *)_txn);
 		scope(exit){
 			_headers = null;
 		}
@@ -91,10 +91,10 @@ class ResponseBuilder
 		if(_headers && _sendEOM) chunked = false;
 
 		if(_headers){
-			debug logDebug("is isResponse : ",_headers.isResponse());
-			debug logDebug("_headers.statusCode : ", _headers.statusCode);
+			// version(CollieDebugMode) logDebug("is isResponse : ",_headers.isResponse());
+			version(CollieDebugMode) logDebug("resonse status code: ", _headers.statusCode);
 			if(_headers.isResponse() && (_headers.statusCode >= 200)) {
-				debug logDebug("is chanlk , ", chunked);
+				version(CollieDebugMode) logDebug("Chunked: ", chunked);
 				if(chunked) {
 					_headers.chunked(true);
 				} else {
@@ -112,7 +112,7 @@ class ResponseBuilder
 			}
 		}
 		if((_body.length > 0) && _txn) {
-			debug logDebug("body len = ", _body.length);
+			version(CollieDebugMode) logDebug("body len = ", _body.length);
 			if(chunked) {
 				_txn.sendChunkHeader(_body.length);
 				_txn.sendBody(_body.allData.data());
@@ -127,9 +127,9 @@ class ResponseBuilder
 		}
 	}
 
-	final @property headers(){return _headers;}
-	final @property bodys(){return &_body;}
-	final @property responseHandler(){return _txn;};
+	final @property HTTPMessage headers(){return _headers;}
+	final @property ByteBuffer!Mallocator* bodys(){return &_body;}
+	final @property ResponseHandler responseHandler(){return _txn;};
 protected:
 	pragma(inline) final void setResponseHandler(ResponseHandler txn){_txn = txn;}
 private:

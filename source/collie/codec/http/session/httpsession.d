@@ -16,10 +16,10 @@ import collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.codec.wsframe;
 import collie.codec.http.errocode;
-import kiss.log;
+import kiss.util.logger;
 
 import kiss.net.TcpStream;
-import kiss.functional;
+import kiss.util.functional;
 import kiss.net;
 import kiss.event.core;
 import kiss.event.task;
@@ -106,7 +106,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 	void inActive() {
 		getCodec.onConnectClose();
-		logDebug("connect closed!");
+		version(CollieDebugMode) logDebug("connection closed!");
 	}
 
 	void onTimeout() @trusted {
@@ -263,7 +263,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		if(txn){
 			txn.transport = this;
 		}
-		logDebug("begin a http requst or reaponse!");
+		version(CollieDebugMode) logDebug("begin a http requst or reaponse!");
 	}
 
 	override void onHeadersComplete(HTTPTransaction txn,

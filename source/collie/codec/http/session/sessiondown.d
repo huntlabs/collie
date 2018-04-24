@@ -97,10 +97,12 @@ import std.exception;
 		write(data); 
 	}
 	override Address localAddress() {
+		assert(tcpStream !is null);
 		return tcpStream.localAddress;
 	}
 
 	override Address remoteAddress() {
+		assert(tcpStream !is null);
 		return tcpStream.remoteAddress;
 	}
 

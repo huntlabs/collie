@@ -12,9 +12,9 @@ module collie.bootstrap.clientmanger;
 
 import collie.net;
 import collie.channel;
-import kiss.timingwheel;
+import kiss.event.timer.common;
 import collie.utils.memory;
-import kiss.functional;
+import kiss.util.functional;
 import collie.exception;
 import collie.utils.exception;
 import collie.net.client.linklogInfo;
@@ -189,7 +189,7 @@ protected:
 		}
 		if (_timer)
 			return false;
-		_timer = new Timer(_loop);
+		_timer = new KissTimer(_loop);
 		_wheel = new TimingWheel(whileSize);
 		_timer.setTimerHandle(()nothrow{_wheel.prevWheel();});
 		return _timer.start(time);
@@ -202,7 +202,7 @@ private:
 
 	shared PipeLineFactory _factory;
 	TimingWheel _wheel;
-	Timer _timer;
+	KissTimer _timer;
 	EventLoop _loop;
 
 	uint _tryCount;

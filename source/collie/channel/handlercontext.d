@@ -12,7 +12,7 @@ module collie.channel.handlercontext;
 
 import std.conv;
 import std.functional;
-import kiss.log;
+import kiss.util.logger;
 import collie.channel.pipeline;
 import collie.channel.handler;
 import collie.channel.exception;
@@ -35,7 +35,7 @@ interface HandlerContext(In, Out)
 
     @property PipelineBase pipeline();
 
-    @property BaseTransport transport();
+    @property Channel transport();
 
 }
 
@@ -49,7 +49,7 @@ interface InboundHandlerContext(In)
 
     @property PipelineBase pipeline();
 
-    @property BaseTransport transport();
+    @property Channel transport();
 }
 
 interface OutboundHandlerContext(Out)
@@ -61,7 +61,7 @@ interface OutboundHandlerContext(Out)
 
     @property PipelineBase pipeline();
 
-    @property BaseTransport transport();
+    @property Channel transport();
 }
 
 enum HandlerDir
@@ -182,7 +182,7 @@ mixin template CommonContextImpl()
     }
 
     pragma(inline)
-    final override @property  BaseTransport transport()
+    final override @property  Channel transport()
     {
         return _pipeline is null ? null : pipeline.transport();
     }

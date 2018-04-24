@@ -11,50 +11,49 @@
 module collie.net.server.connection;
 
 import kiss.net.TcpStream;
-import kiss.timingwheel;
-import kiss.net.Timer;
+import kiss.event.timer.common;
+import kiss.util.KissTimer;
 import kiss.event;
 import kiss.event.task;
-import kiss.log;
+import kiss.util.logger;
 
 
 abstract class ServerConnection : WheelTimer
 {
 	this(TcpStream socket)
 	{
-		restSocket(socket);
+		resetSocket(socket);
 	}
 
-	final void restSocket(TcpStream socket)
+	final void resetSocket(TcpStream socket)
 	{
 		if(_socket !is null){
-			_socket.setCloseHandle(null);
-			_socket.setReadHandle(null);
+			_socket.onClosed(null);
+			_socket.onDataReceived(null);
 			_socket = null;
 		}
 		if(socket !is null){
 			_socket = socket;
 			_loop = cast(EventLoop) socket.eventLoop;
 			_socket.onClosed(&doClose);
-			_socket.setReadHandle(&onRead);
+			_socket.onDataReceived(&onRead);
 		}
 	}
 
 	final bool isAlive() @trusted {
-		return _socket && _socket.watched;
+		return _socket && _socket.isRegistered;
 	}
 
 	final bool active() @trusted
 	{
 		if(_socket is null)
 			return false;
-		bool active  = _socket.watch;
-		if(active)
-			onActive();
-		return active;
+		_socket.start();
+		onActive();
+		return true;
 	}
 
-	final void write(ubyte[] data,TCPWriteCallBack cback = null) @trusted
+	final void write(ubyte[] data, DataWrittenHandler cback = null) @trusted
 	{
 		write(new SocketStreamBuffer(data,cback));
 	}
@@ -82,7 +81,10 @@ abstract class ServerConnection : WheelTimer
 		_loop.postTask(newTask(&_postClose));
 	}
 
-	final @property tcpStream()@safe {return _socket;}
+	final @property TcpStream tcpStream()@safe {
+		assert(_socket !is null);
+		return _socket;
+		}
 protected:
 	void onActive() nothrow;
 	void onClose() nothrow;

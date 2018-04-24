@@ -14,8 +14,8 @@ import std.socket;
 
 import kiss.net.TcpListener;
 import kiss.net.TcpStream;
-import kiss.timingwheel;
-import kiss.net.Timer;
+import kiss.event.timer.common;
+import kiss.util.KissTimer;
 import kiss.event;
 import kiss.event.task;
 
@@ -56,7 +56,7 @@ final class TCPServer
 
 		_TcpListener.setReadHandle(&newConnect);
 		_loop.postTask(newTask((){
-				_TcpListener.listen(block).watch;
+				_TcpListener.listen(block).start();
 			}));
 	}
 
@@ -83,8 +83,8 @@ final class TCPServer
 			}
 		}
 		_wheel = new TimingWheel(whileSize);
-		_timer = new Timer(_loop, time);
-		_timer.setTimerHandle((Object) {_wheel.prevWheel();});
+		_timer = new KissTimer(_loop, time);
+		_timer.onTick((Object) {_wheel.prevWheel();});
 		//_timer.start(time);
 		_loop.postTask(newTask((){ _timer.start();}));
 	}
@@ -117,7 +117,7 @@ private:
 	NewConnection _cback;
 private:
 	TimingWheel _wheel;
-	Timer _timer;
+	KissTimer _timer;
 	uint _timeout;
 }
 

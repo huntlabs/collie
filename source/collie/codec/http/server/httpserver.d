@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.server.httpserver;
-import kiss.log;
+import kiss.util.logger;
 import collie.codec.http.session.httpsession;
 import collie.codec.http.httptansaction;
 import collie.codec.http.server.httpserveroptions;
@@ -31,7 +31,7 @@ import collie.net.server.connection;
 import collie.bootstrap.exception;
 import collie.bootstrap.exception;
 import collie.bootstrap.serversslconfig;
-import kiss.net.struct_;
+import kiss.event.socket;
 
 import std.socket;
 
@@ -90,7 +90,7 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 
 	void addBind(ref HTTPServerOptions.IPConfig addr)
 	{
-		logDebug("",_isStart);
+		// logDebug("",_isStart);
 		if(_isStart) return;
 		newServer(addr);
 		_ipconfigs.insertBack(addr);
@@ -98,12 +98,11 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 
 	void start()
 	{
-		logDebug("start ",_isStart);
+		// logDebug("start ",_isStart);
 		if(_isStart) return;
 		_isStart = true;
 		for(size_t i = 0; i < _servers.length; ++i)
 		{
-			logDebug("start listen ---");
 			static if(UsePipeline)
 				_servers[i].startListening();
 			else {
@@ -177,6 +176,7 @@ protected:
 			ser.pipeline(new shared ServerAccpeTFactory(ipconfig));
 			ser.heartbeatTimeOut(cast(uint)_options.timeOut);
 			ser.bind(ipconfig.address);
+			logDebug("binding on: ", ipconfig.address.toString());
 			_servers.insertBack(ser);
 		} else {
 			bool ruseport = _group !is null;
@@ -194,6 +194,8 @@ protected:
 		{
 			Server ser = new Server(loop);
 			ser.setNewConntionCallBack(&newConnect);
+			logDebug("binding on: ", address.toString());
+
 			ser.bind(address,(TcpListener accpet) @trusted {
 					if(ruseport)
 						accpet.reusePort(true);

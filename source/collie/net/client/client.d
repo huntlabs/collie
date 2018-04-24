@@ -13,7 +13,7 @@ module collie.net.client.client;
 import std.socket;
 
 import kiss.event;
-import kiss.net.Timer;
+import kiss.util.KissTimer;
 import kiss.net.TcpStream;
 import kiss.net.TcpStream;
 import collie.net.client.linklogInfo;
@@ -54,7 +54,7 @@ import kiss.event.task;
 	}
 
 
-	final void write(ubyte[] data,TCPWriteCallBack cback = null) @trusted
+	final void write(ubyte[] data, DataWrittenHandler cback = null) @trusted
 	{
 		write(new SocketStreamBuffer(data,cback));
 	}
@@ -75,10 +75,10 @@ import kiss.event.task;
 		_loop.postTask(newTask(&_postClose));
 	}
 
-	final @property tcpStreamClient() @trusted {return _logInfo.client;}
-	final @property timer() @trusted {return _timer;}
-	final @property timeout() @safe {return _timeout;}
-	final @property eventLoop() @trusted {return _loop;}
+	final @property TcpStream tcpStreamClient() @trusted {return _logInfo.client;}
+	final @property KissTimer timer() @trusted {return _timer;}
+	final @property uint timeout() @safe {return _timeout;}
+	final @property EventLoop eventLoop() @trusted {return _loop;}
 protected:
 	void onActive() nothrow;
 	void onFailure() nothrow;
@@ -96,7 +96,8 @@ protected:
 			_timer = new KissTimer(_loop);
 			_timer.onTick(&onTimeout);
 		}
-		_timer.start(_timeout * 1000);
+		_timer.interval = _timeout * 1000;
+		_timer.start();
 	}
 private:
 	final void connect()
@@ -104,9 +105,9 @@ private:
 		_logInfo.client = new TcpStream(_loop);
 		if(_logInfo.cback)
 			_logInfo.cback(_logInfo.client);
-		_logInfo.client.setConnectHandle(&connectCallBack);
-		_logInfo.client.setCloseHandle(&doClose);
-		_logInfo.client.setReadHandle(&onRead);
+		_logInfo.client.onConnected(&connectCallBack);
+		_logInfo.client.onClosed(&doClose);
+		_logInfo.client.onDataReceived(&onRead);
 		_logInfo.client.connect(_logInfo.addr);
 	}
 
@@ -164,7 +165,7 @@ private
 	EventLoop _loop;
 	LinklogInfo _logInfo;
 	uint _tryCount = 1;
-	Timer _timer;
+	KissTimer _timer;
 	uint _timeout;
 }
 

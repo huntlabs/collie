@@ -13,12 +13,12 @@ module collie.net.client.clientmanger;
 import std.socket;
 
 import kiss.event;
-import kiss.net.Timer;
+import kiss.util.KissTimer;
 import kiss.net.TcpStream;
 import collie.net.client.linklogInfo;
 import collie.net.client.exception;
 
-import kiss.timingwheel;
+import kiss.event.timer.common;
 //import collie.utils.memory;
 import kiss.event.task;
 
@@ -163,7 +163,7 @@ private:
 	uint _timeout;
 
 	EventLoop _loop;
-	Timer _timer;
+	KissTimer _timer;
 	TimingWheel _wheel;
 	TLinkManger!ConCallBack _waitConnect;
 
@@ -189,21 +189,21 @@ private:
 	final void resetClient(TcpStream client) @trusted
 	{
 		if(_client !is null){
-			_client.setCloseHandle(null);
-			_client.setReadHandle(null);
-			_client.setConnectHandle(null);
+			_client.onClosed(null);
+			_client.onDataReceived(null);
+			_client.onConnected(null);
 			_client = null;
 		}
 		if(client !is null){
 			_client = client;
 			_loop = cast(EventLoop) client.eventLoop;
-			_client.setCloseHandle(&doClose);
-			_client.setReadHandle(&onRead);
-			_client.setConnectHandle(&tmpConnectCallBack);
+			_client.onClosed(&doClose);
+			_client.onDataReceived(&onRead);
+			_client.onConnected(&tmpConnectCallBack);
 		}
 	}
 
-	final void write(in ubyte[] data,TCPWriteCallBack cback = null) @trusted
+	final void write(in ubyte[] data, DataWrittenHandler cback = null) @trusted
 	{
 		write(new SocketStreamBuffer(data,cback));
 	}

@@ -17,4 +17,3 @@ public import collie.net.eventloopgroup;
 public import kiss.event;
 public import kiss.net.TcpListener;
 public import kiss.net.TcpStream;
-public import kiss.net.Timer;

@@ -9,11 +9,14 @@
  *
  */
 module collie.bootstrap.server;
-import kiss.log;
+
+import kiss.util.logger;
+import kiss.util.KissTimer;
+
 import collie.net;
 import collie.channel;
 import collie.bootstrap.serversslconfig;
-public import collie.bootstrap.exception;
+import collie.bootstrap.exception;
 
 
 import std.exception;
@@ -254,7 +257,7 @@ private:
 private:
 
 import std.functional;
-import kiss.timingwheel;
+import kiss.event.timer.common;
 import collie.utils.memory;
 import collie.net;
 
@@ -380,7 +383,7 @@ protected:
     {
         if (_timer)
             return;
-        _timer = new Timer(_acceptor.eventLoop, time);
+        _timer = new KissTimer(_acceptor.eventLoop, time);
         _timer.onTick(&doWheel);
         _wheel = new TimingWheel(whileSize);
         _timer.start();
@@ -441,7 +444,7 @@ private:
     }
 
     TcpListener _acceptor;
-    Timer _timer;
+    KissTimer _timer;
     TimingWheel _wheel;
     AcceptPipeline _pipe;
     shared PipelineFactory!PipeLine _pipeFactory;

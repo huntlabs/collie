@@ -20,8 +20,9 @@ import collie.codec.http.server;
 import collie.bootstrap.serversslconfig;
 import std.parallelism;
 
-debug { 
-        extern(C) __gshared string[] rt_options = [ "gcopt=profile:1"];// maxPoolSize:50" ];
+debug
+{
+	extern (C) __gshared string[] rt_options = ["gcopt=profile:1"]; // maxPoolSize:50" ];
 }
 
 class MyHandler : RequestHandler
@@ -30,63 +31,58 @@ protected:
 	override void onResquest(HTTPMessage headers) nothrow
 	{
 		_header = headers;
-//		collectException({
-//			trace("************************");
-//			writeln("---new HTTP request!");
-//			writeln("path is : ", _header.url);
-//			}());
+		//		collectException({
+		//			trace("************************");
+		//			writeln("---new HTTP request!");
+		//			writeln("path is : ", _header.url);
+		//			}());
 	}
 
 	override void onBody(const ubyte[] data) nothrow
 	{
-		collectException({
-				writeln("body is : ", cast(string) data);
-			}());
+		collectException({ writeln("body is : ", cast(string) data); }());
 	}
 
 	override void onEOM() nothrow
 	{
 		collectException({
-				auto build = Unique!ResponseBuilder(new ResponseBuilder(_downstream));
-				//ResponseBuilder build = new ResponseBuilder(_downstream);// scoped!ResponseBuilder(_downstream);
-				build.status(cast(ushort)200,HTTPMessage.statusText(200));
-				build.setBody(cast(ubyte[])"string hello = \"hello world!!\";");
-				build.sendWithEOM();
-			}());
+			auto build = Unique!ResponseBuilder(new ResponseBuilder(_downstream));
+			//ResponseBuilder build = new ResponseBuilder(_downstream);// scoped!ResponseBuilder(_downstream);
+			build.status(cast(ushort) 200, HTTPMessage.statusText(200));
+			build.setBody(cast(ubyte[]) "Hello, World!");
+			build.sendWithEOM();
+		}());
 	}
 
-	override void onError(HTTPErrorCode code) nothrow {
-		collectException({
-				writeln("on erro : ", code);
-			}());
+	override void onError(HTTPErrorCode code) nothrow
+	{
+		collectException({ writeln("on erro: ", code); }());
 	}
 
 	override void requestComplete() nothrow
 	{
-		collectException({
-				writeln("requestComplete : ");
-			}());
+		collectException({ writeln("requestComplete: "); }());
 	}
 
 private:
 	HTTPMessage _header;
 }
 
-
-RequestHandler newHandler(RequestHandler,HTTPMessage)
+RequestHandler newHandler(RequestHandler, HTTPMessage)
 {
 
-	 auto handler = new MyHandler();
-	trace("----------newHandler, handle is : ", cast(void *)handler);
+	auto handler = new MyHandler();
+	debug trace("----------newHandler, handle is : ", cast(void*) handler);
 	return handler;
 }
 
 void main()
 {
-   // globalLogLevel(LogLevel.warning);
+	// globalLogLevel(LogLevel.warning);
 	trace("----------");
 
-	version(USE_SSL){
+	version (USE_SSL)
+	{
 		ServerSSLConfig ssl = new ServerSSLConfig(SSLMode.SSLv2v3);
 		ssl.certificateFile = "server.pem";
 		ssl.privateKeyFile = "server.pem";
@@ -94,11 +90,13 @@ void main()
 	HTTPServerOptions option = new HTTPServerOptions();
 	option.handlerFactories ~= (toDelegate(&newHandler));
 	option.threads = totalCPUs;
-	version(USE_SSL) option.ssLConfig = ssl;
-	HTTPServerOptions.IPConfig ipconfig ;
+	version (USE_SSL)
+		option.ssLConfig = ssl;
+	HTTPServerOptions.IPConfig ipconfig;
 	ipconfig.address = new InternetAddress("0.0.0.0", 8090);
 
 	HttpServer server = new HttpServer(option);
 	server.addBind(ipconfig);
+	// writefln("The server is listening on %s.", ipconfig.address.toString());
 	server.start();
 }

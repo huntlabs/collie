@@ -59,13 +59,13 @@ abstract class PipelineBase
     }
 
     pragma(inline)
-    @property final void transport(BaseTransport transport)
+    @property final void transport(Channel transport)
     {
         _transport = transport;
     }
 
     pragma(inline,true)
-    @property final transport()
+    @property final Channel transport()
     {
         return _transport;
     }
@@ -169,7 +169,7 @@ protected:
     bool _isFinalize = true;
 private:
     PipelineManager _manager = null;
-    BaseTransport _transport;
+    Channel _transport;
     //	AsynTransportlogInfo _transportlogInfo;
 
     final PipelineBase addHelper(Context)(Context ctx, bool front)
