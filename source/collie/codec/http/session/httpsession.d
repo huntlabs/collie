@@ -268,7 +268,7 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 
 	override void onHeadersComplete(HTTPTransaction txn,
 		HTTPMessage msg){
-		logDebug("onHeadersComplete ------url: ", msg.url);
+		version(CollieDebugMode) logDebug("url: ", msg.url);
 		msg.clientAddress = getPeerAddress();
 		setupOnHeadersComplete(txn,msg);
 	}
@@ -326,16 +326,15 @@ protected:
 		HTTPMessage msg);
 
 	void setupProtocolUpgrade(ref HTTPTransaction txn,CodecProtocol protocol,string protocolString,HTTPMessage msg);
-protected:
+
 	final void closeWriteCallBack(){
-		// logDebug("shodle close!????????????");
 		//txn.onDelayedDestroy();
 		if(_codec is null || _codec.shouldClose()) {
 			logDebug("\t\t --------do close!!!");
 			_down.httpClose();
 		}
 	}
-protected:
+	
 	Address _localAddr;
 	Address _peerAddr;
 	HTTPCodec _codec;

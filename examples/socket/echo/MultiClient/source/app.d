@@ -1,0 +1,98 @@
+/*
+ * Collie - An asynchronous event-driven network framework using Dlang development
+ *
+ * Copyright (C) 2015-2016  Shanghai Putao Technology Co., Ltd 
+ *
+ * Developer: putao's Dlang team
+ *
+ * Licensed under the Apache-2.0 License.
+ *
+ */
+module app;
+
+import core.thread;
+
+import std.datetime;
+import std.stdio;
+import std.functional;
+import std.exception;
+
+import kiss.net.TcpStream;
+import collie.net;
+import collie.net.client.clientmanger;
+
+@trusted class EchoConnect : ClientConnection
+{
+	this(TcpStream sock, int id)
+	{
+		super(sock);
+		_id = id;
+	}
+
+protected:
+	override void onActive() nothrow
+	{
+		collectException(writeln(_id, " Connection succeeded!"));
+	}
+
+	override void onClose() nothrow
+	{
+		collectException(writeln(_id, " client disconnected!"));
+	}
+
+	override void onRead(in ubyte[] data) nothrow
+	{
+		collectException({ writeln(_id, " . read data : ", cast(string) data); }());
+	}
+
+	override void onTimeOut() nothrow
+	{
+		collectException({
+			if (isAlive)
+			{
+				writeln(_id, " => Timer ticked!");
+				string data = Clock.currTime().toSimpleString();
+				write(cast(ubyte[]) data, null);
+			}
+		}());
+	}
+
+	int _id;
+}
+
+ClientConnection[] clientList;
+__gshared _id = 10000;
+
+void main()
+{
+	ClientConnection newConnect(TcpStream client)
+	{
+		return new EchoConnect(client, ++_id);
+	}
+
+	void createClient(TcpStream client) @trusted
+	{
+		writeln("new client!");
+	}
+
+	void newConnection(ClientConnection contion) @trusted
+	{
+		writeln("new connection!!");
+		clientList ~= contion;
+	}
+
+	EventLoop loop = new EventLoop();
+
+	TCPClientManger manger = new TCPClientManger(loop);
+	manger.setNewConnectionCallBack(&newConnect);
+	manger.setClientCreatorCallBack(&createClient);
+	manger.startTimeout(5);
+	manger.tryCout(3);
+	foreach (i; 0 .. 20)
+	{
+		manger.connect(new InternetAddress("127.0.0.1", 8090), &newConnection);
+		// manger.connect(new InternetAddress("10.1.222.120", 8090), &newConnection);
+	}
+
+	loop.run();
+}

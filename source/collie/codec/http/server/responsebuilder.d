@@ -42,7 +42,7 @@ class ResponseBuilder
 	final ResponseBuilder status(ushort code, string message)
 	{
 		if(_txn){
-			logDebug("statatus : ", code, "  message : ", message);
+			debug logDebug("status: ", code, "  message: ", message);
 			if(_headers is null)
 				_headers = new HTTPMessage();
 			_headers.statusCode(code);
