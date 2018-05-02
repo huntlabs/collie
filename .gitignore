@@ -33,3 +33,4 @@ examples/socket/http/HttpServer/http-server
 examples/socket/echo/MultiClient/multi-client
 examples/pipeline/echo/multiclient/client
 examples/socket/echo/TcpServer/.gitignore.swp
+collie-test-default
