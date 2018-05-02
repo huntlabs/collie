@@ -17,6 +17,7 @@ import std.stdio;
 import std.functional;
 import std.experimental.logger;
 
+import kiss.exception;
 import collie.net;
 import collie.channel;
 import collie.bootstrap.server;
@@ -27,26 +28,28 @@ ServerBootstrap!EchoPipeline ser;
 
 class EchoHandler : HandlerAdapter!(const(ubyte[]), StreamWriteBuffer)
 {
-public:
-    override void read(Context ctx, const(ubyte[]) msg){
-        write(ctx,new SocketStreamBuffer(msg.dup,&callBack),null);
+    override void read(Context ctx, const(ubyte[]) msg)
+    {
+        write(ctx, new SocketStreamBuffer(msg.dup, &callBack), null);
     }
 
-    void callBack(const(ubyte[]) data, size_t len) @trusted nothrow{
-        catchAndLogException((){
-             writeln("writed data : ", cast(string) data, "   the length is ", len);
+    void callBack(const(ubyte[]) data, size_t len) @trusted nothrow
+    {
+        catchAndLogException(() {
+            writeln("writed data : ", cast(string) data, "   the length is ", len);
         }());
     }
 
-    override void timeOut(Context ctx){
+    override void timeOut(Context ctx)
+    {
         writeln("Sever beat time Out!");
     }
 }
 
 shared class EchoPipelineFactory : PipelineFactory!EchoPipeline
 {
-public:
-    override EchoPipeline newPipeline(TcpStream sock){
+    override EchoPipeline newPipeline(TcpStream sock)
+    {
         auto pipeline = EchoPipeline.create();
         pipeline.addBack(new TCPSocketHandler(sock));
         pipeline.addBack(new EchoHandler());
@@ -59,7 +62,7 @@ void main()
 {
     ser = new ServerBootstrap!EchoPipeline();
     ser.childPipeline(new EchoPipelineFactory()).heartbeatTimeOut(360)
-        .group(new EventLoopGroup).bind(8094);
+        .group(new EventLoopGroup).bind(8090);
     ser.waitForStop();
 
     writeln("APP Stop!");

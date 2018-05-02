@@ -14,6 +14,7 @@ import collie.net;
 import collie.channel.handler;
 import collie.channel.handlercontext;
 import kiss.net;
+import kiss.exception;
 import kiss.net.TcpStream;
 import kiss.event.task;
 

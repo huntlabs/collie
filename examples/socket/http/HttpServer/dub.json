@@ -4,7 +4,9 @@
 	"copyright": "Copyright © 2016, dsby",
 	"authors": ["dsby"],
 	"targetType": "executable",
-	"dependencies": {
+	"dependencies": { "kiss": {
+			"path" : "/home/zxp/dlang/kiss"
+		},
             "collie" : {
                 "path" : "../../../../"
             }

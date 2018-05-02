@@ -1,26 +1,36 @@
 {
-	"name": "httpserver",
-	"description": "A minimal D application.",
-	"copyright": "Copyright © 2016, dsby",
-	"authors": ["dsby"],
-	"targetType": "executable",
-	"dependencies": {
-            "collie" : {
-                "path" : "../../../../"
-            }
-	},
-	"configurations": [
-            {
-                "name": "default"
+    "name": "httpserver",
+    "description": "A minimal D application.",
+    "copyright": "Copyright © 2016, dsby",
+    "authors": [
+        "dsby"
+    ],
+    "targetType": "executable",
+    "dependencies": {
+        "collie": {
+            "path": "../../../../"
+        }
+    },
+    "configurations": [
+        {
+            "name": "default"
+        },
+        {
+            "name": "ssl",
+            "versions": [
+                "USE_SSL"
+            ],
+            "subConfigurations": {
+                "collie": "ssl"
             },
-            {
-                "name": "ssl",
-                "versions": ["USE_SSL"],
-                "subConfigurations": {
-                    "collie": "ssl"
-                },
-                "sourceFiles-windows-x86-dmd": ["../../../lib/x86/ssl.lib","../../../lib/x86/eay.lib"],
-                "sourceFiles-windows-x86_64-dmd": ["../../../lib/x64/libeay32.lib","../../../lib/x64/ssleay32.lib"]
-            }
-        ]
+            "sourceFiles-windows-x86-dmd": [
+                "../../../lib/x86/ssl.lib",
+                "../../../lib/x86/eay.lib"
+            ],
+            "sourceFiles-windows-x86_64-dmd": [
+                "../../../lib/x64/libeay32.lib",
+                "../../../lib/x64/ssleay32.lib"
+            ]
+        }
+    ]
 }

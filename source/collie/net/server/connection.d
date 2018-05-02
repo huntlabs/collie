@@ -99,7 +99,7 @@ private:
  	final void _postWriteBuffer(StreamWriteBuffer buffer)
     {
         if (_socket) {
-		debug logDebug("posting data...  ");
+			debug logDebug("posting data...  ");
             rest();
             _socket.write(buffer);
         } else

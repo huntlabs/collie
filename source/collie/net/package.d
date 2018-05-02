@@ -13,7 +13,7 @@ module collie.net;
 import std.base64;
 
 public import std.socket;
-public import collie.net.eventloopgroup;
+// public import collie.net.eventloopgroup;
 public import kiss.event;
 public import kiss.net.TcpListener;
 public import kiss.net.TcpStream;

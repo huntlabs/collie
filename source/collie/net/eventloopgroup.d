@@ -8,6 +8,8 @@
  * Licensed under the Apache-2.0 License.
  *
  */
+ 
+deprecated("Using kiss.event.EventLoopGroup instead.") 
 module collie.net.eventloopgroup;
 
 import core.thread;
@@ -15,7 +17,7 @@ import std.parallelism;
 
 import kiss.event;
 
-@trusted final class EventLoopGroup
+@trusted final class EventLoopGroup1
 {
     this(uint size = (totalCPUs - 1), int waitTime = 2000)
     {

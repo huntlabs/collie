@@ -10,6 +10,7 @@
  */
 module collie.bootstrap.server;
 
+import kiss.exception;
 import kiss.util.logger;
 import kiss.util.KissTimer;
 

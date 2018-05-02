@@ -12,6 +12,7 @@ module collie.net.client.client;
 
 import std.socket;
 
+import kiss.exception;
 import kiss.event;
 import kiss.util.KissTimer;
 import kiss.net.TcpStream;
