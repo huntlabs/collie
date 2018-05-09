@@ -15,7 +15,7 @@ import std.array;
 import std.string;
 import std.exception;
 import std.algorithm.searching : canFind, countUntil;
-import kiss.util.logger;
+import kiss.logger;
 import collie.utils.string;
 import kiss.container.Vector;
 import std.experimental.allocator.mallocator;

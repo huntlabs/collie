@@ -14,7 +14,7 @@ import std.socket;
 
 import kiss.exception;
 import kiss.event;
-import kiss.util.KissTimer;
+import kiss.util.timer;
 import kiss.net.TcpStream;
 import kiss.net.TcpStream;
 import collie.net.client.linklogInfo;

@@ -11,8 +11,8 @@
 module collie.bootstrap.server;
 
 import kiss.exception;
-import kiss.util.logger;
-import kiss.util.KissTimer;
+import kiss.logger;
+import kiss.util.timer;
 
 import collie.net;
 import collie.channel;

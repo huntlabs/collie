@@ -10,7 +10,7 @@
  */
 module collie.codec.mqtt.mqttcodecutil;
 
-import kiss.util.logger;
+import kiss.logger;
 import std.conv;
 import std.stdio;
 import std.string;

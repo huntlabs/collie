@@ -16,7 +16,7 @@ import kiss.exception;
 import kiss.net.TcpListener;
 import kiss.net.TcpStream;
 import kiss.event.timer.common;
-import kiss.util.KissTimer;
+import kiss.util.timer;
 import kiss.event;
 import kiss.event.task;
 
@@ -33,32 +33,46 @@ final class TCPServer
 		_loop = loop;
 	}
 
-	@property tcpListener(){return _TcpListener;}
-	@property eventLoop(){return _loop;}
-	@property bindAddress(){return _bind;}
-	@property timeout(){return _timeout;}
+	@property tcpListener()
+	{
+		return _TcpListener;
+	}
+
+	@property eventLoop()
+	{
+		return _loop;
+	}
+
+	@property bindAddress()
+	{
+		return _bind;
+	}
+
+	@property timeout()
+	{
+		return _timeout;
+	}
 
 	void bind(Address addr, OnAceptorCreator ona = null)
 	{
-		if(_TcpListener !is null)
+		if (_TcpListener !is null)
 			throw new SocketBindException("the server is areadly binded!");
 		_bind = addr;
-		_TcpListener = new TcpListener(_loop,addr.addressFamily);
-		if(ona) ona(_TcpListener);
+		_TcpListener = new TcpListener(_loop, addr.addressFamily);
+		if (ona)
+			ona(_TcpListener);
 		_TcpListener.bind(_bind);
 	}
 
 	void listen(int block)
 	{
-		if(_TcpListener is null)
+		if (_TcpListener is null)
 			throw new SocketBindException("the server is not bind!");
-		if(_cback is null)
+		if (_cback is null)
 			throw new SocketServerException("Please set CallBack frist!");
 
 		_TcpListener.setReadHandle(&newConnect);
-		_loop.postTask(newTask((){
-				_TcpListener.listen(block).start();
-			}));
+		_loop.postTask(newTask(() { _TcpListener.listen(block).start(); }));
 	}
 
 	void setNewConntionCallBack(NewConnection cback)
@@ -68,16 +82,20 @@ final class TCPServer
 
 	void startTimeout(uint s)
 	{
-		if(_wheel !is null)
+		if (_wheel !is null)
 			throw new SocketServerException("TimeOut is runing!");
 		_timeout = s;
-		if(_timeout == 0)return;
+		if (_timeout == 0)
+			return;
 
-		uint whileSize;uint time; 
-		enum int[] fvka = [40,120,600,1000,uint.max];
-		enum int[] fvkb = [50,60,100,150,300];
-		foreach(i ; 0..fvka.length ){
-			if(s <= fvka[i]){
+		uint whileSize;
+		uint time;
+		enum int[] fvka = [40, 120, 600, 1000, uint.max];
+		enum int[] fvkb = [50, 60, 100, 150, 300];
+		foreach (i; 0 .. fvka.length)
+		{
+			if (s <= fvka[i])
+			{
 				whileSize = fvkb[i];
 				time = _timeout * 1000 / whileSize;
 				break;
@@ -85,27 +103,29 @@ final class TCPServer
 		}
 		_wheel = new TimingWheel(whileSize);
 		_timer = new KissTimer(_loop, time);
-		_timer.onTick((Object) {_wheel.prevWheel();});
+		_timer.onTick((Object) { _wheel.prevWheel(); });
 		//_timer.start(time);
-		_loop.postTask(newTask((){ _timer.start();}));
+		_loop.postTask(newTask(() { _timer.start(); }));
 	}
 
 	void close()
 	{
-		if(_TcpListener)
+		if (_TcpListener)
 			_loop.postTask(newTask(&_TcpListener.close));
 	}
+
 protected:
-	void newConnect(Selector loop, Socket socket)
-	// void newConnect(TcpListener sender, TcpStream stream) 
+	void newConnect(Selector loop, Socket socket) // void newConnect(TcpListener sender, TcpStream stream) 
 	{
-		catchAndLogException((){
+		catchAndLogException(() {
 			import std.exception;
+
 			ServerConnection connection;
 			// connection = _cback( loop,socket );
-			collectException(_cback(loop,socket),connection);
-			if(connection is null) return;
-			if(connection.active() && _wheel)
+			collectException(_cback(loop, socket), connection);
+			if (connection is null)
+				return;
+			if (connection.active() && _wheel)
 				_wheel.addNewTimer(connection);
 		}());
 	}
@@ -121,4 +141,3 @@ private:
 	KissTimer _timer;
 	uint _timeout;
 }
-

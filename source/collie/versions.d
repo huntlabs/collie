@@ -12,5 +12,5 @@
 
 module collie.versions;
 
-enum COLLIE_VERSION = "0.9.16";
+enum COLLIE_VERSION = "0.10.10";
 

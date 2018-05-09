@@ -16,7 +16,7 @@ import collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
 import collie.codec.http.codec.wsframe;
 import collie.codec.http.errocode;
-import kiss.util.logger;
+import kiss.logger;
 
 import kiss.net.TcpStream;
 import kiss.util.functional;

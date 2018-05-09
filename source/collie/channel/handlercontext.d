@@ -12,7 +12,7 @@ module collie.channel.handlercontext;
 
 import std.conv;
 import std.functional;
-import kiss.util.logger;
+import kiss.logger;
 import collie.channel.pipeline;
 import collie.channel.handler;
 import collie.channel.exception;

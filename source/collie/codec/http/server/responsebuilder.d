@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.server.responsebuilder;
-import kiss.util.logger;
+import kiss.logger;
 import collie.codec.http.server.responsehandler;
 import collie.codec.http.httpmessage;
 import collie.codec.http.codec.httpcodec;

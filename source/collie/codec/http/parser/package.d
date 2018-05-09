@@ -10,7 +10,7 @@
  */
 module collie.codec.http.parser;
 
-import kiss.util.logger;
+import kiss.logger;
 import collie.codec.http.headers.httpmethod;
 public import collie.codec.http.parser.parsertype;
 

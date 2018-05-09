@@ -9,7 +9,7 @@
  *
  */
 module collie.codec.http.server.httpserver;
-import kiss.util.logger;
+import kiss.logger;
 import collie.codec.http.session.httpsession;
 import collie.codec.http.httptansaction;
 import collie.codec.http.server.httpserveroptions;

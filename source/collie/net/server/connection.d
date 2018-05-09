@@ -12,10 +12,10 @@ module collie.net.server.connection;
 
 import kiss.net.TcpStream;
 import kiss.event.timer.common;
-import kiss.util.KissTimer;
+import kiss.util.timer;
 import kiss.event;
 import kiss.event.task;
-import kiss.util.logger;
+import kiss.logger;
 
 
 abstract class ServerConnection : WheelTimer

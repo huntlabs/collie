@@ -2,7 +2,7 @@
 
 import std.bitmanip;
 import std.conv;
-import kiss.util.logger;
+import kiss.logger;
 import kiss.event;
 
 import collie.channel;
