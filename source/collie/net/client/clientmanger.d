@@ -20,8 +20,8 @@ import collie.net.client.linklogInfo;
 import collie.net.client.exception;
 
 import kiss.event.timer.common;
-//import collie.utils.memory;
 import kiss.event.task;
+import kiss.util.functional;
 
 final class TCPClientManger
 {
@@ -104,13 +104,11 @@ final class TCPClientManger
 protected:
 	void connect(LinklogInfo * logInfo)
 	{
-		// import collie.utils.functional;
 		logInfo.client = new TcpStream(_loop);
 		if(_oncreator)
 			_oncreator(logInfo.client);
 		logInfo.client.onClosed(&tmpCloseCallBack);
-		// logInfo.client.setConnectHandle(bind(&connectCallBack,logInfo));
-		assert(false, "Improvement needed for bind");
+		logInfo.client.onConnected(bind(&connectCallBack,logInfo));
 		// logInfo.client.setReadHandle(&tmpReadCallBack);
 		// logInfo.client.connect(logInfo.addr);
 	}
