@@ -273,7 +273,7 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
         pipe.finalize();
         _pipe = pipe;
         _pipe.transport(_acceptor);
-        _acceptor.setReadHandle(&acceptCallBack);
+        _acceptor.onConnectionAccepted(&acceptCallBack);
         _sslctx = ctx;
 		_list = new ServerConnection!PipeLine();
 		version(USE_SSL)
@@ -370,9 +370,9 @@ protected:
         gcFree(conn);
     }
 
-    void acceptCallBack(Selector loop, Socket socket)   
+    void acceptCallBack(TcpListener sender, TcpStream stream)   
     {
-        catchAndLogException(_pipe.read(socket));
+        catchAndLogException(_pipe.read(stream));
     }
 
     pragma(inline, true) @property acceptor()

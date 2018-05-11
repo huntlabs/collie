@@ -428,7 +428,7 @@ abstract shared class PipelineFactory(PipeLine)
     PipeLine newPipeline(TcpStream transport);
 }
 
-alias AcceptPipeline = Pipeline!(Socket, uint);
+alias AcceptPipeline = Pipeline!(TcpStream, uint);
 abstract shared class AcceptPipelineFactory
 {
     AcceptPipeline newPipeline(TcpListener acceptor);

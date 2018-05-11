@@ -25,7 +25,7 @@ import collie.net.server.exception;
 
 final class TCPServer
 {
-	alias NewConnection = ServerConnection delegate(Selector loop, Socket socket);
+	alias NewConnection = ServerConnection delegate(TcpListener sender, TcpStream stream);
 	alias OnAceptorCreator = void delegate(kiss.net.TcpListener.TcpListener);
 
 	this(EventLoop loop)
@@ -71,7 +71,8 @@ final class TCPServer
 		if (_cback is null)
 			throw new SocketServerException("Please set CallBack frist!");
 
-		_TcpListener.setReadHandle(&newConnect);
+		// _TcpListener.onPeerCreating(&createTcpStream);
+		_TcpListener.onConnectionAccepted(&newConnect);
 		_loop.postTask(newTask(() { _TcpListener.listen(block).start(); }));
 	}
 
@@ -115,19 +116,46 @@ final class TCPServer
 	}
 
 protected:
-	void newConnect(Selector loop, Socket socket) // void newConnect(TcpListener sender, TcpStream stream) 
-	{
-		catchAndLogException(() {
-			import std.exception;
 
-			ServerConnection connection;
-			// connection = _cback( loop,socket );
-			collectException(_cback(loop, socket), connection);
-			if (connection is null)
-				return;
-			if (connection.active() && _wheel)
-				_wheel.addNewTimer(connection);
-		}());
+	TcpStream createTcpStream(TcpListener sender, Socket sock, size_t bufferSize)
+	{
+		TcpStream tcpStream;
+		EventLoop loop = cast(EventLoop)sender.eventLoop;
+		version(USE_SSL){
+			if(_ssl_Ctx){
+				import collie.net.common;
+				auto ssl = SSL_new(_ssl_Ctx);
+				static if (IOMode == IO_MODE.iocp){
+					BIO * readBIO = BIO_new(BIO_s_mem());
+					BIO * writeBIO = BIO_new(BIO_s_mem());
+					SSL_set_bio(ssl, readBIO, writeBIO);
+					SSL_set_accept_state(ssl);
+					tcpStream = new SSLSocket( loop, sock, ssl,readBIO,writeBIO);
+				} else {
+					if (SSL_set_fd(ssl, sock.handle()) < 0)
+					{
+						error("SSL_set_fd error: fd = ", sock.handle());
+						SSL_shutdown(ssl);
+						SSL_free(ssl);
+						return null;
+					}
+					SSL_set_accept_state(ssl);
+					tcpStream = new SSLSocket( loop, sock, ssl);
+				}
+			}
+		} else {
+			tcpStream = new TcpStream(loop, sock, bufferSize);
+		}
+
+		return tcpStream;
+	}
+
+	void newConnect(TcpListener sender, TcpStream stream)
+	{
+		ServerConnection connection = _cback(sender, stream);
+		assert( connection !is null);
+		if (connection.active() && _wheel)
+			_wheel.addNewTimer(connection);
 	}
 
 private:

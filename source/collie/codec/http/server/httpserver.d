@@ -217,35 +217,10 @@ protected:
 		}
 	}
 
-	ServerConnection newConnect(Selector loop,Socket sock) 
+
+	ServerConnection newConnect(TcpListener sender, TcpStream stream) 
 	{
-		TcpStream socket;
-		version(USE_SSL){
-			if(_ssl_Ctx){
-				import collie.net.common;
-				auto ssl = SSL_new(_ssl_Ctx);
-				static if (IOMode == IO_MODE.iocp){
-					BIO * readBIO = BIO_new(BIO_s_mem());
-					BIO * writeBIO = BIO_new(BIO_s_mem());
-					SSL_set_bio(ssl, readBIO, writeBIO);
-					SSL_set_accept_state(ssl);
-					socket = new SSLSocket(cast(EventLoop) loop, sock, ssl,readBIO,writeBIO);
-				} else {
-					if (SSL_set_fd(ssl, sock.handle()) < 0)
-					{
-						error("SSL_set_fd error: fd = ", sock.handle());
-						SSL_shutdown(ssl);
-						SSL_free(ssl);
-						return null;
-					}
-					SSL_set_accept_state(ssl);
-					socket = new SSLSocket(cast(EventLoop) loop, sock, ssl);
-				}
-			}
-		} else {
-			socket = new TcpStream(loop,sock);
-		}
-		return new HttpHandlerConnection(socket,this,
+		return new HttpHandlerConnection(stream,this,
 			new HTTP1XCodec(TransportDirection.DOWNSTREAM,cast(uint)_options.maxHeaderSize));
 	}
 private:
