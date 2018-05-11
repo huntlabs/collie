@@ -132,7 +132,7 @@ final class ServerBootstrap(PipeLine)
 		_isLoopWait = true;
 		if(_group)
 			_group.start();
-		_loop.join();
+		_loop.run();
     }
 
 	void startListening()
@@ -403,7 +403,7 @@ protected:
 			shark.prev.next = shark.next;
 			if(shark.next) shark.next.prev = shark.prev;
             scope (exit)
-                delete shark;
+                shark.destroy();
             if (sock)
             {
                 sock.setHandshakeCallBack(null);

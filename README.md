@@ -10,14 +10,21 @@ An asynchronous event-driven network framework written in [dlang](http://dlang.o
 
 ##  Support
 
-Feature   |   epoll   |   kqueue   |   iocp    |   select 
-----------|-----------|------------|-----------|------------ 
+Feature   |   epoll   |   kqueue   |   iocp    |   select
+----------|-----------|------------|-----------|------------
 TCP       |     Y     |     Y      |     Y     |     Y
 SSL*      |     Y     |     Y      |     Y     |     Y
 UDP       |     Y     |     Y      |     Y     |     Y
 Timer     |     Y     |     Y      |     Y     |     Y
 
 NOte: Now , the ssl only support as server. not support as a client.
+
+## TODO
+- [ ] HTTP2 surport
+- [ ] Modules reorganization
+- [ ] Performance improvement
+- [ ] API improvement
+- [ ] Examples improvement
 
 ## Contact:
 * QQ Group : **184183224**
