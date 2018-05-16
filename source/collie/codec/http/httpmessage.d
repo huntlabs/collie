@@ -20,6 +20,9 @@ import std.variant;
 import std.conv;
 import std.exception;
 import std.string;
+
+alias HttpMessage = HTTPMessage;
+
 public 
 
 final class HTTPMessage
@@ -28,6 +31,7 @@ final class HTTPMessage
 	{
 		_version[0] = 1;
 		_version[1] = 1;
+		_versionStr = "1.1";
 	}
 
 	/* Setter and getter for the SPDY priority value (0 - 7).  When serialized
@@ -133,6 +137,7 @@ final class HTTPMessage
 	{
 		_version[0] = maj;
 		_version[1] = min;
+		_versionStr = format("%d.%d", maj, min );
 	}
 
 	auto getHTTPVersion()
@@ -142,6 +147,8 @@ final class HTTPMessage
 		tv.min = _version[1];
 		return tv;
 	}
+
+	string getProtocolVersion() { return _versionStr; }
 
 	@property void url(string url){ 
 		auto idx = url.indexOf('?');
@@ -307,10 +314,10 @@ final class HTTPMessage
    * specified name.  The returned value is only valid as long as this
    * HTTPMessage object.
    */
-	string getQueryParam(string name)
+	string getQueryParam(string name, string defaults = string.init)
 	{
 		parseQueryParams();
-		return _queryParams.get(name,string.init);
+		return _queryParams.get(name,defaults);
 	}
 	/**
    * Get the query parameter with the specified name after percent decoding.
@@ -335,6 +342,8 @@ final class HTTPMessage
    * query param
    */
 	string[string] queryParam(){parseQueryParams();return _queryParams;}
+
+	void queryParam(string[string] v) { _queryParams = v; }
 
 	/**
    * Set the query string to the specified value, and recreate the url_.
@@ -602,13 +611,11 @@ private:
 	string _versionStr;
 	MegType _isRequest = MegType.Null_;
 	Req_Res _resreq;
-private:
 	ubyte[2] _version;
 	HTTPHeaders _headers;
 //	string[string] _cookies;
 	string[string] _queryParams;
 
-private:
 	bool _parsedCookies = false;
 	bool _parsedQueryParams = false;
 	bool _chunked = false;

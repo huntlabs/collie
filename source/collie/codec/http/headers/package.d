@@ -9,6 +9,8 @@ import std.array;
 public import collie.codec.http.headers.httpcommonheaders;
 public import collie.codec.http.headers.httpmethod;
 
+alias HttpHeaders = HTTPHeaders;
+
 struct HTTPHeaders
 {
 	enum kInitialVectorReserve = 32;
@@ -240,6 +242,26 @@ struct HTTPHeaders
 			return _headerValues[index];
 		}
 		return string.init;
+	}
+
+	string[] getValuesByKey(string name)
+	{
+		HTTPHeaderCode code = headersHash(name);
+		if(code != HTTPHeaderCode.OTHER)
+		{
+			remove(code);
+			return null;
+		}
+
+		string[] r = null;
+		for(size_t i = 0; i < _headersNames.length; ++i){
+			if(_codes[i] != HTTPHeaderCode.OTHER) continue;
+
+			if(isSameIngnoreLowUp(name,_headersNames[i])){
+				r ~= _headerValues[i];
+			}
+		}
+		return r;
 	}
 
 	/**
