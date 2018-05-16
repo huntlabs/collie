@@ -475,7 +475,7 @@ final class HTTPMessage
 			case 417:
 				return "Expectation Failed";
 			case 418:
-				return "I\"m a teapot"; // RFC2324
+				return "I'm a teapot"; // RFC2324
 			case 422:
 				return "Unprocessable Entity"; // RFC4918
 			case 423:
