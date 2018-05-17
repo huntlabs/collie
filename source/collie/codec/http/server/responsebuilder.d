@@ -127,7 +127,6 @@ class ResponseBuilder
 	{
 		// version(CollieDebugMode) logDebug("_txn is ", cast(void *)_txn);
 		scope(exit){
-			_headers = null;
 			_httpMessage = null;
 		}
 		bool chunked = true;
