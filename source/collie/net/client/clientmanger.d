@@ -110,7 +110,7 @@ protected:
 		logInfo.client.onClosed(&tmpCloseCallBack);
 		logInfo.client.onConnected(bind(&connectCallBack,logInfo));
 		// logInfo.client.setReadHandle(&tmpReadCallBack);
-		// logInfo.client.connect(logInfo.addr);
+		logInfo.client.connect(logInfo.addr);
 	}
 
 	void tmpReadCallBack(in ubyte[]) nothrow {}
