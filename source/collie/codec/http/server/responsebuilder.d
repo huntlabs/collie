@@ -169,6 +169,11 @@ class ResponseBuilder
 		}
 	}
 
+	void clear()
+    {
+        _txn = null;
+    }
+
 	@property HttpMessage httpMessage(){return _httpMessage;}
 	final @property HTTPMessage headers(){return _httpMessage;}
 	final @property ByteBuffer!Mallocator* bodys(){return &_body;}
@@ -178,9 +183,9 @@ protected:
 	HTTPMessage _httpMessage;
 	HttpHeaders _headers;
 	ByteBuffer!Mallocator _body;
+	ResponseHandler _txn;
 
 private:
-	ResponseHandler _txn;
 	bool _sendEOM = false;
 }
 
