@@ -23,39 +23,32 @@ import std.conv;
 */
 class ResponseBuilder
 {
-	this(ResponseHandler txn)
+	this()
 	{
-		setResponseHandler(txn);
 		_body = new ByteBuffer!Mallocator();
 		_httpMessage = new HttpMessage();
 	}
 
+	this(ResponseHandler txn)
+	{
+		_txn = txn;
+		this();
+	}
+
 	final ResponseBuilder promise(string url, string host)
 	{
-		if (_txn)
-		{
-			if (_httpMessage is null)
-			{
-				_httpMessage = new HttpMessage();
-			}
-			_httpMessage.url(url);
-			_httpMessage.addHeader(HTTPHeaderCode.HOST, host);
-		}
+		_httpMessage.url(url);
+		_httpMessage.addHeader(HTTPHeaderCode.HOST, host);
 		return this;
 	}
 
 	final ResponseBuilder status(ushort code, string message)
 	{
-		if (_txn)
-		{
-			debug logDebug("status: ", code, "  message: ", message);
-			if (_httpMessage is null)
-			{
-				_httpMessage = new HttpMessage();
-			}
-			_httpMessage.statusCode(code);
-			_httpMessage.statusMessage(message);
-		}
+		debug logDebug("status: ", code, "  message: ", message);
+
+		_httpMessage.statusCode(code);
+		_httpMessage.statusMessage(message);
+
 		return this;
 	}
 
@@ -78,15 +71,13 @@ class ResponseBuilder
      */
 	final ResponseBuilder header(T = string)(string name, T value)
 	{
-		if (_txn && _httpMessage)
-			_httpMessage.addHeader(name, to!string(value));
+		_httpMessage.addHeader(name, to!string(value));
 		return this;
 	}
 
-	final ResponseBuilder header(T = string)(HTTPHeaderCode code, T value)
+	final ResponseBuilder header(T = string)(HttpHeaderCode code, T value)
 	{
-		if (_txn && _httpMessage)
-			_httpMessage.addHeader(code, to!string(value));
+		_httpMessage.addHeader(code, to!string(value));
 		return this;
 	}
 
@@ -98,22 +89,17 @@ class ResponseBuilder
      */
 	ResponseBuilder withHeaders(string[string] headers)
 	{
+		validate();
 		foreach (string key, string value; headers)
-		{
 			_httpMessage.addHeader(key, value);
-		}
 		return this;
 	}
 
-	final ResponseBuilder setBody(ubyte[] data)
+	final ResponseBuilder setBody(in ubyte[] data)
 	{
-		if (_txn)
-			_body.write(data);
-		originalContent = data;
+		_body.write(data);
 		return this;
 	}
-
-	protected const(ubyte)[] originalContent;
 
 	final ResponseBuilder connectionClose()
 	{
@@ -128,11 +114,8 @@ class ResponseBuilder
 
 	final void send()
 	{
+		validate();
 		// version(CollieDebugMode) logDebug("_txn is ", cast(void *)_txn);
-		scope (exit)
-		{
-			_httpMessage = null;
-		}
 		bool chunked = true;
 		if (_httpMessage && _sendEOM)
 			chunked = false;
@@ -193,7 +176,13 @@ class ResponseBuilder
 
 	void clear()
 	{
+		_isDisposed = true;
 		_txn = null;
+	}
+
+	private void validate()
+	{
+		assert(!_isDisposed, "The resources have been released!");
 	}
 
 	@property HttpMessage httpMessage()
@@ -211,21 +200,22 @@ class ResponseBuilder
 		return &_body;
 	}
 
-	final @property ResponseHandler responseHandler()
+	@property ResponseHandler dataHandler()
 	{
 		return _txn;
 	}
-	
-protected:
-	pragma(inline) final void setResponseHandler(ResponseHandler txn)
+
+	@property void dataHandler(ResponseHandler txn)
 	{
 		_txn = txn;
 	}
 
+protected:
 	HttpMessage _httpMessage;
 	ByteBuffer!Mallocator _body;
 	ResponseHandler _txn;
 
 private:
 	bool _sendEOM = false;
+	bool _isDisposed = false;
 }
