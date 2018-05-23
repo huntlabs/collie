@@ -19,74 +19,74 @@ import std.experimental.allocator.mallocator;
 
 import std.conv;
 
-
+/**
+*/
 class ResponseBuilder
 {
 	this(ResponseHandler txn)
 	{
 		setResponseHandler(txn);
 		_body = new ByteBuffer!Mallocator();
-		_httpMessage = new HTTPMessage();
-		_headers = _httpMessage.getHeaders();
+		_httpMessage = new HttpMessage();
 	}
 
 	final ResponseBuilder promise(string url, string host)
 	{
-		if(_txn){
-			if(_httpMessage is null)
+		if (_txn)
+		{
+			if (_httpMessage is null)
 			{
-				_httpMessage = new HTTPMessage();
-				_headers = _httpMessage.getHeaders();
+				_httpMessage = new HttpMessage();
 			}
 			_httpMessage.url(url);
-			_httpMessage.getHeaders.add(HTTPHeaderCode.HOST,host);
+			_httpMessage.addHeader(HTTPHeaderCode.HOST, host);
 		}
 		return this;
 	}
 
 	final ResponseBuilder status(ushort code, string message)
 	{
-		if(_txn){
+		if (_txn)
+		{
 			debug logDebug("status: ", code, "  message: ", message);
-			if(_httpMessage is null)
+			if (_httpMessage is null)
 			{
-				_httpMessage = new HTTPMessage();
-				_headers = _httpMessage.getHeaders();
+				_httpMessage = new HttpMessage();
 			}
 			_httpMessage.statusCode(code);
 			_httpMessage.statusMessage(message);
 		}
 		return this;
 	}
-	
+
 	/**
      * Get the status code for the response.
      *
      * @return int
      */
-    int status()
-    {
-        return _httpMessage.statusCode();
-    }
+	int status()
+	{
+		return _httpMessage.statusCode();
+	}
 
-    /**
+	/**
      * Set a header on the Response.
      *
      * @param  string  $key
      * @param  array|string  $values
      * @return $this
      */
-	final ResponseBuilder header(T = string)(string name,T value)
+	final ResponseBuilder header(T = string)(string name, T value)
 	{
-		if(_txn && _httpMessage)
-			_httpMessage.getHeaders.add(name,to!string(value));
+		if (_txn && _httpMessage)
+			_httpMessage.addHeader(name, to!string(value));
 		return this;
 	}
 
-	final ResponseBuilder header(T = string)(HTTPHeaderCode code,T value)
+	final ResponseBuilder header(T = string)(HTTPHeaderCode code, T value)
 	{
-		if(_txn && _httpMessage)
-			_httpMessage.getHeaders.add(code,to!string(value));
+		if (_txn && _httpMessage)
+			_httpMessage.addHeader(code, to!string(value));
 		return this;
 	}
 
@@ -96,29 +96,32 @@ class ResponseBuilder
      * @param  array  $headers
      * @return $this
      */
-    ResponseBuilder withHeaders(string[string] headers)
-    {
-        foreach (string key, string value; headers) {
-           _headers.add(key, value);
-        }
-        return this;
-    }
-
+	ResponseBuilder withHeaders(string[string] headers)
+	{
+		foreach (string key, string value; headers)
+		{
+			_httpMessage.addHeader(key, value);
+		}
+		return this;
+	}
 
 	final ResponseBuilder setBody(ubyte[] data)
 	{
-		if(_txn)
+		if (_txn)
 			_body.write(data);
 		originalContent = data;
 		return this;
 	}
+
 	protected const(ubyte)[] originalContent;
 
-	final ResponseBuilder connectionClose(){
-		return header(HTTPHeaderCode.CONNECTION,"close");
+	final ResponseBuilder connectionClose()
+	{
+		return header(HTTPHeaderCode.CONNECTION, "close");
 	}
 
-	final void sendWithEOM(){
+	final void sendWithEOM()
+	{
 		_sendEOM = true;
 		send();
 	}
@@ -126,66 +129,103 @@ class ResponseBuilder
 	final void send()
 	{
 		// version(CollieDebugMode) logDebug("_txn is ", cast(void *)_txn);
-		scope(exit){
+		scope (exit)
+		{
 			_httpMessage = null;
 		}
 		bool chunked = true;
-		if(_httpMessage && _sendEOM) chunked = false;
+		if (_httpMessage && _sendEOM)
+			chunked = false;
 
-		if(_httpMessage){
+		if (_httpMessage)
+		{
 			// version(CollieDebugMode) logDebug("is isResponse : ",_httpMessage.isResponse());
-			version(CollieDebugMode) logDebug("resonse status code: ", _httpMessage.statusCode);
-			if(_httpMessage.isResponse() && (_httpMessage.statusCode >= 200)) {
-				version(CollieDebugMode) logDebug("Chunked: ", chunked);
-				if(chunked) {
+			version (CollieDebugMode)
+				logDebug("resonse status code: ", _httpMessage.statusCode);
+			if (_httpMessage.isResponse() && (_httpMessage.statusCode >= 200))
+			{
+				version (CollieDebugMode)
+					logDebug("Chunked: ", chunked);
+				if (chunked)
+				{
 					_httpMessage.chunked(true);
-				} else {
+				}
+				else
+				{
 					_httpMessage.chunked(false);
-					_httpMessage.getHeaders.add(HTTPHeaderCode.CONTENT_LENGTH, to!string(_body.length));
+					_httpMessage.setHeader(HTTPHeaderCode.CONTENT_LENGTH, to!string(_body.length));
 				}
 			}
-			if(_txn) {
-				if((_body.length == 0) && _sendEOM) {
+			if (_txn)
+			{
+				if ((_body.length == 0) && _sendEOM)
+				{
 					_txn.sendHeadersWithEOM(_httpMessage);
 					return;
-				}else {
+				}
+				else
+				{
 					_txn.sendHeaders(_httpMessage);
 				}
 			}
 		}
-		if((_body.length > 0) && _txn) {
-			version(CollieDebugMode) logDebug("body len = ", _body.length);
-			if(chunked) {
+		if ((_body.length > 0) && _txn)
+		{
+			version (CollieDebugMode)
+				logDebug("body len = ", _body.length);
+			if (chunked)
+			{
 				_txn.sendChunkHeader(_body.length);
 				_txn.sendBody(_body.allData.data());
-			} else {
-				_txn.sendBody(_body.allData.data(),_sendEOM);
+			}
+			else
+			{
+				_txn.sendBody(_body.allData.data(), _sendEOM);
 				return;
 			}
 			_body.clear();
 		}
-		if(_sendEOM && _txn) {
+		if (_sendEOM && _txn)
+		{
 			_txn.sendEOM();
 		}
 	}
 
 	void clear()
-    {
-        _txn = null;
-    }
+	{
+		_txn = null;
+	}
 
-	@property HttpMessage httpMessage(){return _httpMessage;}
-	final @property HTTPMessage headers(){return _httpMessage;}
-	final @property ByteBuffer!Mallocator* bodys(){return &_body;}
-	final @property ResponseHandler responseHandler(){return _txn;};
+	@property HttpMessage httpMessage()
+	{
+		return _httpMessage;
+	}
+
+	final @property HttpMessage headers()
+	{
+		return _httpMessage;
+	}
+
+	final @property ByteBuffer!Mallocator* bodys()
+	{
+		return &_body;
+	}
+
+	final @property ResponseHandler responseHandler()
+	{
+		return _txn;
+	}
+	
 protected:
-	pragma(inline) final void setResponseHandler(ResponseHandler txn){_txn = txn;}
-	HTTPMessage _httpMessage;
-	HttpHeaders _headers;
+	pragma(inline) final void setResponseHandler(ResponseHandler txn)
+	{
+		_txn = txn;
+	}
+
+	HttpMessage _httpMessage;
 	ByteBuffer!Mallocator _body;
 	ResponseHandler _txn;
 
 private:
 	bool _sendEOM = false;
 }
-

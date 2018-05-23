@@ -9,9 +9,9 @@ import std.array;
 public import collie.codec.http.headers.httpcommonheaders;
 public import collie.codec.http.headers.httpmethod;
 
-alias HttpHeaders = HTTPHeaders;
+alias HTTPHeaders = HttpHeaders;
 
-struct HTTPHeaders
+struct HttpHeaders
 {
 	enum kInitialVectorReserve = 32;
 	
@@ -70,6 +70,7 @@ struct HTTPHeaders
 		_headerValues~= value;
 
 	}
+
 	void add(HTTPHeaderCode code, string value)
 	{
 		if(code == HTTPHeaderCode.OTHER || code > HTTPHeaderCode.SEC_WEBSOCKET_ACCEPT)

@@ -23,26 +23,31 @@ import kiss.event;
 
 abstract class RequestHandler
 {
-	void setResponseHandler(ResponseHandler handler) nothrow {
+	void setResponseHandler(ResponseHandler handler) nothrow
+	{
 		_downstream = handler;
+	}
+
+	@property ResponseHandler responseHandler()
+	{
+		return _downstream;
 	}
 
 	/**
    * Invoked when we have successfully fetched headers from client. This will
    * always be the first callback invoked on your handler.
    */
-	void onRequest(HTTPMessage headers) nothrow
+	void onRequest(HttpMessage headers) nothrow
 	{
 	}
 
 	/**
 	deprecated("Incorrect spelling. Using onRequest instead.")
 	*/
-	void onResquest(HTTPMessage headers) nothrow
+	void onResquest(HttpMessage headers) nothrow
 	{
 		onRequest(headers);
 	}
-
 
 	/**
    * Invoked when we get part of body for the request.
@@ -75,9 +80,11 @@ abstract class RequestHandler
 	void onError(HTTPErrorCode code) nothrow;
 
 	void onFrame(ref WSFrame frame) nothrow
-	{}
+	{
+	}
 
-	bool onUpgtade(CodecProtocol protocol, HTTPMessage msg) nothrow {
+	bool onUpgtade(CodecProtocol protocol, HttpMessage msg) nothrow
+	{
 		return false;
 	}
 
@@ -85,113 +92,157 @@ protected:
 	ResponseHandler _downstream;
 }
 
-final class RequestHandlerAdaptor : ResponseHandler,HTTPTransactionHandler
+final class RequestHandlerAdaptor : ResponseHandler, HTTPTransactionHandler
 {
 	this(RequestHandler handler)
 	{
 		super(handler);
 	}
-	
-	override void setTransaction(HTTPTransaction txn) {
+
+	override void setTransaction(HTTPTransaction txn)
+	{
 		_txn = txn;
 		_upstream.setResponseHandler(this);
 	}
-	
-	override void detachTransaction() {
+
+	override void detachTransaction()
+	{
 		_txn = null;
-		if(!_erro) {
+		if (!_erro)
+		{
 			_upstream.requestComplete();
 		}
 	}
-	
-	override void onHeadersComplete(HTTPMessage msg) {
+
+	override void onHeadersComplete(HttpMessage msg)
+	{
 		// logDebug("onHeadersComplete , erro is : ", _erro , " _upstream is ", cast(void *)_upstream);
-		if(msg.getHeaders.exists(HTTPHeaderCode.EXPECT)) {
+		if (msg.getHeaders.exists(HTTPHeaderCode.EXPECT))
+		{
 			logDebug("has header EXPECT--------");
 			string str = msg.getHeaders.getSingleOrEmpty(HTTPHeaderCode.EXPECT);
-			if(!isSameIngnoreLowUp(str,"100-continue")) {
-				scope HTTPMessage headers = new HTTPMessage();
-				headers.constructDirectResponse(1,1,417,"Expectation Failed");
+			if (!isSameIngnoreLowUp(str, "100-continue"))
+			{
+				scope HttpMessage headers = new HttpMessage();
+				headers.constructDirectResponse(1, 1, 417, "Expectation Failed");
 				headers.wantsKeepAlive(false);
 				_txn.sendHeadersWithEOM(headers);
 				return;
-			}else {
-				scope HTTPMessage headers = new HTTPMessage();
-				headers.constructDirectResponse(1,1,100,"Continue");
+			}
+			else
+			{
+				scope HttpMessage headers = new HttpMessage();
+				headers.constructDirectResponse(1, 1, 100, "Continue");
 				_txn.sendHeaders(headers);
 			}
 		}
-		if(!_erro)
+		if (!_erro)
 			_upstream.onResquest(msg);
 	}
-	
-	override void onBody(const ubyte[] chain) {
+
+	override void onBody(const ubyte[] chain)
+	{
 		_upstream.onBody(chain);
 	}
-	
-	override void onChunkHeader(size_t lenght){}
-	
-	override void onChunkComplete() {}
-	
-	override void onEOM() {
-		if(!_erro)
+
+	override void onChunkHeader(size_t lenght)
+	{
+	}
+
+	override void onChunkComplete()
+	{
+	}
+
+	override void onEOM()
+	{
+		if (!_erro)
 			_upstream.onEOM();
 	}
-	
-	override void onError(HTTPErrorCode erromsg)  {
-		if(_erro) return;
+
+	override void onError(HTTPErrorCode erromsg)
+	{
+		if (_erro)
+			return;
 		_erro = true;
 		_upstream.onError(erromsg);
 	}
-	
-	override void onWsFrame(ref WSFrame wsf) {
+
+	override void onWsFrame(ref WSFrame wsf)
+	{
 		_upstream.onFrame(wsf);
 	}
-	
-	override void onEgressPaused() {}
-	
-	override void onEgressResumed() {}
-	
-	override void sendHeadersWithEOM(HTTPMessage msg) {
-		if(_txn)
+
+	override void onEgressPaused()
+	{
+	}
+
+	override void onEgressResumed()
+	{
+	}
+
+	override void sendHeadersWithEOM(HttpMessage msg)
+	{
+		if (_txn)
 			_txn.sendHeadersWithEOM(msg);
 	}
-	
-	override void sendHeaders(HTTPMessage msg)
+
+	override void sendHeaders(HttpMessage msg)
 	{
 		_responseStarted = true;
-		if(_txn)
+		if (_txn)
 			_txn.sendHeaders(msg);
 	}
-	
-	override void sendChunkHeader(size_t len){if(_txn)_txn.sendChunkHeader(len);}
-	
-	override void sendBody(in ubyte[] data, bool iseom = false){if(_txn)_txn.sendBody(data,iseom);if(iseom)_responseStarted = false;}
-	
-	
-	override void sendChunkTerminator(){if(_txn)_txn.sendChunkTerminator();}
-	
-	override void sendEOM(){if(_txn)_txn.sendEOM(); _responseStarted = false;}
-	
-	override void sendTimeOut() {
-		if(_txn)
+
+	override void sendChunkHeader(size_t len)
+	{
+		if (_txn)
+			_txn.sendChunkHeader(len);
+	}
+
+	override void sendBody(in ubyte[] data, bool iseom = false)
+	{
+		if (_txn)
+			_txn.sendBody(data, iseom);
+		if (iseom)
+			_responseStarted = false;
+	}
+
+	override void sendChunkTerminator()
+	{
+		if (_txn)
+			_txn.sendChunkTerminator();
+	}
+
+	override void sendEOM()
+	{
+		if (_txn)
+			_txn.sendEOM();
+		_responseStarted = false;
+	}
+
+	override void sendTimeOut()
+	{
+		if (_txn)
 			_txn.sendTimeOut();
 	}
-	
-	override void socketWrite(StreamWriteBuffer buffer) {
-		if(_txn)
+
+	override void socketWrite(StreamWriteBuffer buffer)
+	{
+		if (_txn)
 			_txn.socketWrite(buffer);
 	}
-	
-	override void sendWsData(OpCode code,ubyte[] data)
+
+	override void sendWsData(OpCode code, ubyte[] data)
 	{
-		if(_txn)
-			_txn.sendWsData(code,data);
+		if (_txn)
+			_txn.sendWsData(code, data);
 	}
-	
-	override bool onUpgtade(CodecProtocol protocol,HTTPMessage msg) {
+
+	override bool onUpgtade(CodecProtocol protocol, HttpMessage msg)
+	{
 		return _upstream.onUpgtade(protocol, msg);
 	}
+
 private:
 	HTTPTransaction _txn;
 	bool _erro = false;
