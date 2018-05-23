@@ -488,6 +488,8 @@ class HttpMessage
 			return "Switching Protocols";
 		case 102:
 			return "Processing"; // RFC2518
+		case 103:
+			return "Early Hints"; 
 		case 200:
 			return "OK";
 		case 201:
@@ -579,7 +581,9 @@ class HttpMessage
 		case 429:
 			return "Too Many Requests"; // RFC6585
 		case 431:
-			return "Request Header Fields Too Large"; // RFC6585
+			return "Request Header Fields Too Large"; 	// RFC6585
+		case 451:
+			return "Unavailable For Legal Reasons"; 	// RFC7725
 		case 500:
 			return "Internal Server Error";
 		case 501:
@@ -593,7 +597,7 @@ class HttpMessage
 		case 505:
 			return "HTTP Version Not Supported";
 		case 506:
-			return "Variant Also Negotiates (Experimental)"; // RFC2295
+			return "Variant Also Negotiates"; // RFC2295
 		case 507:
 			return "Insufficient Storage"; // RFC4918
 		case 508:
@@ -742,6 +746,9 @@ enum HttpCodes
 {
 	CONTINUE = 100,
 	SWITCHING_PROTOCOLS = 101,
+	PROCESSING = 102,            // RFC2518
+	EARLY_HINTS = 103,           // RFC8297
+
 	OK = 200,
 	CREATED = 201,
 	ACCEPTED = 202,
@@ -749,6 +756,9 @@ enum HttpCodes
 	NO_CONTENT = 204,
 	RESET_CONTENT = 205,
 	PARTIAL_CONTENT = 206,
+	MULI_STATUS = 207,
+	ALREADY_REPORTED = 208,      // RFC5842
+	IM_USED = 226,               // RFC3229
 
 	MULTIPLE_CHOICES = 300,
 	MOVED_PERMANENTLY = 301,
@@ -757,6 +767,7 @@ enum HttpCodes
 	NOT_MODIFIED = 304,
 	USE_PROXY = 305,
 	TEMPORARY_REDIRECT = 307,
+	PERMANENTLY_REDIRECT = 308,					// RFC7238
 
 	BAD_REQUEST = 400,
 	UNAUTHORIZED = 401,
@@ -776,7 +787,16 @@ enum HttpCodes
 	UNSUPPORTED_MEDIA_TYPE = 415,
 	REQUESTED_RANGE_NOT_SATISFIABLE = 416,
 	EXPECTATION_FAILED = 417,
-	TOO_MANY_REQUESTS = 429,
+	I_AM_A_TEAPOT = 418,
+	MISDIRECTED_REQUEST = 421,
+	UNPROCESSABLE_ENTITY = 422,
+	LOCKED = 423,
+	FAILED_DEPENDENCY = 424,
+	RESERVED_FOR_WEBDAV_ADVANCED_COLLECTIONS_EXPIRED_PROPOSAL = 425,
+	UPGRADE_REQUIRED = 426,
+	PRECONDITION_REQUIRED = 428,				// RFC6585
+	TOO_MANY_REQUESTS = 429,					// RFC6585
+	REQUEST_HEADER_FIELDS_TOO_LARGE = 431,		// RFC6585
 	UNAVAILABLE_FOR_LAGAL_REASONS = 451,
 
 	INTERNAL_SERVER_ERROR = 500,
@@ -784,14 +804,12 @@ enum HttpCodes
 	BAD_GATEWAY = 502,
 	SERVICE_UNAVALIBALE = 503,
 	GATEWAY_TIMEOUT = 504,
-	HTTP_VERSION_NOT_SUPPORTED = 505,
-
-	// for WebDAV
-	MULI_STATUS = 207,
-	UNPROCESSABLE_ENTITY = 422,
-	LOCKED = 423,
-	FAILED_DEPENDENCY = 424,
-	INSUFFICIENT_STORAGE = 507
+	VERSION_NOT_SUPPORTED = 505,
+	VARIANT_ALSO_NEGOTIATES_EXPERIMENTAL = 506, // RFC2295
+	INSUFFICIENT_STORAGE = 507,					// RFC4918
+	LOOP_DETECTED = 508,						// RFC5842
+	NOT_EXTENDED = 510,							// RFC2774
+	NETWORK_AUTHENTICATION_REQUIRED = 511		// RFC6585
 }
 
 bool isSuccessCode(HttpCodes code)
