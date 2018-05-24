@@ -19,7 +19,6 @@ import collie.channel;
 import collie.bootstrap.serversslconfig;
 import collie.bootstrap.exception;
 
-
 import std.exception;
 
 final class ServerBootstrap(PipeLine)
@@ -42,8 +41,8 @@ final class ServerBootstrap(PipeLine)
 
     auto setSSLConfig(ServerSSLConfig config)
     {
-	       _sslConfig = config;
-	       return this;
+        _sslConfig = config;
+        return this;
     }
 
     auto childPipeline(shared PipelineFactory!PipeLine factory)
@@ -96,9 +95,10 @@ final class ServerBootstrap(PipeLine)
 
     void stopListening()
     {
-		if (!_listening)
+        if (!_listening)
             return;
-		scope(exit)_listening = false;
+        scope (exit)
+            _listening = false;
         foreach (ref accept; _serverlist)
         {
             accept.stop();
@@ -107,17 +107,19 @@ final class ServerBootstrap(PipeLine)
 
     }
 
-	void stop()
-	{
-		if(!_isLoopWait) return;
-		scope(exit) _isLoopWait = false;
-		_group.stop();
-		_loop.stop();
-	}
+    void stop()
+    {
+        if (!_isLoopWait)
+            return;
+        scope (exit)
+            _isLoopWait = false;
+        _group.stop();
+        _loop.stop();
+    }
 
     void join()
     {
-		if (!_isLoopWait)
+        if (!_isLoopWait)
             return;
         if (_group)
             _group.wait();
@@ -125,64 +127,73 @@ final class ServerBootstrap(PipeLine)
 
     void waitForStop()
     {
-		if(_isLoopWait)
-			throw new ServerIsRuningException("server is runing!");
-		if(!_listening)
-			startListening();
-		_isLoopWait = true;
-		if(_group)
-			_group.start();
-		_loop.run();
+        if (_isLoopWait)
+            throw new ServerIsRuningException("server is runing!");
+        if (!_listening)
+            startListening();
+        _isLoopWait = true;
+        if (_group)
+            _group.start();
+        _loop.run();
     }
 
-	void startListening()
-	{
-		if (_listening)
-			throw new ServerIsListeningException("server is listening!");
-		if (_address is null || _childPipelineFactory is null)
-			throw new ServerStartException("the address or childPipelineFactory is null!");
+    void startListening()
+    {
+        if (_listening)
+            throw new ServerIsListeningException("server is listening!");
+        if (_address is null || _childPipelineFactory is null)
+            throw new ServerStartException("the address or childPipelineFactory is null!");
 
-		_listening = true;
-		uint wheel, time;
-		bool beat = getTimeWheelConfig(wheel, time);
-		_mainAccept = creatorAcceptor(_loop);
-		_mainAccept.initialize();
-		if (beat)
-			_mainAccept.startTimingWhile(wheel, time);
-		if (_group)
-		{
-			foreach (loop; _group)
-			{
-				auto acceptor = creatorAcceptor(loop);
-				acceptor.initialize();
-				_serverlist ~= acceptor;
-				if (beat)
-					acceptor.startTimingWhile(wheel, time);
-			}
-		}
-		logDebug("server _listening!");
-	}
+        _listening = true;
+        uint wheel, time;
+        bool beat = getTimeWheelConfig(wheel, time);
+        _mainAccept = creatorAcceptor(_loop);
+        _mainAccept.initialize();
+        if (beat)
+            _mainAccept.startTimingWhile(wheel, time);
+        if (_group)
+        {
+            foreach (loop; _group)
+            {
+                auto acceptor = creatorAcceptor(loop);
+                acceptor.initialize();
+                _serverlist ~= acceptor;
+                if (beat)
+                    acceptor.startTimingWhile(wheel, time);
+            }
+        }
+        logDebug("server _listening!");
+    }
 
-	EventLoopGroup group(){return _group;}
+    EventLoopGroup group()
+    {
+        return _group;
+    }
 
-	@property EventLoop eventLoop(){return _loop;}
+    @property EventLoop eventLoop()
+    {
+        return _loop;
+    }
 
-	@property Address address(){return _address;}
+    @property Address address()
+    {
+        return _address;
+    }
 
 protected:
     auto creatorAcceptor(EventLoop loop)
     {
         auto acceptor = new TcpListener(loop, _address.addressFamily);
-		if(_rusePort)
-        	acceptor.reusePort = _rusePort;
+        if (_rusePort)
+            acceptor.reusePort = _rusePort;
         acceptor.bind(_address);
         acceptor.listen(1024);
-		{
-			Linger optLinger;
-			optLinger.on = 1;
-			optLinger.time = 0;
-			acceptor.setOption(SocketOptionLevel.SOCKET, SocketOption.LINGER, optLinger);
-		}
+        {
+            Linger optLinger;
+            optLinger.on = 1;
+            optLinger.time = 0;
+            acceptor.setOption(SocketOptionLevel.SOCKET, SocketOption.LINGER, optLinger);
+        }
         AcceptPipeline pipe;
         if (_acceptorPipelineFactory)
             pipe = _acceptorPipelineFactory.newPipeline(acceptor);
@@ -190,18 +201,17 @@ protected:
             pipe = AcceptPipeline.create();
 
         SSL_CTX* ctx = null;
-		version(USE_SSL)
+        version (USE_SSL)
         {
             if (_sslConfig)
             {
                 ctx = _sslConfig.generateSSLCtx();
                 if (!ctx)
-					throw new SSLException("Can not gengrate SSL_CTX");
+                    throw new SSLException("Can not gengrate SSL_CTX");
             }
         }
 
-        return new ServerAcceptor!(PipeLine)(acceptor, pipe, _childPipelineFactory,
-            ctx);
+        return new ServerAcceptor!(PipeLine)(acceptor, pipe, _childPipelineFactory, ctx);
     }
 
     bool getTimeWheelConfig(out uint whileSize, out uint time)
@@ -246,9 +256,9 @@ private:
     ServerAcceptor!(PipeLine)[] _serverlist;
     EventLoopGroup _group;
 
-	bool _listening = false;
+    bool _listening = false;
     bool _rusePort = true;
-	bool _isLoopWait = false;
+    bool _isLoopWait = false;
     uint _timeOut = 0;
     Address _address;
 
@@ -265,7 +275,7 @@ import collie.net;
 final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
 {
     this(TcpListener acceptor, AcceptPipeline pipe,
-        shared PipelineFactory!PipeLine clientPipeFactory, SSL_CTX* ctx = null)
+            shared PipelineFactory!PipeLine clientPipeFactory, SSL_CTX* ctx = null)
     {
         _acceptor = acceptor;
         _pipeFactory = clientPipeFactory;
@@ -275,35 +285,38 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
         _pipe.transport(_acceptor);
         _acceptor.onConnectionAccepted(&acceptCallBack);
         _sslctx = ctx;
-		_list = new ServerConnection!PipeLine();
-		version(USE_SSL)
-			_sharkList = new SSLHandShark();
+        _list = new ServerConnection!PipeLine();
+        version (USE_SSL)
+            _sharkList = new SSLHandShark();
     }
 
-    pragma(inline, true) void initialize()
+    void initialize()
     {
         _pipe.transportActive();
     }
 
-    pragma(inline, true) void stop()
+    void stop()
     {
         _pipe.transportInactive();
     }
 
     override void read(Context ctx, Socket msg)
     {
-		version(USE_SSL)
+        version (USE_SSL)
         {
             if (_sslctx)
             {
-                    auto ssl = SSL_new(_sslctx);
-				static if (IOMode == IO_MODE.iocp){
-					BIO * readBIO = BIO_new(BIO_s_mem());
-					BIO * writeBIO = BIO_new(BIO_s_mem());
-					SSL_set_bio(ssl, readBIO, writeBIO);
-					SSL_set_accept_state(ssl);
-					auto asynssl = new SSLSocket(_acceptor.eventLoop, msg, ssl,readBIO,writeBIO);
-				} else {
+                auto ssl = SSL_new(_sslctx);
+                static if (IOMode == IO_MODE.iocp)
+                {
+                    BIO* readBIO = BIO_new(BIO_s_mem());
+                    BIO* writeBIO = BIO_new(BIO_s_mem());
+                    SSL_set_bio(ssl, readBIO, writeBIO);
+                    SSL_set_accept_state(ssl);
+                    auto asynssl = new SSLSocket(_acceptor.eventLoop, msg, ssl, readBIO, writeBIO);
+                }
+                else
+                {
                     if (SSL_set_fd(ssl, msg.handle()) < 0)
                     {
                         error("SSL_set_fd error: fd = ", msg.handle());
@@ -313,22 +326,24 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
                     }
                     SSL_set_accept_state(ssl);
                     auto asynssl = new SSLSocket(_acceptor.eventLoop, msg, ssl);
-				}
-                    auto shark = new SSLHandShark(asynssl, &doHandShark);
+                }
+                auto shark = new SSLHandShark(asynssl, &doHandShark);
 
-					shark.next = _sharkList.next;
-					if(shark.next) shark.next.prev = shark;
-					shark.prev = _sharkList;
-					_sharkList.next = shark;
+                shark.next = _sharkList.next;
+                if (shark.next)
+                    shark.next.prev = shark;
+                shark.prev = _sharkList;
+                _sharkList.next = shark;
 
-                    asynssl.start();
+                asynssl.start();
             }
             else
             {
                 auto asyntcp = new TcpStream(_acceptor.eventLoop, msg);
                 startSocket(asyntcp);
             }
-        } else
+        }
+        else
         {
             auto asyntcp = new TcpStream(_acceptor.eventLoop, msg);
             startSocket(asyntcp);
@@ -351,31 +366,32 @@ final class ServerAcceptor(PipeLine) : InboundHandler!(Socket)
     override void transportInactive(Context ctx)
     {
         _acceptor.close();
-		auto con = _list.next;
-		_list.next = null;
-		while(con) {
-			auto tcon = con;
-			con = con.next;
-			tcon.close();
-		}
+        auto con = _list.next;
+        _list.next = null;
+        while (con)
+        {
+            auto tcon = con;
+            con = con.next;
+            tcon.close();
+        }
         _acceptor.eventLoop.stop();
     }
 
 protected:
     pragma(inline) void remove(ServerConnection!PipeLine conn)
     {
-		conn.prev.next = conn.next;
-		if(conn.next)
-			conn.next.prev = conn.prev;
+        conn.prev.next = conn.next;
+        if (conn.next)
+            conn.next.prev = conn.prev;
         gcFree(conn);
     }
 
-    void acceptCallBack(TcpListener sender, TcpStream stream)   
+    void acceptCallBack(TcpListener sender, TcpStream stream)
     {
         catchAndLogException(_pipe.read(stream));
     }
 
-    pragma(inline, true) @property acceptor()
+    @property acceptor()
     {
         return _acceptor;
     }
@@ -390,18 +406,19 @@ protected:
         _timer.start();
     }
 
-    void doWheel(Object) 
+    void doWheel(Object)
     {
         if (_wheel)
             _wheel.prevWheel();
     }
 
-	version(USE_SSL)
+    version (USE_SSL)
     {
         void doHandShark(SSLHandShark shark, SSLSocket sock)
         {
-			shark.prev.next = shark.next;
-			if(shark.next) shark.next.prev = shark.prev;
+            shark.prev.next = shark.next;
+            if (shark.next)
+                shark.next.prev = shark.prev;
             scope (exit)
                 shark.destroy();
             if (sock)
@@ -424,11 +441,11 @@ protected:
         auto con = new ServerConnection!PipeLine(pipe);
         con.serverAceptor = this;
 
-		con.next = _list.next;
-		if(con.next)
-			con.next.prev = con;
-		con.prev = _list;
-		_list.next = con;
+        con.next = _list.next;
+        if (con.next)
+            con.next.prev = con;
+        con.prev = _list;
+        _list.next = con;
 
         con.initialize();
         if (_wheel)
@@ -436,12 +453,12 @@ protected:
     }
 
 private:
-   // int[ServerConnection!PipeLine] _list;
-	ServerConnection!PipeLine _list;
+    // int[ServerConnection!PipeLine] _list;
+    ServerConnection!PipeLine _list;
 
-	version(USE_SSL)
+    version (USE_SSL)
     {
-		SSLHandShark _sharkList;
+        SSLHandShark _sharkList;
     }
 
     TcpListener _acceptor;
@@ -465,22 +482,22 @@ private:
     {
     }
 
-    pragma(inline, true) void initialize()
+    void initialize()
     {
         _pipe.transportActive();
     }
 
-    pragma(inline, true) void close()
+    void close()
     {
         _pipe.transportInactive();
     }
 
-    pragma(inline, true) @property serverAceptor()
+    @property serverAceptor()
     {
         return _manger;
     }
 
-    pragma(inline, true) @property serverAceptor(ServerAcceptor!PipeLine manger)
+    @property serverAceptor(ServerAcceptor!PipeLine manger)
     {
         _manger = manger;
     }
@@ -500,18 +517,21 @@ private:
 
     override void onTimeOut() nothrow
     {
-		collectException(_pipe.timeOut());
+        collectException(_pipe.timeOut());
     }
+
 private:
-	this(){}
-	ServerConnection!PipeLine prev;
-	ServerConnection!PipeLine next;
-private:
+    this()
+    {
+    }
+
+    ServerConnection!PipeLine prev;
+    ServerConnection!PipeLine next;
     ServerAcceptor!PipeLine _manger;
     PipeLine _pipe;
 }
 
-version(USE_SSL)
+version (USE_SSL)
 {
     final class SSLHandShark
     {
@@ -523,10 +543,6 @@ version(USE_SSL)
             _socket.setCloseCallBack(&onClose);
             _socket.setReadCallBack(&readCallBack);
             _socket.setHandshakeCallBack(&handSharkCallBack);
-        }
-
-        ~this()
-        {
         }
 
     protected:
@@ -551,11 +567,13 @@ version(USE_SSL)
             _cback(this, _socket);
         }
 
-	private:
-		this(){}
-		SSLHandShark prev;
-		SSLHandShark next;
     private:
+        this()
+        {
+        }
+
+        SSLHandShark prev;
+        SSLHandShark next;
         SSLSocket _socket;
         SSLHandSharkCallBack _cback;
     }
