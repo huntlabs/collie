@@ -16,7 +16,7 @@ import std.datetime;
 import std.stdio;
 import std.functional;
 import std.exception;
-import std.experimental.logger;
+import kiss.logger;
 
 import collie.net;
 import collie.net.server.connection;

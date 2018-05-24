@@ -9,7 +9,7 @@
  *
  */
 import std.stdio;
-import std.experimental.logger;
+import kiss.logger;
 import std.exception;
 import std.typecons;
 import std.functional;
