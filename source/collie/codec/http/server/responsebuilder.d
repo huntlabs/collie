@@ -26,7 +26,7 @@ class ResponseBuilder
 	this()
 	{
 		_body = new ByteBuffer!Mallocator();
-		_httpMessage = new HttpMessage();
+		_httpMessage = new HttpMessage(HttpMessageType.response);
 	}
 
 	this(ResponseHandler txn)
@@ -115,43 +115,44 @@ class ResponseBuilder
 	final void send()
 	{
 		validate();
-		// version(CollieDebugMode) logDebug("_txn is ", cast(void *)_txn);
+		// version(CollieDebugMode) 
+		// logDebug("_txn is ", cast(void *)_txn);
 		bool chunked = true;
-		if (_httpMessage && _sendEOM)
+		if (_sendEOM)
 			chunked = false;
+	
+		version(CollieDebugMode) 
+		logDebug("is isResponse : ",_httpMessage.isResponse());
+		version (CollieDebugMode)
+		logDebug("resonse status code: ", _httpMessage.statusCode);
 
-		if (_httpMessage)
+		if (_httpMessage.statusCode >= 200 && _httpMessage.isResponse())
 		{
-			// version(CollieDebugMode) logDebug("is isResponse : ",_httpMessage.isResponse());
 			version (CollieDebugMode)
-				logDebug("resonse status code: ", _httpMessage.statusCode);
-			if (_httpMessage.isResponse() && (_httpMessage.statusCode >= 200))
+				logDebug("Chunked: ", chunked);
+			if (chunked)
 			{
-				version (CollieDebugMode)
-					logDebug("Chunked: ", chunked);
-				if (chunked)
-				{
-					_httpMessage.chunked(true);
-				}
-				else
-				{
-					_httpMessage.chunked(false);
-					_httpMessage.setHeader(HTTPHeaderCode.CONTENT_LENGTH, to!string(_body.length));
-				}
+				_httpMessage.chunked(true);
 			}
-			if (_txn)
+			else
 			{
-				if ((_body.length == 0) && _sendEOM)
-				{
-					_txn.sendHeadersWithEOM(_httpMessage);
-					return;
-				}
-				else
-				{
-					_txn.sendHeaders(_httpMessage);
-				}
+				_httpMessage.chunked(false);
+				_httpMessage.setHeader(HTTPHeaderCode.CONTENT_LENGTH, to!string(_body.length));
 			}
 		}
+		if (_txn)
+		{
+			if ((_body.length == 0) && _sendEOM)
+			{
+				_txn.sendHeadersWithEOM(_httpMessage);
+				return;
+			}
+			else
+			{
+				_txn.sendHeaders(_httpMessage);
+			}
+		}
+		
 		if ((_body.length > 0) && _txn)
 		{
 			version (CollieDebugMode)

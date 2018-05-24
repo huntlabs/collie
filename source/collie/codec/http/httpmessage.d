@@ -23,11 +23,35 @@ import std.string;
 
 alias HTTPMessage = HttpMessage;
 
+enum HttpMessageType
+{
+	unknown,
+	request,
+	response
+}
+
 /**
 */
 class HttpMessage
 {
+	private HttpMessageType _messageType;
 	this()
+	{
+		initilizeVersion();
+		_messageType = HttpMessageType.unknown;
+	}
+
+	this(HttpMessageType messageType)
+	{
+		initilizeVersion();
+		_messageType = messageType;
+		if(messageType == HttpMessageType.response)
+			_resreq.res = Response();
+		else if(messageType == HttpMessageType.request)
+			_resreq.req = Request();
+	}
+
+	private void initilizeVersion()
 	{
 		_version[0] = 1;
 		_version[1] = 1;
@@ -467,7 +491,7 @@ class HttpMessage
    */
 	bool isRequest() const
 	{
-		return _isRequest == MegType.Request_;
+		return _messageType == HttpMessageType.request;
 	}
 
 	/**
@@ -475,7 +499,7 @@ class HttpMessage
    */
 	bool isResponse() const
 	{
-		return _isRequest == MegType.Response_;
+		return _messageType == HttpMessageType.response;
 	}
 
 	static string statusText(int code)
@@ -638,9 +662,6 @@ protected:
 		string _path;
 		string _query;
 		string _url;
-
-		//ushort _pushStatus;
-		//string _pushStatusStr;
 	}
 
 	struct Response
@@ -652,12 +673,14 @@ protected:
 
 	ref Request request()
 	{
-		if (_isRequest == MegType.Null_)
+		// FIXME: Needing refactor or cleanup -@zxp at 5/24/2018, 1:09:52 PM
+		// 
+		if (_messageType == HttpMessageType.unknown)
 		{
-			_isRequest = MegType.Request_;
+			_messageType = HttpMessageType.request;
 			_resreq.req = Request();
 		}
-		else if (_isRequest == MegType.Response_)
+		else if (_messageType == HttpMessageType.response)
 		{
 			throw new HTTPMessageTypeException("the message type is Response not Request");
 		}
@@ -666,12 +689,13 @@ protected:
 
 	ref Response response()
 	{
-		if (_isRequest == MegType.Null_)
+		if (_messageType == HttpMessageType.unknown)
 		{
-			_isRequest = MegType.Response_;
+			_messageType = HttpMessageType.response;
 			_resreq.res = Response();
 		}
-		else if (_isRequest == MegType.Request_)
+		else if (_messageType == HttpMessageType.request)
+		// if (_messageType != HttpMessageType.response)
 		{
 			throw new HTTPMessageTypeException("the message type is Request not Response");
 		}
@@ -712,13 +736,6 @@ protected:
 		Response res;
 	}
 
-	enum MegType : ubyte
-	{
-		Null_,
-		Request_,
-		Response_,
-	}
-
 private:
 	Address _dstAddress;
 	string _dstIP;
@@ -726,11 +743,9 @@ private:
 
 	string _localIP;
 	string _versionStr;
-	MegType _isRequest = MegType.Null_;
 	Req_Res _resreq;
 	ubyte[2] _version;
 	HttpHeaders _headers;
-	//	string[string] _cookies;
 	string[string] _queryParams;
 
 	bool _parsedCookies = false;
@@ -742,7 +757,7 @@ private:
 
 /**
 */
-enum HttpCodes
+enum HttpStatusCodes
 {
 	CONTINUE = 100,
 	SWITCHING_PROTOCOLS = 101,
@@ -812,7 +827,7 @@ enum HttpCodes
 	NETWORK_AUTHENTICATION_REQUIRED = 511		// RFC6585
 }
 
-bool isSuccessCode(HttpCodes code)
+bool isSuccessCode(HttpStatusCodes code)
 {
 	return (code >= 200 && code < 300);
 }
