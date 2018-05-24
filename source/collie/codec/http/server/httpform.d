@@ -26,6 +26,9 @@ class HTTPFormException : Exception
 	mixin basicExceptionCtors;
 }
 
+
+alias HttpForm = HTTPForm;
+
 class HTTPForm
 {
 	import std.experimental.allocator.mallocator;
@@ -91,14 +94,37 @@ class HTTPForm
 		return _vaild;
 	}
 	
+	/**
+     * Request body parameters ($_POST).
+     *
+     */
+	@property string[string] formData()
+	{
+		return _formData;
+	}	
+	
+	@property void formData(string[string] v)
+	{
+		_formData = v;
+	}
+
+	protected string[string] _formData;
+
+	
 	@property StringArray[string] formMap()
 	{
 		return _forms;
 	}
 	
+	
 	@property FormFile[string] fileMap()
 	{
 		return _files;
+	}
+
+	string[] fileKeys()
+	{
+		return _files.keys();
 	}
 	
 	string getFromValue(string key)
@@ -116,7 +142,7 @@ class HTTPForm
 		return _forms.get(key, aty);
 	}
 	
-	auto getFileValue(string key)
+	FormFile getFileValue(string key)
 	{
 		return _files.get(key, null);
 	}
@@ -130,11 +156,14 @@ protected:
 				str ~= data;
 			});
 		splitNameValue(cast(string)str,'&','=',(string key, string value){
-				logDebug("recv: ",key," ", value);
+				string v = decodeComponent(value);
+				logDebugf("recv: %s=%s, decoded:%s",key, value, v);
+				string k = key.idup;
+				_formData[k] = v;
 				if(value.length > 0)
-					_forms[key.idup] ~= decodeComponent(value);
+					_forms[k] ~= v;
 				else
-					_forms[key.idup] ~= "";
+					_forms[k] ~= "";
 				return true;
 			});
 	}

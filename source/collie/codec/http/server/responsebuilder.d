@@ -19,124 +19,204 @@ import std.experimental.allocator.mallocator;
 
 import std.conv;
 
-
+/**
+*/
 class ResponseBuilder
 {
+	this()
+	{
+		_body = new ByteBuffer!Mallocator();
+		_httpMessage = new HttpMessage(HttpMessageType.response);
+	}
+
 	this(ResponseHandler txn)
 	{
-		setResponseHandler(txn);
-		_body = new ByteBuffer!Mallocator();
+		_txn = txn;
+		this();
 	}
 
 	final ResponseBuilder promise(string url, string host)
 	{
-		if(_txn){
-			if(_headers is null)
-				_headers = new HTTPMessage();
-			_headers.url(url);
-			_headers.getHeaders.add(HTTPHeaderCode.HOST,host);
-		}
+		_httpMessage.url(url);
+		_httpMessage.addHeader(HTTPHeaderCode.HOST, host);
 		return this;
 	}
 
 	final ResponseBuilder status(ushort code, string message)
 	{
-		if(_txn){
-			debug logDebug("status: ", code, "  message: ", message);
-			if(_headers is null)
-				_headers = new HTTPMessage();
-			_headers.statusCode(code);
-			_headers.statusMessage(message);
-		}
+		debug logDebug("status: ", code, "  message: ", message);
+
+		_httpMessage.statusCode(code);
+		_httpMessage.statusMessage(message);
+
 		return this;
 	}
 
-	final ResponseBuilder header(T = string)(string name,T value)
+	/**
+     * Get the status code for the response.
+     *
+     * @return int
+     */
+	int status()
 	{
-		if(_txn && _headers)
-			_headers.getHeaders.add(name,to!string(value));
-		return this;
+		return _httpMessage.statusCode();
 	}
 
-	final ResponseBuilder header(T = string)(HTTPHeaderCode code,T value)
+	/**
+     * Set a header on the Response.
+     *
+     * @param  string  $key
+     * @param  array|string  $values
+     * @return $this
+     */
+	final ResponseBuilder header(T = string)(string name, T value)
 	{
-		if(_txn && _headers)
-			_headers.getHeaders.add(code,to!string(value));
+		_httpMessage.setHeader(name, to!string(value));
 		return this;
 	}
 
-	final ResponseBuilder setBody(ubyte[] data)
+	final ResponseBuilder header(T = string)(HttpHeaderCode code, T value)
 	{
-		if(_txn)
-			_body.write(data);
+		_httpMessage.setHeader(code, to!string(value));
 		return this;
 	}
 
-	final ResponseBuilder connectionClose(){
-		return header(HTTPHeaderCode.CONNECTION,"close");
+	/**
+     * Add an array of headers to the response.
+     *
+     * @param  array  $headers
+     * @return $this
+     */
+	ResponseBuilder withHeaders(string[string] headers)
+	{
+		validate();
+		foreach (string key, string value; headers)
+			_httpMessage.addHeader(key, value);
+		return this;
 	}
 
-	final void sendWithEOM(){
+	final ResponseBuilder setBody(in ubyte[] data)
+	{
+		_body.write(data);
+		return this;
+	}
+
+	final ResponseBuilder connectionClose()
+	{
+		return header(HTTPHeaderCode.CONNECTION, "close");
+	}
+
+	final void sendWithEOM()
+	{
 		_sendEOM = true;
 		send();
 	}
 
 	final void send()
 	{
-		// version(CollieDebugMode) logDebug("_txn is ", cast(void *)_txn);
-		scope(exit){
-			_headers = null;
-		}
+		validate();
+		// version(CollieDebugMode) 
+		// logDebug("_txn is ", cast(void *)_txn);
 		bool chunked = true;
-		if(_headers && _sendEOM) chunked = false;
+		if (_sendEOM)
+			chunked = false;
+	
+		version(CollieDebugMode) 
+		logDebug("is isResponse : ",_httpMessage.isResponse());
+		version (CollieDebugMode)
+		logDebug("resonse status code: ", _httpMessage.statusCode);
 
-		if(_headers){
-			// version(CollieDebugMode) logDebug("is isResponse : ",_headers.isResponse());
-			version(CollieDebugMode) logDebug("resonse status code: ", _headers.statusCode);
-			if(_headers.isResponse() && (_headers.statusCode >= 200)) {
-				version(CollieDebugMode) logDebug("Chunked: ", chunked);
-				if(chunked) {
-					_headers.chunked(true);
-				} else {
-					_headers.chunked(false);
-					_headers.getHeaders.add(HTTPHeaderCode.CONTENT_LENGTH, to!string(_body.length));
-				}
+		if (_httpMessage.statusCode >= 200 && _httpMessage.isResponse())
+		{
+			version (CollieDebugMode)
+				logDebug("Chunked: ", chunked);
+			if (chunked)
+			{
+				_httpMessage.chunked(true);
 			}
-			if(_txn) {
-				if((_body.length == 0) && _sendEOM) {
-					_txn.sendHeadersWithEOM(_headers);
-					return;
-				}else {
-					_txn.sendHeaders(_headers);
-				}
+			else
+			{
+				_httpMessage.chunked(false);
+				_httpMessage.setHeader(HTTPHeaderCode.CONTENT_LENGTH, to!string(_body.length));
 			}
 		}
-		if((_body.length > 0) && _txn) {
-			version(CollieDebugMode) logDebug("body len = ", _body.length);
-			if(chunked) {
+		if (_txn)
+		{
+			if ((_body.length == 0) && _sendEOM)
+			{
+				_txn.sendHeadersWithEOM(_httpMessage);
+				return;
+			}
+			else
+			{
+				_txn.sendHeaders(_httpMessage);
+			}
+		}
+		
+		if ((_body.length > 0) && _txn)
+		{
+			version (CollieDebugMode)
+				logDebug("body len = ", _body.length);
+			if (chunked)
+			{
 				_txn.sendChunkHeader(_body.length);
 				_txn.sendBody(_body.allData.data());
-			} else {
-				_txn.sendBody(_body.allData.data(),_sendEOM);
+			}
+			else
+			{
+				_txn.sendBody(_body.allData.data(), _sendEOM);
 				return;
 			}
 			_body.clear();
 		}
-		if(_sendEOM && _txn) {
+		if (_sendEOM && _txn)
+		{
 			_txn.sendEOM();
 		}
 	}
 
-	final @property HTTPMessage headers(){return _headers;}
-	final @property ByteBuffer!Mallocator* bodys(){return &_body;}
-	final @property ResponseHandler responseHandler(){return _txn;};
+	void clear()
+	{
+		_isDisposed = true;
+		_txn = null;
+	}
+
+	private void validate()
+	{
+		assert(!_isDisposed, "The resources have been released!");
+	}
+
+	@property HttpMessage httpMessage()
+	{
+		return _httpMessage;
+	}
+
+	final @property HttpMessage headers()
+	{
+		return _httpMessage;
+	}
+
+	final @property ByteBuffer!Mallocator* bodys()
+	{
+		return &_body;
+	}
+
+	@property ResponseHandler dataHandler()
+	{
+		return _txn;
+	}
+
+	@property void dataHandler(ResponseHandler txn)
+	{
+		_txn = txn;
+	}
+
 protected:
-	pragma(inline) final void setResponseHandler(ResponseHandler txn){_txn = txn;}
-private:
-	ResponseHandler _txn;
-	HTTPMessage _headers;
+	HttpMessage _httpMessage;
 	ByteBuffer!Mallocator _body;
+	ResponseHandler _txn;
 
+private:
 	bool _sendEOM = false;
+	bool _isDisposed = false;
 }
-
