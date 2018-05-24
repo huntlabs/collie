@@ -71,13 +71,13 @@ class ResponseBuilder
      */
 	final ResponseBuilder header(T = string)(string name, T value)
 	{
-		_httpMessage.addHeader(name, to!string(value));
+		_httpMessage.setHeader(name, to!string(value));
 		return this;
 	}
 
 	final ResponseBuilder header(T = string)(HttpHeaderCode code, T value)
 	{
-		_httpMessage.addHeader(code, to!string(value));
+		_httpMessage.setHeader(code, to!string(value));
 		return this;
 	}
 
