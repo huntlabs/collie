@@ -221,7 +221,7 @@ private:
 
     final void removeAt(size_t site)
     {
-        import kiss.array;
+        import kiss.container.array;
         _isFinalize = false;
         PipelineContext rctx = _ctxs[site];
         rctx.detachPipeline();

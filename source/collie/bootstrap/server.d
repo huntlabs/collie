@@ -132,7 +132,7 @@ final class ServerBootstrap(PipeLine)
 		_isLoopWait = true;
 		if(_group)
 			_group.start();
-		_loop.join();
+		_loop.run();
     }
 
 	void startListening()

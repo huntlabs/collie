@@ -114,7 +114,7 @@ final class GroupMember
 
     void start()
     {
-        _loop.join();
+        _loop.run();
     }
 
     alias eventLoop this;
