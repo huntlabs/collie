@@ -7,7 +7,7 @@
     ],
     "license": "Apache-2.0",
     "dependencies": {
-        "kiss": {"path": "../kiss"}
+        "kiss": "~master"
     },
     "configurations":[
         {

@@ -90,9 +90,7 @@ RequestHandler newHandler(RequestHandler,HTTPMessage)
 
 void main()
 {
-    
-    writeln("Edit source/app.d to start your project.");
-    globalLogLevel(LogLevel.warning);
+    // globalLogLevel(LogLevel.warning);
 	trace("----------");
 	version(USE_SSL){
 		ServerSSLConfig ssl = new ServerSSLConfig(SSLMode.SSLv2v3);
