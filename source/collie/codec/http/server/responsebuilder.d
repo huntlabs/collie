@@ -38,7 +38,7 @@ class ResponseBuilder
 	final ResponseBuilder promise(string url, string host)
 	{
 		_httpMessage.url(url);
-		_httpMessage.addHeader(HTTPHeaderCode.HOST, host);
+		_httpMessage.setHeader(HTTPHeaderCode.HOST, host);
 		return this;
 	}
 

@@ -23,19 +23,16 @@ import collie.channel;
 import kiss.net.TcpStream;
 import kiss.event;
 import kiss.net.TcpListener;
-// import collie.net.acceptor;
-// import collie.net.eventloop;
-// import collie.net.eventloopgroup;
+import kiss.event.socket;
+
 import collie.net.server.tcpserver;
 import collie.net.server.connection;
 import collie.bootstrap.exception;
 import collie.bootstrap.exception;
 import collie.bootstrap.serversslconfig;
-import kiss.event.socket;
 
 import std.socket;
-
-
+import std.parallelism;
 
 alias HTTPPipeline = Pipeline!(const(ubyte[]), StreamWriteBuffer);
 alias HTTPServer = HTTPServerImpl!true;
@@ -64,6 +61,7 @@ final class HTTPServerImpl(bool UsePipeline) : HTTPSessionController
 		_mainLoop = new EventLoop();
 		size_t thread = _options.threads - 1;
 		if(thread > 0) {
+			if(thread>totalCPUs) thread = totalCPUs-1;
 			_group = new EventLoopGroup(cast(uint)thread);
 		}
 

@@ -127,15 +127,15 @@ final class ServerBootstrap(PipeLine)
 
     void waitForStop()
     {
-        if (_isLoopWait)
-            throw new ServerIsRuningException("server is runing!");
-        if (!_listening)
-            startListening();
-        _isLoopWait = true;
-        if (_group)
-            _group.start();
-        _loop.run();
-    }
+		if(_isLoopWait)
+			throw new ServerIsRuningException("server is runing!");
+		if(!_listening)
+			startListening();
+		_isLoopWait = true;
+		if(_group)
+			_group.start();
+		_loop.run();
+	}
 
     void startListening()
     {
