@@ -7,19 +7,19 @@
     ],
     "license": "Apache-2.0",
     "dependencies": {
-        "kiss": "~>0.4.0"
+        "kiss": "~>0.4.1"
     },
     "configurations":[
         {
             "name": "default"
         },
         {
-            "name": "debug-mode",
+            "name": "debug",
             "versions": [
                 "CollieDebugMode"
             ],
             "subConfigurations": {
-                "kiss" : "debug-mode"
+                "kiss" : "debug"
             }
         }
     ],

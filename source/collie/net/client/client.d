@@ -103,13 +103,14 @@ protected:
 private:
 	final void connect()
 	{
-		_logInfo.client = new TcpStream(_loop);
+		TcpStream stream = new TcpStream(_loop);
+		_logInfo.client = stream;
 		if(_logInfo.cback)
-			_logInfo.cback(_logInfo.client);
-		_logInfo.client.onConnected(&connectCallBack);
-		_logInfo.client.onClosed(&doClose);
-		_logInfo.client.onDataReceived(&onRead);
-		_logInfo.client.connect(_logInfo.addr);
+			_logInfo.cback(stream);
+		stream.onConnected(&connectCallBack);
+		stream.onClosed(&doClose);
+		stream.onDataReceived(&onRead);
+		stream.connect(_logInfo.addr);
 	}
 
 	final void connectCallBack(bool state) nothrow{

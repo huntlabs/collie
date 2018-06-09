@@ -115,16 +115,16 @@ class ResponseBuilder
 	final void send()
 	{
 		validate();
-		// version(CollieDebugMode) 
-		// logDebug("_txn is ", cast(void *)_txn);
+		
 		bool chunked = true;
 		if (_sendEOM)
 			chunked = false;
 	
 		version(CollieDebugMode) 
-		logDebug("is isResponse : ",_httpMessage.isResponse());
-		version (CollieDebugMode)
-		logDebug("resonse status code: ", _httpMessage.statusCode);
+		{
+			// logDebug("is isResponse : ",_httpMessage.isResponse());
+			logDebug("resonse status code: ", _httpMessage.statusCode);
+		}
 
 		if (_httpMessage.statusCode >= 200 && _httpMessage.isResponse())
 		{

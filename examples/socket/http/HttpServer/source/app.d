@@ -78,7 +78,8 @@ RequestHandler newHandler(RequestHandler, HTTPMessage)
 
 void main()
 {
-	// globalLogLevel(LogLevel.warning);
+	setLoggingLevel(LogLevel.LOG_DEBUG);
+
 	trace("----------");
 
 	version (USE_SSL)

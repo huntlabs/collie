@@ -58,7 +58,7 @@ abstract class ServerConnection : WheelTimer
 		write(new SocketStreamBuffer(data,cback));
 	}
 
-	final void write(StreamWriteBuffer buffer) @trusted
+	final void write(StreamWriteBuffer buffer)
     {
         if (_loop.isInLoopThread()) {
             _postWriteBuffer(buffer);
@@ -99,12 +99,12 @@ private:
  	final void _postWriteBuffer(StreamWriteBuffer buffer)
     {
         if (_socket) {
-			debug logDebug("posting data...  ");
+			version (CollieDebugMode) logDebug("posting data...  ", buffer);
             rest();
             _socket.write(buffer);
         } else
 		{
-			debug logDebug("post done.");
+			version (CollieDebugMode) logDebug("post done.");
             buffer.doFinish();
 		}
     }

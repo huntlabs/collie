@@ -126,9 +126,11 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		HTTPMessage headers,
 		bool eom)
 	{
-		auto tdata = new HTTPBuffer();
+		HTTPBuffer tdata = new HTTPBuffer();
 		_codec.generateHeader(txn,headers,tdata,eom);
 
+		version(CollieDebugMode) 
+		logDebug("sending headers: length=", tdata.length);
 		//auto cback = eom ? bind(&closeWriteCallBack,txn) : &writeCallBack;
 		//_down.httpWrite(tdata.data(true),cback);
 		if(eom){
@@ -136,23 +138,23 @@ abstract class HTTPSession : HTTPTransaction.Transport,
 		} 
 		_down.httpWrite(tdata);
 		
-
 	}
 
 	override size_t sendBody(HTTPTransaction txn,
 		in ubyte[] data,
 		bool eom)
 	{
-
-		auto tdata = new HTTPBuffer();
+		HTTPBuffer tdata = new HTTPBuffer();
 		size_t rlen = getCodec.generateBody(txn,tdata,data,eom);
+
+		version(CollieDebugMode) 
+		logDebug("sending body: length=", rlen);
 
 		if(eom){
 			tdata.setFinalTask(newTask((){closeWriteCallBack();txn.onDelayedDestroy();}));
 		} 
 		_down.httpWrite(tdata);
-		
-		// logDebug("send length : ", rlen);
+
 		return rlen;
 	}
 	

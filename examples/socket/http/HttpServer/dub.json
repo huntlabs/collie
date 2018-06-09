@@ -10,7 +10,7 @@
             }
 	},
 	"subConfigurations": {
-		"collie" : "debug-mode"
+		"collie" : "debug"
 	},
 	"configurations": [
 		{
