@@ -156,6 +156,7 @@ protected:
 				str ~= data;
 			});
 		splitNameValue(cast(string)str,'&','=',(string key, string value){
+				value = value.replace("+","%20");
 				string v = decodeComponent(value);
 				logDebugf("recv: %s=%s, decoded:%s",key, value, v);
 				string k = key.idup;
