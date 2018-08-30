@@ -163,6 +163,10 @@ final class RequestHandlerAdaptor : ResponseHandler, HTTPTransactionHandler
 	{
 		if (_erro)
 			return;
+		version(CollieDebugMode) {
+			import std.conv;
+			warning(to!string(erromsg));
+		}
 		_erro = true;
 		_upstream.onError(erromsg);
 	}

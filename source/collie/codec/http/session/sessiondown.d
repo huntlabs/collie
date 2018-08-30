@@ -12,11 +12,12 @@ module collie.codec.http.session.sessiondown;
 
 import collie.channel;
 import collie.codec.http.session.httpsession;
+import collie.net;
+import collie.utils.memory;
 import std.socket;
 import kiss.net.TcpStream;
-import collie.net;
 import kiss.event.task;
-import collie.utils.memory;
+import kiss.logger;
 
 @trusted class PipelineSessionDown : HandlerAdapter!(const(ubyte[]), StreamWriteBuffer),SessionDown
 {
@@ -111,8 +112,12 @@ import std.exception;
 	}
 protected:
 	override void onTimeOut() nothrow {
-		if(_session)
-			collectException(_session.onTimeout());
+		if(_session) {
+			try {
+				version(CollieDebugMode) warning("timeout");
+				_session.onTimeout();
+			} catch(Exception) {}
+		}
 	}
 
 	override void onClose() nothrow {

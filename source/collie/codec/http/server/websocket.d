@@ -15,6 +15,8 @@ import std.exception;
 
 import std.experimental.allocator.gc_allocator;
 
+import kiss.container.Vector;
+import kiss.logger;
 
 import collie.codec.http.httpmessage;
 import collie.codec.http.errocode;
@@ -22,7 +24,6 @@ import collie.codec.http.codec.wsframe;
 import collie.codec.http.headers;
 import collie.codec.http.httptansaction;
 import collie.codec.http.codec.httpcodec;
-import kiss.container.Vector;
 import collie.utils.memory;
 import collie.codec.http.server;
 
@@ -73,9 +74,11 @@ protected:
 	final override void onEOM() nothrow{}
 	final override void requestComplete() nothrow{}
 	final override void onError(HTTPErrorCode code) nothrow {
-        if(code != HTTPErrorCode.TIME_OUT)
+		try {
+        	if(code != HTTPErrorCode.TIME_OUT)
 		    _downstream = null;
-		collectException(onErro(code));
+			onErro(code);
+		} catch(Exception) {}
 	}
 	override bool onUpgtade(CodecProtocol protocol,HTTPMessage msg) nothrow{
 		//_addr = msg.clientAddress();

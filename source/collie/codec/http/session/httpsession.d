@@ -330,7 +330,6 @@ protected:
 	void setupProtocolUpgrade(ref HTTPTransaction txn,CodecProtocol protocol,string protocolString,HTTPMessage msg);
 
 	final void closeWriteCallBack(){
-		//txn.onDelayedDestroy();
 		if(_codec is null || _codec.shouldClose()) {
 			logDebug("\t\t --------do close!!!");
 			_down.httpClose();
